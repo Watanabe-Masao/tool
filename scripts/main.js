@@ -275,6 +275,7 @@ function resetWeightSteps() {
   if (method === 'direct') {
     // 歩留まり率直接入力モード
     show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP1_RESULT);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
@@ -414,13 +415,24 @@ function handleWeightDirectStep1() {
 
   // 3つすべて入力されているかチェック
   if (![bc, bp, bw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP1_RESULT);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
     return;
   }
 
-  // Step 2の入力欄を表示（結果は表示しない）
+  // 加工前の100gあたり計算
+  const beforeCost100 = per100FromBox(bc, bw);
+  const beforePrice100 = per100FromBox(bp, bw);
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+  // 結果を表示
+  setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_DIRECT_STEP1, yen(toFixed(beforeCost100)));
+  setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_DIRECT_STEP1, yen(toFixed(beforePrice100)));
+  setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP1, pct(toFixed(beforeMarkup)));
+
+  show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1_RESULT);
   show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
 
   // 次のステップの処理をトリガー
@@ -428,12 +440,9 @@ function handleWeightDirectStep1() {
 }
 
 /**
- * Step 2の処理：歩留まり率入力→歩留まり率と加工前の情報を表示（計量モード - 歩留まり率直接入力）
+ * Step 2の処理：歩留まり率入力→歩留まり率を表示（計量モード - 歩留まり率直接入力）
  */
 function handleWeightDirectStep2() {
-  const bc = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
-  const bp = num(WEIGHT_FIELDS.DIRECT.BOX_PRICE);
-  const bw = num(WEIGHT_FIELDS.DIRECT.BOX_WEIGHT);
   const yr = num(WEIGHT_FIELDS.DIRECT.YIELD_RATE);
 
   if (!Number.isFinite(yr) || yr <= 0) {
@@ -444,16 +453,6 @@ function handleWeightDirectStep2() {
 
   // 歩留まり率を表示
   setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_DIRECT_STEP2, pct(toFixed(yr)));
-
-  // 加工前の100gあたり計算
-  const beforeCost100 = per100FromBox(bc, bw);
-  const beforePrice100 = per100FromBox(bp, bw);
-  const beforeMarkup = markup(beforeCost100, beforePrice100);
-
-  // 加工前の結果を表示
-  setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_DIRECT_STEP2, yen(toFixed(beforeCost100)));
-  setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_DIRECT_STEP2, yen(toFixed(beforePrice100)));
-  setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP2, pct(toFixed(beforeMarkup)));
 
   show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
   show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
