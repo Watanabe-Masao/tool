@@ -2,11 +2,12 @@
  * メインアプリケーションロジック（段階的フォーム対応 - 2モード）
  */
 
-import { per100FromPerUnit, markup, calcYield, toFixed } from './calculation.js';
+import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed } from './calculation.js';
 import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, FIXED_FIELDS, RADIO_NAMES } from './constants.js';
+import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
+import { calculateWeight } from './calculator-weight.js';
 import { displayResults } from './display.js';
 import {
   calculateProductSimulation,
@@ -31,11 +32,15 @@ function switchMode(newMode) {
   hide(UI_ELEMENTS.WARNING);
 
   // ステップをリセット
-  resetSteps();
+  if (isFixed) {
+    resetSteps();
+  } else {
+    resetWeightSteps();
+  }
 }
 
 /**
- * 歩留まり率入力方法の切り替え
+ * 歩留まり率入力方法の切り替え（定額モード）
  */
 function switchYieldMethod() {
   const method = qs(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`)?.value;
@@ -47,6 +52,21 @@ function switchYieldMethod() {
 
   // ステップをリセット
   resetSteps();
+}
+
+/**
+ * 歩留まり率入力方法の切り替え（計量モード）
+ */
+function switchWeightYieldMethod() {
+  const method = qs(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`)?.value;
+  const isDirect = method === 'direct';
+
+  // モードの表示切り替え
+  qs(`#${UI_ELEMENTS.WEIGHT_CALCULATE_MODE}`).classList.toggle('is-hidden', isDirect);
+  qs(`#${UI_ELEMENTS.WEIGHT_DIRECT_MODE}`).classList.toggle('is-hidden', !isDirect);
+
+  // ステップをリセット
+  resetWeightSteps();
 }
 
 /**
@@ -245,6 +265,200 @@ function handleDirectStep3() {
 }
 
 /**
+ * 計量モードのステップをリセット
+ */
+function resetWeightSteps() {
+  appState.resetStep();
+
+  const method = qs(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`)?.value;
+
+  if (method === 'direct') {
+    // 歩留まり率直接入力モード
+    show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+    hide(UI_ELEMENTS.RESULTS);
+
+    // 入力フィールドをクリア
+    [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+     WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+     WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+  } else {
+    // 重量から計算モード
+    show(UI_ELEMENTS.WEIGHT_STEP1);
+    hide(UI_ELEMENTS.WEIGHT_STEP1_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_STEP2);
+    hide(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_STEP3);
+    hide(UI_ELEMENTS.RESULTS);
+
+    // 入力フィールドをクリア
+    [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+     WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+     WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+  }
+}
+
+/**
+ * Step 1の処理：箱の基本情報入力→加工前の計算（計量モード - 重量から計算）
+ */
+function handleWeightStep1() {
+  const bc = num(WEIGHT_FIELDS.CALCULATE.BOX_COST);
+  const bp = num(WEIGHT_FIELDS.CALCULATE.BOX_PRICE);
+  const bw = num(WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT);
+
+  // 3つすべて入力されているかチェック
+  if (![bc, bp, bw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.WEIGHT_STEP1_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_STEP2);
+    hide(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_STEP3);
+    return;
+  }
+
+  // 加工前の100gあたり計算
+  const beforeCost100 = per100FromBox(bc, bw);
+  const beforePrice100 = per100FromBox(bp, bw);
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+  // 結果を表示
+  setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_STEP1, yen(toFixed(beforeCost100)));
+  setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_STEP1, yen(toFixed(beforePrice100)));
+  setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_STEP1, pct(toFixed(beforeMarkup)));
+
+  show(UI_ELEMENTS.WEIGHT_STEP1_RESULT);
+  show(UI_ELEMENTS.WEIGHT_STEP2);
+
+  // 次のステップの処理をトリガー
+  handleWeightStep2();
+}
+
+/**
+ * Step 2の処理：加工前後のサンプル重量入力→歩留まり率計算（計量モード - 重量から計算）
+ */
+function handleWeightStep2() {
+  const bs = num(WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE);
+  const aw = num(WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT);
+
+  if (![bs, aw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_STEP3);
+    return;
+  }
+
+  // 歩留まり率を計算
+  const yr = calcYield(bs, aw);
+  setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_STEP2, pct(toFixed(yr)));
+
+  show(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+  show(UI_ELEMENTS.WEIGHT_STEP3);
+
+  // 次のステップの処理をトリガー
+  handleWeightStep3();
+}
+
+/**
+ * Step 3の処理：加工後設定売価入力→最終結果表示（計量モード - 重量から計算）
+ */
+function handleWeightStep3() {
+  const method = 'calculate';
+  const result = calculateWeight(method);
+
+  if (!result) {
+    hide(UI_ELEMENTS.RESULTS);
+    return;
+  }
+
+  const snapshotData = displayResults(result, true);
+  appState.updateSnapshot(snapshotData);
+
+  handleProductCalculation();
+}
+
+/**
+ * Step 1の処理：箱の基本情報入力（計量モード - 歩留まり率直接入力）
+ */
+function handleWeightDirectStep1() {
+  const bc = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
+  const bp = num(WEIGHT_FIELDS.DIRECT.BOX_PRICE);
+  const bw = num(WEIGHT_FIELDS.DIRECT.BOX_WEIGHT);
+
+  // 3つすべて入力されているかチェック
+  if (![bc, bp, bw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+    return;
+  }
+
+  // Step 2の入力欄を表示（結果は表示しない）
+  show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
+
+  // 次のステップの処理をトリガー
+  handleWeightDirectStep2();
+}
+
+/**
+ * Step 2の処理：歩留まり率入力→歩留まり率と加工前の情報を表示（計量モード - 歩留まり率直接入力）
+ */
+function handleWeightDirectStep2() {
+  const bc = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
+  const bp = num(WEIGHT_FIELDS.DIRECT.BOX_PRICE);
+  const bw = num(WEIGHT_FIELDS.DIRECT.BOX_WEIGHT);
+  const yr = num(WEIGHT_FIELDS.DIRECT.YIELD_RATE);
+
+  if (!Number.isFinite(yr) || yr <= 0) {
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+    return;
+  }
+
+  // 歩留まり率を表示
+  setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_DIRECT_STEP2, pct(toFixed(yr)));
+
+  // 加工前の100gあたり計算
+  const beforeCost100 = per100FromBox(bc, bw);
+  const beforePrice100 = per100FromBox(bp, bw);
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+  // 加工前の結果を表示
+  setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_DIRECT_STEP2, yen(toFixed(beforeCost100)));
+  setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_DIRECT_STEP2, yen(toFixed(beforePrice100)));
+  setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP2, pct(toFixed(beforeMarkup)));
+
+  show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+  show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+
+  // 次のステップの処理をトリガー
+  handleWeightDirectStep3();
+}
+
+/**
+ * Step 3の処理：加工後設定売価入力→最終結果表示（計量モード - 歩留まり率直接入力）
+ */
+function handleWeightDirectStep3() {
+  const method = 'direct';
+  const result = calculateWeight(method);
+
+  if (!result) {
+    hide(UI_ELEMENTS.RESULTS);
+    return;
+  }
+
+  const snapshotData = displayResults(result, true);
+  appState.updateSnapshot(snapshotData);
+
+  handleProductCalculation();
+}
+
+/**
  * 商品化シミュレーション処理
  */
 function handleProductCalculation() {
@@ -271,7 +485,12 @@ function handleDiscountUpdate() {
  * 全クリア処理
  */
 function clearAll() {
-  resetSteps();
+  const currentMode = appState.getMode();
+  if (currentMode === MODE.FIXED) {
+    resetSteps();
+  } else {
+    resetWeightSteps();
+  }
   appState.resetAll();
 }
 
@@ -284,34 +503,65 @@ function init() {
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => switchMode(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.CLEAR_BTN}`)?.addEventListener('click', clearAll);
 
-  // 歩留まり率入力方法の切り替え
+  // 歩留まり率入力方法の切り替え（定額モード）
   qsa(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]`).forEach(r => {
     r.addEventListener('change', switchYieldMethod);
   });
 
-  // 重量から計算モード - Step 1の入力監視
+  // 歩留まり率入力方法の切り替え（計量モード）
+  qsa(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]`).forEach(r => {
+    r.addEventListener('change', switchWeightYieldMethod);
+  });
+
+  // 定額モード - 重量から計算モード - Step 1の入力監視
   [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
    FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT].forEach(id => {
     qs(`#${id}`)?.addEventListener('input', handleStep1);
   });
 
-  // 重量から計算モード - Step 2の入力監視
+  // 定額モード - 重量から計算モード - Step 2の入力監視
   qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', handleStep2);
 
-  // 重量から計算モード - Step 3の入力監視
+  // 定額モード - 重量から計算モード - Step 3の入力監視
   qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleStep3);
 
-  // 歩留まり率直接入力モード - Step 1の入力監視
+  // 定額モード - 歩留まり率直接入力モード - Step 1の入力監視
   [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
    FIXED_FIELDS.DIRECT.BEFORE_WEIGHT].forEach(id => {
     qs(`#${id}`)?.addEventListener('input', handleDirectStep1);
   });
 
-  // 歩留まり率直接入力モード - Step 2の入力監視
+  // 定額モード - 歩留まり率直接入力モード - Step 2の入力監視
   qs(`#${FIXED_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleDirectStep2);
 
-  // 歩留まり率直接入力モード - Step 3の入力監視
+  // 定額モード - 歩留まり率直接入力モード - Step 3の入力監視
   qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleDirectStep3);
+
+  // 計量モード - 重量から計算モード - Step 1の入力監視
+  [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+   WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT].forEach(id => {
+    qs(`#${id}`)?.addEventListener('input', handleWeightStep1);
+  });
+
+  // 計量モード - 重量から計算モード - Step 2の入力監視
+  [WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE, WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT].forEach(id => {
+    qs(`#${id}`)?.addEventListener('input', handleWeightStep2);
+  });
+
+  // 計量モード - 重量から計算モード - Step 3の入力監視
+  qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightStep3);
+
+  // 計量モード - 歩留まり率直接入力モード - Step 1の入力監視
+  [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+   WEIGHT_FIELDS.DIRECT.BOX_WEIGHT].forEach(id => {
+    qs(`#${id}`)?.addEventListener('input', handleWeightDirectStep1);
+  });
+
+  // 計量モード - 歩留まり率直接入力モード - Step 2の入力監視
+  qs(`#${WEIGHT_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleWeightDirectStep2);
+
+  // 計量モード - 歩留まり率直接入力モード - Step 3の入力監視
+  qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightDirectStep3);
 
   // 商品化シミュレーション
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
