@@ -130,6 +130,9 @@ export const UI_ELEMENTS = {
   YIELD_RATE_WEIGHT_STEP2: 'yieldRateWeightStep2',
 
   // ステップ結果表示（計量モード - 歩留まり率直接入力）
+  BEFORE_COST_WEIGHT_DIRECT_STEP1: 'beforeCostWeightDirectStep1',
+  BEFORE_PRICE_WEIGHT_DIRECT_STEP1: 'beforePriceWeightDirectStep1',
+  BEFORE_MARKUP_WEIGHT_DIRECT_STEP1: 'beforeMarkupWeightDirectStep1',
   BEFORE_COST_WEIGHT_DIRECT_STEP2: 'beforeCostWeightDirectStep2',
   BEFORE_PRICE_WEIGHT_DIRECT_STEP2: 'beforePriceWeightDirectStep2',
   BEFORE_MARKUP_WEIGHT_DIRECT_STEP2: 'beforeMarkupWeightDirectStep2',
