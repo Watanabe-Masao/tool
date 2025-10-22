@@ -66,16 +66,37 @@ class ProductSimulationData {
 export class AppState {
   constructor() {
     this.mode = MODE.FIXED;
+    this.currentStep = 1;  // 現在のステップ（1, 2, 3）
     this.snapshot = new CalculationSnapshot();
     this.productData = new ProductSimulationData();
   }
 
   setMode(mode) {
     this.mode = mode;
+    this.currentStep = 1;  // モード変更時はステップ1に戻る
   }
 
   getMode() {
     return this.mode;
+  }
+
+  // ステップ管理
+  getCurrentStep() {
+    return this.currentStep;
+  }
+
+  setStep(step) {
+    this.currentStep = step;
+  }
+
+  nextStep() {
+    if (this.currentStep < 3) {
+      this.currentStep++;
+    }
+  }
+
+  resetStep() {
+    this.currentStep = 1;
   }
 
   updateSnapshot(data) {
@@ -97,6 +118,7 @@ export class AppState {
   resetAll() {
     this.snapshot.reset();
     this.productData.reset();
+    this.currentStep = 1;
   }
 }
 

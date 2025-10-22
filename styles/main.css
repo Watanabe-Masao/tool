@@ -34,6 +34,23 @@ body {
 .section-title { color: var(--text); border-bottom: 2px solid var(--brand); padding-bottom: 8px; margin: 0 0 12px; font-size: clamp(1rem, 3vw, 1.2rem); }
 .section-subtitle { margin: 18px 0 10px; font-size: 1rem; color: var(--text); }
 
+/* ステップフォーム */
+.step-title {
+  color: var(--brand);
+  font-size: 1.1rem;
+  margin: 20px 0 12px;
+  font-weight: 700;
+  padding-left: 8px;
+  border-left: 4px solid var(--brand);
+}
+.step-result {
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+}
+
 /***** フォーム *****/
 .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
 .field { display: grid; gap: 6px; }

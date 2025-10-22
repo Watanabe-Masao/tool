@@ -1,28 +1,13 @@
 /**
- * メインアプリケーションロジック
- * リファクタリング版 - モジュール化により責務を分離
+ * メインアプリケーションロジック（段階的フォーム対応）
  */
 
-import { per100FromBox } from './calculation.js';
-import { qs, num, hide, toggleActive, bind } from './dom-utils.js';
+import { per100FromPerUnit, markup, calcYield, toFixed } from './calculation.js';
+import { qs, num, hide, show, toggleActive, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
+import { MODE, UI_ELEMENTS, FIXED_FIELDS } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
-import { calculateWeight } from './calculator-weight.js';
-import {
-  setupFixedRadioHandlers,
-  setupWeightRadioHandlers,
-  bindFixedInputs,
-  bindWeightInputs,
-  setupDiscountSlider,
-  clearAllInputs
-} from './input-handler.js';
-import {
-  showWarning,
-  displayResults,
-  clearAllDisplays,
-  updatePer100gDisplay
-} from './display.js';
+import { displayResults } from './display.js';
 import {
   calculateProductSimulation,
   updateDiscountSimulation
@@ -44,41 +29,101 @@ function switchMode(newMode) {
   qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`).classList.toggle('is-hidden', isFixed);
   hide(UI_ELEMENTS.RESULTS);
   hide(UI_ELEMENTS.WARNING);
+
+  // ステップをリセット
+  resetSteps();
 }
 
 /**
- * 計量モードの100gあたり売価を更新
+ * ステップをリセット
  */
-function handleWeightPer100gUpdate() {
-  const price = num('boxPrice');
-  const weight = num('boxWeight');
-  const value = per100FromBox(price ?? NaN, weight ?? NaN);
-  updatePer100gDisplay(UI_ELEMENTS.PER_100G_DISPLAY, value);
-}
+function resetSteps() {
+  appState.resetStep();
 
-function handleWeightPer100gUpdateDirect() {
-  const price = num('boxPriceDirect');
-  const weight = num('boxWeightDirect');
-  const value = per100FromBox(price ?? NaN, weight ?? NaN);
-  updatePer100gDisplay(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, value);
+  // Step 1のみ表示、他は非表示
+  show(UI_ELEMENTS.FIXED_STEP1);
+  hide(UI_ELEMENTS.FIXED_STEP1_RESULT);
+  hide(UI_ELEMENTS.FIXED_STEP2);
+  hide(UI_ELEMENTS.FIXED_STEP2_RESULT);
+  hide(UI_ELEMENTS.FIXED_STEP3);
+  hide(UI_ELEMENTS.RESULTS);
+
+  // 入力フィールドをクリア
+  [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+   FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+   FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
 }
 
 /**
- * メイン計算処理
+ * Step 1の処理：基本情報入力→加工前の計算
  */
-function calculate() {
-  const mode = appState.getMode();
-  const method = qs(`input[name="${RADIO_NAMES[mode === MODE.FIXED ? 'YIELD_METHOD_FIXED' : 'YIELD_METHOD_WEIGHT']}"]:checked`)?.value;
+function handleStep1() {
+  const uc = num(FIXED_FIELDS.CALCULATE.UNIT_COST);
+  const up = num(FIXED_FIELDS.CALCULATE.UNIT_PRICE);
+  const bw = num(FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT);
 
-  let result;
-  if (mode === MODE.FIXED) {
-    result = calculateFixed(method);
-  } else {
-    result = calculateWeight(method);
+  // 3つすべて入力されているかチェック
+  if (![uc, up, bw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.FIXED_STEP1_RESULT);
+    hide(UI_ELEMENTS.FIXED_STEP2);
+    hide(UI_ELEMENTS.FIXED_STEP2_RESULT);
+    hide(UI_ELEMENTS.FIXED_STEP3);
+    return;
   }
 
+  // 加工前の100gあたり計算
+  const beforeCost100 = per100FromPerUnit(uc, bw);
+  const beforePrice100 = per100FromPerUnit(up, bw);
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+  // 結果を表示
+  setText(UI_ELEMENTS.BEFORE_COST_STEP1, yen(toFixed(beforeCost100)));
+  setText(UI_ELEMENTS.BEFORE_PRICE_STEP1, yen(toFixed(beforePrice100)));
+  setText(UI_ELEMENTS.BEFORE_MARKUP_STEP1, pct(toFixed(beforeMarkup)));
+
+  show(UI_ELEMENTS.FIXED_STEP1_RESULT);
+  show(UI_ELEMENTS.FIXED_STEP2);
+
+  // 次のステップの処理をトリガー
+  handleStep2();
+}
+
+/**
+ * Step 2の処理：加工後重量入力→歩留まり率計算
+ */
+function handleStep2() {
+  const bw = num(FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT);
+  const aw = num(FIXED_FIELDS.CALCULATE.AFTER_WEIGHT);
+
+  if (![bw, aw].every(v => Number.isFinite(v) && v > 0)) {
+    hide(UI_ELEMENTS.FIXED_STEP2_RESULT);
+    hide(UI_ELEMENTS.FIXED_STEP3);
+    return;
+  }
+
+  // 歩留まり率を計算
+  const yr = calcYield(bw, aw);
+  setText(UI_ELEMENTS.YIELD_RATE_STEP2, pct(toFixed(yr)));
+
+  show(UI_ELEMENTS.FIXED_STEP2_RESULT);
+  show(UI_ELEMENTS.FIXED_STEP3);
+
+  // 次のステップの処理をトリガー
+  handleStep3();
+}
+
+/**
+ * Step 3の処理：加工後設定売価入力→最終結果表示
+ */
+function handleStep3() {
+  const method = 'calculate';  // 現在は計算モードのみ対応
+  const result = calculateFixed(method);
+
   if (!result) {
-    showWarning();
+    hide(UI_ELEMENTS.RESULTS);
     return;
   }
 
@@ -115,8 +160,7 @@ function handleDiscountUpdate() {
  * 全クリア処理
  */
 function clearAll() {
-  clearAllInputs();
-  clearAllDisplays();
+  resetSteps();
   appState.resetAll();
 }
 
@@ -129,23 +173,36 @@ function init() {
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => switchMode(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.CLEAR_BTN}`)?.addEventListener('click', clearAll);
 
-  // ラジオボタン切替
-  setupFixedRadioHandlers(calculate);
-  setupWeightRadioHandlers(calculate);
-
-  // 入力フィールド監視
-  bindFixedInputs(calculate);
-  bindWeightInputs(() => {
-    handleWeightPer100gUpdate();
-    handleWeightPer100gUpdateDirect();
-    calculate();
+  // Step 1の入力監視
+  [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+   FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT].forEach(id => {
+    qs(`#${id}`)?.addEventListener('input', handleStep1);
   });
 
+  // Step 2の入力監視
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', handleStep2);
+
+  // Step 3の入力監視
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleStep3);
+
   // 商品化シミュレーション
-  bind([UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE], handleProductCalculation);
+  [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
+    qs(`#${id}`)?.addEventListener('input', handleProductCalculation);
+  });
 
   // 値引きシミュレーション
-  setupDiscountSlider(handleDiscountUpdate);
+  qs(`#${UI_ELEMENTS.DISC_SLIDER}`)?.addEventListener('input', (e) => {
+    qs(`#${UI_ELEMENTS.DISC_INPUT}`).value = e.target.value;
+    handleDiscountUpdate();
+  });
+
+  qs(`#${UI_ELEMENTS.DISC_INPUT}`)?.addEventListener('input', (e) => {
+    let v = parseFloat(e.target.value) || 0;
+    v = Math.max(0, Math.min(100, v));
+    e.target.value = v;
+    qs(`#${UI_ELEMENTS.DISC_SLIDER}`).value = Math.min(v, 50);
+    handleDiscountUpdate();
+  });
 }
 
 // アプリケーション起動
