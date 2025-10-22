@@ -287,6 +287,9 @@ function resetWeightSteps() {
       const el = qs(`#${id}`);
       if (el) el.value = '';
     });
+
+    // 100gあたりの売価表示をクリア
+    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
   } else {
     // 重量から計算モード
     show(UI_ELEMENTS.WEIGHT_STEP1);
@@ -303,6 +306,9 @@ function resetWeightSteps() {
       const el = qs(`#${id}`);
       if (el) el.value = '';
     });
+
+    // 100gあたりの売価表示をクリア
+    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
   }
 }
 
@@ -313,6 +319,14 @@ function handleWeightStep1() {
   const bc = num(WEIGHT_FIELDS.CALCULATE.BOX_COST);
   const bp = num(WEIGHT_FIELDS.CALCULATE.BOX_PRICE);
   const bw = num(WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT);
+
+  // 100gあたりの売価をリアルタイム表示
+  if (Number.isFinite(bp) && Number.isFinite(bw) && bw > 0) {
+    const price100 = per100FromBox(bp, bw);
+    setText(UI_ELEMENTS.PER_100G_DISPLAY, yen(toFixed(price100)));
+  } else {
+    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
+  }
 
   // 3つすべて入力されているかチェック
   if (![bc, bp, bw].every(v => Number.isFinite(v) && v > 0)) {
@@ -389,6 +403,14 @@ function handleWeightDirectStep1() {
   const bc = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
   const bp = num(WEIGHT_FIELDS.DIRECT.BOX_PRICE);
   const bw = num(WEIGHT_FIELDS.DIRECT.BOX_WEIGHT);
+
+  // 100gあたりの売価をリアルタイム表示
+  if (Number.isFinite(bp) && Number.isFinite(bw) && bw > 0) {
+    const price100 = per100FromBox(bp, bw);
+    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, yen(toFixed(price100)));
+  } else {
+    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
+  }
 
   // 3つすべて入力されているかチェック
   if (![bc, bp, bw].every(v => Number.isFinite(v) && v > 0)) {
