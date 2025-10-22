@@ -102,9 +102,9 @@ export const UI_ELEMENTS = {
   YIELD_RATE_STEP2: 'yieldRateStep2',
 
   // ステップ結果表示（歩留まり率直接入力）
-  BEFORE_COST_DIRECT_STEP1: 'beforeCostDirectStep1',
-  BEFORE_PRICE_DIRECT_STEP1: 'beforePriceDirectStep1',
-  BEFORE_MARKUP_DIRECT_STEP1: 'beforeMarkupDirectStep1',
+  BEFORE_COST_DIRECT_STEP2: 'beforeCostDirectStep2',
+  BEFORE_PRICE_DIRECT_STEP2: 'beforePriceDirectStep2',
+  BEFORE_MARKUP_DIRECT_STEP2: 'beforeMarkupDirectStep2',
   YIELD_RATE_DIRECT_STEP2: 'yieldRateDirectStep2',
 
   // 表示エリア
