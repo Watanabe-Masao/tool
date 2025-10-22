@@ -33,7 +33,7 @@ export const FIXED_FIELDS = {
     UNIT_PRICE: 'unitPriceDirect',
     BEFORE_WEIGHT: 'beforeWeightDirect',
     YIELD_RATE: 'yieldRateDirect',
-    AFTER_PRICE_100: 'afterPrice100'
+    AFTER_PRICE_100: 'afterPrice100Direct'
   }
 };
 
@@ -77,18 +77,35 @@ export const UI_ELEMENTS = {
   WEIGHT_CALCULATE_INPUTS: 'weightCalculateInputs',
   WEIGHT_DIRECT_INPUTS: 'weightDirectInputs',
 
-  // ステップ要素（定額モード）
+  // モード切り替え
+  FIXED_CALCULATE_MODE: 'fixedCalculateMode',
+  FIXED_DIRECT_MODE: 'fixedDirectMode',
+
+  // ステップ要素（定額モード - 重量から計算）
   FIXED_STEP1: 'fixedStep1',
   FIXED_STEP1_RESULT: 'fixedStep1Result',
   FIXED_STEP2: 'fixedStep2',
   FIXED_STEP2_RESULT: 'fixedStep2Result',
   FIXED_STEP3: 'fixedStep3',
 
-  // ステップ結果表示
+  // ステップ要素（定額モード - 歩留まり率直接入力）
+  FIXED_DIRECT_STEP1: 'fixedDirectStep1',
+  FIXED_DIRECT_STEP1_RESULT: 'fixedDirectStep1Result',
+  FIXED_DIRECT_STEP2: 'fixedDirectStep2',
+  FIXED_DIRECT_STEP2_RESULT: 'fixedDirectStep2Result',
+  FIXED_DIRECT_STEP3: 'fixedDirectStep3',
+
+  // ステップ結果表示（重量から計算）
   BEFORE_COST_STEP1: 'beforeCostStep1',
   BEFORE_PRICE_STEP1: 'beforePriceStep1',
   BEFORE_MARKUP_STEP1: 'beforeMarkupStep1',
   YIELD_RATE_STEP2: 'yieldRateStep2',
+
+  // ステップ結果表示（歩留まり率直接入力）
+  BEFORE_COST_DIRECT_STEP1: 'beforeCostDirectStep1',
+  BEFORE_PRICE_DIRECT_STEP1: 'beforePriceDirectStep1',
+  BEFORE_MARKUP_DIRECT_STEP1: 'beforeMarkupDirectStep1',
+  YIELD_RATE_DIRECT_STEP2: 'yieldRateDirectStep2',
 
   // 表示エリア
   RESULTS: 'results',
