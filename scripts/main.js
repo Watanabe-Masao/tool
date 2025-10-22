@@ -238,7 +238,7 @@ function handleDirectStep3() {
     return;
   }
 
-  const snapshotData = displayResults(result);
+  const snapshotData = displayResults(result, true);
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();
