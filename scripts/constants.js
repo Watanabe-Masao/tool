@@ -112,6 +112,8 @@ export const UI_ELEMENTS = {
   WARNING: 'warning',
   EXP_RESULTS: 'expResults',
   DISC_RESULTS: 'discResults',
+  YIELD_RATE_SECTION: 'yieldRateSection',
+  BEFORE_SECTION: 'beforeSection',
 
   // 100gあたり売価表示
   PER_100G_DISPLAY: 'per100gDisplay',

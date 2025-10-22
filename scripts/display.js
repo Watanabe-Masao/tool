@@ -18,7 +18,7 @@ export function showWarning() {
 /**
  * 計算結果を表示
  */
-export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, priceDiff, finishedLabel }) {
+export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, priceDiff, finishedLabel }, isDirectMode = false) {
   hide(UI_ELEMENTS.WARNING);
 
   // 基本結果の表示
@@ -29,6 +29,15 @@ export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, pric
   setText(UI_ELEMENTS.AFTER_PRICE, yen(toFixed(ap)));
   setText(UI_ELEMENTS.BEFORE_MARKUP, pct(toFixed(bm)));
   setText(UI_ELEMENTS.AFTER_MARKUP, pct(toFixed(am)));
+
+  // 直接入力モードの場合は歩留まり率と加工前のセクションを非表示
+  if (isDirectMode) {
+    hide(UI_ELEMENTS.YIELD_RATE_SECTION);
+    hide(UI_ELEMENTS.BEFORE_SECTION);
+  } else {
+    show(UI_ELEMENTS.YIELD_RATE_SECTION);
+    show(UI_ELEMENTS.BEFORE_SECTION);
+  }
 
   // 粗利率の計算と表示
   const beforeGross = grossFromMarkup(bm, 0);

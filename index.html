@@ -163,16 +163,18 @@
     <section id="results" class="card section is-hidden" aria-labelledby="resultHeading">
       <h2 id="resultHeading" class="section-title">📊 計算結果</h2>
 
-      <div class="result-block">
+      <div id="yieldRateSection" class="result-block">
         <div class="result-label">歩留まり率</div>
         <div id="yieldRate" class="result-value">-</div>
       </div>
 
-      <h3 class="section-subtitle">📦 加工前</h3>
-      <div class="grid">
-        <div class="stat"><div class="stat-label">100gあたり原価</div><div id="beforeCost" class="stat-value">-</div></div>
-        <div class="stat"><div class="stat-label">100gあたり売価</div><div id="beforePrice" class="stat-value">-</div></div>
-        <div class="stat stat--info"><div class="stat-label">値入率</div><div id="beforeMarkup" class="stat-value">-</div></div>
+      <div id="beforeSection">
+        <h3 class="section-subtitle">📦 加工前</h3>
+        <div class="grid">
+          <div class="stat"><div class="stat-label">100gあたり原価</div><div id="beforeCost" class="stat-value">-</div></div>
+          <div class="stat"><div class="stat-label">100gあたり売価</div><div id="beforePrice" class="stat-value">-</div></div>
+          <div class="stat stat--info"><div class="stat-label">値入率</div><div id="beforeMarkup" class="stat-value">-</div></div>
+        </div>
       </div>
 
       <h3 class="section-subtitle">🔨 加工後</h3>
