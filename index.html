@@ -75,6 +75,16 @@
             <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100" step="0.01" inputmode="decimal" placeholder="158" /></label>
           </div>
         </div>
+
+        <!-- Step 3 結果: 加工後の詳細 -->
+        <div id="fixedStep3Result" class="is-hidden step-result">
+          <h3 class="section-subtitle">🔨 加工後</h3>
+          <div class="grid">
+            <div class="stat"><div class="stat-label">100gあたり原価</div><div id="afterCostStep3" class="stat-value">-</div></div>
+            <div class="stat"><div class="stat-label">100gあたり売価</div><div id="afterPriceStep3" class="stat-value">-</div></div>
+            <div class="stat stat--success"><div class="stat-label">値入率</div><div id="afterMarkupStep3" class="stat-value">-</div></div>
+          </div>
+        </div>
       </div>
 
       <!-- 歩留まり率直接入力モード -->
@@ -116,6 +126,16 @@
           <h3 class="step-title">ステップ 3️⃣ 加工後の売価を設定</h3>
           <div class="grid">
             <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100Direct" step="0.01" inputmode="decimal" placeholder="158" /></label>
+          </div>
+        </div>
+
+        <!-- Step 3 結果: 加工後の詳細 -->
+        <div id="fixedDirectStep3Result" class="is-hidden step-result">
+          <h3 class="section-subtitle">🔨 加工後</h3>
+          <div class="grid">
+            <div class="stat"><div class="stat-label">100gあたり原価</div><div id="afterCostDirectStep3" class="stat-value">-</div></div>
+            <div class="stat"><div class="stat-label">100gあたり売価</div><div id="afterPriceDirectStep3" class="stat-value">-</div></div>
+            <div class="stat stat--success"><div class="stat-label">値入率</div><div id="afterMarkupDirectStep3" class="stat-value">-</div></div>
           </div>
         </div>
       </div>
@@ -179,6 +199,16 @@
             <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100W" step="0.01" inputmode="decimal" placeholder="158" /></label>
           </div>
         </div>
+
+        <!-- Step 3 結果: 加工後の詳細 -->
+        <div id="weightStep3Result" class="is-hidden step-result">
+          <h3 class="section-subtitle">🔨 加工後</h3>
+          <div class="grid">
+            <div class="stat"><div class="stat-label">100gあたり原価</div><div id="afterCostWeightStep3" class="stat-value">-</div></div>
+            <div class="stat"><div class="stat-label">100gあたり売価</div><div id="afterPriceWeightStep3" class="stat-value">-</div></div>
+            <div class="stat stat--success"><div class="stat-label">値入率</div><div id="afterMarkupWeightStep3" class="stat-value">-</div></div>
+          </div>
+        </div>
       </div>
 
       <!-- 歩留まり率直接入力モード -->
@@ -227,6 +257,16 @@
             <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100WDirect" step="0.01" inputmode="decimal" placeholder="158" /></label>
           </div>
         </div>
+
+        <!-- Step 3 結果: 加工後の詳細 -->
+        <div id="weightDirectStep3Result" class="is-hidden step-result">
+          <h3 class="section-subtitle">🔨 加工後</h3>
+          <div class="grid">
+            <div class="stat"><div class="stat-label">100gあたり原価</div><div id="afterCostWeightDirectStep3" class="stat-value">-</div></div>
+            <div class="stat"><div class="stat-label">100gあたり売価</div><div id="afterPriceWeightDirectStep3" class="stat-value">-</div></div>
+            <div class="stat stat--success"><div class="stat-label">値入率</div><div id="afterMarkupWeightDirectStep3" class="stat-value">-</div></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -240,25 +280,11 @@
     <section id="results" class="card section is-hidden" aria-labelledby="resultHeading">
       <h2 id="resultHeading" class="section-title">📊 計算結果</h2>
 
-      <div id="yieldRateSection" class="result-block">
-        <div class="result-label">歩留まり率</div>
-        <div id="yieldRate" class="result-value">-</div>
-      </div>
-
-      <div id="beforeSection">
-        <h3 class="section-subtitle">📦 加工前</h3>
-        <div class="grid">
-          <div class="stat"><div class="stat-label">100gあたり原価</div><div id="beforeCost" class="stat-value">-</div></div>
-          <div class="stat"><div class="stat-label">100gあたり売価</div><div id="beforePrice" class="stat-value">-</div></div>
-          <div class="stat stat--info"><div class="stat-label">値入率</div><div id="beforeMarkup" class="stat-value">-</div></div>
-        </div>
-      </div>
-
-      <h3 class="section-subtitle">🔨 加工後</h3>
-      <div class="grid">
-        <div class="stat"><div class="stat-label">100gあたり原価</div><div id="afterCost" class="stat-value">-</div></div>
-        <div class="stat"><div class="stat-label">100gあたり売価</div><div id="afterPrice" class="stat-value">-</div></div>
-        <div class="stat stat--success"><div class="stat-label">値入率</div><div id="afterMarkup" class="stat-value">-</div></div>
+      <!-- 隠しフィールド（displayResults関数で使用） -->
+      <div class="is-hidden">
+        <div id="yieldRateSection"><div id="yieldRate"></div></div>
+        <div id="beforeSection"><div id="beforeCost"></div><div id="beforePrice"></div><div id="beforeMarkup"></div></div>
+        <div id="afterCost"></div><div id="afterPrice"></div><div id="afterMarkup"></div>
       </div>
 
       <h3 class="section-subtitle">⚖️ 比較</h3>

@@ -84,6 +84,7 @@ function resetSteps() {
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP2);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP2_RESULT);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP3);
+    hide(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
 
     // 入力フィールドをクリア
@@ -100,6 +101,7 @@ function resetSteps() {
     hide(UI_ELEMENTS.FIXED_STEP2);
     hide(UI_ELEMENTS.FIXED_STEP2_RESULT);
     hide(UI_ELEMENTS.FIXED_STEP3);
+    hide(UI_ELEMENTS.FIXED_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
 
     // 入力フィールドをクリア
@@ -178,11 +180,20 @@ function handleStep3() {
   const result = calculateFixed(method);
 
   if (!result) {
+    hide(UI_ELEMENTS.FIXED_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
     return;
   }
 
-  const snapshotData = displayResults(result);
+  // Step 3結果セクションに加工後の詳細を表示
+  setText(UI_ELEMENTS.AFTER_COST_STEP3, yen(toFixed(result.ac)));
+  setText(UI_ELEMENTS.AFTER_PRICE_STEP3, yen(toFixed(result.ap)));
+  setText(UI_ELEMENTS.AFTER_MARKUP_STEP3, pct(toFixed(result.am)));
+
+  show(UI_ELEMENTS.FIXED_STEP3_RESULT);
+
+  // 最終結果セクションを表示（歩留まり率・加工前・加工後は既に表示済みなので非表示）
+  const snapshotData = displayResults(result, 'step');
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();
@@ -254,11 +265,20 @@ function handleDirectStep3() {
   const result = calculateFixed(method);
 
   if (!result) {
+    hide(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
     return;
   }
 
-  const snapshotData = displayResults(result, true);
+  // Step 3結果セクションに加工後の詳細を表示
+  setText(UI_ELEMENTS.AFTER_COST_DIRECT_STEP3, yen(toFixed(result.ac)));
+  setText(UI_ELEMENTS.AFTER_PRICE_DIRECT_STEP3, yen(toFixed(result.ap)));
+  setText(UI_ELEMENTS.AFTER_MARKUP_DIRECT_STEP3, pct(toFixed(result.am)));
+
+  show(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
+
+  // 最終結果セクションを表示（歩留まり率・加工前・加工後は既に表示済みなので非表示）
+  const snapshotData = displayResults(result, 'step');
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();
@@ -279,6 +299,7 @@ function resetWeightSteps() {
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
 
     // 入力フィールドをクリア
@@ -298,6 +319,7 @@ function resetWeightSteps() {
     hide(UI_ELEMENTS.WEIGHT_STEP2);
     hide(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
     hide(UI_ELEMENTS.WEIGHT_STEP3);
+    hide(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
 
     // 入力フィールドをクリア
@@ -387,11 +409,20 @@ function handleWeightStep3() {
   const result = calculateWeight(method);
 
   if (!result) {
+    hide(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
     return;
   }
 
-  const snapshotData = displayResults(result, false);
+  // Step 3結果セクションに加工後の詳細を表示
+  setText(UI_ELEMENTS.AFTER_COST_WEIGHT_STEP3, yen(toFixed(result.ac)));
+  setText(UI_ELEMENTS.AFTER_PRICE_WEIGHT_STEP3, yen(toFixed(result.ap)));
+  setText(UI_ELEMENTS.AFTER_MARKUP_WEIGHT_STEP3, pct(toFixed(result.am)));
+
+  show(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
+
+  // 最終結果セクションを表示（歩留まり率・加工前・加工後は既に表示済みなので非表示）
+  const snapshotData = displayResults(result, 'step');
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();
@@ -470,11 +501,20 @@ function handleWeightDirectStep3() {
   const result = calculateWeight(method);
 
   if (!result) {
+    hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
     return;
   }
 
-  const snapshotData = displayResults(result, true);
+  // Step 3結果セクションに加工後の詳細を表示
+  setText(UI_ELEMENTS.AFTER_COST_WEIGHT_DIRECT_STEP3, yen(toFixed(result.ac)));
+  setText(UI_ELEMENTS.AFTER_PRICE_WEIGHT_DIRECT_STEP3, yen(toFixed(result.ap)));
+  setText(UI_ELEMENTS.AFTER_MARKUP_WEIGHT_DIRECT_STEP3, pct(toFixed(result.am)));
+
+  show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
+
+  // 最終結果セクションを表示（歩留まり率・加工前・加工後は既に表示済みなので非表示）
+  const snapshotData = displayResults(result, 'step');
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();

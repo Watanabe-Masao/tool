@@ -89,6 +89,7 @@ export const UI_ELEMENTS = {
   FIXED_STEP2: 'fixedStep2',
   FIXED_STEP2_RESULT: 'fixedStep2Result',
   FIXED_STEP3: 'fixedStep3',
+  FIXED_STEP3_RESULT: 'fixedStep3Result',
 
   // ステップ要素（定額モード - 歩留まり率直接入力）
   FIXED_DIRECT_STEP1: 'fixedDirectStep1',
@@ -96,6 +97,7 @@ export const UI_ELEMENTS = {
   FIXED_DIRECT_STEP2: 'fixedDirectStep2',
   FIXED_DIRECT_STEP2_RESULT: 'fixedDirectStep2Result',
   FIXED_DIRECT_STEP3: 'fixedDirectStep3',
+  FIXED_DIRECT_STEP3_RESULT: 'fixedDirectStep3Result',
 
   // ステップ要素（計量モード - 重量から計算）
   WEIGHT_STEP1: 'weightStep1',
@@ -103,6 +105,7 @@ export const UI_ELEMENTS = {
   WEIGHT_STEP2: 'weightStep2',
   WEIGHT_STEP2_RESULT: 'weightStep2Result',
   WEIGHT_STEP3: 'weightStep3',
+  WEIGHT_STEP3_RESULT: 'weightStep3Result',
 
   // ステップ要素（計量モード - 歩留まり率直接入力）
   WEIGHT_DIRECT_STEP1: 'weightDirectStep1',
@@ -110,6 +113,7 @@ export const UI_ELEMENTS = {
   WEIGHT_DIRECT_STEP2: 'weightDirectStep2',
   WEIGHT_DIRECT_STEP2_RESULT: 'weightDirectStep2Result',
   WEIGHT_DIRECT_STEP3: 'weightDirectStep3',
+  WEIGHT_DIRECT_STEP3_RESULT: 'weightDirectStep3Result',
 
   // ステップ結果表示（重量から計算）
   BEFORE_COST_STEP1: 'beforeCostStep1',
@@ -137,6 +141,20 @@ export const UI_ELEMENTS = {
   BEFORE_PRICE_WEIGHT_DIRECT_STEP2: 'beforePriceWeightDirectStep2',
   BEFORE_MARKUP_WEIGHT_DIRECT_STEP2: 'beforeMarkupWeightDirectStep2',
   YIELD_RATE_WEIGHT_DIRECT_STEP2: 'yieldRateWeightDirectStep2',
+
+  // ステップ結果表示（Step 3 - 加工後）
+  AFTER_COST_STEP3: 'afterCostStep3',
+  AFTER_PRICE_STEP3: 'afterPriceStep3',
+  AFTER_MARKUP_STEP3: 'afterMarkupStep3',
+  AFTER_COST_DIRECT_STEP3: 'afterCostDirectStep3',
+  AFTER_PRICE_DIRECT_STEP3: 'afterPriceDirectStep3',
+  AFTER_MARKUP_DIRECT_STEP3: 'afterMarkupDirectStep3',
+  AFTER_COST_WEIGHT_STEP3: 'afterCostWeightStep3',
+  AFTER_PRICE_WEIGHT_STEP3: 'afterPriceWeightStep3',
+  AFTER_MARKUP_WEIGHT_STEP3: 'afterMarkupWeightStep3',
+  AFTER_COST_WEIGHT_DIRECT_STEP3: 'afterCostWeightDirectStep3',
+  AFTER_PRICE_WEIGHT_DIRECT_STEP3: 'afterPriceWeightDirectStep3',
+  AFTER_MARKUP_WEIGHT_DIRECT_STEP3: 'afterMarkupWeightDirectStep3',
 
   // 表示エリア
   RESULTS: 'results',
