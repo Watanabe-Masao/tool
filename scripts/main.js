@@ -169,7 +169,7 @@ function handleStep3() {
 }
 
 /**
- * Step 1の処理：基本情報入力→加工前の計算（歩留まり率直接入力モード）
+ * Step 1の処理：基本情報入力（歩留まり率直接入力モード）
  */
 function handleDirectStep1() {
   const uc = num(FIXED_FIELDS.DIRECT.UNIT_COST);
@@ -178,24 +178,13 @@ function handleDirectStep1() {
 
   // 3つすべて入力されているかチェック
   if (![uc, up, bw].every(v => Number.isFinite(v) && v > 0)) {
-    hide(UI_ELEMENTS.FIXED_DIRECT_STEP1_RESULT);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP2);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP2_RESULT);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP3);
     return;
   }
 
-  // 加工前の100gあたり計算
-  const beforeCost100 = per100FromPerUnit(uc, bw);
-  const beforePrice100 = per100FromPerUnit(up, bw);
-  const beforeMarkup = markup(beforeCost100, beforePrice100);
-
-  // 結果を表示
-  setText(UI_ELEMENTS.BEFORE_COST_DIRECT_STEP1, yen(toFixed(beforeCost100)));
-  setText(UI_ELEMENTS.BEFORE_PRICE_DIRECT_STEP1, yen(toFixed(beforePrice100)));
-  setText(UI_ELEMENTS.BEFORE_MARKUP_DIRECT_STEP1, pct(toFixed(beforeMarkup)));
-
-  show(UI_ELEMENTS.FIXED_DIRECT_STEP1_RESULT);
+  // Step 2の入力欄を表示（結果は表示しない）
   show(UI_ELEMENTS.FIXED_DIRECT_STEP2);
 
   // 次のステップの処理をトリガー
@@ -203,9 +192,12 @@ function handleDirectStep1() {
 }
 
 /**
- * Step 2の処理：歩留まり率入力→表示（歩留まり率直接入力モード）
+ * Step 2の処理：歩留まり率入力→歩留まり率と加工前の情報を表示（歩留まり率直接入力モード）
  */
 function handleDirectStep2() {
+  const uc = num(FIXED_FIELDS.DIRECT.UNIT_COST);
+  const up = num(FIXED_FIELDS.DIRECT.UNIT_PRICE);
+  const bw = num(FIXED_FIELDS.DIRECT.BEFORE_WEIGHT);
   const yr = num(FIXED_FIELDS.DIRECT.YIELD_RATE);
 
   if (!Number.isFinite(yr) || yr <= 0) {
@@ -216,6 +208,16 @@ function handleDirectStep2() {
 
   // 歩留まり率を表示
   setText(UI_ELEMENTS.YIELD_RATE_DIRECT_STEP2, pct(toFixed(yr)));
+
+  // 加工前の100gあたり計算
+  const beforeCost100 = per100FromPerUnit(uc, bw);
+  const beforePrice100 = per100FromPerUnit(up, bw);
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+  // 加工前の結果を表示
+  setText(UI_ELEMENTS.BEFORE_COST_DIRECT_STEP2, yen(toFixed(beforeCost100)));
+  setText(UI_ELEMENTS.BEFORE_PRICE_DIRECT_STEP2, yen(toFixed(beforePrice100)));
+  setText(UI_ELEMENTS.BEFORE_MARKUP_DIRECT_STEP2, pct(toFixed(beforeMarkup)));
 
   show(UI_ELEMENTS.FIXED_DIRECT_STEP2_RESULT);
   show(UI_ELEMENTS.FIXED_DIRECT_STEP3);
