@@ -399,6 +399,7 @@ function handleWeightStep3() {
 
 /**
  * Step 1の処理：箱の基本情報入力（計量モード - 歩留まり率直接入力）
+ * 箱の基本情報から加工前の100gあたり原価・売価・値入率を計算して表示
  */
 function handleWeightDirectStep1() {
   const bc = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
