@@ -52,7 +52,7 @@ export const WEIGHT_FIELDS = {
     BOX_PRICE: 'boxPriceDirect',
     BOX_WEIGHT: 'boxWeightDirect',
     YIELD_RATE: 'yieldRateDirectW',
-    AFTER_PRICE_100: 'afterPrice100W'
+    AFTER_PRICE_100: 'afterPrice100WDirect'
   }
 };
 
@@ -80,6 +80,8 @@ export const UI_ELEMENTS = {
   // モード切り替え
   FIXED_CALCULATE_MODE: 'fixedCalculateMode',
   FIXED_DIRECT_MODE: 'fixedDirectMode',
+  WEIGHT_CALCULATE_MODE: 'weightCalculateMode',
+  WEIGHT_DIRECT_MODE: 'weightDirectMode',
 
   // ステップ要素（定額モード - 重量から計算）
   FIXED_STEP1: 'fixedStep1',
@@ -95,6 +97,20 @@ export const UI_ELEMENTS = {
   FIXED_DIRECT_STEP2_RESULT: 'fixedDirectStep2Result',
   FIXED_DIRECT_STEP3: 'fixedDirectStep3',
 
+  // ステップ要素（計量モード - 重量から計算）
+  WEIGHT_STEP1: 'weightStep1',
+  WEIGHT_STEP1_RESULT: 'weightStep1Result',
+  WEIGHT_STEP2: 'weightStep2',
+  WEIGHT_STEP2_RESULT: 'weightStep2Result',
+  WEIGHT_STEP3: 'weightStep3',
+
+  // ステップ要素（計量モード - 歩留まり率直接入力）
+  WEIGHT_DIRECT_STEP1: 'weightDirectStep1',
+  WEIGHT_DIRECT_STEP1_RESULT: 'weightDirectStep1Result',
+  WEIGHT_DIRECT_STEP2: 'weightDirectStep2',
+  WEIGHT_DIRECT_STEP2_RESULT: 'weightDirectStep2Result',
+  WEIGHT_DIRECT_STEP3: 'weightDirectStep3',
+
   // ステップ結果表示（重量から計算）
   BEFORE_COST_STEP1: 'beforeCostStep1',
   BEFORE_PRICE_STEP1: 'beforePriceStep1',
@@ -106,6 +122,18 @@ export const UI_ELEMENTS = {
   BEFORE_PRICE_DIRECT_STEP2: 'beforePriceDirectStep2',
   BEFORE_MARKUP_DIRECT_STEP2: 'beforeMarkupDirectStep2',
   YIELD_RATE_DIRECT_STEP2: 'yieldRateDirectStep2',
+
+  // ステップ結果表示（計量モード - 重量から計算）
+  BEFORE_COST_WEIGHT_STEP1: 'beforeCostWeightStep1',
+  BEFORE_PRICE_WEIGHT_STEP1: 'beforePriceWeightStep1',
+  BEFORE_MARKUP_WEIGHT_STEP1: 'beforeMarkupWeightStep1',
+  YIELD_RATE_WEIGHT_STEP2: 'yieldRateWeightStep2',
+
+  // ステップ結果表示（計量モード - 歩留まり率直接入力）
+  BEFORE_COST_WEIGHT_DIRECT_STEP2: 'beforeCostWeightDirectStep2',
+  BEFORE_PRICE_WEIGHT_DIRECT_STEP2: 'beforePriceWeightDirectStep2',
+  BEFORE_MARKUP_WEIGHT_DIRECT_STEP2: 'beforeMarkupWeightDirectStep2',
+  YIELD_RATE_WEIGHT_DIRECT_STEP2: 'yieldRateWeightDirectStep2',
 
   // 表示エリア
   RESULTS: 'results',
