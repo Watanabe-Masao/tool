@@ -390,7 +390,7 @@ function handleWeightStep3() {
     return;
   }
 
-  const snapshotData = displayResults(result, true);
+  const snapshotData = displayResults(result, false);
   appState.updateSnapshot(snapshotData);
 
   handleProductCalculation();
