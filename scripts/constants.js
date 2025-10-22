@@ -77,6 +77,19 @@ export const UI_ELEMENTS = {
   WEIGHT_CALCULATE_INPUTS: 'weightCalculateInputs',
   WEIGHT_DIRECT_INPUTS: 'weightDirectInputs',
 
+  // ステップ要素（定額モード）
+  FIXED_STEP1: 'fixedStep1',
+  FIXED_STEP1_RESULT: 'fixedStep1Result',
+  FIXED_STEP2: 'fixedStep2',
+  FIXED_STEP2_RESULT: 'fixedStep2Result',
+  FIXED_STEP3: 'fixedStep3',
+
+  // ステップ結果表示
+  BEFORE_COST_STEP1: 'beforeCostStep1',
+  BEFORE_PRICE_STEP1: 'beforePriceStep1',
+  BEFORE_MARKUP_STEP1: 'beforeMarkupStep1',
+  YIELD_RATE_STEP2: 'yieldRateStep2',
+
   // 表示エリア
   RESULTS: 'results',
   WARNING: 'warning',

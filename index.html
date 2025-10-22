@@ -19,32 +19,52 @@
       </div>
     </section>
 
-    <!-- 定額売価→計量加工 -->
+    <!-- 定額売価→計量加工（段階的フォーム） -->
     <section id="fixedInputs" class="card section" aria-labelledby="fixedHeading">
       <h2 id="fixedHeading" class="section-title">📦 基本情報（定額売価→計量加工）</h2>
 
-      <fieldset class="fieldset">
-        <legend class="legend">歩留まり率の入力方法</legend>
-        <label class="radio"><input type="radio" name="yieldMethodFixed" value="calculate" checked /> 重量から計算</label>
-        <label class="radio"><input type="radio" name="yieldMethodFixed" value="direct" /> 歩留まり率を直接入力</label>
-      </fieldset>
-
-      <div id="fixedCalculateInputs" class="grid">
-        <label class="field"><span>1個あたりの原価（円）</span><input type="number" id="unitCost" step="0.01" inputmode="decimal" placeholder="150" /></label>
-        <label class="field"><span>1個あたりの売価（円）</span><input type="number" id="unitPrice" step="0.01" inputmode="decimal" placeholder="198" /></label>
-        <label class="field"><span>加工前重量（g）</span><input type="number" id="beforeWeight" step="0.01" inputmode="decimal" placeholder="300" /></label>
-        <label class="field"><span>加工後重量（g）</span><input type="number" id="afterWeight" step="0.01" inputmode="decimal" placeholder="150" /></label>
+      <!-- Step 1: 基本情報入力 -->
+      <div id="fixedStep1">
+        <h3 class="step-title">ステップ 1️⃣ 基本情報を入力</h3>
+        <div class="grid">
+          <label class="field"><span>1個あたりの原価（円）</span><input type="number" id="unitCost" step="0.01" inputmode="decimal" placeholder="150" /></label>
+          <label class="field"><span>1個あたりの売価（円）</span><input type="number" id="unitPrice" step="0.01" inputmode="decimal" placeholder="198" /></label>
+          <label class="field"><span>加工前重量（g）</span><input type="number" id="beforeWeight" step="0.01" inputmode="decimal" placeholder="300" /></label>
+        </div>
       </div>
 
-      <div id="fixedDirectInputs" class="grid is-hidden">
-        <label class="field"><span>1個あたりの原価（円）</span><input type="number" id="unitCostDirect" step="0.01" inputmode="decimal" placeholder="150" /></label>
-        <label class="field"><span>1個あたりの売価（円）</span><input type="number" id="unitPriceDirect" step="0.01" inputmode="decimal" placeholder="198" /></label>
-        <label class="field"><span>加工前重量（g）</span><input type="number" id="beforeWeightDirect" step="0.01" inputmode="decimal" placeholder="300" /></label>
-        <label class="field"><span>歩留まり率（%）</span><input type="number" id="yieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" /></label>
+      <!-- Step 1 結果: 加工前の情報 -->
+      <div id="fixedStep1Result" class="is-hidden step-result">
+        <h3 class="section-subtitle">📦 加工前</h3>
+        <div class="grid">
+          <div class="stat"><div class="stat-label">100gあたり原価</div><div id="beforeCostStep1" class="stat-value">-</div></div>
+          <div class="stat"><div class="stat-label">100gあたり売価</div><div id="beforePriceStep1" class="stat-value">-</div></div>
+          <div class="stat stat--info"><div class="stat-label">値入率</div><div id="beforeMarkupStep1" class="stat-value">-</div></div>
+        </div>
       </div>
 
-      <div class="grid">
-        <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100" step="0.01" inputmode="decimal" placeholder="158" /></label>
+      <!-- Step 2: 加工後重量入力 -->
+      <div id="fixedStep2" class="is-hidden">
+        <h3 class="step-title">ステップ 2️⃣ 加工後の重量を入力</h3>
+        <div class="grid">
+          <label class="field"><span>加工後重量（g）</span><input type="number" id="afterWeight" step="0.01" inputmode="decimal" placeholder="150" /></label>
+        </div>
+      </div>
+
+      <!-- Step 2 結果: 歩留まり率 -->
+      <div id="fixedStep2Result" class="is-hidden step-result">
+        <div class="result-block">
+          <div class="result-label">歩留まり率</div>
+          <div id="yieldRateStep2" class="result-value">-</div>
+        </div>
+      </div>
+
+      <!-- Step 3: 加工後設定売価入力 -->
+      <div id="fixedStep3" class="is-hidden">
+        <h3 class="step-title">ステップ 3️⃣ 加工後の売価を設定</h3>
+        <div class="grid">
+          <label class="field"><span>加工後設定売価（100gあたり）（円）</span><input type="number" id="afterPrice100" step="0.01" inputmode="decimal" placeholder="158" /></label>
+        </div>
       </div>
     </section>
 
