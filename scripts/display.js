@@ -17,8 +17,10 @@ export function showWarning() {
 
 /**
  * 計算結果を表示
+ * @param {Object} data - 計算結果データ
+ * @param {string} mode - 表示モード: 'step' (ステップ式表示) または undefined/false (通常表示)
  */
-export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, priceDiff, finishedLabel }, isDirectMode = false) {
+export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, priceDiff, finishedLabel }, mode = null) {
   hide(UI_ELEMENTS.WARNING);
 
   // 基本結果の表示
@@ -30,10 +32,11 @@ export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, pric
   setText(UI_ELEMENTS.BEFORE_MARKUP, pct(toFixed(bm)));
   setText(UI_ELEMENTS.AFTER_MARKUP, pct(toFixed(am)));
 
-  // 直接入力モードの場合は歩留まり率と加工前のセクションを非表示
-  if (isDirectMode) {
+  // ステップ式表示の場合は歩留まり率・加工前・加工後を非表示（既にステップ結果で表示済み）
+  if (mode === 'step') {
     hide(UI_ELEMENTS.YIELD_RATE_SECTION);
     hide(UI_ELEMENTS.BEFORE_SECTION);
+    // 加工後の基本情報も非表示（HTMLから削除する必要がある）
   } else {
     show(UI_ELEMENTS.YIELD_RATE_SECTION);
     show(UI_ELEMENTS.BEFORE_SECTION);
