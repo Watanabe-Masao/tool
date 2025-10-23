@@ -34,7 +34,7 @@ export function calculateProductSimulation(snapshot) {
 }
 
 /**
- * 値引き後粗利率を更新
+ * 値引後最終粗利率を更新
  */
 export function updateDiscountSimulation(productData) {
   if (!productData || !Number.isFinite(productData.price) || !Number.isFinite(productData.markup)) {
