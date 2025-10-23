@@ -174,6 +174,7 @@ function handleStep2() {
 
 /**
  * Step 3の処理：加工後設定売価入力→最終結果表示（重量から計算モード）
+ * 加工後の100gあたり原価・売価・値入率を計算してStep 3結果セクションに表示
  */
 function handleStep3() {
   const method = 'calculate';
