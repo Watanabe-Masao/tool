@@ -8,13 +8,16 @@ import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
-import { displayResults, displayReverseSimulation, hideReverseSimulation } from './display.js';
+import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
   updateDiscountSimulation,
   calculateWeightFromMarkup,
   calculatePriceFromMarkup,
-  calculateCostFromMarkup
+  calculateConsumableFromMarkup,
+  calculateAfterWeightFromMarkup,
+  calculateYieldRateFromMarkup,
+  calculateDiscountRateFromGross
 } from './product-simulator.js';
 
 /**
@@ -545,6 +548,23 @@ function handleProductCalculation() {
 function toggleReverseSimulation() {
   const section = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
   if (section.classList.contains('is-hidden')) {
+    // 現在のモードに応じて歩留まり率ラベルを更新
+    const currentMode = appState.getMode();
+    let isCalculateMode = true;
+
+    if (currentMode === MODE.FIXED) {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+      isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    } else {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+      isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    }
+
+    const yieldLabel = qs(`#${UI_ELEMENTS.YIELD_CALC_LABEL}`);
+    if (yieldLabel) {
+      yieldLabel.textContent = isCalculateMode ? '加工後重量（g）' : '歩留まり率（%）';
+    }
+
     show(UI_ELEMENTS.REVERSE_SIM_SECTION);
     handleReverseCalculation();
   } else {
@@ -560,12 +580,7 @@ function handleReverseCalculation() {
   const targetMarkup = num(UI_ELEMENTS.TARGET_MARKUP);
   const weight = num(UI_ELEMENTS.EXP_WEIGHT);
   const consumable = num(UI_ELEMENTS.CONSUMABLE) ?? 0;
-
-  // 必須データのチェック
-  if (!snapshot.afterCost || !snapshot.afterPrice || !Number.isFinite(targetMarkup)) {
-    hideReverseSimulation();
-    return;
-  }
+  const productData = appState.getProductData();
 
   // どのラジオボタンが選択されているか取得
   const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
@@ -575,45 +590,129 @@ function handleReverseCalculation() {
   }
 
   const calcTarget = selectedRadio.value;
+
+  // 値引率計算の場合は別処理
+  if (calcTarget === 'discount') {
+    if (!productData.markup || !Number.isFinite(targetMarkup)) {
+      hideReverseSimulation();
+      return;
+    }
+    const result = calculateDiscountRateFromGross(productData.markup, targetMarkup);
+    if (result !== null && Number.isFinite(result)) {
+      if (result < 0) {
+        displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
+      } else if (result > 100) {
+        displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
+      } else {
+        displayReverseSimulation(result, '必要な値引率', '%');
+      }
+    } else {
+      displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
+    }
+    return;
+  }
+
+  // 通常の計算の必須データチェック
+  if (!snapshot.afterCost || !snapshot.afterPrice || !Number.isFinite(targetMarkup)) {
+    hideReverseSimulation();
+    return;
+  }
+
+  // 現在のモード判定
+  const currentMode = appState.getMode();
+  let isCalculateMode = true;
+  let beforeWeight = null;
+
+  if (currentMode === MODE.FIXED) {
+    const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+    isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    if (isCalculateMode) {
+      beforeWeight = num(FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT);
+    }
+  } else {
+    const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+    isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    if (isCalculateMode) {
+      const beforeSample = num(WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE);
+      beforeWeight = beforeSample;
+    }
+  }
+
   let result = null;
   let label = '';
   let unit = '';
+  let errorMsg = '';
 
   switch (calcTarget) {
     case 'weight':
-      // 重量を計算
       result = calculateWeightFromMarkup(snapshot.afterCost, snapshot.afterPrice, targetMarkup, consumable);
       label = '必要な重量';
       unit = 'g';
+      if (result === null) {
+        const maxMarkup = ((snapshot.afterPrice - snapshot.afterCost) / snapshot.afterPrice) * 100;
+        errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+      }
       break;
 
     case 'price':
-      // 100gあたり売価を計算
       if (!Number.isFinite(weight) || weight <= 0) {
-        hideReverseSimulation();
+        displayReverseError('加工後設定売価', '1パックに入れる予定重量を入力してください');
         return;
       }
       result = calculatePriceFromMarkup(snapshot.afterCost, weight, targetMarkup, consumable);
       label = '必要な100gあたり売価';
       unit = '円';
+      if (result === null) {
+        errorMsg = '目標値入率は100%未満で設定してください';
+      }
       break;
 
-    case 'cost':
-      // 100gあたり原価を計算
+    case 'consumable':
       if (!Number.isFinite(weight) || weight <= 0) {
-        hideReverseSimulation();
+        displayReverseError('1個あたりの原価', '1パックに入れる予定重量を入力してください');
         return;
       }
-      result = calculateCostFromMarkup(snapshot.afterPrice, weight, targetMarkup, consumable);
-      label = '必要な100gあたり原価';
+      result = calculateConsumableFromMarkup(snapshot.afterCost, snapshot.afterPrice, weight, targetMarkup);
+      label = '必要な消耗品費';
       unit = '円';
+      if (result === null || result < 0) {
+        const maxMarkup = ((snapshot.afterPrice - snapshot.afterCost) / snapshot.afterPrice) * 100;
+        errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+      }
+      break;
+
+    case 'yield':
+      if (!Number.isFinite(weight) || weight <= 0) {
+        displayReverseError(isCalculateMode ? '加工後重量' : '歩留まり率', '1パックに入れる予定重量を入力してください');
+        return;
+      }
+
+      if (isCalculateMode) {
+        if (!Number.isFinite(beforeWeight) || beforeWeight <= 0) {
+          displayReverseError('加工後重量', '加工前重量を入力してください');
+          return;
+        }
+        result = calculateAfterWeightFromMarkup(beforeWeight, snapshot.afterCost, snapshot.afterPrice, weight, targetMarkup, consumable);
+        label = '必要な加工後重量';
+        unit = 'g';
+        if (result === null || result > beforeWeight) {
+          errorMsg = `目標値入率を下げるか、加工前重量を${toFixed(beforeWeight)}g以上に設定してください`;
+        }
+      } else {
+        result = calculateYieldRateFromMarkup(snapshot.afterCost, snapshot.afterPrice, weight, targetMarkup, consumable);
+        label = '必要な歩留まり率';
+        unit = '%';
+        if (result === null || result > 100) {
+          errorMsg = '目標値入率を下げるか、条件を見直してください';
+        }
+      }
       break;
   }
 
-  if (result !== null && Number.isFinite(result)) {
+  if (result !== null && Number.isFinite(result) && result >= 0) {
     displayReverseSimulation(result, label, unit);
   } else {
-    hideReverseSimulation();
+    displayReverseError(label, errorMsg || '計算できませんでした。条件を見直してください');
   }
 }
 
@@ -727,7 +826,7 @@ function init() {
   });
 
   // 逆算シミュレーション
-  qs(`#${UI_ELEMENTS.EXP_MARKUP_STAT}`)?.addEventListener('click', toggleReverseSimulation);
+  qs(`#${UI_ELEMENTS.DISC_GROSS_STAT}`)?.addEventListener('click', toggleReverseSimulation);
   qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', handleReverseCalculation);
   qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
     r.addEventListener('change', handleReverseCalculation);
