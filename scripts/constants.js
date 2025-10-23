@@ -201,6 +201,7 @@ export const UI_ELEMENTS = {
   REVERSE_SIM_SECTION: 'reverseSimSection',
   TARGET_MARKUP: 'targetMarkup',
   REVERSE_RESULTS: 'reverseResults',
+  REVERSE_RESULT_STAT: 'reverseResultStat',
   REVERSE_RESULT_LABEL: 'reverseResultLabel',
   REVERSE_RESULT_VALUE: 'reverseResultValue',
   REVERSE_ERROR: 'reverseError',
