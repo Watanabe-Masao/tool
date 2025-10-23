@@ -135,9 +135,19 @@ export function clearAllDisplays() {
  * 逆算シミュレーション結果を表示
  */
 export function displayReverseSimulation(value, label, unit) {
+  hide(UI_ELEMENTS.REVERSE_ERROR);
   setText(UI_ELEMENTS.REVERSE_RESULT_LABEL, label);
   setText(UI_ELEMENTS.REVERSE_RESULT_VALUE, `${toFixed(value)}${unit}`);
   show(UI_ELEMENTS.REVERSE_RESULTS);
+}
+
+/**
+ * 逆算シミュレーションエラーを表示
+ */
+export function displayReverseError(label, message) {
+  hide(UI_ELEMENTS.REVERSE_RESULTS);
+  setText(UI_ELEMENTS.REVERSE_ERROR_MESSAGE, `${label}: ${message}`);
+  show(UI_ELEMENTS.REVERSE_ERROR);
 }
 
 /**
@@ -145,4 +155,5 @@ export function displayReverseSimulation(value, label, unit) {
  */
 export function hideReverseSimulation() {
   hide(UI_ELEMENTS.REVERSE_RESULTS);
+  hide(UI_ELEMENTS.REVERSE_ERROR);
 }

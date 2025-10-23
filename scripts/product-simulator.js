@@ -229,3 +229,53 @@ export function calculateYieldRateFromMarkup(afterCost, afterPrice, weight, targ
 
   return yieldRate > 0 && yieldRate <= 100 ? yieldRate : null;
 }
+
+/**
+ * 逆算シミュレーション: 目標粗利率から必要な値引率を計算
+ * @param {number} productMarkup - 商品化後の値入率（%）
+ * @param {number} targetGross - 目標粗利率（%）
+ * @returns {number|null} 必要な値引率（%）
+ */
+export function calculateDiscountRateFromGross(productMarkup, targetGross) {
+  // productMarkup = 商品化後の値入率
+  // targetGross = 目標粗利率
+  // 粗利率 = 値入率 なので、目標粗利率 = 目標値入率
+  //
+  // 値引前の値入率 = productMarkup
+  // 値引後の値入率 = targetGross
+  //
+  // cost = price * (1 - productMarkup/100)
+  // 値引後の売価 = price * (1 - discountRate/100)
+  // targetGross/100 = (値引後売価 - cost) / 値引後売価
+  // targetGross/100 = (price * (1 - d) - cost) / (price * (1 - d))  where d = discountRate/100
+  // targetGross/100 * price * (1 - d) = price * (1 - d) - cost
+  // cost = price * (1 - d) * (1 - targetGross/100)
+  //
+  // cost = price * (1 - productMarkup/100) = price * (1 - d) * (1 - targetGross/100)
+  // (1 - productMarkup/100) = (1 - d) * (1 - targetGross/100)
+  // (1 - d) = (1 - productMarkup/100) / (1 - targetGross/100)
+  // d = 1 - (1 - productMarkup/100) / (1 - targetGross/100)
+  // discountRate = (1 - (1 - productMarkup/100) / (1 - targetGross/100)) * 100
+
+  if (!Number.isFinite(productMarkup) || !Number.isFinite(targetGross)) {
+    return null;
+  }
+
+  const productMarkupRatio = productMarkup / PERCENT_MULTIPLIER;
+  const targetGrossRatio = targetGross / PERCENT_MULTIPLIER;
+
+  if (targetGrossRatio >= 1) {
+    return null; // 目標粗利率100%以上は不可能
+  }
+
+  const denominator = 1 - targetGrossRatio;
+
+  if (denominator <= 0) {
+    return null;
+  }
+
+  const discountRatio = 1 - (1 - productMarkupRatio) / denominator;
+  const discountRate = discountRatio * PERCENT_MULTIPLIER;
+
+  return discountRate >= 0 && discountRate <= 100 ? discountRate : null;
+}

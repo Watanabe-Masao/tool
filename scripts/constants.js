@@ -197,12 +197,14 @@ export const UI_ELEMENTS = {
   DISC_GROSS: 'discGross',
 
   // 逆算シミュレーション
-  EXP_MARKUP_STAT: 'expMarkupStat',
+  DISC_GROSS_STAT: 'discGrossStat',
   REVERSE_SIM_SECTION: 'reverseSimSection',
   TARGET_MARKUP: 'targetMarkup',
   REVERSE_RESULTS: 'reverseResults',
   REVERSE_RESULT_LABEL: 'reverseResultLabel',
   REVERSE_RESULT_VALUE: 'reverseResultValue',
+  REVERSE_ERROR: 'reverseError',
+  REVERSE_ERROR_MESSAGE: 'reverseErrorMessage',
   YIELD_CALC_LABEL: 'yieldCalcLabel'
 };
 
