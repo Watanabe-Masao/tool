@@ -543,6 +543,17 @@ function handleProductCalculation() {
 }
 
 /**
+ * 逆算シミュレーションをリセット
+ */
+function resetReverseSimulation() {
+  hide(UI_ELEMENTS.REVERSE_SIM_SECTION);
+  hideReverseSimulation();
+  // 目標値入率をクリア
+  const targetInput = qs(`#${UI_ELEMENTS.TARGET_MARKUP}`);
+  if (targetInput) targetInput.value = '';
+}
+
+/**
  * 逆算シミュレーションの表示/非表示を切り替え
  */
 function toggleReverseSimulation() {
@@ -711,8 +722,85 @@ function handleReverseCalculation() {
 
   if (result !== null && Number.isFinite(result) && result >= 0) {
     displayReverseSimulation(result, label, unit);
+    // 結果の値を保存（クリック時に使用）
+    const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
+    if (reverseResultStat) {
+      reverseResultStat.dataset.calcTarget = calcTarget;
+      reverseResultStat.dataset.calcValue = result.toString();
+    }
   } else {
     displayReverseError(label, errorMsg || '計算できませんでした。条件を見直してください');
+  }
+}
+
+/**
+ * 逆算シミュレーション結果を適用
+ */
+function applyReverseSimulationResult() {
+  const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
+  if (!reverseResultStat) return;
+
+  const calcTarget = reverseResultStat.dataset.calcTarget;
+  const calcValue = parseFloat(reverseResultStat.dataset.calcValue);
+
+  if (!calcTarget || !Number.isFinite(calcValue)) return;
+
+  const currentMode = appState.getMode();
+  let targetElement = null;
+
+  switch (calcTarget) {
+    case 'weight':
+      // 1パックに入れる予定重量
+      targetElement = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
+      break;
+
+    case 'price':
+      // 加工後設定売価（モードに応じて異なる）
+      if (currentMode === MODE.FIXED) {
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? FIXED_FIELDS.CALCULATE.AFTER_PRICE_100 : FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
+      } else {
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100 : WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
+      }
+      break;
+
+    case 'consumable':
+      // 消耗品費
+      targetElement = qs(`#${UI_ELEMENTS.CONSUMABLE}`);
+      break;
+
+    case 'yield':
+      // 加工後重量 or 歩留まり率（モードに応じて異なる）
+      if (currentMode === MODE.FIXED) {
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? FIXED_FIELDS.CALCULATE.AFTER_WEIGHT : FIXED_FIELDS.DIRECT.YIELD_RATE}`);
+      } else {
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT : WEIGHT_FIELDS.DIRECT.YIELD_RATE}`);
+      }
+      break;
+
+    case 'discount':
+      // 値引率
+      targetElement = qs(`#${UI_ELEMENTS.DISC_INPUT}`);
+      // スライダーも更新
+      const slider = qs(`#${UI_ELEMENTS.DISC_SLIDER}`);
+      if (slider) slider.value = Math.min(calcValue, 50);
+      break;
+  }
+
+  if (targetElement) {
+    targetElement.value = toFixed(calcValue);
+    // inputイベントをトリガーして再計算を実行
+    targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // 逆算シミュレーションを閉じる
+    resetReverseSimulation();
   }
 }
 
@@ -828,10 +916,20 @@ function init() {
   // 逆算シミュレーション
   // イベント委譲を使用して確実にクリックを検出
   document.addEventListener('click', (e) => {
-    const target = e.target.closest(`#${UI_ELEMENTS.DISC_GROSS_STAT}`);
-    if (target) {
+    // 値引後粗利率をクリック → 逆算シミュレーションを開く
+    const discGrossTarget = e.target.closest(`#${UI_ELEMENTS.DISC_GROSS_STAT}`);
+    if (discGrossTarget) {
       e.preventDefault();
       toggleReverseSimulation();
+      return;
+    }
+
+    // 逆算結果をクリック → 値を適用
+    const reverseResultTarget = e.target.closest(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
+    if (reverseResultTarget) {
+      e.preventDefault();
+      applyReverseSimulationResult();
+      return;
     }
   });
 
@@ -839,6 +937,48 @@ function init() {
   qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
     r.addEventListener('change', handleReverseCalculation);
   });
+
+  // ステップ1-5の入力が変更されたら逆算シミュレーションをリセット
+  const allInputFields = [
+    // 定額モード - 重量から計算
+    FIXED_FIELDS.CALCULATE.BOX_COST,
+    FIXED_FIELDS.CALCULATE.BOX_PRICE,
+    FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT,
+    FIXED_FIELDS.CALCULATE.BEFORE_SAMPLE,
+    FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+    FIXED_FIELDS.CALCULATE.AFTER_PRICE_100,
+    // 定額モード - 歩留まり率直接入力
+    FIXED_FIELDS.DIRECT.BOX_COST,
+    FIXED_FIELDS.DIRECT.BOX_PRICE,
+    FIXED_FIELDS.DIRECT.BEFORE_WEIGHT,
+    FIXED_FIELDS.DIRECT.YIELD_RATE,
+    FIXED_FIELDS.DIRECT.AFTER_PRICE_100,
+    // 計量モード - 重量から計算
+    WEIGHT_FIELDS.CALCULATE.BOX_COST,
+    WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+    WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT,
+    WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+    WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT,
+    WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100,
+    // 計量モード - 歩留まり率直接入力
+    WEIGHT_FIELDS.DIRECT.BOX_COST,
+    WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+    WEIGHT_FIELDS.DIRECT.BOX_WEIGHT,
+    WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+    WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100,
+    // 商品化シミュレーション
+    UI_ELEMENTS.EXP_WEIGHT,
+    UI_ELEMENTS.CONSUMABLE,
+    // 値引きシミュレーション
+    UI_ELEMENTS.DISC_INPUT
+  ];
+
+  allInputFields.forEach(fieldId => {
+    qs(`#${fieldId}`)?.addEventListener('input', resetReverseSimulation);
+  });
+
+  // スライダーも監視
+  qs(`#${UI_ELEMENTS.DISC_SLIDER}`)?.addEventListener('input', resetReverseSimulation);
 }
 
 // アプリケーション起動
