@@ -202,7 +202,8 @@ export const UI_ELEMENTS = {
   TARGET_MARKUP: 'targetMarkup',
   REVERSE_RESULTS: 'reverseResults',
   REVERSE_RESULT_LABEL: 'reverseResultLabel',
-  REVERSE_RESULT_VALUE: 'reverseResultValue'
+  REVERSE_RESULT_VALUE: 'reverseResultValue',
+  YIELD_CALC_LABEL: 'yieldCalcLabel'
 };
 
 // ラジオボタン名
