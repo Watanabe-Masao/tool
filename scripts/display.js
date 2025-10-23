@@ -127,4 +127,22 @@ export function clearAllDisplays() {
   hide(UI_ELEMENTS.WARNING);
   hide(UI_ELEMENTS.EXP_RESULTS);
   hide(UI_ELEMENTS.DISC_RESULTS);
+  hide(UI_ELEMENTS.REVERSE_SIM_SECTION);
+  hide(UI_ELEMENTS.REVERSE_RESULTS);
+}
+
+/**
+ * 逆算シミュレーション結果を表示
+ */
+export function displayReverseSimulation(value, label, unit) {
+  setText(UI_ELEMENTS.REVERSE_RESULT_LABEL, label);
+  setText(UI_ELEMENTS.REVERSE_RESULT_VALUE, `${toFixed(value)}${unit}`);
+  show(UI_ELEMENTS.REVERSE_RESULTS);
+}
+
+/**
+ * 逆算シミュレーション結果を非表示
+ */
+export function hideReverseSimulation() {
+  hide(UI_ELEMENTS.REVERSE_RESULTS);
 }

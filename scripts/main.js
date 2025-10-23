@@ -8,10 +8,13 @@ import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
-import { displayResults } from './display.js';
+import { displayResults, displayReverseSimulation, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
-  updateDiscountSimulation
+  updateDiscountSimulation,
+  calculateWeightFromMarkup,
+  calculatePriceFromMarkup,
+  calculateCostFromMarkup
 } from './product-simulator.js';
 
 /**
@@ -537,6 +540,84 @@ function handleProductCalculation() {
 }
 
 /**
+ * 逆算シミュレーションの表示/非表示を切り替え
+ */
+function toggleReverseSimulation() {
+  const section = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
+  if (section.classList.contains('is-hidden')) {
+    show(UI_ELEMENTS.REVERSE_SIM_SECTION);
+    handleReverseCalculation();
+  } else {
+    hide(UI_ELEMENTS.REVERSE_SIM_SECTION);
+  }
+}
+
+/**
+ * 逆算シミュレーション処理
+ */
+function handleReverseCalculation() {
+  const snapshot = appState.getSnapshot();
+  const targetMarkup = num(UI_ELEMENTS.TARGET_MARKUP);
+  const weight = num(UI_ELEMENTS.EXP_WEIGHT);
+  const consumable = num(UI_ELEMENTS.CONSUMABLE) ?? 0;
+
+  // 必須データのチェック
+  if (!snapshot.afterCost || !snapshot.afterPrice || !Number.isFinite(targetMarkup)) {
+    hideReverseSimulation();
+    return;
+  }
+
+  // どのラジオボタンが選択されているか取得
+  const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
+  if (!selectedRadio) {
+    hideReverseSimulation();
+    return;
+  }
+
+  const calcTarget = selectedRadio.value;
+  let result = null;
+  let label = '';
+  let unit = '';
+
+  switch (calcTarget) {
+    case 'weight':
+      // 重量を計算
+      result = calculateWeightFromMarkup(snapshot.afterCost, snapshot.afterPrice, targetMarkup, consumable);
+      label = '必要な重量';
+      unit = 'g';
+      break;
+
+    case 'price':
+      // 100gあたり売価を計算
+      if (!Number.isFinite(weight) || weight <= 0) {
+        hideReverseSimulation();
+        return;
+      }
+      result = calculatePriceFromMarkup(snapshot.afterCost, weight, targetMarkup, consumable);
+      label = '必要な100gあたり売価';
+      unit = '円';
+      break;
+
+    case 'cost':
+      // 100gあたり原価を計算
+      if (!Number.isFinite(weight) || weight <= 0) {
+        hideReverseSimulation();
+        return;
+      }
+      result = calculateCostFromMarkup(snapshot.afterPrice, weight, targetMarkup, consumable);
+      label = '必要な100gあたり原価';
+      unit = '円';
+      break;
+  }
+
+  if (result !== null && Number.isFinite(result)) {
+    displayReverseSimulation(result, label, unit);
+  } else {
+    hideReverseSimulation();
+  }
+}
+
+/**
  * 値引き更新処理
  */
 function handleDiscountUpdate() {
@@ -643,6 +724,13 @@ function init() {
     e.target.value = v;
     qs(`#${UI_ELEMENTS.DISC_SLIDER}`).value = Math.min(v, 50);
     handleDiscountUpdate();
+  });
+
+  // 逆算シミュレーション
+  qs(`#${UI_ELEMENTS.EXP_MARKUP_STAT}`)?.addEventListener('click', toggleReverseSimulation);
+  qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', handleReverseCalculation);
+  qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
+    r.addEventListener('change', handleReverseCalculation);
   });
 }
 

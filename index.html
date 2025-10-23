@@ -308,7 +308,43 @@
         <div id="expResults" class="grid is-hidden">
           <div class="stat stat--note"><div class="stat-label">想定商品化原価</div><div id="expCost" class="stat-value">-</div></div>
           <div class="stat stat--ok"><div class="stat-label">想定商品化売価</div><div id="expPrice" class="stat-value">-</div></div>
-          <div class="stat stat--ok"><div class="stat-label">想定商品化後値入率</div><div id="expMarkup" class="stat-value">-</div></div>
+          <div class="stat stat--ok" style="cursor: pointer;" id="expMarkupStat" title="クリックして逆算シミュレーションを開く"><div class="stat-label">想定商品化後値入率</div><div id="expMarkup" class="stat-value">-</div></div>
+        </div>
+      </div>
+
+      <!-- 逆算シミュレーション -->
+      <div id="reverseSimSection" class="card card-sub is-hidden">
+        <h4 class="section-subtitle">🔄 逆算シミュレーション</h4>
+        <p style="font-size: 0.9em; margin-bottom: 1em; color: #666;">目標値入率から、必要な値を逆算します。計算したい項目を選択してください。</p>
+
+        <div class="field">
+          <label class="legend">目標値入率（%）</label>
+          <input type="number" id="targetMarkup" step="0.1" min="0" max="100" placeholder="例: 30" />
+        </div>
+
+        <div class="field">
+          <label class="legend">計算する項目を選択</label>
+          <label class="radio-label">
+            <input type="radio" name="reverseCalcTarget" value="weight" checked />
+            <span>1パックに入れる予定重量（g）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reverseCalcTarget" value="price" />
+            <span>加工後設定売価（100gあたり）（円）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reverseCalcTarget" value="cost" />
+            <span>100gあたりの原価（円）</span>
+          </label>
+        </div>
+
+        <div id="reverseResults" class="is-hidden" style="margin-top: 1em;">
+          <div class="grid">
+            <div class="stat stat--success">
+              <div class="stat-label" id="reverseResultLabel">計算結果</div>
+              <div id="reverseResultValue" class="stat-value">-</div>
+            </div>
+          </div>
         </div>
       </div>
 

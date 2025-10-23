@@ -194,13 +194,22 @@ export const UI_ELEMENTS = {
   // 値引きシミュレーション
   DISC_SLIDER: 'discSlider',
   DISC_INPUT: 'discInput',
-  DISC_GROSS: 'discGross'
+  DISC_GROSS: 'discGross',
+
+  // 逆算シミュレーション
+  EXP_MARKUP_STAT: 'expMarkupStat',
+  REVERSE_SIM_SECTION: 'reverseSimSection',
+  TARGET_MARKUP: 'targetMarkup',
+  REVERSE_RESULTS: 'reverseResults',
+  REVERSE_RESULT_LABEL: 'reverseResultLabel',
+  REVERSE_RESULT_VALUE: 'reverseResultValue'
 };
 
 // ラジオボタン名
 export const RADIO_NAMES = {
   YIELD_METHOD_FIXED: 'yieldMethodFixed',
-  YIELD_METHOD_WEIGHT: 'yieldMethodWeight'
+  YIELD_METHOD_WEIGHT: 'yieldMethodWeight',
+  REVERSE_CALC_TARGET: 'reverseCalcTarget'
 };
 
 // 値引きシミュレーション設定
