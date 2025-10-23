@@ -92,7 +92,7 @@ export function hideProductSimulation() {
 }
 
 /**
- * 値引き後粗利率を表示
+ * 値引後最終粗利率を表示
  */
 export function displayDiscountGross(discountRate, markup) {
   const discGross = grossFromMarkup(markup, discountRate);
@@ -101,7 +101,7 @@ export function displayDiscountGross(discountRate, markup) {
 }
 
 /**
- * 値引き後粗利率を非表示
+ * 値引後最終粗利率を非表示
  */
 export function hideDiscountResults() {
   hide(UI_ELEMENTS.DISC_RESULTS);
