@@ -826,7 +826,15 @@ function init() {
   });
 
   // 逆算シミュレーション
-  qs(`#${UI_ELEMENTS.DISC_GROSS_STAT}`)?.addEventListener('click', toggleReverseSimulation);
+  // イベント委譲を使用して確実にクリックを検出
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest(`#${UI_ELEMENTS.DISC_GROSS_STAT}`);
+    if (target) {
+      e.preventDefault();
+      toggleReverseSimulation();
+    }
+  });
+
   qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', handleReverseCalculation);
   qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
     r.addEventListener('change', handleReverseCalculation);
