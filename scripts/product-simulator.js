@@ -11,7 +11,8 @@ import { displayProductSimulation, hideProductSimulation, displayDiscountGross, 
  */
 export function calculateProductSimulation(snapshot) {
   const weight = num(UI_ELEMENTS.EXP_WEIGHT);
-  const consumableCost = num(UI_ELEMENTS.CONSUMABLE) ?? 0;
+  const c = num(UI_ELEMENTS.CONSUMABLE) ?? 0;
+  const consumableCost = Math.max(0, c);
 
   // 入力が不正、またはsnapshotが不正な場合
   if (

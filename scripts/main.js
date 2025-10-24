@@ -15,8 +15,6 @@ import {
   calculateWeightFromMarkup,
   calculatePriceFromMarkup,
   calculateConsumableFromMarkup,
-  calculateUnitCostFromMarkup,
-  calculateBoxCostFromMarkup,
   calculateAfterWeightFromMarkup,
   calculateYieldRateFromMarkup,
   calculateDiscountRateFromGross
@@ -653,17 +651,7 @@ function handleReverseCalculation() {
   const snapshot = appState.getSnapshot();
   const targetMarkup = num(UI_ELEMENTS.TARGET_MARKUP);
   const productData = appState.getProductData();
-
-  // 現在のモードに応じて「原価」ラベルを動的に変更
   const currentMode = appState.getMode();
-  const costLabel = qs('#reverseCostLabel');
-  if (costLabel) {
-    if (currentMode === MODE.FIXED) {
-      costLabel.textContent = '1個あたりの原価（円）';
-    } else {
-      costLabel.textContent = '1箱あたりの原価（円）';
-    }
-  }
 
   // どのラジオボタンが選択されているか取得
   const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
@@ -739,68 +727,16 @@ function handleReverseCalculation() {
       }
       break;
 
-    case 'cost':
-      // 原価の逆算（モード・入力方法に応じて異なる）
+    case 'consumable':
       if (!Number.isFinite(inputs.weight) || inputs.weight <= 0) {
-        displayReverseError(currentMode === MODE.FIXED ? '1個あたりの原価' : '1箱あたりの原価', '1パックに入れる予定重量を入力してください');
+        displayReverseError('消耗品費', '1パックに入れる予定重量を入力してください');
         return;
       }
-
-      if (currentMode === MODE.FIXED) {
-        // ========================================
-        // 定額売価→計量加工: 1個あたりの原価を逆算
-        // ========================================
-        if (!Number.isFinite(inputs.beforeWeight) || inputs.beforeWeight <= 0) {
-          displayReverseError('1個あたりの原価', '加工前重量を入力してください');
-          return;
-        }
-
-        // 使用する歩留まり率を判定
-        const yieldRateToUse = inputs.isCalculateMode ? inputs.yieldRate : inputs.yieldRateDirect;
-        if (!Number.isFinite(yieldRateToUse) || yieldRateToUse <= 0) {
-          displayReverseError('1個あたりの原価', inputs.isCalculateMode ? '加工後重量を入力してください' : '歩留まり率を入力してください');
-          return;
-        }
-
-        result = calculateUnitCostFromMarkup(
-          inputs.afterPrice,
-          inputs.beforeWeight,
-          yieldRateToUse,
-          inputs.weight,
-          targetMarkup,
-          inputs.consumable
-        );
-        label = '必要な1個あたりの原価';
-      } else {
-        // ========================================
-        // 計量売価→計量加工: 1箱あたりの原価を逆算
-        // ========================================
-        if (!Number.isFinite(inputs.boxWeight) || inputs.boxWeight <= 0) {
-          displayReverseError('1箱あたりの原価', '1箱あたりの重量を入力してください');
-          return;
-        }
-
-        // 使用する歩留まり率を判定
-        const yieldRateToUse = inputs.isCalculateMode ? inputs.yieldRate : inputs.yieldRateDirect;
-        if (!Number.isFinite(yieldRateToUse) || yieldRateToUse <= 0) {
-          displayReverseError('1箱あたりの原価', inputs.isCalculateMode ? '加工後重量を入力してください' : '歩留まり率を入力してください');
-          return;
-        }
-
-        result = calculateBoxCostFromMarkup(
-          inputs.afterPrice,
-          inputs.boxWeight,
-          yieldRateToUse,
-          inputs.weight,
-          targetMarkup,
-          inputs.consumable
-        );
-        label = '必要な1箱あたりの原価';
-      }
+      result = calculateConsumableFromMarkup(inputs.afterCost, inputs.afterPrice, inputs.weight, targetMarkup);
+      label = '必要な消耗品費';
       unit = '円';
-      if (result === null || result < 0) {
-        const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
-        errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+      if (result === null) {
+        errorMsg = '目標値入率を下げるか、条件を見直してください';
       }
       break;
 
