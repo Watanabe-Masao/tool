@@ -1,0 +1,364 @@
+/**
+ * 履歴・ダイアログ機能のスタイル
+ */
+
+/* ============================================
+   ダイアログ基本スタイル
+   ============================================ */
+
+.dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: #fff;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.dialog--large {
+  max-width: 800px;
+  max-height: 80vh;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 1.25em;
+  font-weight: 700;
+  color: #333;
+}
+
+.dialog-body {
+  padding: 1.5em;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75em;
+  padding: 1em 1.5em;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5em;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* ============================================
+   履歴ツールバー
+   ============================================ */
+
+.history-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-bottom: 1.5em;
+}
+
+.history-toolbar input[type="text"] {
+  width: 100%;
+  padding: 0.75em;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.2s;
+}
+
+.history-toolbar input[type="text"]:focus {
+  outline: none;
+  border-color: #5c6bc0;
+}
+
+.history-toolbar-actions {
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   履歴リスト
+   ============================================ */
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  background: #f9f9f9;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1em;
+  margin-bottom: 1em;
+  transition: all 0.2s;
+}
+
+.history-item:hover {
+  border-color: #5c6bc0;
+  box-shadow: 0 2px 8px rgba(92, 107, 192, 0.1);
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75em;
+}
+
+.history-item-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #333;
+}
+
+.history-item-icon {
+  font-size: 1.25em;
+}
+
+.history-item-name {
+  flex: 1;
+}
+
+.history-item-mode {
+  background: #5c6bc0;
+  color: #fff;
+  padding: 0.25em 0.75em;
+  border-radius: 16px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.history-item-stats {
+  display: flex;
+  gap: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.history-stat {
+  font-size: 0.95em;
+  color: #666;
+}
+
+.history-stat strong {
+  color: #333;
+  font-weight: 700;
+}
+
+.history-item-date {
+  font-size: 0.85em;
+  color: #999;
+  margin-bottom: 1em;
+}
+
+.history-item-actions {
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.history-empty,
+.history-loading {
+  text-align: center;
+  padding: 2em;
+  color: #999;
+  font-style: italic;
+}
+
+/* ============================================
+   ボタンスタイル
+   ============================================ */
+
+.btn-small {
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.btn-small:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.btn-small:active {
+  transform: scale(0.95);
+}
+
+.btn-load {
+  background: #5c6bc0;
+  color: #fff;
+  border-color: #5c6bc0;
+}
+
+.btn-load:hover {
+  background: #4a5bb8;
+  border-color: #4a5bb8;
+}
+
+.btn-edit {
+  background: #ffa726;
+  color: #fff;
+  border-color: #ffa726;
+}
+
+.btn-edit:hover {
+  background: #fb8c00;
+  border-color: #fb8c00;
+}
+
+.btn-delete,
+.btn-danger {
+  background: #ef5350;
+  color: #fff;
+  border-color: #ef5350;
+}
+
+.btn-delete:hover,
+.btn-danger:hover {
+  background: #e53935;
+  border-color: #e53935;
+}
+
+/* ============================================
+   トースト通知
+   ============================================ */
+
+#toast {
+  position: fixed;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 1em 2em;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: bottom 0.3s ease;
+  z-index: 10000;
+  max-width: 90%;
+  text-align: center;
+}
+
+#toast.toast--show {
+  bottom: 30px;
+}
+
+#toast.toast--success {
+  background: #4caf50;
+}
+
+#toast.toast--error {
+  background: #ef5350;
+}
+
+/* ============================================
+   レスポンシブ対応
+   ============================================ */
+
+@media (max-width: 600px) {
+  .dialog {
+    width: 95%;
+    max-width: none;
+  }
+
+  .dialog--large {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .dialog-header {
+    padding: 1em;
+  }
+
+  .dialog-body {
+    padding: 1em;
+  }
+
+  .history-toolbar {
+    gap: 0.75em;
+  }
+
+  .history-toolbar-actions {
+    flex-direction: column;
+  }
+
+  .history-toolbar-actions button {
+    width: 100%;
+  }
+
+  .history-item {
+    padding: 0.75em;
+  }
+
+  .history-item-stats {
+    flex-direction: column;
+    gap: 0.5em;
+  }
+
+  .history-item-actions {
+    flex-direction: column;
+  }
+
+  .history-item-actions button {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   アニメーション
+   ============================================ */
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog[open] {
+  animation: slideIn 0.3s ease;
+}
