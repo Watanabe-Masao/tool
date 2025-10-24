@@ -616,6 +616,12 @@ function handleReverseCalculation() {
         displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
       } else {
         displayReverseSimulation(result, '必要な値引率', '%');
+        // 結果の値を保存（クリック時に使用）
+        const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
+        if (reverseResultStat) {
+          reverseResultStat.dataset.calcTarget = calcTarget;
+          reverseResultStat.dataset.calcValue = result.toString();
+        }
       }
     } else {
       displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
@@ -801,6 +807,19 @@ function applyReverseSimulationResult() {
 
     // 逆算シミュレーションを閉じる
     resetReverseSimulation();
+
+    // 要素までスクロールしてフォーカスを当てる
+    setTimeout(() => {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetElement.focus();
+      // モバイルでの視認性向上のため、一時的にハイライト
+      targetElement.style.transition = 'background-color 0.3s';
+      const originalBg = targetElement.style.backgroundColor;
+      targetElement.style.backgroundColor = '#fff3cd';
+      setTimeout(() => {
+        targetElement.style.backgroundColor = originalBg;
+      }, 1000);
+    }, 100);
   }
 }
 
