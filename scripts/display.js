@@ -63,7 +63,8 @@ export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, pric
 
   show(UI_ELEMENTS.RESULTS);
 
-  return { ac, ap, bm, am, bp, bc };
+  // 逆算で歩留まり率を参照できるように yr も返す
+  return { ac, ap, bm, am, bp, bc, yr };
 }
 
 /**

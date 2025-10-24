@@ -19,15 +19,18 @@ class CalculationSnapshot {
     this.afterMarkup = null;
     this.beforePrice = null;
     this.beforeCost = null;
+    // 逆算で必要になる歩留まり率（%）
+    this.yieldRate = null;
   }
 
-  update({ ac, ap, bm, am, bp, bc }) {
+  update({ ac, ap, bm, am, bp, bc, yr }) {
     this.afterCost = ac;
     this.afterPrice = ap;
     this.beforeMarkup = bm;
     this.afterMarkup = am;
     this.beforePrice = bp;
     this.beforeCost = bc;
+    this.yieldRate = yr;
   }
 
   isValid() {

@@ -664,7 +664,7 @@ function handleReverseCalculation() {
 
   // 値引率計算の場合は別処理
   if (calcTarget === 'discount') {
-    if (!productData.markup || !Number.isFinite(targetMarkup)) {
+    if (!Number.isFinite(productData.markup) || !Number.isFinite(targetMarkup)) {
       hideReverseSimulation();
       return;
     }
@@ -690,7 +690,7 @@ function handleReverseCalculation() {
   }
 
   // 通常の計算の必須データチェック
-  if (!snapshot.afterCost || !snapshot.afterPrice || !Number.isFinite(targetMarkup)) {
+  if (!Number.isFinite(snapshot.afterCost) || !Number.isFinite(snapshot.afterPrice) || !Number.isFinite(targetMarkup)) {
     hideReverseSimulation();
     return;
   }
