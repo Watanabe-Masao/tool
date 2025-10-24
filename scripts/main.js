@@ -19,6 +19,7 @@ import {
   calculateYieldRateFromMarkup,
   calculateDiscountRateFromGross
 } from './product-simulator.js';
+import { initHistoryUI } from './history-ui.js';
 
 /**
  * モード切替処理
@@ -998,6 +999,22 @@ function init() {
 
   // スライダーも監視
   qs(`#${UI_ELEMENTS.DISC_SLIDER}`)?.addEventListener('input', resetReverseSimulation);
+
+  // 履歴機能の初期化
+  initHistoryUI();
+
+  // Service Workerを登録（PWA対応）
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/tool/sw.js')
+        .then((registration) => {
+          console.log('[PWA] Service Worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.error('[PWA] Service Worker registration failed:', error);
+        });
+    });
+  }
 }
 
 // アプリケーション起動

@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="食品加工業向けの歩留まり率・原価・売価・値入率を計算するWebアプリケーション" />
+  <meta name="theme-color" content="#5c6bc0" />
   <title>🧮 歩留まり計算ツール（リファクタリング版）</title>
   <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/history.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
 <body>
   <main class="container">
@@ -271,6 +276,7 @@
     </section>
 
     <div class="btn-row">
+      <button id="historyBtn" class="btn btn-secondary">📂 履歴</button>
       <button id="clearBtn" class="btn btn-secondary">クリア</button>
     </div>
 
@@ -379,8 +385,58 @@
           <p style="font-size: 0.85em; color: #666; margin-top: 0.5em; text-align: center;">💡 タップして値を適用</p>
         </div>
       </div>
+
+      <div class="btn-row" style="margin-top: 1.5em;">
+        <button id="saveBtn" class="btn btn-primary">💾 この計算を保存</button>
+      </div>
     </section>
   </main>
+
+  <!-- 保存ダイアログ -->
+  <dialog id="saveDialog" class="dialog">
+    <h3 class="dialog-title">💾 計算を保存</h3>
+    <div class="dialog-body">
+      <label class="field">
+        <span>商品名 <span style="color: #e53935;">*</span></span>
+        <input type="text" id="saveName" placeholder="例: サーモン切り身" />
+      </label>
+      <label class="field">
+        <span>カテゴリ</span>
+        <select id="saveCategory">
+          <option value="">選択してください</option>
+          <option value="fish">🐟 魚類</option>
+          <option value="meat">🥩 肉類</option>
+          <option value="vegetable">🥬 野菜</option>
+          <option value="other">📦 その他</option>
+        </select>
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button id="cancelSaveBtn" class="btn btn-secondary">キャンセル</button>
+      <button id="confirmSaveBtn" class="btn btn-primary">保存</button>
+    </div>
+  </dialog>
+
+  <!-- 履歴モーダル -->
+  <dialog id="historyModal" class="dialog dialog--large">
+    <div class="dialog-header">
+      <h3 class="dialog-title">📂 保存済みの計算</h3>
+      <button id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="history-toolbar">
+        <input type="text" id="historySearch" placeholder="🔍 商品名で検索..." />
+        <div class="history-toolbar-actions">
+          <button id="exportBtn" class="btn btn-small">📤 エクスポート</button>
+          <button id="importBtn" class="btn btn-small">📥 インポート</button>
+          <button id="clearAllBtn" class="btn btn-small btn-danger">🗑️ すべて削除</button>
+        </div>
+      </div>
+      <ul id="historyList" class="history-list">
+        <li class="history-loading">読み込み中...</li>
+      </ul>
+    </div>
+  </dialog>
 
   <script type="module" src="scripts/main.js"></script>
 </body>
