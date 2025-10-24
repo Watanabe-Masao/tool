@@ -745,10 +745,6 @@ function handleReverseCalculation() {
         displayReverseError(currentMode === MODE.FIXED ? '1個あたりの原価' : '1箱あたりの原価', '1パックに入れる予定重量を入力してください');
         return;
       }
-      if (!Number.isFinite(inputs.yieldRate) || inputs.yieldRate <= 0) {
-        displayReverseError(currentMode === MODE.FIXED ? '1個あたりの原価' : '1箱あたりの原価', '歩留まり率を入力してください');
-        return;
-      }
 
       if (currentMode === MODE.FIXED) {
         // ========================================
@@ -758,10 +754,18 @@ function handleReverseCalculation() {
           displayReverseError('1個あたりの原価', '加工前重量を入力してください');
           return;
         }
+
+        // 使用する歩留まり率を判定
+        const yieldRateToUse = inputs.isCalculateMode ? inputs.yieldRate : inputs.yieldRateDirect;
+        if (!Number.isFinite(yieldRateToUse) || yieldRateToUse <= 0) {
+          displayReverseError('1個あたりの原価', inputs.isCalculateMode ? '加工後重量を入力してください' : '歩留まり率を入力してください');
+          return;
+        }
+
         result = calculateUnitCostFromMarkup(
           inputs.afterPrice,
           inputs.beforeWeight,
-          inputs.yieldRate,
+          yieldRateToUse,
           inputs.weight,
           targetMarkup,
           inputs.consumable
@@ -775,10 +779,18 @@ function handleReverseCalculation() {
           displayReverseError('1箱あたりの原価', '1箱あたりの重量を入力してください');
           return;
         }
+
+        // 使用する歩留まり率を判定
+        const yieldRateToUse = inputs.isCalculateMode ? inputs.yieldRate : inputs.yieldRateDirect;
+        if (!Number.isFinite(yieldRateToUse) || yieldRateToUse <= 0) {
+          displayReverseError('1箱あたりの原価', inputs.isCalculateMode ? '加工後重量を入力してください' : '歩留まり率を入力してください');
+          return;
+        }
+
         result = calculateBoxCostFromMarkup(
           inputs.afterPrice,
           inputs.boxWeight,
-          inputs.yieldRate,
+          yieldRateToUse,
           inputs.weight,
           targetMarkup,
           inputs.consumable
