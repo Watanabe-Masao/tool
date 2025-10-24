@@ -616,6 +616,12 @@ function handleReverseCalculation() {
         displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
       } else {
         displayReverseSimulation(result, '必要な値引率', '%');
+        // 結果の値を保存（クリック時に使用）
+        const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
+        if (reverseResultStat) {
+          reverseResultStat.dataset.calcTarget = calcTarget;
+          reverseResultStat.dataset.calcValue = result.toString();
+        }
       }
     } else {
       displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
