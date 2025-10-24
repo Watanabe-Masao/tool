@@ -801,6 +801,19 @@ function applyReverseSimulationResult() {
 
     // 逆算シミュレーションを閉じる
     resetReverseSimulation();
+
+    // 要素までスクロールしてフォーカスを当てる
+    setTimeout(() => {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetElement.focus();
+      // モバイルでの視認性向上のため、一時的にハイライト
+      targetElement.style.transition = 'background-color 0.3s';
+      const originalBg = targetElement.style.backgroundColor;
+      targetElement.style.backgroundColor = '#fff3cd';
+      setTimeout(() => {
+        targetElement.style.backgroundColor = originalBg;
+      }, 1000);
+    }, 100);
   }
 }
 
