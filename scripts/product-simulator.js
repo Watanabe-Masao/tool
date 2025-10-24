@@ -118,12 +118,12 @@ export function calculatePriceFromMarkup(afterCost, weight, targetMarkup, consum
 }
 
 /**
- * 逆算シミュレーション: 目標値入率から必要な消耗品費（1個あたりの原価）を計算
+ * 逆算シミュレーション: 目標値入率から必要な消耗品費を計算
  * @param {number} afterCost - 加工後100gあたり原価
  * @param {number} afterPrice - 加工後100gあたり売価
  * @param {number} weight - 1パックあたりの重量（g）
  * @param {number} targetMarkup - 目標値入率（%）
- * @returns {number|null} 必要な消耗品費
+ * @returns {number|null} 必要な消耗品費（円）
  */
 export function calculateConsumableFromMarkup(afterCost, afterPrice, weight, targetMarkup) {
   // cost = afterCost * weight / 100 + consumable
