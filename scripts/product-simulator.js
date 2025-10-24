@@ -146,6 +146,90 @@ export function calculateConsumableFromMarkup(afterCost, afterPrice, weight, tar
 }
 
 /**
+ * 逆算シミュレーション: 目標値入率から必要な原価を計算（定額売価モード: 1個あたりの原価）
+ * @param {number} afterPrice - 加工後100gあたり売価
+ * @param {number} beforeWeight - 加工前重量（g）
+ * @param {number} yieldRate - 歩留まり率（%）
+ * @param {number} weight - 1パックあたりの重量（g）
+ * @param {number} targetMarkup - 目標値入率（%）
+ * @param {number} consumable - 消耗品費（円）
+ * @returns {number|null} 必要な1個あたりの原価（円）
+ */
+export function calculateUnitCostFromMarkup(afterPrice, beforeWeight, yieldRate, weight, targetMarkup, consumable) {
+  // 1. 目標値入率から加工後100gあたり原価を逆算
+  // finalCost = afterCost * weight / 100 + consumable
+  // finalPrice = afterPrice * weight / 100
+  // markup/100 = (finalPrice - finalCost) / finalPrice
+  // finalCost = finalPrice * (1 - markup/100)
+  // afterCost * weight / 100 + consumable = afterPrice * weight / 100 * (1 - markup/100)
+  // afterCost = afterPrice * (1 - markup/100) - consumable * 100 / weight
+
+  if (!Number.isFinite(afterPrice) || !Number.isFinite(beforeWeight) ||
+      !Number.isFinite(yieldRate) || !Number.isFinite(weight) ||
+      !Number.isFinite(targetMarkup) || !Number.isFinite(consumable) ||
+      beforeWeight <= 0 || yieldRate <= 0 || weight <= 0) {
+    return null;
+  }
+
+  const markupRatio = targetMarkup / PERCENT_MULTIPLIER;
+  const afterCost = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
+
+  if (afterCost <= 0) {
+    return null;
+  }
+
+  // 2. 加工前100gあたり原価を計算
+  // afterCost = beforeCost / (yieldRate / 100)
+  // beforeCost = afterCost * (yieldRate / 100)
+  const beforeCost = afterCost * (yieldRate / PERCENT_MULTIPLIER);
+
+  // 3. 1個あたりの原価を計算
+  // beforeCost = unitCost / beforeWeight * 100
+  // unitCost = beforeCost * beforeWeight / 100
+  const unitCost = beforeCost * beforeWeight / GRAMS_PER_100G;
+
+  return unitCost > 0 ? unitCost : null;
+}
+
+/**
+ * 逆算シミュレーション: 目標値入率から必要な原価を計算（計量売価モード: 1箱あたりの原価）
+ * @param {number} afterPrice - 加工後100gあたり売価
+ * @param {number} boxWeight - 1箱あたりの重量（kg）
+ * @param {number} yieldRate - 歩留まり率（%）
+ * @param {number} weight - 1パックあたりの重量（g）
+ * @param {number} targetMarkup - 目標値入率（%）
+ * @param {number} consumable - 消耗品費（円）
+ * @returns {number|null} 必要な1箱あたりの原価（円）
+ */
+export function calculateBoxCostFromMarkup(afterPrice, boxWeight, yieldRate, weight, targetMarkup, consumable) {
+  // 1. 目標値入率から加工後100gあたり原価を逆算
+  if (!Number.isFinite(afterPrice) || !Number.isFinite(boxWeight) ||
+      !Number.isFinite(yieldRate) || !Number.isFinite(weight) ||
+      !Number.isFinite(targetMarkup) || !Number.isFinite(consumable) ||
+      boxWeight <= 0 || yieldRate <= 0 || weight <= 0) {
+    return null;
+  }
+
+  const markupRatio = targetMarkup / PERCENT_MULTIPLIER;
+  const afterCost = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
+
+  if (afterCost <= 0) {
+    return null;
+  }
+
+  // 2. 加工前100gあたり原価を計算
+  const beforeCost = afterCost * (yieldRate / PERCENT_MULTIPLIER);
+
+  // 3. 1箱あたりの原価を計算
+  // beforeCost = boxCost / (boxWeight * 1000) * 100
+  // beforeCost = boxCost / (boxWeight * 10)
+  // boxCost = beforeCost * boxWeight * 10
+  const boxCost = beforeCost * boxWeight * 10;
+
+  return boxCost > 0 ? boxCost : null;
+}
+
+/**
  * 逆算シミュレーション: 目標値入率から必要な加工後重量を計算
  * @param {number} beforeWeight - 加工前重量（g）
  * @param {number} afterCost - 加工後100gあたり原価

@@ -15,6 +15,8 @@ import {
   calculateWeightFromMarkup,
   calculatePriceFromMarkup,
   calculateConsumableFromMarkup,
+  calculateUnitCostFromMarkup,
+  calculateBoxCostFromMarkup,
   calculateAfterWeightFromMarkup,
   calculateYieldRateFromMarkup,
   calculateDiscountRateFromGross
@@ -594,6 +596,17 @@ function handleReverseCalculation() {
   const consumable = num(UI_ELEMENTS.CONSUMABLE) ?? 0;
   const productData = appState.getProductData();
 
+  // 現在のモードに応じて「原価」ラベルを動的に変更
+  const currentMode = appState.getMode();
+  const costLabel = qs('#reverseCostLabel');
+  if (costLabel) {
+    if (currentMode === MODE.FIXED) {
+      costLabel.textContent = '1個あたりの原価（円）';
+    } else {
+      costLabel.textContent = '1箱あたりの原価（円）';
+    }
+  }
+
   // どのラジオボタンが選択されているか取得
   const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
   if (!selectedRadio) {
@@ -636,16 +649,19 @@ function handleReverseCalculation() {
     return;
   }
 
-  // 現在のモード判定
-  const currentMode = appState.getMode();
+  // 現在のモード判定（currentModeは既に定義済み）
   let isCalculateMode = true;
   let beforeWeight = null;
+  let boxWeight = null;
+  let yieldRate = snapshot.yieldRate;
 
   if (currentMode === MODE.FIXED) {
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
     isCalculateMode = methodRadio && methodRadio.value === 'calculate';
     if (isCalculateMode) {
       beforeWeight = num(FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT);
+    } else {
+      beforeWeight = num(FIXED_FIELDS.DIRECT.BEFORE_WEIGHT);
     }
   } else {
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
@@ -653,6 +669,9 @@ function handleReverseCalculation() {
     if (isCalculateMode) {
       const beforeSample = num(WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE);
       beforeWeight = beforeSample;
+      boxWeight = num(WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT);
+    } else {
+      boxWeight = num(WEIGHT_FIELDS.DIRECT.BOX_WEIGHT);
     }
   }
 
@@ -685,13 +704,33 @@ function handleReverseCalculation() {
       }
       break;
 
-    case 'consumable':
+    case 'cost':
       if (!Number.isFinite(weight) || weight <= 0) {
-        displayReverseError('1個あたりの原価', '1パックに入れる予定重量を入力してください');
+        displayReverseError(currentMode === MODE.FIXED ? '1個あたりの原価' : '1箱あたりの原価', '1パックに入れる予定重量を入力してください');
         return;
       }
-      result = calculateConsumableFromMarkup(snapshot.afterCost, snapshot.afterPrice, weight, targetMarkup);
-      label = '必要な消耗品費';
+      if (!Number.isFinite(yieldRate) || yieldRate <= 0) {
+        displayReverseError(currentMode === MODE.FIXED ? '1個あたりの原価' : '1箱あたりの原価', '歩留まり率を入力してください');
+        return;
+      }
+
+      if (currentMode === MODE.FIXED) {
+        // 定額売価モード: 1個あたりの原価を逆算
+        if (!Number.isFinite(beforeWeight) || beforeWeight <= 0) {
+          displayReverseError('1個あたりの原価', '加工前重量を入力してください');
+          return;
+        }
+        result = calculateUnitCostFromMarkup(snapshot.afterPrice, beforeWeight, yieldRate, weight, targetMarkup, consumable);
+        label = '必要な1個あたりの原価';
+      } else {
+        // 計量売価モード: 1箱あたりの原価を逆算
+        if (!Number.isFinite(boxWeight) || boxWeight <= 0) {
+          displayReverseError('1箱あたりの原価', '1箱あたりの重量を入力してください');
+          return;
+        }
+        result = calculateBoxCostFromMarkup(snapshot.afterPrice, boxWeight, yieldRate, weight, targetMarkup, consumable);
+        label = '必要な1箱あたりの原価';
+      }
       unit = '円';
       if (result === null || result < 0) {
         const maxMarkup = ((snapshot.afterPrice - snapshot.afterCost) / snapshot.afterPrice) * 100;
@@ -774,9 +813,19 @@ function applyReverseSimulationResult() {
       }
       break;
 
-    case 'consumable':
-      // 消耗品費
-      targetElement = qs(`#${UI_ELEMENTS.CONSUMABLE}`);
+    case 'cost':
+      // 原価（モードに応じて異なる）
+      if (currentMode === MODE.FIXED) {
+        // 定額売価モード: 1個あたりの原価
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? FIXED_FIELDS.CALCULATE.UNIT_COST : FIXED_FIELDS.DIRECT.UNIT_COST}`);
+      } else {
+        // 計量売価モード: 1箱あたりの原価
+        const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+        const isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+        targetElement = qs(`#${isCalculateMode ? WEIGHT_FIELDS.CALCULATE.BOX_COST : WEIGHT_FIELDS.DIRECT.BOX_COST}`);
+      }
       break;
 
     case 'yield':
