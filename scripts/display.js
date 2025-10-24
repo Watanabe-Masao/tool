@@ -55,8 +55,11 @@ export function displayResults({ yr, bc, bp, ac, ap, bm, am, finishedPrice, pric
   show(UI_ELEMENTS.FINISHED_ITEM);
   show(UI_ELEMENTS.DIFF_ITEM);
 
-  // 値引きスライダーとインプットを初期化
-  resetDiscountInputs();
+  // 値引きスライダーとインプットを初期化（既に値が入っている場合はスキップ）
+  const currentDiscountValue = qs(`#${UI_ELEMENTS.DISC_INPUT}`)?.value;
+  if (!currentDiscountValue || currentDiscountValue === '0') {
+    resetDiscountInputs();
+  }
 
   show(UI_ELEMENTS.RESULTS);
 
