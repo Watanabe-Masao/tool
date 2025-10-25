@@ -128,16 +128,19 @@
   border-radius: 12px;
   background: #f9f9f9;
   border: 2px solid #e0e0e0;
+  /* 横スワイプを優先 */
+  touch-action: pan-y;
 }
 
 /* カルーセルトラック */
 .history-carousel-track {
   display: flex;
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: pan-y;
+  /* 横スワイプをブロックしない */
+  touch-action: none;
   will-change: transform;
   /* タッチエリアを広げる */
   padding: 0.5em 0;
