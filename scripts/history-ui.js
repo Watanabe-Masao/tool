@@ -118,7 +118,7 @@ function createHistoryItemHTML(item, isFirst = true) {
   const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
   const modeLabel = item.mode === 'fixed' ? '定額売価' : '計量売価';
-  const categoryIcon = getCategoryIcon(item.category);
+  const modeIcon = getModeIcon(item.mode);
 
   // モードに応じて表示ラベルと値を取得
   const isFixedMode = item.mode === 'fixed';
@@ -129,8 +129,11 @@ function createHistoryItemHTML(item, isFirst = true) {
   const cost = isFixedMode ? item.input?.unitCost : item.input?.boxCost;
   const price = isFixedMode ? item.input?.unitPrice : item.input?.boxPrice;
 
-  // 値入率を取得
-  const markup = item.result?.am ?? item.result?.afterMarkup ?? item.result?.markup;
+  // 加工前値入率を取得
+  const beforeMarkup = item.result?.markup;
+
+  // 加工後値入率を取得
+  const afterMarkup = item.result?.am ?? item.result?.afterMarkup;
 
   // 歩留まり率を取得（result.yieldRate が優先、なければ input.yieldRate）
   const yieldRate = item.result?.yieldRate ?? item.input?.yieldRate;
@@ -140,16 +143,16 @@ function createHistoryItemHTML(item, isFirst = true) {
   if (item.result?.discountGross != null && typeof item.result.discountGross === 'number') {
     // 保存されている値引後粗利率を使用
     finalGross = item.result.discountGross.toFixed(1);
-  } else if (typeof markup === 'number') {
-    // 値引後粗利率がない場合は値入率を使用（後方互換性）
-    finalGross = markup.toFixed(1);
+  } else if (typeof afterMarkup === 'number') {
+    // 値引後粗利率がない場合は加工後値入率を使用（後方互換性）
+    finalGross = afterMarkup.toFixed(1);
   }
 
   return `
     <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
       <div class="history-item-header">
         <div class="history-item-title">
-          <span class="history-item-icon">${categoryIcon}</span>
+          <span class="history-item-icon">${modeIcon}</span>
           <span class="history-item-name">${escapeHTML(item.name || '無題')}</span>
         </div>
         <div class="history-item-mode">${modeLabel}</div>
@@ -158,7 +161,8 @@ function createHistoryItemHTML(item, isFirst = true) {
         <div class="history-stats-row">
           <span class="history-stat">${costLabel}: <strong>${typeof cost === 'number' ? cost.toFixed(0) : '-'}円</strong></span>
           <span class="history-stat">${priceLabel}: <strong>${typeof price === 'number' ? price.toFixed(0) : '-'}円</strong></span>
-          <span class="history-stat">値入率: <strong>${typeof markup === 'number' ? markup.toFixed(1) : '-'}%</strong></span>
+          <span class="history-stat">加工前値入率: <strong>${typeof beforeMarkup === 'number' ? beforeMarkup.toFixed(1) : '-'}%</strong></span>
+          <span class="history-stat">加工後値入率: <strong>${typeof afterMarkup === 'number' ? afterMarkup.toFixed(1) : '-'}%</strong></span>
         </div>
         <div class="history-stats-row">
           <span class="history-stat">歩留まり率: <strong>${typeof yieldRate === 'number' ? yieldRate.toFixed(1) : '-'}%</strong></span>
@@ -176,16 +180,12 @@ function createHistoryItemHTML(item, isFirst = true) {
 }
 
 /**
- * カテゴリに応じたアイコンを返す
- * @param {string} category
+ * モードに応じたアイコンを返す
+ * @param {string} mode
  * @returns {string}
  */
-function getCategoryIcon(category) {
-  const icons = {
-    'vegetable': '🥬',
-    'fruit': '🍎'
-  };
-  return icons[category] || '📦';
+function getModeIcon(mode) {
+  return mode === 'fixed' ? '定' : '計';
 }
 
 /**
