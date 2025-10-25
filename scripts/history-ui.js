@@ -265,7 +265,16 @@ function initializeCarousels() {
 
       currentIndex = index;
       const offset = -index * 100;
-      track.style.transition = smooth ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+
+      // トランジションを設定
+      if (smooth) {
+        track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        track.style.willChange = 'auto';
+      } else {
+        track.style.transition = 'none';
+        track.style.willChange = 'transform';
+      }
+
       track.style.transform = `translateX(${offset}%)`;
 
       // アクティブ状態を更新
@@ -329,6 +338,10 @@ function initializeCarousels() {
       }
       isDragging = false;
 
+      // トランジションを再度有効化（必須）
+      track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      track.style.willChange = 'auto';
+
       const diff = currentX - startX;
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration; // ピクセル/ミリ秒
@@ -337,20 +350,21 @@ function initializeCarousels() {
       const threshold = carousel.offsetWidth * 0.05;
       const isQuickSwipe = velocity > 0.2;
 
+      // スワイプ方向を判定
       if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
         if (diff > 0 && currentIndex > 0) {
           // 右スワイプ（戻る）
-          showItem(currentIndex - 1);
+          showItem(currentIndex - 1, true);
         } else if (diff < 0 && currentIndex < items.length - 1) {
           // 左スワイプ（進む）
-          showItem(currentIndex + 1);
+          showItem(currentIndex + 1, true);
         } else {
           // 端に到達している場合は元の位置に戻る
-          showItem(currentIndex);
+          showItem(currentIndex, true);
         }
       } else {
-        // 元の位置に戻る
-        showItem(currentIndex);
+        // 閾値未満の場合は元の位置に戻る
+        showItem(currentIndex, true);
       }
     };
 
@@ -412,6 +426,10 @@ function initializeCarousels() {
       mouseDown = false;
       isDragging = false;
 
+      // トランジションを再度有効化（必須）
+      track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      track.style.willChange = 'auto';
+
       const diff = currentX - startX;
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration;
@@ -419,16 +437,18 @@ function initializeCarousels() {
       const threshold = carousel.offsetWidth * 0.05;
       const isQuickSwipe = velocity > 0.2;
 
+      // スワイプ方向を判定
       if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
         if (diff > 0 && currentIndex > 0) {
-          showItem(currentIndex - 1);
+          showItem(currentIndex - 1, true);
         } else if (diff < 0 && currentIndex < items.length - 1) {
-          showItem(currentIndex + 1);
+          showItem(currentIndex + 1, true);
         } else {
-          showItem(currentIndex);
+          showItem(currentIndex, true);
         }
       } else {
-        showItem(currentIndex);
+        // 閾値未満の場合は元の位置に戻る
+        showItem(currentIndex, true);
       }
     };
 
