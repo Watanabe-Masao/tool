@@ -678,6 +678,13 @@ function handleReverseCalculation() {
   const productData = appState.getProductData();
   const currentMode = appState.getMode();
 
+  console.log('[逆算] handleReverseCalculation called', {
+    snapshot,
+    targetMarkup,
+    productData,
+    currentMode
+  });
+
   // 現在のモードに応じて「原価」ラベルを動的に変更
   const costLabel = qs('#reverseCostLabel');
   if (costLabel) {
@@ -691,11 +698,13 @@ function handleReverseCalculation() {
   // どのラジオボタンが選択されているか取得
   const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
   if (!selectedRadio) {
+    console.log('[逆算] ラジオボタンが選択されていません');
     hideReverseSimulation();
     return;
   }
 
   const calcTarget = selectedRadio.value;
+  console.log('[逆算] 計算対象:', calcTarget);
 
   // 値引率計算の場合は別処理
   if (calcTarget === 'discount') {
@@ -728,11 +737,20 @@ function handleReverseCalculation() {
   // 原価逆算ではafterCostは不要（afterPriceから逆算するため）
   if (calcTarget === 'cost') {
     if (!Number.isFinite(snapshot.afterPrice) || !Number.isFinite(targetMarkup)) {
+      console.log('[逆算] 必須データ不足（原価計算）', {
+        afterPrice: snapshot.afterPrice,
+        targetMarkup
+      });
       hideReverseSimulation();
       return;
     }
   } else {
     if (!Number.isFinite(snapshot.afterCost) || !Number.isFinite(snapshot.afterPrice) || !Number.isFinite(targetMarkup)) {
+      console.log('[逆算] 必須データ不足（通常計算）', {
+        afterCost: snapshot.afterCost,
+        afterPrice: snapshot.afterPrice,
+        targetMarkup
+      });
       hideReverseSimulation();
       return;
     }
@@ -902,7 +920,10 @@ function handleReverseCalculation() {
       break;
   }
 
+  console.log('[逆算] 計算結果:', { result, label, unit, errorMsg });
+
   if (result !== null && Number.isFinite(result) && result >= 0) {
+    console.log('[逆算] 結果を表示します');
     displayReverseSimulation(result, label, unit);
     // 結果の値を保存（クリック時に使用）
     const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
@@ -911,6 +932,7 @@ function handleReverseCalculation() {
       reverseResultStat.dataset.calcValue = result.toString();
     }
   } else {
+    console.log('[逆算] エラーを表示します:', errorMsg || '計算できませんでした');
     displayReverseError(label, errorMsg || '計算できませんでした。条件を見直してください');
   }
 }
