@@ -2,7 +2,10 @@
  * Service Worker - 完全オフライン対応
  */
 
-const CACHE_NAME = 'yield-calculator-v1';
+// バージョン更新時はここを変更（例: v1 → v2 → v3...）
+const CACHE_VERSION = 2;
+const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}`;
+
 const urlsToCache = [
   '/tool/',
   '/tool/index.html',
@@ -66,40 +69,36 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// フェッチ時: Cache First戦略（高速表示）
+// フェッチ時: Network First戦略（常に最新を取得、オフライン時のみキャッシュ）
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // キャッシュに存在する場合は即座に返す
-        if (response) {
-          console.log('[Service Worker] Cache hit:', event.request.url);
-          return response;
+        // ネットワークから取得成功
+        console.log('[Service Worker] Network success:', event.request.url);
+
+        // レスポンスが有効か確認
+        if (response && response.status === 200 && response.type !== 'error') {
+          // レスポンスをクローンしてキャッシュに保存（オフライン時のバックアップ）
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
 
-        // キャッシュになければネットワークから取得
-        console.log('[Service Worker] Network request:', event.request.url);
-        return fetch(event.request)
-          .then((response) => {
-            // レスポンスが有効か確認
-            if (!response || response.status !== 200 || response.type === 'error') {
-              return response;
+        return response;
+      })
+      .catch((error) => {
+        // ネットワーク失敗時（オフライン）: キャッシュから取得
+        console.log('[Service Worker] Network failed, using cache:', event.request.url);
+        return caches.match(event.request)
+          .then((cachedResponse) => {
+            if (cachedResponse) {
+              console.log('[Service Worker] Cache hit:', event.request.url);
+              return cachedResponse;
             }
-
-            // レスポンスをクローンしてキャッシュに保存
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch((error) => {
-            console.error('[Service Worker] Fetch failed:', error);
-            // オフライン時のフォールバック処理
-            // 必要に応じてオフライン用のページを返す
+            console.error('[Service Worker] No cache available:', event.request.url);
+            throw error;
           });
       })
   );
