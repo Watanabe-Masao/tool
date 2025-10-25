@@ -201,6 +201,10 @@
 
 .history-item:not(.active) {
   opacity: 0.3;
+}
+
+/* 非アクティブなアイテムのボタンのみクリック無効化 */
+.history-item:not(.active) button {
   pointer-events: none;
 }
 
