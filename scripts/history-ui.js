@@ -129,11 +129,11 @@ function createHistoryItemHTML(item, isFirst = true) {
   const cost = isFixedMode ? item.input?.unitCost : item.input?.boxCost;
   const price = isFixedMode ? item.input?.unitPrice : item.input?.boxPrice;
 
-  // 加工前値入率を取得（result.bmまたはresult.markup）
-  const beforeMarkup = item.result?.bm ?? item.result?.markup;
+  // 加工前値入率を取得
+  const beforeMarkup = item.result?.beforeMarkup ?? item.result?.bm ?? item.result?.markup;
 
   // 加工後値入率を取得
-  const afterMarkup = item.result?.am ?? item.result?.afterMarkup;
+  const afterMarkup = item.result?.afterMarkup ?? item.result?.am;
 
   // 歩留まり率を取得（result.yieldRate が優先、なければ input.yieldRate）
   const yieldRate = item.result?.yieldRate ?? item.input?.yieldRate;
@@ -152,7 +152,7 @@ function createHistoryItemHTML(item, isFirst = true) {
     <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
       <div class="history-item-header">
         <div class="history-item-title">
-          <span class="history-item-icon">${modeIcon}</span>
+          <span class="history-item-mode-label">${modeIcon}</span>
           <span class="history-item-name">${escapeHTML(item.name || '無題')}</span>
         </div>
       </div>
@@ -435,6 +435,12 @@ async function handleLoadCalculation(id) {
     // 少し待ってからフィールドに値を復元（UIの切り替えが完了するまで）
     setTimeout(() => {
       restoreAllInputFields(data.mode, data.input);
+
+      // 結果データがある場合はappStateに復元
+      if (data.result) {
+        restoreCalculationResults(data.mode, data.input.yieldMethod, data.result);
+      }
+
       // 計算を強制的にトリガー
       triggerCalculation(data.mode, data.input.yieldMethod);
       showToast('✅ データを読み込みました');
@@ -558,6 +564,28 @@ function restoreAllInputFields(mode, input) {
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
     }
   }
+}
+
+/**
+ * 保存された計算結果を復元してappStateを更新
+ * @param {string} mode
+ * @param {string} yieldMethod
+ * @param {Object} result
+ */
+function restoreCalculationResults(mode, yieldMethod, result) {
+  // appStateのsnapshotを更新
+  appState.updateSnapshot({
+    ac: result.afterCost,
+    ap: result.afterPrice,
+    bm: result.beforeMarkup,
+    am: result.afterMarkup,
+    bp: result.beforePrice,
+    bc: result.beforeCost,
+    yr: result.yieldRate
+  });
+
+  // ステップを最終ステップに設定
+  appState.setStep(3);
 }
 
 /**
