@@ -2,7 +2,7 @@
  * 履歴機能のUI管理
  */
 
-import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
+import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames, copyDataToClipboard, pasteDataFromClipboard } from './storage.js';
 import { qs, num } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
@@ -863,6 +863,31 @@ export async function handleImport() {
 }
 
 /**
+ * データをクリップボードにコピー
+ */
+export async function handleCopyData() {
+  try {
+    const count = await copyDataToClipboard();
+    showToast(`✅ ${count}件のデータをコピーしました\n他のデバイスで「データを貼付け」から復元できます`);
+  } catch (error) {
+    showToast('❌ コピーに失敗しました\nクリップボードへのアクセスを許可してください', 'error');
+  }
+}
+
+/**
+ * クリップボードからデータを貼付け
+ */
+export async function handlePasteData() {
+  try {
+    const count = await pasteDataFromClipboard();
+    await renderHistoryList();
+    showToast(`✅ ${count}件のデータを貼付けました`);
+  } catch (error) {
+    showToast('❌ 貼付けに失敗しました\nクリップボードにデータがあるか確認してください', 'error');
+  }
+}
+
+/**
  * すべての履歴をクリア
  */
 export async function handleClearAll() {
@@ -937,6 +962,18 @@ export function initHistoryUI() {
   const searchInput = qs('#historySearch');
   if (searchInput) {
     searchInput.addEventListener('input', handleSearch);
+  }
+
+  // データをコピー
+  const copyDataBtn = qs('#copyDataBtn');
+  if (copyDataBtn) {
+    copyDataBtn.addEventListener('click', handleCopyData);
+  }
+
+  // データを貼付け
+  const pasteDataBtn = qs('#pasteDataBtn');
+  if (pasteDataBtn) {
+    pasteDataBtn.addEventListener('click', handlePasteData);
   }
 
   // エクスポート
