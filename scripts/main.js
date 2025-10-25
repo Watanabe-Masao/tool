@@ -745,7 +745,8 @@ function handleReverseCalculation() {
   // 値引率計算の場合は別処理
   if (calcTarget === 'discount') {
     if (!Number.isFinite(targetMarkup)) {
-      displayReverseError('計算エラー', '目標値入率を入力してください');
+      console.log('[逆算] 目標値入率が未入力のため、結果を非表示にします');
+      hideReverseSimulation();
       return;
     }
     if (!Number.isFinite(productData.markup)) {
@@ -773,14 +774,16 @@ function handleReverseCalculation() {
     return;
   }
 
+  // 目標値入率が未入力の場合は、エラーを表示せず静かに待つ
+  if (!Number.isFinite(targetMarkup)) {
+    console.log('[逆算] 目標値入率が未入力のため、結果を非表示にします');
+    hideReverseSimulation();
+    return;
+  }
+
   // 通常の計算の必須データチェック
   // 原価逆算ではafterCostは不要（afterPriceから逆算するため）
   if (calcTarget === 'cost') {
-    if (!Number.isFinite(targetMarkup)) {
-      console.log('[逆算] 目標値入率が未入力');
-      displayReverseError('計算エラー', '目標値入率を入力してください');
-      return;
-    }
     if (!Number.isFinite(snapshot.afterPrice)) {
       console.log('[逆算] 必須データ不足（原価計算）', {
         afterPrice: snapshot.afterPrice
@@ -789,11 +792,6 @@ function handleReverseCalculation() {
       return;
     }
   } else {
-    if (!Number.isFinite(targetMarkup)) {
-      console.log('[逆算] 目標値入率が未入力');
-      displayReverseError('計算エラー', '目標値入率を入力してください');
-      return;
-    }
     if (!Number.isFinite(snapshot.afterCost) || !Number.isFinite(snapshot.afterPrice)) {
       console.log('[逆算] 必須データ不足（通常計算）', {
         afterCost: snapshot.afterCost,
