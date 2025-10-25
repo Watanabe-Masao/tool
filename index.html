@@ -30,7 +30,10 @@
 
     <!-- 定額売価→計量加工（段階的フォーム） -->
     <section id="fixedInputs" class="card section" aria-labelledby="fixedHeading">
-      <h2 id="fixedHeading" class="section-title">📦 基本情報（定額売価→計量加工）</h2>
+      <div class="section-header">
+        <h2 id="fixedHeading" class="section-title">📦 基本情報（定額売価→計量加工）</h2>
+        <button id="historyBtn" class="btn btn-secondary btn-header">📂 履歴</button>
+      </div>
 
       <!-- 歩留まり率の入力方法選択 -->
       <fieldset class="fieldset">
@@ -279,11 +282,6 @@
       </div>
     </section>
 
-    <div class="btn-row">
-      <button id="historyBtn" class="btn btn-secondary">📂 履歴</button>
-      <button id="clearBtn" class="btn btn-secondary">クリア</button>
-    </div>
-
     <div id="warning" class="notice notice-warn" role="alert" aria-live="assertive">⚠️ すべての必須項目を入力してください</div>
 
     <!-- 結果表示 -->
@@ -392,6 +390,7 @@
 
       <div class="btn-row" style="margin-top: 1.5em;">
         <button id="saveBtn" class="btn btn-primary">💾 この計算を保存</button>
+        <button id="clearBtn" class="btn btn-secondary">クリア</button>
       </div>
     </section>
   </main>
