@@ -22,9 +22,9 @@
 }
 
 .dialog--large {
-  max-width: 95%;
-  max-height: 90vh;
-  width: 95%;
+  max-width: 98%;
+  max-height: 95vh;
+  width: 98%;
 }
 
 .dialog-header {
@@ -44,7 +44,7 @@
 
 .dialog-body {
   padding: 1.5em;
-  max-height: 75vh;
+  max-height: 82vh;
   overflow-y: auto;
 }
 

@@ -129,8 +129,8 @@ function createHistoryItemHTML(item, isFirst = true) {
   const cost = isFixedMode ? item.input?.unitCost : item.input?.boxCost;
   const price = isFixedMode ? item.input?.unitPrice : item.input?.boxPrice;
 
-  // 加工前値入率を取得
-  const beforeMarkup = item.result?.markup;
+  // 加工前値入率を取得（result.bmまたはresult.markup）
+  const beforeMarkup = item.result?.bm ?? item.result?.markup;
 
   // 加工後値入率を取得
   const afterMarkup = item.result?.am ?? item.result?.afterMarkup;
@@ -155,7 +155,6 @@ function createHistoryItemHTML(item, isFirst = true) {
           <span class="history-item-icon">${modeIcon}</span>
           <span class="history-item-name">${escapeHTML(item.name || '無題')}</span>
         </div>
-        <div class="history-item-mode">${modeLabel}</div>
       </div>
       <div class="history-item-stats">
         <div class="history-stats-row">
@@ -180,12 +179,12 @@ function createHistoryItemHTML(item, isFirst = true) {
 }
 
 /**
- * モードに応じたアイコンを返す
+ * モードに応じたラベルを返す
  * @param {string} mode
  * @returns {string}
  */
 function getModeIcon(mode) {
-  return mode === 'fixed' ? '定' : '計';
+  return mode === 'fixed' ? '定額売価' : '計量売価';
 }
 
 /**
