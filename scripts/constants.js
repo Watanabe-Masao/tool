@@ -206,7 +206,7 @@ export const UI_ELEMENTS = {
   REVERSE_RESULT_VALUE: 'reverseResultValue',
   REVERSE_ERROR: 'reverseError',
   REVERSE_ERROR_MESSAGE: 'reverseErrorMessage',
-  YIELD_CALC_LABEL: 'yieldCalcLabel'
+  YIELD_CALC_LABEL: 'reverseYieldLabel'
 };
 
 // ラジオボタン名
