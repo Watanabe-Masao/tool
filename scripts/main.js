@@ -61,11 +61,8 @@ function switchYieldMethod() {
   // ステップをリセット
   resetSteps();
 
-  // 逆算シミュレーションが表示されている場合、ラベルと計算結果を更新
-  const reverseSimSection = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
-  if (reverseSimSection && !reverseSimSection.classList.contains('is-hidden')) {
-    handleReverseCalculation();
-  }
+  // 逆算シミュレーションが表示されている場合、ラベルのみ更新
+  updateReverseSimulationLabels();
 }
 
 /**
@@ -82,11 +79,8 @@ function switchWeightYieldMethod() {
   // ステップをリセット
   resetWeightSteps();
 
-  // 逆算シミュレーションが表示されている場合、ラベルと計算結果を更新
-  const reverseSimSection = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
-  if (reverseSimSection && !reverseSimSection.classList.contains('is-hidden')) {
-    handleReverseCalculation();
-  }
+  // 逆算シミュレーションが表示されている場合、ラベルのみ更新
+  updateReverseSimulationLabels();
 }
 
 /**
@@ -682,20 +676,16 @@ function getReverseSimulationInputs() {
 }
 
 /**
- * 逆算シミュレーション処理
+ * 逆算シミュレーションのラベルのみを更新（計算は行わない）
  */
-function handleReverseCalculation() {
-  const snapshot = appState.getSnapshot();
-  const targetMarkup = num(UI_ELEMENTS.TARGET_MARKUP);
-  const productData = appState.getProductData();
-  const currentMode = appState.getMode();
+function updateReverseSimulationLabels() {
+  // 逆算シミュレーションが表示されていない場合は何もしない
+  const reverseSimSection = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
+  if (!reverseSimSection || reverseSimSection.classList.contains('is-hidden')) {
+    return;
+  }
 
-  console.log('[逆算] handleReverseCalculation called', {
-    snapshot,
-    targetMarkup,
-    productData,
-    currentMode
-  });
+  const currentMode = appState.getMode();
 
   // 現在のモードに応じて「原価」ラベルを動的に変更
   const costLabel = qs('#reverseCostLabel');
@@ -720,12 +710,32 @@ function handleReverseCalculation() {
     }
     yieldLabel.textContent = isCalculateMode ? '加工後重量（g）' : '歩留まり率（%）';
   }
+}
+
+/**
+ * 逆算シミュレーション処理
+ */
+function handleReverseCalculation() {
+  const snapshot = appState.getSnapshot();
+  const targetMarkup = num(UI_ELEMENTS.TARGET_MARKUP);
+  const productData = appState.getProductData();
+  const currentMode = appState.getMode();
+
+  console.log('[逆算] handleReverseCalculation called', {
+    snapshot,
+    targetMarkup,
+    productData,
+    currentMode
+  });
+
+  // ラベルを更新
+  updateReverseSimulationLabels();
 
   // どのラジオボタンが選択されているか取得
   const selectedRadio = document.querySelector(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]:checked`);
   if (!selectedRadio) {
     console.log('[逆算] ラジオボタンが選択されていません');
-    hideReverseSimulation();
+    displayReverseError('計算エラー', '計算する項目を選択してください');
     return;
   }
 
@@ -734,8 +744,12 @@ function handleReverseCalculation() {
 
   // 値引率計算の場合は別処理
   if (calcTarget === 'discount') {
-    if (!Number.isFinite(productData.markup) || !Number.isFinite(targetMarkup)) {
-      hideReverseSimulation();
+    if (!Number.isFinite(targetMarkup)) {
+      displayReverseError('計算エラー', '目標値入率を入力してください');
+      return;
+    }
+    if (!Number.isFinite(productData.markup)) {
+      displayReverseError('計算エラー', '商品化シミュレーションを完了してください');
       return;
     }
     const result = calculateDiscountRateFromGross(productData.markup, targetMarkup);
@@ -762,22 +776,30 @@ function handleReverseCalculation() {
   // 通常の計算の必須データチェック
   // 原価逆算ではafterCostは不要（afterPriceから逆算するため）
   if (calcTarget === 'cost') {
-    if (!Number.isFinite(snapshot.afterPrice) || !Number.isFinite(targetMarkup)) {
+    if (!Number.isFinite(targetMarkup)) {
+      console.log('[逆算] 目標値入率が未入力');
+      displayReverseError('計算エラー', '目標値入率を入力してください');
+      return;
+    }
+    if (!Number.isFinite(snapshot.afterPrice)) {
       console.log('[逆算] 必須データ不足（原価計算）', {
-        afterPrice: snapshot.afterPrice,
-        targetMarkup
+        afterPrice: snapshot.afterPrice
       });
-      hideReverseSimulation();
+      displayReverseError('計算エラー', 'ステップ3まで入力して加工後の売価を計算してください');
       return;
     }
   } else {
-    if (!Number.isFinite(snapshot.afterCost) || !Number.isFinite(snapshot.afterPrice) || !Number.isFinite(targetMarkup)) {
+    if (!Number.isFinite(targetMarkup)) {
+      console.log('[逆算] 目標値入率が未入力');
+      displayReverseError('計算エラー', '目標値入率を入力してください');
+      return;
+    }
+    if (!Number.isFinite(snapshot.afterCost) || !Number.isFinite(snapshot.afterPrice)) {
       console.log('[逆算] 必須データ不足（通常計算）', {
         afterCost: snapshot.afterCost,
-        afterPrice: snapshot.afterPrice,
-        targetMarkup
+        afterPrice: snapshot.afterPrice
       });
-      hideReverseSimulation();
+      displayReverseError('計算エラー', 'ステップ3まで入力して加工後の原価・売価を計算してください');
       return;
     }
   }
