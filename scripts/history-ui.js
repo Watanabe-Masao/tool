@@ -293,23 +293,31 @@ function initializeCarousels() {
       currentX = startX;
       startTime = Date.now();
       isDragging = true;
+      // トランジションを完全に無効化してスムーズに
       track.style.transition = 'none';
+      track.style.willChange = 'transform';
     }, { passive: true });
 
-    // タッチ移動 - カルーセル全体で検出
+    // タッチ移動 - カルーセル全体で検出（指に追従）
     carousel.addEventListener('touchmove', (e) => {
       if (!isDragging || touchStartedOnButton) return;
 
       currentX = e.touches[0].clientX;
       const diff = currentX - startX;
-      const offset = -currentIndex * 100 + (diff / carousel.offsetWidth) * 100;
 
-      // 端でのオーバースクロールを制限
-      const maxOffset = 0;
-      const minOffset = -(items.length - 1) * 100;
+      // カルーセルの幅を基準に計算
+      const containerWidth = carousel.offsetWidth;
+      const offset = -currentIndex * 100 + (diff / containerWidth) * 100;
+
+      // 端でのオーバースクロールを少し許可（弾性効果）
+      const maxOffset = 10; // 少しオーバースクロール許可
+      const minOffset = -(items.length - 1) * 100 - 10;
       const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
 
-      track.style.transform = `translateX(${clampedOffset}%)`;
+      // 滑らかに動かす
+      requestAnimationFrame(() => {
+        track.style.transform = `translateX(${clampedOffset}%)`;
+      });
     }, { passive: true });
 
     // タッチ終了
@@ -368,7 +376,9 @@ function initializeCarousels() {
       startTime = Date.now();
       mouseDown = true;
       isDragging = true;
+      // トランジションを完全に無効化してスムーズに
       track.style.transition = 'none';
+      track.style.willChange = 'transform';
       e.preventDefault();
     });
 
@@ -377,14 +387,20 @@ function initializeCarousels() {
 
       currentX = e.clientX;
       const diff = currentX - startX;
-      const offset = -currentIndex * 100 + (diff / carousel.offsetWidth) * 100;
 
-      // 端でのオーバースクロールを制限
-      const maxOffset = 0;
-      const minOffset = -(items.length - 1) * 100;
+      // カルーセルの幅を基準に計算
+      const containerWidth = carousel.offsetWidth;
+      const offset = -currentIndex * 100 + (diff / containerWidth) * 100;
+
+      // 端でのオーバースクロールを少し許可（弾性効果）
+      const maxOffset = 10;
+      const minOffset = -(items.length - 1) * 100 - 10;
       const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
 
-      track.style.transform = `translateX(${clampedOffset}%)`;
+      // 滑らかに動かす
+      requestAnimationFrame(() => {
+        track.style.transform = `translateX(${clampedOffset}%)`;
+      });
     });
 
     const handleMouseEnd = () => {
