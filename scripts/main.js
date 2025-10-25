@@ -60,6 +60,12 @@ function switchYieldMethod() {
 
   // ステップをリセット
   resetSteps();
+
+  // 逆算シミュレーションが表示されている場合、ラベルと計算結果を更新
+  const reverseSimSection = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
+  if (reverseSimSection && !reverseSimSection.classList.contains('is-hidden')) {
+    handleReverseCalculation();
+  }
 }
 
 /**
@@ -75,6 +81,12 @@ function switchWeightYieldMethod() {
 
   // ステップをリセット
   resetWeightSteps();
+
+  // 逆算シミュレーションが表示されている場合、ラベルと計算結果を更新
+  const reverseSimSection = qs(`#${UI_ELEMENTS.REVERSE_SIM_SECTION}`);
+  if (reverseSimSection && !reverseSimSection.classList.contains('is-hidden')) {
+    handleReverseCalculation();
+  }
 }
 
 /**
@@ -693,6 +705,20 @@ function handleReverseCalculation() {
     } else {
       costLabel.textContent = '1箱あたりの原価（円）';
     }
+  }
+
+  // 入力方法に応じて「加工後重量/歩留まり率」ラベルを動的に変更
+  const yieldLabel = qs('#reverseYieldLabel');
+  if (yieldLabel) {
+    let isCalculateMode = true;
+    if (currentMode === MODE.FIXED) {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+      isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    } else {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+      isCalculateMode = methodRadio && methodRadio.value === 'calculate';
+    }
+    yieldLabel.textContent = isCalculateMode ? '加工後重量（g）' : '歩留まり率（%）';
   }
 
   // どのラジオボタンが選択されているか取得
