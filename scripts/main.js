@@ -752,8 +752,14 @@ function handleReverseCalculation() {
       label = '必要な重量';
       unit = 'g';
       if (result === null) {
-        const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
-        errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+        if (inputs.consumable === 0) {
+          // 消耗品費が0の場合、重量に依存しないので特別なメッセージ
+          const actualMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
+          errorMsg = `消耗品費が0の場合、重量に関係なく値入率は${toFixed(actualMarkup)}%になります。目標値入率を${toFixed(actualMarkup)}%に設定してください。`;
+        } else {
+          const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
+          errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+        }
       }
       break;
 
@@ -861,8 +867,14 @@ function handleReverseCalculation() {
         );
         label = '必要な加工後重量';
         unit = 'g';
-        if (result === null || result > beforeWeight) {
-          errorMsg = `目標値入率を下げるか、加工前重量を${toFixed(beforeWeight)}g以上に設定してください`;
+        if (result === null) {
+          // 目標値入率と現在の値入率を比較してメッセージを分岐
+          const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+          if (targetMarkup < currentMarkup) {
+            errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+          } else {
+            errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+          }
         }
       } else {
         // ========================================
@@ -877,8 +889,14 @@ function handleReverseCalculation() {
         );
         label = '必要な歩留まり率';
         unit = '%';
-        if (result === null || result > 100) {
-          errorMsg = '目標値入率を下げるか、条件を見直してください';
+        if (result === null) {
+          // 目標値入率と現在の値入率を比較してメッセージを分岐
+          const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+          if (targetMarkup < currentMarkup) {
+            errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+          } else {
+            errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+          }
         }
       }
       break;
