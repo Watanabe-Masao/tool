@@ -3,8 +3,10 @@
  */
 
 // バージョン更新時はここを変更（例: v1 → v2 → v3...）
-const CACHE_VERSION = 2;
-const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}`;
+// タイムスタンプを含めることで確実に更新を検出
+const CACHE_VERSION = 3;
+const CACHE_BUILD = '20250125-001'; // YYYYMMDD-XXX形式
+const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
 const urlsToCache = [
   '/tool/',
@@ -116,5 +118,14 @@ self.addEventListener('message', (event) => {
         return cache.addAll(urlsToCache);
       })
     );
+  }
+
+  // バージョン情報の要求に応答
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({
+      version: CACHE_VERSION,
+      build: CACHE_BUILD,
+      cacheName: CACHE_NAME
+    });
   }
 });
