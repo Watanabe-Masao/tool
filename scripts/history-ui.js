@@ -3,7 +3,7 @@
  */
 
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
-import { qs, num } from './dom-utils.js';
+import { qs, num, show, hide } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup } from './calculation.js';
@@ -586,6 +586,47 @@ function restoreCalculationResults(mode, yieldMethod, result) {
 
   // ステップを最終ステップに設定
   appState.setStep(3);
+
+  // モードとメソッドに応じてステップ結果コンテナを表示
+  if (mode === MODE.FIXED) {
+    if (yieldMethod === 'calculate') {
+      // 重量から計算モード
+      show(UI_ELEMENTS.FIXED_STEP1);
+      show(UI_ELEMENTS.FIXED_STEP1_RESULT);
+      show(UI_ELEMENTS.FIXED_STEP2);
+      show(UI_ELEMENTS.FIXED_STEP2_RESULT);
+      show(UI_ELEMENTS.FIXED_STEP3);
+      show(UI_ELEMENTS.FIXED_STEP3_RESULT);
+    } else {
+      // 歩留まり率直接入力モード
+      show(UI_ELEMENTS.FIXED_DIRECT_STEP1);
+      show(UI_ELEMENTS.FIXED_DIRECT_STEP2);
+      show(UI_ELEMENTS.FIXED_DIRECT_STEP2_RESULT);
+      show(UI_ELEMENTS.FIXED_DIRECT_STEP3);
+      show(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
+    }
+  } else {
+    if (yieldMethod === 'calculate') {
+      // 重量から計算モード
+      show(UI_ELEMENTS.WEIGHT_STEP1);
+      show(UI_ELEMENTS.WEIGHT_STEP1_RESULT);
+      show(UI_ELEMENTS.WEIGHT_STEP2);
+      show(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+      show(UI_ELEMENTS.WEIGHT_STEP3);
+      show(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
+    } else {
+      // 歩留まり率直接入力モード
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1);
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1_RESULT);
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
+      show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
+    }
+  }
+
+  // 最終結果セクションを表示
+  show(UI_ELEMENTS.RESULTS);
 }
 
 /**
