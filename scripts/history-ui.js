@@ -265,16 +265,7 @@ function initializeCarousels() {
 
       currentIndex = index;
       const offset = -index * 100;
-
-      // トランジションを設定
-      if (smooth) {
-        track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        track.style.willChange = 'auto';
-      } else {
-        track.style.transition = 'none';
-        track.style.willChange = 'transform';
-      }
-
+      track.style.transition = smooth ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
       track.style.transform = `translateX(${offset}%)`;
 
       // アクティブ状態を更新
@@ -302,31 +293,12 @@ function initializeCarousels() {
       currentX = startX;
       startTime = Date.now();
       isDragging = true;
-      // トランジションを完全に無効化してスムーズに
-      track.style.transition = 'none';
-      track.style.willChange = 'transform';
     }, { passive: true });
 
-    // タッチ移動 - カルーセル全体で検出（指に追従）
+    // タッチ移動 - カルーセル全体で検出
     carousel.addEventListener('touchmove', (e) => {
       if (!isDragging || touchStartedOnButton) return;
-
       currentX = e.touches[0].clientX;
-      const diff = currentX - startX;
-
-      // カルーセルの幅を基準に計算
-      const containerWidth = carousel.offsetWidth;
-      const offset = -currentIndex * 100 + (diff / containerWidth) * 100;
-
-      // 端でのオーバースクロールを少し許可（弾性効果）
-      const maxOffset = 10; // 少しオーバースクロール許可
-      const minOffset = -(items.length - 1) * 100 - 10;
-      const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
-
-      // 滑らかに動かす
-      requestAnimationFrame(() => {
-        track.style.transform = `translateX(${clampedOffset}%)`;
-      });
     }, { passive: true });
 
     // タッチ終了
@@ -337,10 +309,6 @@ function initializeCarousels() {
         return;
       }
       isDragging = false;
-
-      // トランジションを再度有効化（必須）
-      track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      track.style.willChange = 'auto';
 
       const diff = currentX - startX;
       const duration = Date.now() - startTime;
@@ -354,17 +322,17 @@ function initializeCarousels() {
       if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
         if (diff > 0 && currentIndex > 0) {
           // 右スワイプ（戻る）
-          showItem(currentIndex - 1, true);
+          showItem(currentIndex - 1);
         } else if (diff < 0 && currentIndex < items.length - 1) {
           // 左スワイプ（進む）
-          showItem(currentIndex + 1, true);
+          showItem(currentIndex + 1);
         } else {
           // 端に到達している場合は元の位置に戻る
-          showItem(currentIndex, true);
+          showItem(currentIndex);
         }
       } else {
         // 閾値未満の場合は元の位置に戻る
-        showItem(currentIndex, true);
+        showItem(currentIndex);
       }
     };
 
@@ -390,31 +358,12 @@ function initializeCarousels() {
       startTime = Date.now();
       mouseDown = true;
       isDragging = true;
-      // トランジションを完全に無効化してスムーズに
-      track.style.transition = 'none';
-      track.style.willChange = 'transform';
       e.preventDefault();
     });
 
     carousel.addEventListener('mousemove', (e) => {
       if (!mouseDown || mouseStartedOnButton) return;
-
       currentX = e.clientX;
-      const diff = currentX - startX;
-
-      // カルーセルの幅を基準に計算
-      const containerWidth = carousel.offsetWidth;
-      const offset = -currentIndex * 100 + (diff / containerWidth) * 100;
-
-      // 端でのオーバースクロールを少し許可（弾性効果）
-      const maxOffset = 10;
-      const minOffset = -(items.length - 1) * 100 - 10;
-      const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
-
-      // 滑らかに動かす
-      requestAnimationFrame(() => {
-        track.style.transform = `translateX(${clampedOffset}%)`;
-      });
     });
 
     const handleMouseEnd = () => {
@@ -426,10 +375,6 @@ function initializeCarousels() {
       mouseDown = false;
       isDragging = false;
 
-      // トランジションを再度有効化（必須）
-      track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      track.style.willChange = 'auto';
-
       const diff = currentX - startX;
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration;
@@ -440,15 +385,15 @@ function initializeCarousels() {
       // スワイプ方向を判定
       if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
         if (diff > 0 && currentIndex > 0) {
-          showItem(currentIndex - 1, true);
+          showItem(currentIndex - 1);
         } else if (diff < 0 && currentIndex < items.length - 1) {
-          showItem(currentIndex + 1, true);
+          showItem(currentIndex + 1);
         } else {
-          showItem(currentIndex, true);
+          showItem(currentIndex);
         }
       } else {
         // 閾値未満の場合は元の位置に戻る
-        showItem(currentIndex, true);
+        showItem(currentIndex);
       }
     };
 
