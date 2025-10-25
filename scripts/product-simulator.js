@@ -3,7 +3,7 @@
  */
 
 import { num, qs } from './dom-utils.js';
-import { UI_ELEMENTS, GRAMS_PER_100G, PERCENT_MULTIPLIER } from './constants.js';
+import { UI_ELEMENTS, GRAMS_PER_100G, PERCENT_MULTIPLIER, TOLERANCE } from './constants.js';
 import { displayProductSimulation, hideProductSimulation, displayDiscountGross, hideDiscountResults } from './display.js';
 
 /**
@@ -84,8 +84,8 @@ export function calculateWeightFromMarkup(afterCost, afterPrice, targetMarkup, c
   if (consumable === 0) {
     // 重量に依存しないので、目標markupが達成可能かチェック
     const actualMarkup = ((afterPrice - afterCost) / afterPrice) * PERCENT_MULTIPLIER;
-    // 目標markupと一致するかチェック（許容誤差0.01%）
-    if (Math.abs(actualMarkup - targetMarkup) < 0.01) {
+    // 目標markupと一致するかチェック
+    if (Math.abs(actualMarkup - targetMarkup) < TOLERANCE.MARKUP) {
       // 一致する場合、任意の有効な重量を返す（100g）
       return 100;
     } else {

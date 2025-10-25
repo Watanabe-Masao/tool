@@ -40,7 +40,7 @@ export function getFixedYieldMethod() {
  * 選択中の歩留まり計算方法を取得（計量モード）
  */
 export function getWeightYieldMethod() {
-  return qs(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`)?.value;
+  return qs(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`)?.value;
 }
 
 /**
