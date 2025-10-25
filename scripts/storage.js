@@ -12,15 +12,17 @@ import { qs } from './dom-utils.js';
  * @param {Object} inputData - 入力データ
  * @param {Object} resultData - 計算結果データ
  * @param {string} category - カテゴリ（オプション）
+ * @param {Object} productData - 商品化データ（オプション）
  * @returns {Promise<number>} 保存されたレコードのID
  */
-export async function saveCalculation(name, mode, inputData, resultData, category = null) {
+export async function saveCalculation(name, mode, inputData, resultData, category = null, productData = null) {
   const data = {
     name,
     mode,
     category,
     input: inputData,
     result: resultData,
+    product: productData,
     timestamp: Date.now()
   };
 
@@ -197,5 +199,25 @@ export async function clearAllHistory() {
   } catch (error) {
     console.error('Failed to clear history:', error);
     throw error;
+  }
+}
+
+/**
+ * ユニークな商品名一覧を取得（プリセット用）
+ * @returns {Promise<Array<string>>} 商品名の配列
+ */
+export async function getUniqueProductNames() {
+  try {
+    const history = await db.getAll({ sortBy: 'name', order: 'asc' });
+    const names = new Set();
+    history.forEach(item => {
+      if (item.name && item.name.trim() !== '') {
+        names.add(item.name.trim());
+      }
+    });
+    return Array.from(names);
+  } catch (error) {
+    console.error('Failed to get unique product names:', error);
+    return [];
   }
 }
