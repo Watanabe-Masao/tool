@@ -243,13 +243,15 @@ function initializeCarousels() {
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let startTime = 0;
 
     // スワイプでアイテムを切り替え
-    function showItem(index) {
+    function showItem(index, smooth = true) {
       if (index < 0 || index >= items.length) return;
 
       currentIndex = index;
       const offset = -index * 100;
+      track.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
       track.style.transform = `translateX(${offset}%)`;
 
       // アクティブ状態を更新
@@ -265,9 +267,11 @@ function initializeCarousels() {
     // タッチ開始
     track.addEventListener('touchstart', (e) => {
       startX = e.touches[0].clientX;
+      currentX = startX;
+      startTime = Date.now();
       isDragging = true;
       track.style.transition = 'none';
-    });
+    }, { passive: true });
 
     // タッチ移動
     track.addEventListener('touchmove', (e) => {
@@ -275,31 +279,49 @@ function initializeCarousels() {
       currentX = e.touches[0].clientX;
       const diff = currentX - startX;
       const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
-      track.style.transform = `translateX(${offset}%)`;
-    });
+
+      // 端でのオーバースクロールを制限
+      const maxOffset = 0;
+      const minOffset = -(items.length - 1) * 100;
+      const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
+
+      track.style.transform = `translateX(${clampedOffset}%)`;
+    }, { passive: true });
 
     // タッチ終了
-    track.addEventListener('touchend', (e) => {
+    const handleTouchEnd = () => {
       if (!isDragging) return;
       isDragging = false;
-      track.style.transition = 'transform 0.3s ease';
 
       const diff = currentX - startX;
-      const threshold = track.offsetWidth * 0.2; // 20%以上スワイプで切り替え
+      const duration = Date.now() - startTime;
+      const velocity = Math.abs(diff) / duration; // ピクセル/ミリ秒
 
-      if (diff > threshold && currentIndex > 0) {
+      // 速いスワイプまたは15%以上の移動で切り替え
+      const threshold = track.offsetWidth * 0.15;
+      const isQuickSwipe = velocity > 0.5;
+
+      if ((diff > threshold || isQuickSwipe) && diff > 30 && currentIndex > 0) {
+        // 右スワイプ（戻る）
         showItem(currentIndex - 1);
-      } else if (diff < -threshold && currentIndex < items.length - 1) {
+      } else if ((diff < -threshold || isQuickSwipe) && diff < -30 && currentIndex < items.length - 1) {
+        // 左スワイプ（進む）
         showItem(currentIndex + 1);
       } else {
+        // 元の位置に戻る
         showItem(currentIndex);
       }
-    });
+    };
+
+    track.addEventListener('touchend', handleTouchEnd);
+    track.addEventListener('touchcancel', handleTouchEnd);
 
     // マウスでもスワイプ可能に
     let mouseDown = false;
     track.addEventListener('mousedown', (e) => {
       startX = e.clientX;
+      currentX = startX;
+      startTime = Date.now();
       mouseDown = true;
       isDragging = true;
       track.style.transition = 'none';
@@ -311,33 +333,40 @@ function initializeCarousels() {
       currentX = e.clientX;
       const diff = currentX - startX;
       const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
-      track.style.transform = `translateX(${offset}%)`;
+
+      // 端でのオーバースクロールを制限
+      const maxOffset = 0;
+      const minOffset = -(items.length - 1) * 100;
+      const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
+
+      track.style.transform = `translateX(${clampedOffset}%)`;
     });
 
-    track.addEventListener('mouseup', (e) => {
+    const handleMouseEnd = () => {
       if (!mouseDown) return;
       mouseDown = false;
       isDragging = false;
-      track.style.transition = 'transform 0.3s ease';
 
       const diff = currentX - startX;
-      const threshold = track.offsetWidth * 0.2;
+      const duration = Date.now() - startTime;
+      const velocity = Math.abs(diff) / duration;
 
-      if (diff > threshold && currentIndex > 0) {
+      const threshold = track.offsetWidth * 0.15;
+      const isQuickSwipe = velocity > 0.5;
+
+      if ((diff > threshold || isQuickSwipe) && diff > 30 && currentIndex > 0) {
         showItem(currentIndex - 1);
-      } else if (diff < -threshold && currentIndex < items.length - 1) {
+      } else if ((diff < -threshold || isQuickSwipe) && diff < -30 && currentIndex < items.length - 1) {
         showItem(currentIndex + 1);
       } else {
         showItem(currentIndex);
       }
-    });
+    };
 
+    track.addEventListener('mouseup', handleMouseEnd);
     track.addEventListener('mouseleave', () => {
       if (mouseDown) {
-        mouseDown = false;
-        isDragging = false;
-        track.style.transition = 'transform 0.3s ease';
-        showItem(currentIndex);
+        handleMouseEnd();
       }
     });
 
@@ -347,6 +376,9 @@ function initializeCarousels() {
         showItem(index);
       });
     });
+
+    // 初期化時にトランジションを設定
+    track.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
   });
 }
 
