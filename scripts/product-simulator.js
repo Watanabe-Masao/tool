@@ -80,6 +80,20 @@ export function calculateWeightFromMarkup(afterCost, afterPrice, targetMarkup, c
     return null; // 計算不可能（値入率が高すぎる、または原価が売価以上）
   }
 
+  // 消耗品費が0の場合の特別処理
+  if (consumable === 0) {
+    // 重量に依存しないので、目標markupが達成可能かチェック
+    const actualMarkup = ((afterPrice - afterCost) / afterPrice) * PERCENT_MULTIPLIER;
+    // 目標markupと一致するかチェック（許容誤差0.01%）
+    if (Math.abs(actualMarkup - targetMarkup) < 0.01) {
+      // 一致する場合、任意の有効な重量を返す（100g）
+      return 100;
+    } else {
+      // 一致しない場合、計算不可能
+      return null;
+    }
+  }
+
   const weight = (consumable * GRAMS_PER_100G) / denominator;
 
   return weight > 0 ? weight : null;
