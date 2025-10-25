@@ -14,10 +14,18 @@ import { displayProductSimulation } from './display.js';
  */
 export async function showHistoryModal() {
   const modal = qs('#historyModal');
-  if (!modal) return;
+  if (!modal) {
+    console.error('履歴モーダルが見つかりません');
+    return;
+  }
 
-  modal.showModal();
-  await renderHistoryList();
+  try {
+    modal.showModal();
+    await renderHistoryList();
+  } catch (error) {
+    console.error('履歴モーダルを開く際にエラーが発生しました:', error);
+    showToast('❌ 履歴を読み込めませんでした', 'error');
+  }
 }
 
 /**
@@ -670,8 +678,8 @@ function restoreCalculationResults(mode, yieldMethod, result, input) {
       setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP1, beforeMarkup);
 
       // 100gあたりの売価を計算して表示
-      if (input.boxPriceDirect != null && input.boxWeightDirect != null) {
-        const per100gPrice = (input.boxPriceDirect / (input.boxWeightDirect * 1000)) * 100;
+      if (input.boxPrice != null && input.boxWeight != null) {
+        const per100gPrice = (input.boxPrice / (input.boxWeight * 1000)) * 100;
         setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, yen(toFixed(per100gPrice)));
       }
 
@@ -1014,12 +1022,18 @@ export function initHistoryUI() {
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
     historyBtn.addEventListener('click', showHistoryModal);
+    console.log('履歴ボタン（定額モード）のイベントリスナーを設定しました');
+  } else {
+    console.error('履歴ボタン（定額モード）が見つかりません');
   }
 
   // 履歴ボタン（計量モード）
   const historyBtnWeight = qs('#historyBtnWeight');
   if (historyBtnWeight) {
     historyBtnWeight.addEventListener('click', showHistoryModal);
+    console.log('履歴ボタン（計量モード）のイベントリスナーを設定しました');
+  } else {
+    console.error('履歴ボタン（計量モード）が見つかりません');
   }
 
   // 履歴モーダルを閉じる
