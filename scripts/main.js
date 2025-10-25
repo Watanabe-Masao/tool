@@ -1200,17 +1200,73 @@ function init() {
   // 履歴機能の初期化
   initHistoryUI();
 
-  // Service Workerを登録（PWA対応）
+  // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
+    let refreshing = false;
+
+    // Service Worker登録
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/tool/sw.js')
         .then((registration) => {
           console.log('[PWA] Service Worker registered:', registration.scope);
+
+          // 更新チェック
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('[PWA] New Service Worker found');
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // 新しいバージョンが利用可能
+                console.log('[PWA] New version available');
+                showUpdateNotification(newWorker);
+              }
+            });
+          });
+
+          // 定期的な更新チェック（1時間ごと）
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
         })
         .catch((error) => {
           console.error('[PWA] Service Worker registration failed:', error);
         });
     });
+
+    // Service Worker制御変更時の自動リロード
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('[PWA] Reloading page with new Service Worker');
+        window.location.reload();
+      }
+    });
+  }
+
+  /**
+   * 更新通知UIを表示
+   */
+  function showUpdateNotification(newWorker) {
+    const notification = qs('#updateNotification');
+    const updateBtn = qs('#updateBtn');
+    const dismissBtn = qs('#dismissUpdateBtn');
+
+    if (!notification) return;
+
+    // 通知を表示
+    notification.classList.remove('is-hidden');
+
+    // 更新ボタンクリック
+    updateBtn.addEventListener('click', () => {
+      console.log('[PWA] User triggered update');
+      newWorker.postMessage({ type: 'SKIP_WAITING' });
+    }, { once: true });
+
+    // 閉じるボタンクリック
+    dismissBtn.addEventListener('click', () => {
+      notification.classList.add('is-hidden');
+    }, { once: true });
   }
 }
 
