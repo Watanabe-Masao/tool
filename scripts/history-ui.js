@@ -6,6 +6,7 @@ import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCa
 import { qs, num } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
+import { grossFromMarkup } from './calculation.js';
 
 /**
  * 履歴モーダルを表示
@@ -45,19 +46,74 @@ export async function renderHistoryList(items = null) {
     return;
   }
 
-  // リストを生成
-  listContainer.innerHTML = history.map(item => createHistoryItemHTML(item)).join('');
+  // 商品名とカテゴリーでグループ化
+  const groups = groupHistoryByProduct(history);
+
+  // グループごとにHTMLを生成
+  listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
   // イベントリスナーをバインド
   bindHistoryItemEvents();
+  initializeCarousels();
+}
+
+/**
+ * 履歴を商品名とカテゴリーでグループ化
+ * @param {Array} history - 履歴データ配列
+ * @returns {Array} グループ化された配列
+ */
+function groupHistoryByProduct(history) {
+  const groupMap = new Map();
+
+  history.forEach(item => {
+    const key = `${item.name || '無題'}_${item.category || 'unknown'}`;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, []);
+    }
+    groupMap.get(key).push(item);
+  });
+
+  // Map を配列に変換
+  return Array.from(groupMap.values());
+}
+
+/**
+ * 履歴グループのHTMLを生成（カルーセル対応）
+ * @param {Array} group - 同一商品名の履歴アイテム配列
+ * @returns {string} HTML文字列
+ */
+function createHistoryGroupHTML(group) {
+  if (group.length === 0) return '';
+
+  const hasMultiple = group.length > 1;
+  const groupId = `group-${group[0].id}`;
+
+  return `
+    <li class="history-group">
+      <div class="history-carousel" id="${groupId}">
+        <div class="history-carousel-track">
+          ${group.map((item, index) => createHistoryItemHTML(item, index === 0)).join('')}
+        </div>
+        ${hasMultiple ? `
+          <div class="history-carousel-indicators">
+            ${group.map((_, index) => `
+              <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
+            `).join('')}
+          </div>
+          <div class="history-carousel-count">${group.length}件の履歴</div>
+        ` : ''}
+      </div>
+    </li>
+  `;
 }
 
 /**
  * 履歴アイテムのHTMLを生成
  * @param {Object} item - 履歴データ
+ * @param {boolean} isFirst - 最初のアイテムかどうか
  * @returns {string} HTML文字列
  */
-function createHistoryItemHTML(item) {
+function createHistoryItemHTML(item, isFirst = true) {
   const date = new Date(item.timestamp);
   const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
@@ -76,19 +132,21 @@ function createHistoryItemHTML(item) {
   // 値入率を取得
   const markup = item.result?.am ?? item.result?.afterMarkup ?? item.result?.markup;
 
-  // 歩留まり率を取得（result.yr が優先、なければ input.yieldRate）
-  const yieldRate = item.result?.yr ?? item.input?.yieldRate;
+  // 歩留まり率を取得（result.yieldRate が優先、なければ input.yieldRate）
+  const yieldRate = item.result?.yieldRate ?? item.input?.yieldRate;
 
-  // 最終粗利率を計算（値入率から計算）
+  // 最終粗利率を取得（値引後最終粗利率）
   let finalGross = '-';
-  if (typeof markup === 'number') {
-    // 粗利率 = 値入率 / (1 - 値引率/100)、値引率が0の場合は粗利率 = 値入率
-    // ここでは保存時の値入率をそのまま最終粗利率として表示
+  if (item.result?.discountGross != null && typeof item.result.discountGross === 'number') {
+    // 保存されている値引後粗利率を使用
+    finalGross = item.result.discountGross.toFixed(1);
+  } else if (typeof markup === 'number') {
+    // 値引後粗利率がない場合は値入率を使用（後方互換性）
     finalGross = markup.toFixed(1);
   }
 
   return `
-    <li class="history-item" data-id="${item.id}">
+    <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
       <div class="history-item-header">
         <div class="history-item-title">
           <span class="history-item-icon">${categoryIcon}</span>
@@ -113,7 +171,7 @@ function createHistoryItemHTML(item) {
         <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
         <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
       </div>
-    </li>
+    </div>
   `;
 }
 
@@ -166,6 +224,128 @@ function bindHistoryItemEvents() {
     btn.addEventListener('click', async (e) => {
       const id = parseInt(e.target.dataset.id);
       await handleDeleteCalculation(id);
+    });
+  });
+}
+
+/**
+ * カルーセルを初期化（スワイプ対応）
+ */
+function initializeCarousels() {
+  document.querySelectorAll('.history-carousel').forEach(carousel => {
+    const track = carousel.querySelector('.history-carousel-track');
+    const items = Array.from(track.children);
+    const indicators = Array.from(carousel.querySelectorAll('.carousel-indicator'));
+
+    if (items.length <= 1) return; // 1件のみの場合はスワイプ不要
+
+    let currentIndex = 0;
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    // スワイプでアイテムを切り替え
+    function showItem(index) {
+      if (index < 0 || index >= items.length) return;
+
+      currentIndex = index;
+      const offset = -index * 100;
+      track.style.transform = `translateX(${offset}%)`;
+
+      // アクティブ状態を更新
+      items.forEach((item, i) => {
+        item.classList.toggle('active', i === index);
+      });
+
+      indicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+      });
+    }
+
+    // タッチ開始
+    track.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+      track.style.transition = 'none';
+    });
+
+    // タッチ移動
+    track.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      currentX = e.touches[0].clientX;
+      const diff = currentX - startX;
+      const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
+      track.style.transform = `translateX(${offset}%)`;
+    });
+
+    // タッチ終了
+    track.addEventListener('touchend', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      track.style.transition = 'transform 0.3s ease';
+
+      const diff = currentX - startX;
+      const threshold = track.offsetWidth * 0.2; // 20%以上スワイプで切り替え
+
+      if (diff > threshold && currentIndex > 0) {
+        showItem(currentIndex - 1);
+      } else if (diff < -threshold && currentIndex < items.length - 1) {
+        showItem(currentIndex + 1);
+      } else {
+        showItem(currentIndex);
+      }
+    });
+
+    // マウスでもスワイプ可能に
+    let mouseDown = false;
+    track.addEventListener('mousedown', (e) => {
+      startX = e.clientX;
+      mouseDown = true;
+      isDragging = true;
+      track.style.transition = 'none';
+      e.preventDefault();
+    });
+
+    track.addEventListener('mousemove', (e) => {
+      if (!mouseDown) return;
+      currentX = e.clientX;
+      const diff = currentX - startX;
+      const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
+      track.style.transform = `translateX(${offset}%)`;
+    });
+
+    track.addEventListener('mouseup', (e) => {
+      if (!mouseDown) return;
+      mouseDown = false;
+      isDragging = false;
+      track.style.transition = 'transform 0.3s ease';
+
+      const diff = currentX - startX;
+      const threshold = track.offsetWidth * 0.2;
+
+      if (diff > threshold && currentIndex > 0) {
+        showItem(currentIndex - 1);
+      } else if (diff < -threshold && currentIndex < items.length - 1) {
+        showItem(currentIndex + 1);
+      } else {
+        showItem(currentIndex);
+      }
+    });
+
+    track.addEventListener('mouseleave', () => {
+      if (mouseDown) {
+        mouseDown = false;
+        isDragging = false;
+        track.style.transition = 'transform 0.3s ease';
+        showItem(currentIndex);
+      }
+    });
+
+    // インジケータークリック
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        showItem(index);
+      });
     });
   });
 }
@@ -537,6 +717,13 @@ export async function handleSaveCalculation() {
   const inputData = collectInputValues(mode);
   const resultData = appState.getSnapshot(); // 計算結果
   const productData = appState.getProductData(); // 商品化データ
+
+  // 値引後最終粗利率を計算して追加
+  if (productData && Number.isFinite(productData.markup)) {
+    const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
+    const discountGross = grossFromMarkup(productData.markup, discountRate);
+    resultData.discountGross = discountGross;
+  }
 
   try {
     await saveCalculation(name, mode, inputData, resultData, category, productData);
