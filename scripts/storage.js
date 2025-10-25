@@ -189,6 +189,39 @@ export async function importData(file) {
 }
 
 /**
+ * データをクリップボードにコピー
+ * @returns {Promise<number>} コピーされたデータ件数
+ */
+export async function copyDataToClipboard() {
+  try {
+    const jsonString = await db.exportJSON();
+    const data = JSON.parse(jsonString);
+    await navigator.clipboard.writeText(jsonString);
+    console.log('Data copied to clipboard');
+    return data.length;
+  } catch (error) {
+    console.error('Failed to copy data to clipboard:', error);
+    throw error;
+  }
+}
+
+/**
+ * クリップボードからデータをインポート
+ * @returns {Promise<number>} インポートされたデータ件数
+ */
+export async function pasteDataFromClipboard() {
+  try {
+    const jsonString = await navigator.clipboard.readText();
+    const count = await db.importJSON(jsonString);
+    console.log(`Pasted ${count} calculations from clipboard`);
+    return count;
+  } catch (error) {
+    console.error('Failed to paste data from clipboard:', error);
+    throw error;
+  }
+}
+
+/**
  * すべての履歴をクリア
  * @returns {Promise<void>}
  */

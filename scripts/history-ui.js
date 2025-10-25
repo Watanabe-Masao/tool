@@ -2,7 +2,7 @@
  * 履歴機能のUI管理
  */
 
-import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
+import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames, copyDataToClipboard, pasteDataFromClipboard } from './storage.js';
 import { qs, num } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
@@ -206,24 +206,37 @@ function bindHistoryItemEvents() {
   // 読込ボタン
   document.querySelectorAll('.btn-load').forEach(btn => {
     btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const id = parseInt(e.target.dataset.id);
       await handleLoadCalculation(id);
+    });
+    // タッチイベントでもスワイプを防止
+    btn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
     });
   });
 
   // 編集ボタン
   document.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = parseInt(e.target.dataset.id);
       handleEditCalculation(id);
+    });
+    btn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
     });
   });
 
   // 削除ボタン
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const id = parseInt(e.target.dataset.id);
       await handleDeleteCalculation(id);
+    });
+    btn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
     });
   });
 }
@@ -244,6 +257,7 @@ function initializeCarousels() {
     let currentX = 0;
     let isDragging = false;
     let startTime = 0;
+    let touchStartedOnButton = false;
 
     // スワイプでアイテムを切り替え
     function showItem(index, smooth = true) {
@@ -266,6 +280,15 @@ function initializeCarousels() {
 
     // タッチ開始
     track.addEventListener('touchstart', (e) => {
+      // ボタン上でのタッチはスワイプを無効化
+      const target = e.target;
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        touchStartedOnButton = true;
+        isDragging = false;
+        return;
+      }
+
+      touchStartedOnButton = false;
       startX = e.touches[0].clientX;
       currentX = startX;
       startTime = Date.now();
@@ -275,7 +298,7 @@ function initializeCarousels() {
 
     // タッチ移動
     track.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
+      if (!isDragging || touchStartedOnButton) return;
       currentX = e.touches[0].clientX;
       const diff = currentX - startX;
       const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
@@ -290,21 +313,24 @@ function initializeCarousels() {
 
     // タッチ終了
     const handleTouchEnd = () => {
-      if (!isDragging) return;
+      if (!isDragging || touchStartedOnButton) {
+        touchStartedOnButton = false;
+        return;
+      }
       isDragging = false;
 
       const diff = currentX - startX;
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration; // ピクセル/ミリ秒
 
-      // 速いスワイプまたは15%以上の移動で切り替え
-      const threshold = track.offsetWidth * 0.15;
-      const isQuickSwipe = velocity > 0.5;
+      // 速いスワイプまたは10%以上の移動で切り替え（感度を大幅に向上）
+      const threshold = track.offsetWidth * 0.1;
+      const isQuickSwipe = velocity > 0.3;
 
-      if ((diff > threshold || isQuickSwipe) && diff > 30 && currentIndex > 0) {
+      if ((diff > threshold || isQuickSwipe) && diff > 20 && currentIndex > 0) {
         // 右スワイプ（戻る）
         showItem(currentIndex - 1);
-      } else if ((diff < -threshold || isQuickSwipe) && diff < -30 && currentIndex < items.length - 1) {
+      } else if ((diff < -threshold || isQuickSwipe) && diff < -20 && currentIndex < items.length - 1) {
         // 左スワイプ（進む）
         showItem(currentIndex + 1);
       } else {
@@ -318,7 +344,18 @@ function initializeCarousels() {
 
     // マウスでもスワイプ可能に
     let mouseDown = false;
+    let mouseStartedOnButton = false;
+
     track.addEventListener('mousedown', (e) => {
+      // ボタン上でのマウスダウンはスワイプを無効化
+      const target = e.target;
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        mouseStartedOnButton = true;
+        mouseDown = false;
+        return;
+      }
+
+      mouseStartedOnButton = false;
       startX = e.clientX;
       currentX = startX;
       startTime = Date.now();
@@ -329,7 +366,7 @@ function initializeCarousels() {
     });
 
     track.addEventListener('mousemove', (e) => {
-      if (!mouseDown) return;
+      if (!mouseDown || mouseStartedOnButton) return;
       currentX = e.clientX;
       const diff = currentX - startX;
       const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
@@ -343,7 +380,10 @@ function initializeCarousels() {
     });
 
     const handleMouseEnd = () => {
-      if (!mouseDown) return;
+      if (!mouseDown || mouseStartedOnButton) {
+        mouseStartedOnButton = false;
+        return;
+      }
       mouseDown = false;
       isDragging = false;
 
@@ -351,12 +391,12 @@ function initializeCarousels() {
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration;
 
-      const threshold = track.offsetWidth * 0.15;
-      const isQuickSwipe = velocity > 0.5;
+      const threshold = track.offsetWidth * 0.1;
+      const isQuickSwipe = velocity > 0.3;
 
-      if ((diff > threshold || isQuickSwipe) && diff > 30 && currentIndex > 0) {
+      if ((diff > threshold || isQuickSwipe) && diff > 20 && currentIndex > 0) {
         showItem(currentIndex - 1);
-      } else if ((diff < -threshold || isQuickSwipe) && diff < -30 && currentIndex < items.length - 1) {
+      } else if ((diff < -threshold || isQuickSwipe) && diff < -20 && currentIndex < items.length - 1) {
         showItem(currentIndex + 1);
       } else {
         showItem(currentIndex);
@@ -823,6 +863,31 @@ export async function handleImport() {
 }
 
 /**
+ * データをクリップボードにコピー
+ */
+export async function handleCopyData() {
+  try {
+    const count = await copyDataToClipboard();
+    showToast(`✅ ${count}件のデータをコピーしました\n他のデバイスで「データを貼付け」から復元できます`);
+  } catch (error) {
+    showToast('❌ コピーに失敗しました\nクリップボードへのアクセスを許可してください', 'error');
+  }
+}
+
+/**
+ * クリップボードからデータを貼付け
+ */
+export async function handlePasteData() {
+  try {
+    const count = await pasteDataFromClipboard();
+    await renderHistoryList();
+    showToast(`✅ ${count}件のデータを貼付けました`);
+  } catch (error) {
+    showToast('❌ 貼付けに失敗しました\nクリップボードにデータがあるか確認してください', 'error');
+  }
+}
+
+/**
  * すべての履歴をクリア
  */
 export async function handleClearAll() {
@@ -897,6 +962,18 @@ export function initHistoryUI() {
   const searchInput = qs('#historySearch');
   if (searchInput) {
     searchInput.addEventListener('input', handleSearch);
+  }
+
+  // データをコピー
+  const copyDataBtn = qs('#copyDataBtn');
+  if (copyDataBtn) {
+    copyDataBtn.addEventListener('click', handleCopyData);
+  }
+
+  // データを貼付け
+  const pasteDataBtn = qs('#pasteDataBtn');
+  if (pasteDataBtn) {
+    pasteDataBtn.addEventListener('click', handlePasteData);
   }
 
   // エクスポート
