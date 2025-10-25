@@ -456,6 +456,17 @@ async function handleLoadCalculation(id) {
         displayProductSimulation(data.product);
       }
 
+      // 商品化シミュレーションのフィールドが入力されている場合、計算を実行
+      // snapshotが有効で、expWeightが入力されている場合のみトリガー
+      const snapshot = appState.getSnapshot();
+      if (snapshot.isValid() && data.input.expWeight != null) {
+        // inputイベントをトリガーして商品化シミュレーションを再計算
+        const expWeightEl = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
+        if (expWeightEl && expWeightEl.value) {
+          expWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+
       showToast('✅ データを読み込みました');
     }, 100);
 
