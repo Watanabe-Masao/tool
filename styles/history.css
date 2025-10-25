@@ -128,8 +128,6 @@
   border-radius: 12px;
   background: #f9f9f9;
   border: 2px solid #e0e0e0;
-  /* 横スワイプを優先 */
-  touch-action: pan-y;
 }
 
 /* カルーセルトラック */
@@ -139,8 +137,7 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  /* 横スワイプをブロックしない */
-  touch-action: none;
+  touch-action: pan-y;
   will-change: transform;
   /* タッチエリアを広げる */
   padding: 0.5em 0;
