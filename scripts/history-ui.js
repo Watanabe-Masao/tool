@@ -64,9 +64,28 @@ function createHistoryItemHTML(item) {
   const modeLabel = item.mode === 'fixed' ? '定額売価' : '計量売価';
   const categoryIcon = getCategoryIcon(item.category);
 
-  // 計算結果の主要データを表示
-  const markup = item.result?.afterMarkup || item.result?.markup || '-';
-  const gross = item.result?.afterGross || '-';
+  // モードに応じて表示ラベルと値を取得
+  const isFixedMode = item.mode === 'fixed';
+  const costLabel = isFixedMode ? '1個あたりの原価' : '1箱あたりの原価';
+  const priceLabel = isFixedMode ? '1個あたりの売価' : '1箱あたりの売価';
+
+  // 原価・売価を取得
+  const cost = isFixedMode ? item.input?.unitCost : item.input?.boxCost;
+  const price = isFixedMode ? item.input?.unitPrice : item.input?.boxPrice;
+
+  // 値入率を取得
+  const markup = item.result?.am ?? item.result?.afterMarkup ?? item.result?.markup;
+
+  // 歩留まり率を取得（result.yr が優先、なければ input.yieldRate）
+  const yieldRate = item.result?.yr ?? item.input?.yieldRate;
+
+  // 最終粗利率を計算（値入率から計算）
+  let finalGross = '-';
+  if (typeof markup === 'number') {
+    // 粗利率 = 値入率 / (1 - 値引率/100)、値引率が0の場合は粗利率 = 値入率
+    // ここでは保存時の値入率をそのまま最終粗利率として表示
+    finalGross = markup.toFixed(1);
+  }
 
   return `
     <li class="history-item" data-id="${item.id}">
@@ -78,8 +97,15 @@ function createHistoryItemHTML(item) {
         <div class="history-item-mode">${modeLabel}</div>
       </div>
       <div class="history-item-stats">
-        <span class="history-stat">値入率: <strong>${typeof markup === 'number' ? markup.toFixed(1) : markup}%</strong></span>
-        <span class="history-stat">粗利率: <strong>${typeof gross === 'number' ? gross.toFixed(1) : gross}%</strong></span>
+        <div class="history-stats-row">
+          <span class="history-stat">${costLabel}: <strong>${typeof cost === 'number' ? cost.toFixed(0) : '-'}円</strong></span>
+          <span class="history-stat">${priceLabel}: <strong>${typeof price === 'number' ? price.toFixed(0) : '-'}円</strong></span>
+          <span class="history-stat">値入率: <strong>${typeof markup === 'number' ? markup.toFixed(1) : '-'}%</strong></span>
+        </div>
+        <div class="history-stats-row">
+          <span class="history-stat">歩留まり率: <strong>${typeof yieldRate === 'number' ? yieldRate.toFixed(1) : '-'}%</strong></span>
+          <span class="history-stat">最終粗利率: <strong>${finalGross}%</strong></span>
+        </div>
       </div>
       <div class="history-item-date">${dateStr}</div>
       <div class="history-item-actions">

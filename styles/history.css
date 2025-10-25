@@ -164,13 +164,21 @@
 
 .history-item-stats {
   display: flex;
-  gap: 1.5em;
+  flex-direction: column;
+  gap: 0.5em;
   margin-bottom: 0.5em;
 }
 
+.history-stats-row {
+  display: flex;
+  gap: 1.5em;
+  flex-wrap: wrap;
+}
+
 .history-stat {
-  font-size: 0.95em;
+  font-size: 0.9em;
   color: #666;
+  white-space: nowrap;
 }
 
 .history-stat strong {
