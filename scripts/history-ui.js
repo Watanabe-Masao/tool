@@ -3,10 +3,10 @@
  */
 
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
-import { qs, num, show, hide } from './dom-utils.js';
+import { qs, num, show, hide, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
-import { grossFromMarkup } from './calculation.js';
+import { grossFromMarkup, toFixed } from './calculation.js';
 
 /**
  * 履歴モーダルを表示
@@ -587,46 +587,96 @@ function restoreCalculationResults(mode, yieldMethod, result) {
   // ステップを最終ステップに設定
   appState.setStep(3);
 
-  // モードとメソッドに応じてステップ結果コンテナを表示
+  // 結果値をフォーマット
+  const beforeCost = yen(toFixed(result.beforeCost));
+  const beforePrice = yen(toFixed(result.beforePrice));
+  const beforeMarkup = pct(toFixed(result.beforeMarkup));
+  const afterCost = yen(toFixed(result.afterCost));
+  const afterPrice = yen(toFixed(result.afterPrice));
+  const afterMarkup = pct(toFixed(result.afterMarkup));
+  const yieldRate = pct(toFixed(result.yieldRate));
+
+  // モードとメソッドに応じてステップ結果コンテナを表示し、値を設定
   if (mode === MODE.FIXED) {
     if (yieldMethod === 'calculate') {
       // 重量から計算モード
       show(UI_ELEMENTS.FIXED_STEP1);
       show(UI_ELEMENTS.FIXED_STEP1_RESULT);
+      setText(UI_ELEMENTS.BEFORE_COST_STEP1, beforeCost);
+      setText(UI_ELEMENTS.BEFORE_PRICE_STEP1, beforePrice);
+      setText(UI_ELEMENTS.BEFORE_MARKUP_STEP1, beforeMarkup);
+
       show(UI_ELEMENTS.FIXED_STEP2);
       show(UI_ELEMENTS.FIXED_STEP2_RESULT);
+      setText(UI_ELEMENTS.YIELD_RATE_STEP2, yieldRate);
+
       show(UI_ELEMENTS.FIXED_STEP3);
       show(UI_ELEMENTS.FIXED_STEP3_RESULT);
+      setText(UI_ELEMENTS.AFTER_COST_STEP3, afterCost);
+      setText(UI_ELEMENTS.AFTER_PRICE_STEP3, afterPrice);
+      setText(UI_ELEMENTS.AFTER_MARKUP_STEP3, afterMarkup);
     } else {
       // 歩留まり率直接入力モード
       show(UI_ELEMENTS.FIXED_DIRECT_STEP1);
       show(UI_ELEMENTS.FIXED_DIRECT_STEP2);
       show(UI_ELEMENTS.FIXED_DIRECT_STEP2_RESULT);
+      setText(UI_ELEMENTS.YIELD_RATE_DIRECT_STEP2, yieldRate);
+      setText(UI_ELEMENTS.BEFORE_COST_DIRECT_STEP2, beforeCost);
+      setText(UI_ELEMENTS.BEFORE_PRICE_DIRECT_STEP2, beforePrice);
+      setText(UI_ELEMENTS.BEFORE_MARKUP_DIRECT_STEP2, beforeMarkup);
+
       show(UI_ELEMENTS.FIXED_DIRECT_STEP3);
       show(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
+      setText(UI_ELEMENTS.AFTER_COST_DIRECT_STEP3, afterCost);
+      setText(UI_ELEMENTS.AFTER_PRICE_DIRECT_STEP3, afterPrice);
+      setText(UI_ELEMENTS.AFTER_MARKUP_DIRECT_STEP3, afterMarkup);
     }
   } else {
     if (yieldMethod === 'calculate') {
       // 重量から計算モード
       show(UI_ELEMENTS.WEIGHT_STEP1);
       show(UI_ELEMENTS.WEIGHT_STEP1_RESULT);
+      setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_STEP1, beforeCost);
+      setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_STEP1, beforePrice);
+      setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_STEP1, beforeMarkup);
+
       show(UI_ELEMENTS.WEIGHT_STEP2);
       show(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
+      setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_STEP2, yieldRate);
+
       show(UI_ELEMENTS.WEIGHT_STEP3);
       show(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
+      setText(UI_ELEMENTS.AFTER_COST_WEIGHT_STEP3, afterCost);
+      setText(UI_ELEMENTS.AFTER_PRICE_WEIGHT_STEP3, afterPrice);
+      setText(UI_ELEMENTS.AFTER_MARKUP_WEIGHT_STEP3, afterMarkup);
     } else {
       // 歩留まり率直接入力モード
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1);
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP1_RESULT);
+      setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_DIRECT_STEP1, beforeCost);
+      setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_DIRECT_STEP1, beforePrice);
+      setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP1, beforeMarkup);
+
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
+      setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_DIRECT_STEP2, yieldRate);
+
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
+      setText(UI_ELEMENTS.AFTER_COST_WEIGHT_DIRECT_STEP3, afterCost);
+      setText(UI_ELEMENTS.AFTER_PRICE_WEIGHT_DIRECT_STEP3, afterPrice);
+      setText(UI_ELEMENTS.AFTER_MARKUP_WEIGHT_DIRECT_STEP3, afterMarkup);
     }
   }
 
   // 最終結果セクションを表示
   show(UI_ELEMENTS.RESULTS);
+
+  // 粗利率を計算して表示
+  const beforeGross = grossFromMarkup(result.beforeMarkup, 0);
+  const afterGross = grossFromMarkup(result.afterMarkup, 0);
+  setText(UI_ELEMENTS.BEFORE_GROSS, pct(toFixed(beforeGross)));
+  setText(UI_ELEMENTS.AFTER_GROSS, pct(toFixed(afterGross)));
 }
 
 /**
