@@ -2,7 +2,7 @@
  * 履歴機能のUI管理
  */
 
-import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames, copyDataToClipboard, pasteDataFromClipboard } from './storage.js';
+import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
 import { qs, num } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
@@ -265,7 +265,7 @@ function initializeCarousels() {
 
       currentIndex = index;
       const offset = -index * 100;
-      track.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+      track.style.transition = smooth ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
       track.style.transform = `translateX(${offset}%)`;
 
       // アクティブ状態を更新
@@ -278,8 +278,8 @@ function initializeCarousels() {
       });
     }
 
-    // タッチ開始
-    track.addEventListener('touchstart', (e) => {
+    // タッチ開始 - カルーセル全体で検出
+    carousel.addEventListener('touchstart', (e) => {
       // ボタン上でのタッチはスワイプを無効化
       const target = e.target;
       if (target.tagName === 'BUTTON' || target.closest('button')) {
@@ -296,12 +296,13 @@ function initializeCarousels() {
       track.style.transition = 'none';
     }, { passive: true });
 
-    // タッチ移動
-    track.addEventListener('touchmove', (e) => {
+    // タッチ移動 - カルーセル全体で検出
+    carousel.addEventListener('touchmove', (e) => {
       if (!isDragging || touchStartedOnButton) return;
+
       currentX = e.touches[0].clientX;
       const diff = currentX - startX;
-      const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
+      const offset = -currentIndex * 100 + (diff / carousel.offsetWidth) * 100;
 
       // 端でのオーバースクロールを制限
       const maxOffset = 0;
@@ -315,6 +316,7 @@ function initializeCarousels() {
     const handleTouchEnd = () => {
       if (!isDragging || touchStartedOnButton) {
         touchStartedOnButton = false;
+        isDragging = false;
         return;
       }
       isDragging = false;
@@ -323,30 +325,35 @@ function initializeCarousels() {
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration; // ピクセル/ミリ秒
 
-      // 速いスワイプまたは10%以上の移動で切り替え（感度を大幅に向上）
-      const threshold = track.offsetWidth * 0.1;
-      const isQuickSwipe = velocity > 0.3;
+      // より敏感な設定：5%の移動または速度0.2で反応
+      const threshold = carousel.offsetWidth * 0.05;
+      const isQuickSwipe = velocity > 0.2;
 
-      if ((diff > threshold || isQuickSwipe) && diff > 20 && currentIndex > 0) {
-        // 右スワイプ（戻る）
-        showItem(currentIndex - 1);
-      } else if ((diff < -threshold || isQuickSwipe) && diff < -20 && currentIndex < items.length - 1) {
-        // 左スワイプ（進む）
-        showItem(currentIndex + 1);
+      if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
+        if (diff > 0 && currentIndex > 0) {
+          // 右スワイプ（戻る）
+          showItem(currentIndex - 1);
+        } else if (diff < 0 && currentIndex < items.length - 1) {
+          // 左スワイプ（進む）
+          showItem(currentIndex + 1);
+        } else {
+          // 端に到達している場合は元の位置に戻る
+          showItem(currentIndex);
+        }
       } else {
         // 元の位置に戻る
         showItem(currentIndex);
       }
     };
 
-    track.addEventListener('touchend', handleTouchEnd);
-    track.addEventListener('touchcancel', handleTouchEnd);
+    carousel.addEventListener('touchend', handleTouchEnd, { passive: true });
+    carousel.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
-    // マウスでもスワイプ可能に
+    // マウスでもスワイプ可能に - カルーセル全体で検出
     let mouseDown = false;
     let mouseStartedOnButton = false;
 
-    track.addEventListener('mousedown', (e) => {
+    carousel.addEventListener('mousedown', (e) => {
       // ボタン上でのマウスダウンはスワイプを無効化
       const target = e.target;
       if (target.tagName === 'BUTTON' || target.closest('button')) {
@@ -365,11 +372,12 @@ function initializeCarousels() {
       e.preventDefault();
     });
 
-    track.addEventListener('mousemove', (e) => {
+    carousel.addEventListener('mousemove', (e) => {
       if (!mouseDown || mouseStartedOnButton) return;
+
       currentX = e.clientX;
       const diff = currentX - startX;
-      const offset = -currentIndex * 100 + (diff / track.offsetWidth) * 100;
+      const offset = -currentIndex * 100 + (diff / carousel.offsetWidth) * 100;
 
       // 端でのオーバースクロールを制限
       const maxOffset = 0;
@@ -382,6 +390,7 @@ function initializeCarousels() {
     const handleMouseEnd = () => {
       if (!mouseDown || mouseStartedOnButton) {
         mouseStartedOnButton = false;
+        mouseDown = false;
         return;
       }
       mouseDown = false;
@@ -391,20 +400,24 @@ function initializeCarousels() {
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diff) / duration;
 
-      const threshold = track.offsetWidth * 0.1;
-      const isQuickSwipe = velocity > 0.3;
+      const threshold = carousel.offsetWidth * 0.05;
+      const isQuickSwipe = velocity > 0.2;
 
-      if ((diff > threshold || isQuickSwipe) && diff > 20 && currentIndex > 0) {
-        showItem(currentIndex - 1);
-      } else if ((diff < -threshold || isQuickSwipe) && diff < -20 && currentIndex < items.length - 1) {
-        showItem(currentIndex + 1);
+      if ((Math.abs(diff) > threshold || isQuickSwipe) && Math.abs(diff) > 10) {
+        if (diff > 0 && currentIndex > 0) {
+          showItem(currentIndex - 1);
+        } else if (diff < 0 && currentIndex < items.length - 1) {
+          showItem(currentIndex + 1);
+        } else {
+          showItem(currentIndex);
+        }
       } else {
         showItem(currentIndex);
       }
     };
 
-    track.addEventListener('mouseup', handleMouseEnd);
-    track.addEventListener('mouseleave', () => {
+    carousel.addEventListener('mouseup', handleMouseEnd);
+    carousel.addEventListener('mouseleave', () => {
       if (mouseDown) {
         handleMouseEnd();
       }
@@ -863,31 +876,6 @@ export async function handleImport() {
 }
 
 /**
- * データをクリップボードにコピー
- */
-export async function handleCopyData() {
-  try {
-    const count = await copyDataToClipboard();
-    showToast(`✅ ${count}件のデータをコピーしました\n他のデバイスで「データを貼付け」から復元できます`);
-  } catch (error) {
-    showToast('❌ コピーに失敗しました\nクリップボードへのアクセスを許可してください', 'error');
-  }
-}
-
-/**
- * クリップボードからデータを貼付け
- */
-export async function handlePasteData() {
-  try {
-    const count = await pasteDataFromClipboard();
-    await renderHistoryList();
-    showToast(`✅ ${count}件のデータを貼付けました`);
-  } catch (error) {
-    showToast('❌ 貼付けに失敗しました\nクリップボードにデータがあるか確認してください', 'error');
-  }
-}
-
-/**
  * すべての履歴をクリア
  */
 export async function handleClearAll() {
@@ -962,18 +950,6 @@ export function initHistoryUI() {
   const searchInput = qs('#historySearch');
   if (searchInput) {
     searchInput.addEventListener('input', handleSearch);
-  }
-
-  // データをコピー
-  const copyDataBtn = qs('#copyDataBtn');
-  if (copyDataBtn) {
-    copyDataBtn.addEventListener('click', handleCopyData);
-  }
-
-  // データを貼付け
-  const pasteDataBtn = qs('#pasteDataBtn');
-  if (pasteDataBtn) {
-    pasteDataBtn.addEventListener('click', handlePasteData);
   }
 
   // エクスポート
