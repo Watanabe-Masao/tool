@@ -7,6 +7,7 @@ import { qs, num, show, hide, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup, toFixed } from './calculation.js';
+import { displayProductSimulation } from './display.js';
 
 /**
  * 履歴モーダルを表示
@@ -441,8 +442,12 @@ async function handleLoadCalculation(id) {
         restoreCalculationResults(data.mode, data.input.yieldMethod, data.result);
       }
 
-      // 計算を強制的にトリガー
-      triggerCalculation(data.mode, data.input.yieldMethod);
+      // 商品化データがある場合は復元
+      if (data.product && data.product.price != null) {
+        appState.updateProductData(data.product);
+        displayProductSimulation(data.product);
+      }
+
       showToast('✅ データを読み込みました');
     }, 100);
 
@@ -677,29 +682,6 @@ function restoreCalculationResults(mode, yieldMethod, result) {
   const afterGross = grossFromMarkup(result.afterMarkup, 0);
   setText(UI_ELEMENTS.BEFORE_GROSS, pct(toFixed(beforeGross)));
   setText(UI_ELEMENTS.AFTER_GROSS, pct(toFixed(afterGross)));
-}
-
-/**
- * 計算をトリガー（inputイベントを発火）
- * @param {string} mode
- * @param {string} yieldMethod
- */
-function triggerCalculation(mode, yieldMethod) {
-  // 最後の入力フィールドでinputイベントをトリガーして計算を実行
-  let lastField;
-  if (mode === MODE.FIXED) {
-    lastField = yieldMethod === 'calculate' ?
-      qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`) :
-      qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
-  } else {
-    lastField = yieldMethod === 'calculate' ?
-      qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`) :
-      qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
-  }
-
-  if (lastField) {
-    lastField.dispatchEvent(new Event('input', { bubbles: true }));
-  }
 }
 
 /**
