@@ -358,14 +358,38 @@ export async function showSaveDialog() {
   const dialog = qs('#saveDialog');
   if (!dialog) return;
 
+  // カテゴリー選択をクリア
+  const categorySelect = qs('#saveCategory');
+  if (categorySelect) {
+    categorySelect.value = '';
+  }
+
   // 商品名入力フィールドをクリア
   const nameInput = qs('#saveName');
   if (nameInput) {
     nameInput.value = '';
   }
 
-  // 商品名プリセットを更新
+  // 商品名プリセットをクリア（カテゴリー未選択のため）
   await updateProductNamePresets();
+
+  // カテゴリー変更時のイベントリスナーを設定
+  if (categorySelect) {
+    // 既存のリスナーを削除してから新しく追加
+    const newCategorySelect = categorySelect.cloneNode(true);
+    categorySelect.parentNode.replaceChild(newCategorySelect, categorySelect);
+
+    newCategorySelect.addEventListener('change', async (e) => {
+      const selectedCategory = e.target.value;
+      // 商品名をクリア
+      const nameInput = qs('#saveName');
+      if (nameInput) {
+        nameInput.value = '';
+      }
+      // 選択されたカテゴリーに応じて商品名をフィルタリング
+      await updateProductNamePresets(selectedCategory || null);
+    });
+  }
 
   dialog.showModal();
 }
@@ -442,14 +466,19 @@ function collectInputValues(mode) {
 /**
  * 商品名プリセットを更新
  */
-async function updateProductNamePresets() {
+async function updateProductNamePresets(category = null) {
   try {
-    const productNames = await getUniqueProductNames();
+    const productNames = await getUniqueProductNames(category);
     const datalist = qs('#productNameList');
-    if (datalist && productNames.length > 0) {
-      datalist.innerHTML = productNames
-        .map(name => `<option value="${escapeHTML(name)}">`)
-        .join('');
+    if (datalist) {
+      if (productNames.length > 0) {
+        datalist.innerHTML = productNames
+          .map(name => `<option value="${escapeHTML(name)}">`)
+          .join('');
+      } else {
+        // カテゴリーが選択されているが商品がない場合
+        datalist.innerHTML = '';
+      }
     }
   } catch (error) {
     console.error('Failed to update product name presets:', error);

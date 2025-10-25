@@ -397,19 +397,19 @@
     <h3 class="dialog-title">💾 計算を保存</h3>
     <div class="dialog-body">
       <label class="field">
-        <span>商品名 <span style="color: #e53935;">*</span></span>
-        <input type="text" id="saveName" list="productNameList" placeholder="例: トマト" autocomplete="off" />
-        <datalist id="productNameList">
-          <!-- JavaScriptで動的に生成 -->
-        </datalist>
-      </label>
-      <label class="field">
         <span>カテゴリ <span style="color: #e53935;">*</span></span>
         <select id="saveCategory" required>
           <option value="">選択してください</option>
           <option value="vegetable">🥬 野菜</option>
           <option value="fruit">🍎 果実</option>
         </select>
+      </label>
+      <label class="field">
+        <span>商品名 <span style="color: #e53935;">*</span></span>
+        <input type="text" id="saveName" list="productNameList" placeholder="例: トマト" autocomplete="off" />
+        <datalist id="productNameList">
+          <!-- JavaScriptで動的に生成 -->
+        </datalist>
       </label>
     </div>
     <div class="dialog-actions">

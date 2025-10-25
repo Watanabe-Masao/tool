@@ -206,12 +206,16 @@ export async function clearAllHistory() {
  * ユニークな商品名一覧を取得（プリセット用）
  * @returns {Promise<Array<string>>} 商品名の配列
  */
-export async function getUniqueProductNames() {
+export async function getUniqueProductNames(category = null) {
   try {
     const history = await db.getAll({ sortBy: 'name', order: 'asc' });
     const names = new Set();
     history.forEach(item => {
       if (item.name && item.name.trim() !== '') {
+        // カテゴリーが指定されている場合はフィルタリング
+        if (category && item.category !== category) {
+          return;
+        }
         names.add(item.name.trim());
       }
     });
