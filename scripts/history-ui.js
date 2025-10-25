@@ -439,7 +439,7 @@ async function handleLoadCalculation(id) {
 
       // 結果データがある場合はappStateに復元
       if (data.result) {
-        restoreCalculationResults(data.mode, data.input.yieldMethod, data.result);
+        restoreCalculationResults(data.mode, data.input.yieldMethod, data.result, data.input);
       }
 
       // 商品化データがある場合は復元
@@ -576,8 +576,9 @@ function restoreAllInputFields(mode, input) {
  * @param {string} mode
  * @param {string} yieldMethod
  * @param {Object} result
+ * @param {Object} input
  */
-function restoreCalculationResults(mode, yieldMethod, result) {
+function restoreCalculationResults(mode, yieldMethod, result, input) {
   // appStateのsnapshotを更新
   appState.updateSnapshot({
     ac: result.afterCost,
@@ -645,6 +646,12 @@ function restoreCalculationResults(mode, yieldMethod, result) {
       setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_STEP1, beforePrice);
       setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_STEP1, beforeMarkup);
 
+      // 100gあたりの売価を計算して表示
+      if (input.boxPrice != null && input.boxWeight != null) {
+        const per100gPrice = (input.boxPrice / (input.boxWeight * 1000)) * 100;
+        setText(UI_ELEMENTS.PER_100G_DISPLAY, yen(toFixed(per100gPrice)));
+      }
+
       show(UI_ELEMENTS.WEIGHT_STEP2);
       show(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
       setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_STEP2, yieldRate);
@@ -661,6 +668,12 @@ function restoreCalculationResults(mode, yieldMethod, result) {
       setText(UI_ELEMENTS.BEFORE_COST_WEIGHT_DIRECT_STEP1, beforeCost);
       setText(UI_ELEMENTS.BEFORE_PRICE_WEIGHT_DIRECT_STEP1, beforePrice);
       setText(UI_ELEMENTS.BEFORE_MARKUP_WEIGHT_DIRECT_STEP1, beforeMarkup);
+
+      // 100gあたりの売価を計算して表示
+      if (input.boxPriceDirect != null && input.boxWeightDirect != null) {
+        const per100gPrice = (input.boxPriceDirect / (input.boxWeightDirect * 1000)) * 100;
+        setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, yen(toFixed(per100gPrice)));
+      }
 
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2);
       show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
@@ -997,10 +1010,16 @@ function showToast(message, type = 'success') {
  * 履歴機能の初期化
  */
 export function initHistoryUI() {
-  // 履歴ボタン
+  // 履歴ボタン（定額モード）
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
     historyBtn.addEventListener('click', showHistoryModal);
+  }
+
+  // 履歴ボタン（計量モード）
+  const historyBtnWeight = qs('#historyBtnWeight');
+  if (historyBtnWeight) {
+    historyBtnWeight.addEventListener('click', showHistoryModal);
   }
 
   // 履歴モーダルを閉じる
