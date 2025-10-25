@@ -2,7 +2,7 @@
  * メインアプリケーションロジック（段階的フォーム対応 - 2モード）
  */
 
-import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed, afterCostPer100 } from './calculation.js';
+import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed } from './calculation.js';
 import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES } from './constants.js';
@@ -628,13 +628,6 @@ function getReverseSimulationInputs() {
       if (!Number.isFinite(inputs.afterPrice)) {
         inputs.afterPrice = num(FIXED_FIELDS.CALCULATE.AFTER_PRICE_100);
       }
-      // afterCostをsnapshotまたは入力フィールドから計算
-      if (!Number.isFinite(inputs.afterCost)) {
-        const beforeCost = per100FromPerUnit(inputs.unitCost, inputs.beforeWeight);
-        if (Number.isFinite(beforeCost) && Number.isFinite(inputs.yieldRate)) {
-          inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRate);
-        }
-      }
     } else {
       // 歩留まり率を直接入力モード
       inputs.unitCost = num(FIXED_FIELDS.DIRECT.UNIT_COST);
@@ -644,13 +637,6 @@ function getReverseSimulationInputs() {
       // afterPriceをsnapshotまたは入力フィールドから取得
       if (!Number.isFinite(inputs.afterPrice)) {
         inputs.afterPrice = num(FIXED_FIELDS.DIRECT.AFTER_PRICE_100);
-      }
-      // afterCostをsnapshotまたは入力フィールドから計算
-      if (!Number.isFinite(inputs.afterCost)) {
-        const beforeCost = per100FromPerUnit(inputs.unitCost, inputs.beforeWeight);
-        if (Number.isFinite(beforeCost) && Number.isFinite(inputs.yieldRateDirect)) {
-          inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRateDirect);
-        }
       }
     }
   } else {
@@ -673,13 +659,6 @@ function getReverseSimulationInputs() {
       if (!Number.isFinite(inputs.afterPrice)) {
         inputs.afterPrice = num(WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100);
       }
-      // afterCostをsnapshotまたは入力フィールドから計算
-      if (!Number.isFinite(inputs.afterCost)) {
-        const beforeCost = per100FromBox(inputs.boxCost, inputs.boxWeight);
-        if (Number.isFinite(beforeCost) && Number.isFinite(inputs.yieldRate)) {
-          inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRate);
-        }
-      }
     } else {
       // 歩留まり率を直接入力モード
       inputs.boxCost = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
@@ -689,13 +668,6 @@ function getReverseSimulationInputs() {
       // afterPriceをsnapshotまたは入力フィールドから取得
       if (!Number.isFinite(inputs.afterPrice)) {
         inputs.afterPrice = num(WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100);
-      }
-      // afterCostをsnapshotまたは入力フィールドから計算
-      if (!Number.isFinite(inputs.afterCost)) {
-        const beforeCost = per100FromBox(inputs.boxCost, inputs.boxWeight);
-        if (Number.isFinite(beforeCost) && Number.isFinite(inputs.yieldRateDirect)) {
-          inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRateDirect);
-        }
       }
     }
   }
