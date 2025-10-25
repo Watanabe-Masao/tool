@@ -174,6 +174,20 @@ export async function importData(file) {
     reader.onload = async (event) => {
       try {
         const jsonString = event.target.result;
+
+        // JSON形式の検証
+        let parsedData;
+        try {
+          parsedData = JSON.parse(jsonString);
+        } catch (parseError) {
+          throw new Error('Invalid JSON format: ' + parseError.message);
+        }
+
+        // データ形式の検証
+        if (!Array.isArray(parsedData)) {
+          throw new Error('Invalid data format: expected array');
+        }
+
         const count = await db.importJSON(jsonString);
         console.log(`Imported ${count} calculations`);
         resolve(count);
@@ -183,7 +197,12 @@ export async function importData(file) {
       }
     };
 
-    reader.onerror = () => reject(reader.error);
+    reader.onerror = () => {
+      const error = reader.error || new Error('Failed to read file');
+      console.error('File reader error:', error);
+      reject(error);
+    };
+
     reader.readAsText(file);
   });
 }

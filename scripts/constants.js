@@ -222,3 +222,8 @@ export const DISCOUNT = {
   MAX: 100,
   SLIDER_MAX: 50
 };
+
+// 計算許容誤差
+export const TOLERANCE = {
+  MARKUP: 0.01  // 値入率の許容誤差（%）
+};

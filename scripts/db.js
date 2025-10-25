@@ -56,6 +56,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
 
       const record = {
@@ -81,6 +83,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
 
       let request;
@@ -122,6 +126,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readonly');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(id);
 
@@ -141,6 +147,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
 
       const getRequest = store.get(id);
@@ -178,6 +186,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
       const request = store.delete(id);
 
@@ -215,17 +225,34 @@ export class YieldCalculatorDB {
    * @returns {Promise<number>} インポートされた件数
    */
   async importJSON(jsonString) {
-    const data = JSON.parse(jsonString);
+    let data;
+    try {
+      data = JSON.parse(jsonString);
+    } catch (parseError) {
+      throw new Error('Invalid JSON format: ' + parseError.message);
+    }
+
     if (!Array.isArray(data)) {
       throw new Error('Invalid JSON format: expected array');
     }
 
     let count = 0;
+    const errors = [];
+
     for (const item of data) {
-      // IDを除いて保存（新規IDが割り当てられる）
-      const { id, ...itemWithoutId } = item;
-      await this.save(itemWithoutId);
-      count++;
+      try {
+        // IDを除いて保存（新規IDが割り当てられる）
+        const { id, ...itemWithoutId } = item;
+        await this.save(itemWithoutId);
+        count++;
+      } catch (error) {
+        errors.push({ item, error: error.message });
+        console.error('Failed to import item:', item, error);
+      }
+    }
+
+    if (errors.length > 0) {
+      console.warn(`Imported ${count} items with ${errors.length} errors`);
     }
 
     return count;
@@ -240,6 +267,8 @@ export class YieldCalculatorDB {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      transaction.onerror = () => reject(transaction.error);
+
       const store = transaction.objectStore(STORE_NAME);
       const request = store.clear();
 
