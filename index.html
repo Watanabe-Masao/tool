@@ -524,6 +524,31 @@
             </div>
             <p id="validityExplanation" class="validity-explanation"></p>
 
+            <!-- 外れ値情報 -->
+            <div id="outlierInfo" class="outlier-info is-hidden">
+              <div class="outlier-info-header">
+                <strong>⚠️ 外れ値の検出</strong>
+                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します">?</span>
+              </div>
+              <div class="outlier-info-content">
+                <div class="outlier-details">
+                  <div class="outlier-row">
+                    <span class="outlier-label">検出された外れ値：</span>
+                    <span id="outlierCount" class="outlier-value">-</span>
+                  </div>
+                  <div class="outlier-row">
+                    <span class="outlier-label">外れ値のリスト：</span>
+                    <span id="outlierList" class="outlier-list">-</span>
+                  </div>
+                  <div class="outlier-row">
+                    <span class="outlier-label">正常範囲：</span>
+                    <span id="outlierRange" class="outlier-value">-</span>
+                  </div>
+                </div>
+                <p id="outlierRecommendation" class="outlier-recommendation"></p>
+              </div>
+            </div>
+
             <!-- 推奨代表値 -->
             <div id="recommendedValue" class="recommended-value is-hidden">
               <div class="recommended-value-header">

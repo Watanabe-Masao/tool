@@ -731,6 +731,82 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   border-left: 4px solid #667eea;
 }
 
+/* 外れ値情報 */
+.outlier-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fff3cd 0%, #fff8e1 100%);
+  border-radius: 8px;
+  border: 2px solid #ffc107;
+}
+
+.outlier-info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.outlier-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.outlier-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outlier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.outlier-row:last-child {
+  border-bottom: none;
+}
+
+.outlier-label {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.outlier-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f57c00;
+  text-align: right;
+}
+
+.outlier-list {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f57c00;
+  text-align: right;
+  word-break: break-word;
+}
+
+.outlier-recommendation {
+  margin: 0;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text);
+  border-left: 4px solid #ffc107;
+}
+
 /* 統計タイプ選択 */
 .stats-type-selector {
   display: flex;

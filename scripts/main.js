@@ -1602,6 +1602,36 @@ function displayStatistics(stats, unit = '%') {
 }
 
 /**
+ * 外れ値を検出（IQR法）
+ * @param {Array<number>} values - データ配列
+ * @param {Object} stats - 統計データ
+ * @returns {Object} { outliers: 外れ値の配列, cleanedValues: 外れ値を除外したデータ, lowerBound: 下限, upperBound: 上限 }
+ */
+function detectOutliers(values, stats) {
+  // IQR法: Q1 - 1.5*IQR より小さい、またはQ3 + 1.5*IQR より大きい値を外れ値とする
+  const lowerBound = stats.q1 - 1.5 * stats.iqr;
+  const upperBound = stats.q3 + 1.5 * stats.iqr;
+
+  const outliers = [];
+  const cleanedValues = [];
+
+  values.forEach(value => {
+    if (value < lowerBound || value > upperBound) {
+      outliers.push(value);
+    } else {
+      cleanedValues.push(value);
+    }
+  });
+
+  return {
+    outliers,
+    cleanedValues,
+    lowerBound,
+    upperBound
+  };
+}
+
+/**
  * 必要サンプルサイズを計算
  * @param {number} stdDev - 標準偏差
  * @param {number} toleranceError - 許容誤差（E）
@@ -1713,11 +1743,89 @@ function displaySampleSizeValidation() {
     }
   }
 
+  // 外れ値を検出して表示
+  const outlierResult = detectOutliers(values, stats);
+  displayOutlierInfo(outlierResult, statsType, isValid);
+
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
-  displayRecommendedValue(stats, isValid);
+  // 外れ値がある場合は、除外後のデータで推奨値を計算
+  if (outlierResult.outliers.length > 0 && outlierResult.cleanedValues.length >= 2) {
+    const cleanedStats = calculateStatistics(outlierResult.cleanedValues);
+    displayRecommendedValue(cleanedStats, isValid);
+  } else {
+    displayRecommendedValue(stats, isValid);
+  }
 
   // 結果を表示
   resultDiv.classList.remove('is-hidden');
+}
+
+/**
+ * 外れ値情報を表示
+ * @param {Object} outlierResult - 外れ値検出結果
+ * @param {string} statsType - 統計タイプ
+ * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
+ */
+function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
+  const outlierInfoDiv = qs('#outlierInfo');
+  const outlierCount = qs('#outlierCount');
+  const outlierList = qs('#outlierList');
+  const outlierRange = qs('#outlierRange');
+  const outlierRecommendation = qs('#outlierRecommendation');
+
+  if (!outlierInfoDiv) {
+    return;
+  }
+
+  // 外れ値がない場合は非表示
+  if (outlierResult.outliers.length === 0) {
+    outlierInfoDiv.classList.add('is-hidden');
+    return;
+  }
+
+  // 統計タイプに応じた単位を取得
+  const unit = statsType === 'yieldRate' ? '%' : 'g';
+
+  const formatValue = (value) => {
+    if (unit === '%') {
+      return pct(toFixed(value));
+    } else {
+      return `${toFixed(value)}${unit}`;
+    }
+  };
+
+  // 外れ値の件数
+  if (outlierCount) {
+    outlierCount.textContent = `${outlierResult.outliers.length}件`;
+  }
+
+  // 外れ値のリスト
+  if (outlierList) {
+    const outlierValues = outlierResult.outliers.map(v => formatValue(v)).join(', ');
+    outlierList.textContent = outlierValues;
+  }
+
+  // 正常範囲
+  if (outlierRange) {
+    const lowerBound = formatValue(outlierResult.lowerBound);
+    const upperBound = formatValue(outlierResult.upperBound);
+    outlierRange.textContent = `${lowerBound} ～ ${upperBound}`;
+  }
+
+  // 推奨メッセージ
+  if (outlierRecommendation) {
+    const cleanedCount = outlierResult.cleanedValues.length;
+    const totalCount = outlierResult.outliers.length + cleanedCount;
+
+    if (cleanedCount >= 2) {
+      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されました。外れ値を除外した${cleanedCount}件のデータ（元データ${totalCount}件中）で統計分析を行うことを推奨します。下記の推奨代表値は外れ値除外後のデータに基づいています。`;
+    } else {
+      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されましたが、除外後のデータが不足しています。データの見直しをお勧めします。`;
+    }
+  }
+
+  // 外れ値情報を表示
+  outlierInfoDiv.classList.remove('is-hidden');
 }
 
 /**
