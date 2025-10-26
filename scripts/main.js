@@ -1008,7 +1008,8 @@ function handleReverseCalculation() {
         );
         label = '必要な歩留まり率';
         unit = '%';
-        currentValue = inputs.yieldRateDirect; // 現在の歩留まり率
+        // 入力方法に応じて現在の歩留まり率を取得
+        currentValue = inputs.isCalculateMode ? inputs.yieldRate : inputs.yieldRateDirect;
         if (result === null) {
           // 計算可能な最大値入率を算出
           if (Number.isFinite(inputs.beforeCost) && Number.isFinite(inputs.afterPrice)) {
