@@ -487,7 +487,7 @@
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
                 許容誤差（E）
-                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です">?</span>
+                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です" data-formula-name="許容誤差（E）" data-formula="E = 許容される誤差の範囲" data-formula-desc="推定値と真の値の間で許容できる誤差の大きさです。例えば許容誤差を2.0%とした場合、真の値±2.0%の範囲内で推定したいということを意味します。小さいほど精度が高くなりますが、その分より多くのサンプル数が必要になります。" data-formula-example="歩留まり率を推定する際、許容誤差2.0%なら、真の歩留まり率が50%の場合、48%～52%の範囲で推定できれば良いということです。">?</span>
               </label>
               <div class="input-with-unit">
                 <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" placeholder="例: 2.0" />
@@ -498,7 +498,7 @@
             <div class="validation-input-group">
               <label for="confidenceLevel" class="validation-label">
                 信頼水準
-                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます">?</span>
+                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます" data-formula-name="信頼水準（Confidence Level）" data-formula="信頼水準 = 1 - α（有意水準）" data-formula-desc="推定値が正しい範囲に含まれる確率です。95%の信頼水準なら、同じ方法で100回サンプリングと推定を繰り返した場合、約95回は真の値が推定範囲内に含まれることを意味します。一般的には90%、95%、99%が使われ、95%が最も標準的です。" data-formula-example="信頼水準95%で歩留まり率を48%～52%と推定した場合、真の歩留まり率がこの範囲内にある確率が95%ということです。残りの5%は推定が外れる可能性があります。">?</span>
               </label>
               <select id="confidenceLevel" class="validation-select">
                 <option value="90">90%（Z=1.645）</option>
