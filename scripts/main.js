@@ -855,10 +855,10 @@ function handleReverseCalculation() {
         if (inputs.consumable === 0) {
           // 消耗品費が0の場合、重量に依存しないので特別なメッセージ
           const actualMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
-          errorMsg = `消耗品費が0の場合、重量に関係なく値入率は${toFixed(actualMarkup)}%になります。目標値入率を${toFixed(actualMarkup)}%に設定してください。`;
+          errorMsg = `消耗品費が0の場合、重量に関係なく値入率は${toFixed(actualMarkup)}%になります。値引後最終粗利率を${toFixed(actualMarkup)}%に設定してください。`;
         } else {
           const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
-          errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+          errorMsg = `目標値入率が${toFixed(maxMarkup)}%を超えます。値引後最終粗利率を0〜${toFixed(maxMarkup)}%の範囲で設定してください。`;
         }
       }
       break;
@@ -872,7 +872,7 @@ function handleReverseCalculation() {
       label = '必要な100gあたり売価';
       unit = '円';
       if (result === null) {
-        errorMsg = '目標値入率は100%未満で設定してください';
+        errorMsg = '値引後最終粗利率が100%以上は計算できません。値引後最終粗利率を0〜99.99%の範囲で設定してください。';
       }
       break;
 
@@ -936,8 +936,12 @@ function handleReverseCalculation() {
       }
       unit = '円';
       if (result === null || result < 0) {
-        const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
-        errorMsg = `目標値入率は${toFixed(maxMarkup)}%以下で設定してください`;
+        if (Number.isFinite(inputs.afterCost) && Number.isFinite(inputs.afterPrice)) {
+          const maxMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * 100;
+          errorMsg = `目標値入率が${toFixed(maxMarkup)}%を超えます。値引後最終粗利率を0〜${toFixed(maxMarkup)}%の範囲で設定してください。`;
+        } else {
+          errorMsg = '計算に必要な情報が不足しています。入力値を確認してください。';
+        }
       }
       break;
 
@@ -972,16 +976,12 @@ function handleReverseCalculation() {
         label = '必要な加工後重量';
         unit = 'g';
         if (result === null) {
-          // 目標値入率と現在の値入率を比較してメッセージを分岐
-          if (Number.isFinite(inputs.afterCost)) {
-            const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
-            if (targetMarkup < currentMarkup) {
-              errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
-            } else {
-              errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
-            }
+          // 計算可能な最大値入率を算出
+          if (Number.isFinite(inputs.beforeCost) && Number.isFinite(inputs.afterPrice)) {
+            const maxMarkup = ((inputs.afterPrice - inputs.beforeCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+            errorMsg = `目標値入率が${toFixed(maxMarkup)}%を超えます。値引後最終粗利率を0〜${toFixed(maxMarkup)}%の範囲で設定してください。`;
           } else {
-            errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+            errorMsg = '計算に必要な情報が不足しています。入力値を確認してください。';
           }
         }
       } else {
@@ -1002,16 +1002,12 @@ function handleReverseCalculation() {
         label = '必要な歩留まり率';
         unit = '%';
         if (result === null) {
-          // 目標値入率と現在の値入率を比較してメッセージを分岐
-          if (Number.isFinite(inputs.afterCost)) {
-            const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
-            if (targetMarkup < currentMarkup) {
-              errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
-            } else {
-              errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
-            }
+          // 計算可能な最大値入率を算出
+          if (Number.isFinite(inputs.beforeCost) && Number.isFinite(inputs.afterPrice)) {
+            const maxMarkup = ((inputs.afterPrice - inputs.beforeCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+            errorMsg = `目標値入率が${toFixed(maxMarkup)}%を超えます。値引後最終粗利率を0〜${toFixed(maxMarkup)}%の範囲で設定してください。`;
           } else {
-            errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+            errorMsg = '計算に必要な情報が不足しています。入力値を確認してください。';
           }
         }
       }
