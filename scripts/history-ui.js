@@ -775,10 +775,7 @@ export async function showSaveDialog() {
   const dialogTitle = qs('#saveDialog .dialog-title');
   const confirmBtn = qs('#confirmSaveBtn');
 
-  if (saveDialogMode === 'overwrite') {
-    if (dialogTitle) dialogTitle.textContent = '💾 上書き保存';
-    if (confirmBtn) confirmBtn.textContent = '上書き保存';
-  } else if (saveDialogMode === 'new') {
+  if (saveDialogMode === 'new') {
     if (dialogTitle) dialogTitle.textContent = '💾 新規保存';
     if (confirmBtn) confirmBtn.textContent = '新規保存';
   } else {
@@ -937,6 +934,7 @@ export function updateSaveButtonsVisibility() {
 
 /**
  * 上書き保存（履歴から読み込んだ計算を更新）
+ * ダイアログを表示せず、既存の商品名・カテゴリで直接保存
  */
 export async function handleOverwriteSave() {
   const loadedHistoryId = appState.getLoadedHistoryId();
@@ -945,39 +943,32 @@ export async function handleOverwriteSave() {
     return;
   }
 
-  const nameInput = qs('#saveName');
-  const categorySelect = qs('#saveCategory');
-
-  if (!nameInput) return;
-
-  const name = nameInput.value.trim();
-  if (name === '') {
-    showToast('❌ 商品名を入力してください', 'error');
-    return;
-  }
-
-  const category = categorySelect ? categorySelect.value : null;
-  if (!category) {
-    showToast('❌ カテゴリを選択してください', 'error');
-    return;
-  }
-
-  // 現在の入力値と計算結果を取得
-  const mode = appState.getMode();
-  const inputData = collectInputValues(mode);
-  const resultData = appState.getSnapshot(); // 計算結果
-  const productData = appState.getProductData(); // 商品化データ
-
-  // 値引後最終粗利率を計算して追加
-  if (productData && Number.isFinite(productData.markup)) {
-    const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
-    const discountGross = grossFromMarkup(productData.markup, discountRate);
-    resultData.discountGross = discountGross;
-  }
-
   try {
+    // 既存の履歴データを取得して商品名とカテゴリを使用
+    const existingData = await loadCalculation(loadedHistoryId);
+
+    if (!existingData) {
+      showToast('❌ 元の履歴データが見つかりません', 'error');
+      return;
+    }
+
+    const name = existingData.name;
+    const category = existingData.category;
+
+    // 現在の入力値と計算結果を取得
+    const mode = appState.getMode();
+    const inputData = collectInputValues(mode);
+    const resultData = appState.getSnapshot(); // 計算結果
+    const productData = appState.getProductData(); // 商品化データ
+
+    // 値引後最終粗利率を計算して追加
+    if (productData && Number.isFinite(productData.markup)) {
+      const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
+      const discountGross = grossFromMarkup(productData.markup, discountRate);
+      resultData.discountGross = discountGross;
+    }
+
     await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
-    closeSaveDialog();
     showToast('✅ 上書き保存しました');
     // 商品名プリセットを更新
     await updateProductNamePresets();
@@ -1209,13 +1200,10 @@ export function initHistoryUI() {
     });
   }
 
-  // 上書き保存ボタン
+  // 上書き保存ボタン（ダイアログを表示せず直接保存）
   const overwriteSaveBtn = qs('#overwriteSaveBtn');
   if (overwriteSaveBtn) {
-    overwriteSaveBtn.addEventListener('click', () => {
-      saveDialogMode = 'overwrite';
-      showSaveDialog();
-    });
+    overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
   }
 
   // 新規保存ボタン
@@ -1232,9 +1220,8 @@ export function initHistoryUI() {
   if (confirmSaveBtn) {
     confirmSaveBtn.addEventListener('click', () => {
       // 保存モードに応じて適切なハンドラを呼び出す
-      if (saveDialogMode === 'overwrite') {
-        handleOverwriteSave();
-      } else if (saveDialogMode === 'new') {
+      // 上書き保存はダイアログを表示しないので、ここではnewとnormalのみ
+      if (saveDialogMode === 'new') {
         handleNewSave();
       } else {
         handleSaveCalculation();
