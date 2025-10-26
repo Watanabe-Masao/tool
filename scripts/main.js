@@ -1488,12 +1488,12 @@ function calculateStatistics(values) {
   const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
 
   // 歪度（Skewness）
-  const skewness = n > 2
+  const skewness = (n > 2 && stdDev > 0)
     ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 3), 0) / n
     : 0;
 
   // 尖度（Kurtosis）- 超過尖度
-  const kurtosis = n > 3
+  const kurtosis = (n > 3 && stdDev > 0)
     ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 4), 0) / n - 3
     : 0;
 
@@ -1609,6 +1609,11 @@ function displayStatistics(stats, unit = '%') {
  * @returns {number} 必要サンプルサイズ
  */
 function calculateRequiredSampleSize(stdDev, toleranceError, confidenceLevel) {
+  // 標準偏差がゼロの場合（全データが同じ値）は計算不要
+  if (stdDev === 0) {
+    return 1; // 最小サンプルサイズ
+  }
+
   // Z値のマッピング
   const zValues = {
     90: 1.645,
@@ -1745,7 +1750,7 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
 
   const formatValue = (value) => {
     if (unit === '%') {
-      return `${toFixed(value)}%`;
+      return pct(toFixed(value));
     } else {
       return `${toFixed(value)}${unit}`;
     }
@@ -1832,17 +1837,8 @@ function renderStatsChart(values, stats, typeName, unit) {
     case 'scatter':
       option = createScatterOption(values, stats, typeName, unit);
       break;
-    case 'line':
-      option = createLineOption(values, stats, typeName, unit);
-      break;
     case 'normal':
       option = createNormalDistOption(values, stats, typeName, unit);
-      break;
-    case 'violin':
-      option = createViolinOption(values, stats, typeName, unit);
-      break;
-    case 'cdf':
-      option = createCDFOption(values, stats, typeName, unit);
       break;
     case 'qqplot':
       option = createQQPlotOption(values, stats, typeName, unit);
