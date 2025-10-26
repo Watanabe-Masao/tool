@@ -790,13 +790,14 @@ function handleReverseCalculation() {
       return;
     }
     const result = calculateDiscountRateFromGross(productData.markup, targetMarkup);
+    const currentDiscountRate = num(UI_ELEMENTS.DISCOUNT_RATE) ?? 0; // 現在の値引率
     if (result !== null && Number.isFinite(result)) {
       if (result < 0) {
         displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
       } else if (result > 100) {
         displayReverseError('値引率', `目標粗利率は${toFixed(productData.markup)}%以下で設定してください`);
       } else {
-        displayReverseSimulation(result, '必要な値引率', '%');
+        displayReverseSimulation(result, '必要な値引率', '%', currentDiscountRate);
         // 結果の値を保存（クリック時に使用）
         const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
         if (reverseResultStat) {
@@ -845,12 +846,14 @@ function handleReverseCalculation() {
   let label = '';
   let unit = '';
   let errorMsg = '';
+  let currentValue = null; // 現在の値を格納
 
   switch (calcTarget) {
     case 'weight':
       result = calculateWeightFromMarkup(inputs.afterCost, inputs.afterPrice, targetMarkup, inputs.consumable);
       label = '必要な重量';
       unit = 'g';
+      currentValue = inputs.weight; // 現在の重量
       if (result === null) {
         if (inputs.consumable === 0) {
           // 消耗品費が0の場合、重量に依存しないので特別なメッセージ
@@ -871,6 +874,7 @@ function handleReverseCalculation() {
       result = calculatePriceFromMarkup(inputs.afterCost, inputs.weight, targetMarkup, inputs.consumable);
       label = '必要な100gあたり売価';
       unit = '円';
+      currentValue = inputs.afterPrice; // 現在の100gあたり売価
       if (result === null) {
         errorMsg = '値引後最終粗利率が100%以上は計算できません。値引後最終粗利率を0〜99.99%の範囲で設定してください。';
       }
@@ -908,6 +912,7 @@ function handleReverseCalculation() {
           inputs.consumable
         );
         label = '必要な1個あたりの原価';
+        currentValue = inputs.unitCost; // 現在の1個あたりの原価
       } else {
         // ========================================
         // 計量売価→計量加工: 1箱あたりの原価を逆算
@@ -933,6 +938,7 @@ function handleReverseCalculation() {
           inputs.consumable
         );
         label = '必要な1箱あたりの原価';
+        currentValue = inputs.boxCost; // 現在の1箱あたりの原価
       }
       unit = '円';
       if (result === null || result < 0) {
@@ -975,6 +981,7 @@ function handleReverseCalculation() {
         );
         label = '必要な加工後重量';
         unit = 'g';
+        currentValue = inputs.afterWeight; // 現在の加工後重量
         if (result === null) {
           // 計算可能な最大値入率を算出
           if (Number.isFinite(inputs.beforeCost) && Number.isFinite(inputs.afterPrice)) {
@@ -1001,6 +1008,7 @@ function handleReverseCalculation() {
         );
         label = '必要な歩留まり率';
         unit = '%';
+        currentValue = inputs.yieldRateDirect; // 現在の歩留まり率
         if (result === null) {
           // 計算可能な最大値入率を算出
           if (Number.isFinite(inputs.beforeCost) && Number.isFinite(inputs.afterPrice)) {
@@ -1014,11 +1022,11 @@ function handleReverseCalculation() {
       break;
   }
 
-  console.log('[逆算] 計算結果:', { result, label, unit, errorMsg });
+  console.log('[逆算] 計算結果:', { result, label, unit, currentValue, errorMsg });
 
   if (result !== null && Number.isFinite(result) && result >= 0) {
     console.log('[逆算] 結果を表示します');
-    displayReverseSimulation(result, label, unit);
+    displayReverseSimulation(result, label, unit, currentValue);
     // 結果の値を保存（クリック時に使用）
     const reverseResultStat = qs(`#${UI_ELEMENTS.REVERSE_RESULT_STAT}`);
     if (reverseResultStat) {
