@@ -1531,6 +1531,9 @@ function displayCurrentStatistics() {
   const selectedType = selectElement?.value || 'yieldRate';
   const data = window.yieldStatsData;
 
+  // 統計タイプが変更されたら外れ値の除外状態をリセット
+  manuallyExcludedOutliers.clear();
+
   if (!data) return;
 
   const values = data[selectedType];
@@ -1747,9 +1750,15 @@ function displaySampleSizeValidation() {
   const outlierResult = detectOutliers(values, stats);
   displayOutlierInfo(outlierResult, statsType, isValid);
 
+  // 手動除外された外れ値を反映したデータを計算
+  const manuallyCleanedValues = values.filter(v => !manuallyExcludedOutliers.has(v));
+
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
-  // 外れ値がある場合は、除外後のデータで推奨値を計算
-  if (outlierResult.outliers.length > 0 && outlierResult.cleanedValues.length >= 2) {
+  // 手動除外がある場合はそれを優先、なければ自動検出の除外を使用
+  if (manuallyExcludedOutliers.size > 0 && manuallyCleanedValues.length >= 2) {
+    const cleanedStats = calculateStatistics(manuallyCleanedValues);
+    displayRecommendedValue(cleanedStats, isValid);
+  } else if (outlierResult.outliers.length > 0 && outlierResult.cleanedValues.length >= 2) {
     const cleanedStats = calculateStatistics(outlierResult.cleanedValues);
     displayRecommendedValue(cleanedStats, isValid);
   } else {
@@ -1760,6 +1769,9 @@ function displaySampleSizeValidation() {
   resultDiv.classList.remove('is-hidden');
 }
 
+// 外れ値の除外状態を管理
+let manuallyExcludedOutliers = new Set();
+
 /**
  * 外れ値情報を表示
  * @param {Object} outlierResult - 外れ値検出結果
@@ -1769,9 +1781,9 @@ function displaySampleSizeValidation() {
 function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   const outlierInfoDiv = qs('#outlierInfo');
   const outlierCount = qs('#outlierCount');
-  const outlierList = qs('#outlierList');
   const outlierRange = qs('#outlierRange');
   const outlierRecommendation = qs('#outlierRecommendation');
+  const outlierCheckboxList = qs('#outlierCheckboxList');
 
   if (!outlierInfoDiv) {
     return;
@@ -1780,6 +1792,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   // 外れ値がない場合は非表示
   if (outlierResult.outliers.length === 0) {
     outlierInfoDiv.classList.add('is-hidden');
+    manuallyExcludedOutliers.clear();
     return;
   }
 
@@ -1799,12 +1812,6 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
     outlierCount.textContent = `${outlierResult.outliers.length}件`;
   }
 
-  // 外れ値のリスト
-  if (outlierList) {
-    const outlierValues = outlierResult.outliers.map(v => formatValue(v)).join(', ');
-    outlierList.textContent = outlierValues;
-  }
-
   // 正常範囲
   if (outlierRange) {
     const lowerBound = formatValue(outlierResult.lowerBound);
@@ -1812,20 +1819,68 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
     outlierRange.textContent = `${lowerBound} ～ ${upperBound}`;
   }
 
+  // チェックボックスリストを生成
+  if (outlierCheckboxList) {
+    outlierCheckboxList.innerHTML = '';
+
+    outlierResult.outliers.forEach((outlierValue, index) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'outlier-checkbox-item';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = `outlier-${index}`;
+      checkbox.value = outlierValue;
+      checkbox.checked = manuallyExcludedOutliers.has(outlierValue);
+      checkbox.addEventListener('change', () => handleOutlierCheckboxChange());
+
+      const label = document.createElement('label');
+      label.htmlFor = `outlier-${index}`;
+      label.className = 'outlier-checkbox-label';
+      label.textContent = formatValue(outlierValue);
+
+      itemDiv.appendChild(checkbox);
+      itemDiv.appendChild(label);
+      outlierCheckboxList.appendChild(itemDiv);
+    });
+  }
+
+  // 手動除外数を計算
+  const manuallyExcludedCount = manuallyExcludedOutliers.size;
+  const remainingOutliersCount = outlierResult.outliers.length - manuallyExcludedCount;
+  const remainingDataCount = outlierResult.cleanedValues.length + remainingOutliersCount;
+
   // 推奨メッセージ
   if (outlierRecommendation) {
-    const cleanedCount = outlierResult.cleanedValues.length;
-    const totalCount = outlierResult.outliers.length + cleanedCount;
+    const totalCount = outlierResult.outliers.length + outlierResult.cleanedValues.length;
 
-    if (cleanedCount >= 2) {
-      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されました。外れ値を除外した${cleanedCount}件のデータ（元データ${totalCount}件中）で統計分析を行うことを推奨します。下記の推奨代表値は外れ値除外後のデータに基づいています。`;
+    if (manuallyExcludedCount > 0) {
+      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値を検出。現在${manuallyExcludedCount}件を除外設定中です。除外後は${remainingDataCount}件のデータ（元データ${totalCount}件中）で統計分析を行います。`;
+    } else if (remainingDataCount >= 2) {
+      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されました。チェックボックスで除外する外れ値を選択してください。除外後のデータで統計分析を行うことを推奨します。`;
     } else {
-      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されましたが、除外後のデータが不足しています。データの見直しをお勧めします。`;
+      outlierRecommendation.textContent = `${outlierResult.outliers.length}件の外れ値が検出されましたが、除外後のデータが不足する可能性があります。データの見直しをお勧めします。`;
     }
   }
 
   // 外れ値情報を表示
   outlierInfoDiv.classList.remove('is-hidden');
+}
+
+/**
+ * 外れ値チェックボックスの変更を処理
+ */
+function handleOutlierCheckboxChange() {
+  // チェックボックスの状態を読み取り
+  manuallyExcludedOutliers.clear();
+
+  const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]:checked');
+  checkboxes.forEach(checkbox => {
+    manuallyExcludedOutliers.add(parseFloat(checkbox.value));
+  });
+
+  // サンプルサイズ妥当性判断を再実行
+  displaySampleSizeValidation();
 }
 
 /**
@@ -2795,6 +2850,23 @@ function init() {
 
   qs('#confidenceLevel')?.addEventListener('change', () => {
     displaySampleSizeValidation();
+  });
+
+  // 外れ値の全選択・全解除ボタン
+  qs('#selectAllOutliers')?.addEventListener('click', () => {
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    handleOutlierCheckboxChange();
+  });
+
+  qs('#deselectAllOutliers')?.addEventListener('click', () => {
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    handleOutlierCheckboxChange();
   });
 
   // 商品化シミュレーション

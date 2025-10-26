@@ -807,6 +807,93 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   border-left: 4px solid #ffc107;
 }
 
+.outlier-list-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.outlier-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.outlier-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.outlier-btn {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: #fff;
+  border: 2px solid var(--brand);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.outlier-btn:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+.outlier-btn:active {
+  transform: scale(0.98);
+}
+
+.outlier-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.outlier-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.outlier-checkbox-item:hover {
+  background: #e9ecef;
+}
+
+.outlier-checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--brand);
+}
+
+.outlier-checkbox-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  flex: 1;
+}
+
+.outlier-checkbox-item input[type="checkbox"]:checked + .outlier-checkbox-label {
+  color: var(--brand);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
 /* 統計タイプ選択 */
 .stats-type-selector {
   display: flex;
