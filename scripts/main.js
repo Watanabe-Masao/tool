@@ -1190,11 +1190,11 @@ function resetYieldStatsEntries() {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
   if (tbody) {
     tbody.innerHTML = '';
-    // 初期行を5行追加
-    for (let i = 0; i < 5; i++) {
-      addYieldStatsRow();
-    }
+    // 初期行を1行追加
+    addYieldStatsRow();
   }
+  // 統計結果をリセット
+  hide('yieldStatsResults');
 }
 
 /**
@@ -1208,22 +1208,18 @@ function addYieldStatsRow() {
   const row = document.createElement('tr');
   row.id = `yieldStatsRow${rowId}`;
   row.className = 'yield-stats-row';
+  row.dataset.rowId = rowId;
 
   row.innerHTML = `
     <td class="row-number">${rowId + 1}</td>
-    <td>
-      <input type="text"
-             id="${YIELD_STATS_FIELDS.PRODUCT_NAME}${rowId}"
-             class="table-input"
-             placeholder="例: トマト" />
-    </td>
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"
              class="table-input"
              step="0.01"
              inputmode="decimal"
-             placeholder="300" />
+             placeholder="300"
+             data-row-id="${rowId}" />
     </td>
     <td>
       <input type="number"
@@ -1231,7 +1227,8 @@ function addYieldStatsRow() {
              class="table-input"
              step="0.01"
              inputmode="decimal"
-             placeholder="150" />
+             placeholder="150"
+             data-row-id="${rowId}" />
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
   `;
@@ -1243,15 +1240,37 @@ function addYieldStatsRow() {
   const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
 
   const handleYieldStatsInput = () => {
-    const beforeWeight = parseFloat(beforeWeightInput.value) || 0;
-    const afterWeight = parseFloat(afterWeightInput.value) || 0;
+    const beforeWeight = parseFloat(beforeWeightInput.value);
+    const afterWeight = parseFloat(afterWeightInput.value);
     const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+    const hasBeforeWeight = beforeWeightInput.value.trim() !== '';
+    const hasAfterWeight = afterWeightInput.value.trim() !== '';
 
+    // 両方空の場合は上詰め処理
+    if (!hasBeforeWeight && !hasAfterWeight) {
+      // この行にデータがあったかチェック
+      if (yieldRateDisplay.textContent !== '-') {
+        compactYieldStatsRows();
+      }
+      return;
+    }
+
+    // どちらか片方だけ入力されている場合はエラー表示
+    if ((hasBeforeWeight && !hasAfterWeight) || (!hasBeforeWeight && hasAfterWeight)) {
+      yieldRateDisplay.textContent = 'エラー';
+      yieldRateDisplay.classList.add('error');
+      yieldRateDisplay.classList.remove('calculated');
+      updateYieldStatsStatistics();
+      return;
+    }
+
+    // 両方入力されている場合は計算
     if (beforeWeight > 0 && afterWeight > 0) {
       const yieldRate = calculateYieldRate(beforeWeight, afterWeight);
       if (yieldRate !== null) {
         yieldRateDisplay.textContent = pct(toFixed(yieldRate));
         yieldRateDisplay.classList.add('calculated');
+        yieldRateDisplay.classList.remove('error');
 
         // 最後の行に値が入力されたら、新しい行を追加
         const allRows = tbody.querySelectorAll('.yield-stats-row');
@@ -1259,18 +1278,162 @@ function addYieldStatsRow() {
         if (lastRow.id === `yieldStatsRow${rowId}`) {
           addYieldStatsRow();
         }
+
+        // 統計情報を更新
+        updateYieldStatsStatistics();
       } else {
         yieldRateDisplay.textContent = '-';
-        yieldRateDisplay.classList.remove('calculated');
+        yieldRateDisplay.classList.remove('calculated', 'error');
       }
     } else {
       yieldRateDisplay.textContent = '-';
-      yieldRateDisplay.classList.remove('calculated');
+      yieldRateDisplay.classList.remove('calculated', 'error');
     }
   };
 
   beforeWeightInput?.addEventListener('input', handleYieldStatsInput);
   afterWeightInput?.addEventListener('input', handleYieldStatsInput);
+}
+
+/**
+ * 歩留まり率統計モード: 空行を上詰めする
+ */
+function compactYieldStatsRows() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  const allRows = Array.from(tbody.querySelectorAll('.yield-stats-row'));
+  const validRows = [];
+
+  // データがある行だけを抽出
+  allRows.forEach(row => {
+    const rowId = row.dataset.rowId;
+    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+
+    if (beforeInput.value.trim() !== '' || afterInput.value.trim() !== '') {
+      validRows.push({
+        beforeValue: beforeInput.value,
+        afterValue: afterInput.value
+      });
+    }
+  });
+
+  // テーブルを再構築
+  yieldStatsEntryCounter = 0;
+  tbody.innerHTML = '';
+
+  // 有効な行を追加
+  validRows.forEach(rowData => {
+    addYieldStatsRow();
+    const newRowId = yieldStatsEntryCounter - 1;
+    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${newRowId}`);
+    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${newRowId}`);
+
+    beforeInput.value = rowData.beforeValue;
+    afterInput.value = rowData.afterValue;
+
+    // 計算をトリガー
+    beforeInput.dispatchEvent(new Event('input'));
+  });
+
+  // 少なくとも1行は残す
+  if (validRows.length === 0) {
+    addYieldStatsRow();
+  }
+
+  // 統計情報を更新
+  updateYieldStatsStatistics();
+}
+
+/**
+ * 歩留まり率統計モード: 統計情報を更新
+ */
+function updateYieldStatsStatistics() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  // 有効な歩留まり率を収集
+  const yieldRates = [];
+  const allRows = tbody.querySelectorAll('.yield-stats-row');
+
+  allRows.forEach(row => {
+    const rowId = row.dataset.rowId;
+    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+
+    if (yieldRateDisplay.classList.contains('calculated')) {
+      const rateText = yieldRateDisplay.textContent.replace('%', '');
+      const rate = parseFloat(rateText);
+      if (!isNaN(rate)) {
+        yieldRates.push(rate);
+      }
+    }
+  });
+
+  // データが2つ以上ある場合のみ統計を表示
+  if (yieldRates.length >= 2) {
+    const stats = calculateStatistics(yieldRates);
+    displayStatistics(stats);
+    show('yieldStatsResults');
+  } else {
+    hide('yieldStatsResults');
+  }
+}
+
+/**
+ * 統計値を計算
+ */
+function calculateStatistics(values) {
+  const n = values.length;
+  const sorted = [...values].sort((a, b) => a - b);
+
+  // 平均値
+  const mean = values.reduce((sum, val) => sum + val, 0) / n;
+
+  // 標準偏差
+  const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+  const stdDev = Math.sqrt(variance);
+
+  // 中央値
+  const median = n % 2 === 0
+    ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+    : sorted[Math.floor(n / 2)];
+
+  // 最大値・最小値
+  const max = sorted[n - 1];
+  const min = sorted[0];
+
+  // σ範囲
+  const sigma1 = { lower: mean - stdDev, upper: mean + stdDev };
+  const sigma2 = { lower: mean - 2 * stdDev, upper: mean + 2 * stdDev };
+  const sigma3 = { lower: mean - 3 * stdDev, upper: mean + 3 * stdDev };
+
+  return {
+    count: n,
+    mean,
+    median,
+    stdDev,
+    max,
+    min,
+    sigma1,
+    sigma2,
+    sigma3
+  };
+}
+
+/**
+ * 統計値を表示
+ */
+function displayStatistics(stats) {
+  setText('statsCount', `${stats.count}個`);
+  setText('statsMax', pct(toFixed(stats.max)));
+  setText('statsMin', pct(toFixed(stats.min)));
+  setText('statsAvg', pct(toFixed(stats.mean)));
+  setText('statsMedian', pct(toFixed(stats.median)));
+  setText('statsStdDev', pct(toFixed(stats.stdDev)));
+  setText('statsSigma1', `${pct(toFixed(stats.sigma1.lower))} ～ ${pct(toFixed(stats.sigma1.upper))}`);
+  setText('statsSigma2', `${pct(toFixed(stats.sigma2.lower))} ～ ${pct(toFixed(stats.sigma2.upper))}`);
+  setText('statsSigma3', `${pct(toFixed(stats.sigma3.lower))} ～ ${pct(toFixed(stats.sigma3.upper))}`);
 }
 
 /**
