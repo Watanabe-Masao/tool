@@ -1826,6 +1826,8 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
     outlierInfoDiv.classList.add('is-hidden');
     manuallyExcludedOutlierIndices.clear();
     currentOutlierValues = [];
+    // ハイライトをクリア
+    highlightOutlierRows();
     return;
   }
 
@@ -1910,6 +1912,9 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
 
   // 外れ値情報を表示
   outlierInfoDiv.classList.remove('is-hidden');
+
+  // 外れ値を含む行をハイライト
+  highlightOutlierRows();
 }
 
 /**
@@ -1929,6 +1934,162 @@ function handleOutlierCheckboxChange() {
 
   // サンプルサイズ妥当性判断を再実行
   displaySampleSizeValidation();
+}
+
+/**
+ * 外れ値を含む行をハイライト表示
+ */
+function highlightOutlierRows() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  const statsTypeSelect = qs('#statsTypeSelect');
+  const statsType = statsTypeSelect?.value || 'yieldRate';
+
+  // まず全ての行からハイライトを削除
+  const allRows = tbody.querySelectorAll('.yield-stats-row');
+  allRows.forEach(row => {
+    row.classList.remove('has-outlier');
+  });
+
+  // 外れ値が検出されていない場合は終了
+  if (!currentOutlierValues || currentOutlierValues.length === 0) {
+    return;
+  }
+
+  // 各行の値をチェックして外れ値を含む行をハイライト
+  allRows.forEach(row => {
+    const rowId = row.dataset.rowId;
+
+    if (statsType === 'yieldRate') {
+      // 歩留まり率をチェック
+      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
+        const rateText = yieldRateDisplay.textContent.replace('%', '');
+        const rate = parseFloat(rateText);
+        if (!isNaN(rate) && isOutlierValue(rate)) {
+          row.classList.add('has-outlier');
+        }
+      }
+    } else if (statsType === 'beforeWeight') {
+      // 加工前重量をチェック
+      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+      if (beforeInput && beforeInput.value.trim() !== '') {
+        const beforeWeight = parseFloat(beforeInput.value);
+        if (!isNaN(beforeWeight) && isOutlierValue(beforeWeight)) {
+          row.classList.add('has-outlier');
+        }
+      }
+    } else if (statsType === 'afterWeight') {
+      // 加工後重量をチェック
+      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+      if (afterInput && afterInput.value.trim() !== '') {
+        const afterWeight = parseFloat(afterInput.value);
+        if (!isNaN(afterWeight) && isOutlierValue(afterWeight)) {
+          row.classList.add('has-outlier');
+        }
+      }
+    }
+  });
+}
+
+/**
+ * 値が外れ値リストに含まれているかをチェック
+ * @param {number} value - チェックする値
+ * @returns {boolean} - 外れ値の場合true
+ */
+function isOutlierValue(value) {
+  if (!currentOutlierValues || currentOutlierValues.length === 0) {
+    return false;
+  }
+
+  // 浮動小数点数の比較のため、非常に小さい差を許容
+  return currentOutlierValues.some(outlierValue =>
+    Math.abs(value - outlierValue) < 0.0001
+  );
+}
+
+/**
+ * 外れ値を含む行をテーブルから削除
+ */
+function deleteOutlierRows() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  // 外れ値が検出されていない場合は何もしない
+  if (!currentOutlierValues || currentOutlierValues.length === 0) {
+    alert('削除する外れ値がありません。');
+    return;
+  }
+
+  // 確認ダイアログを表示
+  const statsTypeSelect = qs('#statsTypeSelect');
+  const statsType = statsTypeSelect?.value || 'yieldRate';
+  const statsTypeName = statsType === 'yieldRate' ? '歩留まり率' :
+                       statsType === 'beforeWeight' ? '加工前重量' : '加工後重量';
+
+  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n削除した行は元に戻せません。\n\n削除する外れ値の数: ${currentOutlierValues.length}件\n\n本当に削除しますか？`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  // 外れ値を含む行を収集
+  const rowsToDelete = [];
+  const allRows = tbody.querySelectorAll('.yield-stats-row');
+
+  allRows.forEach(row => {
+    const rowId = row.dataset.rowId;
+
+    if (statsType === 'yieldRate') {
+      // 歩留まり率をチェック
+      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
+        const rateText = yieldRateDisplay.textContent.replace('%', '');
+        const rate = parseFloat(rateText);
+        if (!isNaN(rate) && isOutlierValue(rate)) {
+          rowsToDelete.push(row);
+        }
+      }
+    } else if (statsType === 'beforeWeight') {
+      // 加工前重量をチェック
+      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+      if (beforeInput && beforeInput.value.trim() !== '') {
+        const beforeWeight = parseFloat(beforeInput.value);
+        if (!isNaN(beforeWeight) && isOutlierValue(beforeWeight)) {
+          rowsToDelete.push(row);
+        }
+      }
+    } else if (statsType === 'afterWeight') {
+      // 加工後重量をチェック
+      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+      if (afterInput && afterInput.value.trim() !== '') {
+        const afterWeight = parseFloat(afterInput.value);
+        if (!isNaN(afterWeight) && isOutlierValue(afterWeight)) {
+          rowsToDelete.push(row);
+        }
+      }
+    }
+  });
+
+  // 行を削除
+  if (rowsToDelete.length === 0) {
+    alert('削除する行が見つかりませんでした。');
+    return;
+  }
+
+  rowsToDelete.forEach(row => {
+    row.remove();
+  });
+
+  // 行番号を再割り当て
+  compactYieldStatsRows();
+
+  // 統計を再計算
+  updateYieldStatsStatistics();
+
+  // 削除完了メッセージ
+  alert(`${rowsToDelete.length}行を削除しました。`);
 }
 
 /**
@@ -2916,6 +3077,9 @@ function init() {
     });
     handleOutlierCheckboxChange();
   });
+
+  // 外れ値を含む行を削除
+  qs('#deleteOutlierRows')?.addEventListener('click', deleteOutlierRows);
 
   // 商品化シミュレーション
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
