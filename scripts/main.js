@@ -1553,11 +1553,14 @@ function displayStatistics(stats, unit = '%') {
 }
 
 /**
- * EChartsで箱ひげ図を描画
+ * グラフを描画（グラフタイプに応じて分岐）
  */
 let statsChartInstance = null;
 
 function renderStatsChart(values, stats, typeName, unit) {
+  const chartTypeSelect = qs('#chartTypeSelect');
+  const chartType = chartTypeSelect?.value || 'boxplot';
+
   const chartDom = qs('#statsChart');
   if (!chartDom) return;
 
@@ -1574,6 +1577,43 @@ function renderStatsChart(values, stats, typeName, unit) {
 
   // EChartsインスタンスを初期化
   statsChartInstance = echarts.init(chartDom);
+
+  // グラフタイプに応じた描画
+  let option;
+  switch (chartType) {
+    case 'boxplot':
+      option = createBoxplotOption(values, stats, typeName, unit);
+      break;
+    case 'histogram':
+      option = createHistogramOption(values, stats, typeName, unit);
+      break;
+    case 'scatter':
+      option = createScatterOption(values, stats, typeName, unit);
+      break;
+    case 'line':
+      option = createLineOption(values, stats, typeName, unit);
+      break;
+    case 'normal':
+      option = createNormalDistOption(values, stats, typeName, unit);
+      break;
+    default:
+      option = createBoxplotOption(values, stats, typeName, unit);
+  }
+
+  statsChartInstance.setOption(option);
+
+  // ウィンドウリサイズ時にチャートもリサイズ
+  window.addEventListener('resize', () => {
+    if (statsChartInstance) {
+      statsChartInstance.resize();
+    }
+  });
+}
+
+/**
+ * 箱ひげ図のオプションを生成
+ */
+function createBoxplotOption(values, stats, typeName, unit) {
 
   // 箱ひげ図用のデータを準備
   // EChartsの箱ひげ図は [min, Q1, median, Q3, max] の形式
@@ -1683,14 +1723,317 @@ function renderStatsChart(values, stats, typeName, unit) {
     ]
   };
 
-  statsChartInstance.setOption(option);
+  return option;
+}
 
-  // ウィンドウリサイズ時にチャートもリサイズ
-  window.addEventListener('resize', () => {
-    if (statsChartInstance) {
-      statsChartInstance.resize();
-    }
+/**
+ * ヒストグラムのオプションを生成
+ */
+function createHistogramOption(values, stats, typeName, unit) {
+  // ビンの数を計算（スタージェスの公式）
+  const binCount = Math.ceil(Math.log2(values.length) + 1);
+  const range = stats.max - stats.min;
+  const binWidth = range / binCount;
+
+  // ヒストグラムのデータを生成
+  const bins = Array(binCount).fill(0);
+  const binLabels = [];
+
+  for (let i = 0; i < binCount; i++) {
+    const binStart = stats.min + i * binWidth;
+    const binEnd = binStart + binWidth;
+    binLabels.push(`${toFixed(binStart)}`);
+  }
+
+  values.forEach(val => {
+    const binIndex = Math.min(Math.floor((val - stats.min) / binWidth), binCount - 1);
+    bins[binIndex]++;
   });
+
+  return {
+    title: {
+      text: `${typeName}の度数分布`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: function(params) {
+        const binIndex = params[0].dataIndex;
+        const binStart = stats.min + binIndex * binWidth;
+        const binEnd = binStart + binWidth;
+        return `${toFixed(binStart)}${unit} ～ ${toFixed(binEnd)}${unit}<br/>度数: ${params[0].value}個`;
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'category',
+      data: binLabels,
+      name: typeName,
+      nameLocation: 'middle',
+      nameGap: 30,
+      axisLabel: {
+        fontSize: 10,
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '度数',
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [{
+      data: bins,
+      type: 'bar',
+      itemStyle: {
+        color: 'rgba(102, 126, 234, 0.8)'
+      },
+      barWidth: '90%'
+    }]
+  };
+}
+
+/**
+ * 散布図のオプションを生成
+ */
+function createScatterOption(values, stats, typeName, unit) {
+  const scatterData = values.map((val, idx) => [idx + 1, val]);
+
+  return {
+    title: {
+      text: `${typeName}の散布図`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        return `データ ${params.data[0]}: ${toFixed(params.data[1])}${unit}`;
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      name: 'データ番号',
+      nameLocation: 'middle',
+      nameGap: 30
+    },
+    yAxis: {
+      type: 'value',
+      name: unit,
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [{
+      data: scatterData,
+      type: 'scatter',
+      itemStyle: {
+        color: 'rgba(102, 126, 234, 0.8)'
+      },
+      symbolSize: 10,
+      markLine: {
+        data: [
+          { yAxis: stats.mean, name: '平均値', lineStyle: { color: '#e74c3c', width: 2 }, label: { formatter: '平均' } },
+          { yAxis: stats.median, name: '中央値', lineStyle: { color: '#f39c12', width: 2 }, label: { formatter: '中央値' } }
+        ]
+      }
+    }]
+  };
+}
+
+/**
+ * 折れ線グラフのオプションを生成
+ */
+function createLineOption(values, stats, typeName, unit) {
+  const lineData = values.map((val, idx) => [idx + 1, val]);
+
+  return {
+    title: {
+      text: `${typeName}の推移`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        return `データ ${params[0].data[0]}: ${toFixed(params[0].data[1])}${unit}`;
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      name: 'データ番号',
+      nameLocation: 'middle',
+      nameGap: 30
+    },
+    yAxis: {
+      type: 'value',
+      name: unit,
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [{
+      data: lineData,
+      type: 'line',
+      smooth: true,
+      itemStyle: {
+        color: 'rgba(102, 126, 234, 0.8)'
+      },
+      lineStyle: {
+        width: 2
+      },
+      areaStyle: {
+        color: 'rgba(102, 126, 234, 0.2)'
+      },
+      markLine: {
+        data: [
+          { yAxis: stats.mean, name: '平均値', lineStyle: { color: '#e74c3c', width: 2, type: 'dashed' }, label: { formatter: '平均' } }
+        ]
+      }
+    }]
+  };
+}
+
+/**
+ * 正規分布曲線のオプションを生成
+ */
+function createNormalDistOption(values, stats, typeName, unit) {
+  // 正規分布の確率密度関数
+  const normalPDF = (x, mean, stdDev) => {
+    return (1 / (stdDev * Math.sqrt(2 * Math.PI))) *
+           Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+  };
+
+  // カーブ用のデータポイントを生成
+  const curvePoints = [];
+  const rangeMin = stats.mean - 4 * stats.stdDev;
+  const rangeMax = stats.mean + 4 * stats.stdDev;
+  const step = (rangeMax - rangeMin) / 100;
+
+  for (let x = rangeMin; x <= rangeMax; x += step) {
+    curvePoints.push([x, normalPDF(x, stats.mean, stats.stdDev)]);
+  }
+
+  // ヒストグラムのデータ（正規化）
+  const binCount = Math.ceil(Math.log2(values.length) + 1);
+  const range = stats.max - stats.min;
+  const binWidth = range / binCount;
+  const bins = Array(binCount).fill(0);
+  const binCenters = [];
+
+  for (let i = 0; i < binCount; i++) {
+    const binStart = stats.min + i * binWidth;
+    const binCenter = binStart + binWidth / 2;
+    binCenters.push(binCenter);
+  }
+
+  values.forEach(val => {
+    const binIndex = Math.min(Math.floor((val - stats.min) / binWidth), binCount - 1);
+    bins[binIndex]++;
+  });
+
+  // ヒストグラムを正規化（確率密度に変換）
+  const normalizedBins = bins.map(count => count / (values.length * binWidth));
+  const histogramData = binCenters.map((center, idx) => [center, normalizedBins[idx]]);
+
+  return {
+    title: {
+      text: `${typeName}の正規分布`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['実測データ', '正規分布曲線'],
+      top: 25
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      name: unit,
+      nameLocation: 'middle',
+      nameGap: 30
+    },
+    yAxis: {
+      type: 'value',
+      name: '確率密度',
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [
+      {
+        name: '実測データ',
+        data: histogramData,
+        type: 'bar',
+        itemStyle: {
+          color: 'rgba(102, 126, 234, 0.5)'
+        },
+        barWidth: binWidth * 0.8
+      },
+      {
+        name: '正規分布曲線',
+        data: curvePoints,
+        type: 'line',
+        smooth: true,
+        itemStyle: {
+          color: '#e74c3c'
+        },
+        lineStyle: {
+          width: 3
+        }
+      }
+    ]
+  };
 }
 
 /**
@@ -1782,6 +2125,11 @@ function init() {
 
   // 歩留まり率統計モード - 統計タイプ選択
   qs('#statsTypeSelect')?.addEventListener('change', () => {
+    displayCurrentStatistics();
+  });
+
+  // 歩留まり率統計モード - グラフタイプ選択
+  qs('#chartTypeSelect')?.addEventListener('change', () => {
     displayCurrentStatistics();
   });
 
