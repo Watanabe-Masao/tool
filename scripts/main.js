@@ -1371,6 +1371,9 @@ function compactYieldStatsRows() {
         yieldRateDisplay.classList.remove('calculated');
       }
     });
+
+    // 有効な行の後に、常に新しい空の行を追加
+    addYieldStatsRow();
   } else {
     // データがない場合は1行追加
     addYieldStatsRow();
