@@ -27,7 +27,6 @@ import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
  * モード切替処理
  */
 function switchMode(newMode) {
-  console.log('[switchMode] 切り替え開始:', newMode);
   appState.setMode(newMode);
 
   const isFixed = newMode === MODE.FIXED;
@@ -54,8 +53,6 @@ function switchMode(newMode) {
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
 
-  console.log('[switchMode] セクション要素:', { fixedInputs, weightInputs, yieldStatsInputs });
-
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
   if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
@@ -69,11 +66,8 @@ function switchMode(newMode) {
   } else if (isWeight) {
     resetWeightSteps();
   } else if (isYieldStats) {
-    console.log('[switchMode] 歩留まり率統計モードに切り替え、リセット開始');
     resetYieldStatsEntries();
   }
-
-  console.log('[switchMode] 切り替え完了');
 }
 
 /**
@@ -1192,16 +1186,12 @@ let yieldStatsEntryCounter = 0;
  * 歩留まり率統計モード: エントリをリセット
  */
 function resetYieldStatsEntries() {
-  console.log('[resetYieldStatsEntries] リセット開始');
   yieldStatsEntryCounter = 0;
   const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
-  console.log('[resetYieldStatsEntries] コンテナ要素:', container);
   if (container) {
     container.innerHTML = '';
     // 初期エントリを1つ追加
     addYieldStatsEntry();
-  } else {
-    console.error('[resetYieldStatsEntries] コンテナが見つかりません:', UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER);
   }
 }
 
@@ -1209,12 +1199,8 @@ function resetYieldStatsEntries() {
  * 歩留まり率統計モード: 新しいエントリを追加
  */
 function addYieldStatsEntry() {
-  console.log('[addYieldStatsEntry] エントリ追加開始');
   const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
-  if (!container) {
-    console.error('[addYieldStatsEntry] コンテナが見つかりません');
-    return;
-  }
+  if (!container) return;
 
   const entryId = yieldStatsEntryCounter++;
   const entryDiv = document.createElement('div');
@@ -1253,12 +1239,10 @@ function addYieldStatsEntry() {
   `;
 
   container.appendChild(entryDiv);
-  console.log('[addYieldStatsEntry] エントリをDOMに追加しました:', entryDiv.id);
 
   // 入力イベントリスナーを追加
   const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${entryId}`);
   const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${entryId}`);
-  console.log('[addYieldStatsEntry] 入力欄を取得:', { beforeWeightInput, afterWeightInput });
 
   const handleYieldStatsInput = () => {
     const beforeWeight = parseFloat(beforeWeightInput.value) || 0;
