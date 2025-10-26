@@ -137,11 +137,22 @@ export function clearAllDisplays() {
 
 /**
  * 逆算シミュレーション結果を表示
+ * @param {number} value - 計算結果の値
+ * @param {string} label - ラベル文字列
+ * @param {string} unit - 単位
+ * @param {number|null} currentValue - 現在の値（オプション）
  */
-export function displayReverseSimulation(value, label, unit) {
+export function displayReverseSimulation(value, label, unit, currentValue = null) {
   hide(UI_ELEMENTS.REVERSE_ERROR);
   setText(UI_ELEMENTS.REVERSE_RESULT_LABEL, label);
-  setText(UI_ELEMENTS.REVERSE_RESULT_VALUE, `${toFixed(value)}${unit}`);
+
+  // 現在の値がある場合は「現在値 → 目標値」の形式で表示
+  if (currentValue !== null && Number.isFinite(currentValue)) {
+    setText(UI_ELEMENTS.REVERSE_RESULT_VALUE, `${toFixed(currentValue)}${unit} → ${toFixed(value)}${unit}`);
+  } else {
+    setText(UI_ELEMENTS.REVERSE_RESULT_VALUE, `${toFixed(value)}${unit}`);
+  }
+
   show(UI_ELEMENTS.REVERSE_RESULTS);
 }
 
