@@ -74,21 +74,22 @@ export async function renderHistoryList(items = null) {
 }
 
 /**
- * 商品名の候補をdatalistに設定
+ * 商品名の候補をselectタグに設定
  * @param {Array} history - 履歴データ配列
  */
 function updateProductNameSuggestions(history) {
-  const datalist = qs('#productNameSuggestions');
-  if (!datalist) return;
+  const selectElement = qs('#historySearch');
+  if (!selectElement) return;
 
   // ユニークな商品名を抽出
   const uniqueNames = [...new Set(history.map(item => item.name).filter(Boolean))];
 
-  // datalistを更新
-  datalist.innerHTML = uniqueNames
-    .sort((a, b) => a.localeCompare(b, 'ja'))
-    .map(name => `<option value="${name}">`)
-    .join('');
+  // selectの選択肢を更新（最初のプレースホルダーオプションは保持）
+  selectElement.innerHTML = '<option value="">🔍 商品名で絞り込み...</option>' +
+    uniqueNames
+      .sort((a, b) => a.localeCompare(b, 'ja'))
+      .map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`)
+      .join('');
 }
 
 /**
@@ -1304,10 +1305,22 @@ export function initHistoryUI() {
     cancelSaveBtn.addEventListener('click', closeSaveDialog);
   }
 
-  // 検索
+  // 検索（selectタグなのでchangeイベントを使用）
   const searchInput = qs('#historySearch');
   if (searchInput) {
-    searchInput.addEventListener('input', handleSearch);
+    searchInput.addEventListener('change', handleSearch);
+  }
+
+  // 選択解除ボタン
+  const clearSearchBtn = qs('#clearSearchBtn');
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', async () => {
+      const searchInput = qs('#historySearch');
+      if (searchInput) {
+        searchInput.value = ''; // 選択を解除
+        await renderHistoryList(); // 全ての履歴を再表示
+      }
+    });
   }
 
   // エクスポート
