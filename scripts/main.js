@@ -2196,14 +2196,20 @@ function setupFormulaModal() {
 
     // data属性がある場合のみクリック/タップイベントを追加
     if (formulaName && formula) {
-      icon.addEventListener('click', (e) => {
+      // PCでのクリックとスマホでのタップ両方に対応
+      const handleInteraction = (e) => {
+        e.preventDefault();
         e.stopPropagation();
         openModal(formulaName, formula, description, example);
-      });
+      };
 
-      // タッチデバイス用
-      icon.addEventListener('touchstart', (e) => {
+      icon.addEventListener('click', handleInteraction);
+
+      // タッチデバイス用：clickイベントが発火しない場合に備えて
+      icon.addEventListener('touchend', (e) => {
+        e.preventDefault();
         e.stopPropagation();
+        openModal(formulaName, formula, description, example);
       });
     }
   });
