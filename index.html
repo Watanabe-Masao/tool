@@ -289,10 +289,23 @@
     <!-- 歩留まり率統計モード -->
     <section id="yieldStatsInputs" class="card section is-hidden" aria-labelledby="yieldStatsHeading">
       <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり率統計</h2>
-      <p class="section-description">複数の商品について加工前後の重量を入力し、歩留まり率を計算します。</p>
+      <p class="section-description">複数の商品について加工前後の重量を入力し、歩留まり率を計算します。Excel風の表形式で入力できます。</p>
 
-      <div id="yieldStatsEntriesContainer">
-        <!-- 動的に入力欄が追加される -->
+      <div class="table-container">
+        <table id="yieldStatsTable" class="yield-stats-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>品名</th>
+              <th>加工前重量（g）</th>
+              <th>加工後重量（g）</th>
+              <th>歩留まり率</th>
+            </tr>
+          </thead>
+          <tbody id="yieldStatsTableBody">
+            <!-- 動的に行が追加される -->
+          </tbody>
+        </table>
       </div>
     </section>
 
