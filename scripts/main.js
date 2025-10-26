@@ -27,7 +27,6 @@ import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
  * モード切替処理
  */
 function switchMode(newMode) {
-  console.log('[switchMode] 切り替え開始:', newMode);
   appState.setMode(newMode);
 
   const isFixed = newMode === MODE.FIXED;
@@ -54,8 +53,6 @@ function switchMode(newMode) {
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
 
-  console.log('[switchMode] セクション要素:', { fixedInputs, weightInputs, yieldStatsInputs });
-
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
   if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
@@ -69,11 +66,8 @@ function switchMode(newMode) {
   } else if (isWeight) {
     resetWeightSteps();
   } else if (isYieldStats) {
-    console.log('[switchMode] 歩留まり率統計モードに切り替え、リセット開始');
     resetYieldStatsEntries();
   }
-
-  console.log('[switchMode] 切り替え完了');
 }
 
 /**
@@ -1189,101 +1183,89 @@ function handleDiscountUpdate() {
 let yieldStatsEntryCounter = 0;
 
 /**
- * 歩留まり率統計モード: エントリをリセット
+ * 歩留まり率統計モード: テーブルをリセット
  */
 function resetYieldStatsEntries() {
-  console.log('[resetYieldStatsEntries] リセット開始');
   yieldStatsEntryCounter = 0;
-  const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
-  console.log('[resetYieldStatsEntries] コンテナ要素:', container);
-  if (container) {
-    container.innerHTML = '';
-    // 初期エントリを1つ追加
-    addYieldStatsEntry();
-  } else {
-    console.error('[resetYieldStatsEntries] コンテナが見つかりません:', UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER);
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (tbody) {
+    tbody.innerHTML = '';
+    // 初期行を5行追加
+    for (let i = 0; i < 5; i++) {
+      addYieldStatsRow();
+    }
   }
 }
 
 /**
- * 歩留まり率統計モード: 新しいエントリを追加
+ * 歩留まり率統計モード: 新しい行を追加
  */
-function addYieldStatsEntry() {
-  console.log('[addYieldStatsEntry] エントリ追加開始');
-  const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
-  if (!container) {
-    console.error('[addYieldStatsEntry] コンテナが見つかりません');
-    return;
-  }
+function addYieldStatsRow() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
 
-  const entryId = yieldStatsEntryCounter++;
-  const entryDiv = document.createElement('div');
-  entryDiv.className = 'yield-stats-entry';
-  entryDiv.id = `yieldStatsEntry${entryId}`;
+  const rowId = yieldStatsEntryCounter++;
+  const row = document.createElement('tr');
+  row.id = `yieldStatsRow${rowId}`;
+  row.className = 'yield-stats-row';
 
-  entryDiv.innerHTML = `
-    <div class="grid">
-      <label class="field">
-        <span>品名</span>
-        <input type="text" id="${YIELD_STATS_FIELDS.PRODUCT_NAME}${entryId}"
-               class="yield-stats-product-name"
-               placeholder="例: トマト" />
-      </label>
-      <label class="field">
-        <span>加工前重量（g）</span>
-        <input type="number" id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${entryId}"
-               class="yield-stats-before-weight"
-               step="0.01"
-               inputmode="decimal"
-               placeholder="300" />
-      </label>
-      <label class="field">
-        <span>加工後重量（g）</span>
-        <input type="number" id="${YIELD_STATS_FIELDS.AFTER_WEIGHT}${entryId}"
-               class="yield-stats-after-weight"
-               step="0.01"
-               inputmode="decimal"
-               placeholder="150" />
-      </label>
-      <div class="stat">
-        <div class="stat-label">歩留まり率</div>
-        <div id="${YIELD_STATS_FIELDS.YIELD_RATE}${entryId}" class="stat-value">-</div>
-      </div>
-    </div>
+  row.innerHTML = `
+    <td class="row-number">${rowId + 1}</td>
+    <td>
+      <input type="text"
+             id="${YIELD_STATS_FIELDS.PRODUCT_NAME}${rowId}"
+             class="table-input"
+             placeholder="例: トマト" />
+    </td>
+    <td>
+      <input type="number"
+             id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"
+             class="table-input"
+             step="0.01"
+             inputmode="decimal"
+             placeholder="300" />
+    </td>
+    <td>
+      <input type="number"
+             id="${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}"
+             class="table-input"
+             step="0.01"
+             inputmode="decimal"
+             placeholder="150" />
+    </td>
+    <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
   `;
 
-  container.appendChild(entryDiv);
-  console.log('[addYieldStatsEntry] エントリをDOMに追加しました:', entryDiv.id);
+  tbody.appendChild(row);
 
   // 入力イベントリスナーを追加
-  const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${entryId}`);
-  const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${entryId}`);
-  console.log('[addYieldStatsEntry] 入力欄を取得:', { beforeWeightInput, afterWeightInput });
+  const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+  const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
 
   const handleYieldStatsInput = () => {
     const beforeWeight = parseFloat(beforeWeightInput.value) || 0;
     const afterWeight = parseFloat(afterWeightInput.value) || 0;
-    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${entryId}`);
+    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
 
     if (beforeWeight > 0 && afterWeight > 0) {
       const yieldRate = calculateYieldRate(beforeWeight, afterWeight);
       if (yieldRate !== null) {
         yieldRateDisplay.textContent = pct(toFixed(yieldRate));
-        yieldRateDisplay.parentElement.classList.add('stat--success');
+        yieldRateDisplay.classList.add('calculated');
 
-        // 最後のエントリに値が入力されたら、新しいエントリを追加
-        const allEntries = container.querySelectorAll('.yield-stats-entry');
-        const lastEntry = allEntries[allEntries.length - 1];
-        if (lastEntry.id === `yieldStatsEntry${entryId}`) {
-          addYieldStatsEntry();
+        // 最後の行に値が入力されたら、新しい行を追加
+        const allRows = tbody.querySelectorAll('.yield-stats-row');
+        const lastRow = allRows[allRows.length - 1];
+        if (lastRow.id === `yieldStatsRow${rowId}`) {
+          addYieldStatsRow();
         }
       } else {
         yieldRateDisplay.textContent = '-';
-        yieldRateDisplay.parentElement.classList.remove('stat--success');
+        yieldRateDisplay.classList.remove('calculated');
       }
     } else {
       yieldRateDisplay.textContent = '-';
-      yieldRateDisplay.parentElement.classList.remove('stat--success');
+      yieldRateDisplay.classList.remove('calculated');
     }
   };
 

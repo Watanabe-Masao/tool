@@ -83,7 +83,7 @@ export const UI_ELEMENTS = {
   FIXED_INPUTS: 'fixedInputs',
   WEIGHT_INPUTS: 'weightInputs',
   YIELD_STATS_INPUTS: 'yieldStatsInputs',
-  YIELD_STATS_ENTRIES_CONTAINER: 'yieldStatsEntriesContainer',
+  YIELD_STATS_TABLE_BODY: 'yieldStatsTableBody',
   FIXED_CALCULATE_INPUTS: 'fixedCalculateInputs',
   FIXED_DIRECT_INPUTS: 'fixedDirectInputs',
   WEIGHT_CALCULATE_INPUTS: 'weightCalculateInputs',
