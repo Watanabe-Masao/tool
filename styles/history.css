@@ -33,6 +33,7 @@
   align-items: center;
   padding: 1.5em;
   border-bottom: 1px solid #e0e0e0;
+  position: relative; /* メニュー配置の基準点 */
 }
 
 .dialog-title {
@@ -46,6 +47,7 @@
   display: flex;
   gap: 0.5em;
   align-items: center;
+  position: relative; /* メニューの親要素 */
 }
 
 .dialog-body {
@@ -123,7 +125,9 @@
    ============================================ */
 
 .history-menu {
-  position: fixed;
+  position: absolute;
+  top: calc(100% + 0.5em);
+  right: 0;
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
