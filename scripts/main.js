@@ -1372,8 +1372,13 @@ function compactYieldStatsRows() {
       }
     });
 
-    // 有効な行の後に、常に新しい空の行を追加
-    addYieldStatsRow();
+    // 最後の有効な行の両方のフィールドに値が入っている場合のみ新しい行を追加
+    const lastRow = validRows[validRows.length - 1];
+    const lastHasBothValues = lastRow.beforeValue.trim() !== '' && lastRow.afterValue.trim() !== '';
+
+    if (lastHasBothValues) {
+      addYieldStatsRow();
+    }
   } else {
     // データがない場合は1行追加
     addYieldStatsRow();
