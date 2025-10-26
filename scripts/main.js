@@ -1199,6 +1199,7 @@ function resetYieldStatsEntries() {
   // 外れ値の除外状態をリセット
   manuallyExcludedOutlierIndices.clear();
   currentOutlierValues = [];
+  currentStatsType = '';
 }
 
 /**
@@ -1536,19 +1537,51 @@ function displayCurrentStatistics() {
   const data = window.yieldStatsData;
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
-  manuallyExcludedOutlierIndices.clear();
-  currentOutlierValues = [];
+  if (currentStatsType !== selectedType) {
+    manuallyExcludedOutlierIndices.clear();
+    currentOutlierValues = [];
+    currentStatsType = selectedType;
+  }
 
   if (!data) return;
 
-  const values = data[selectedType];
+  let values = data[selectedType];
   if (!values || values.length < 2) {
     // データが不足している場合は非表示
     hide('yieldStatsResults');
     return;
   }
 
-  const stats = calculateStatistics(values);
+  // 手動除外が設定されている場合、データをフィルタリング
+  let finalValues = values;
+  let finalStats = null;
+
+  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
+    const excludedValues = new Set();
+    manuallyExcludedOutlierIndices.forEach(index => {
+      if (index < currentOutlierValues.length) {
+        excludedValues.add(currentOutlierValues[index]);
+      }
+    });
+
+    finalValues = values.filter(v => {
+      for (const excludedValue of excludedValues) {
+        if (Math.abs(v - excludedValue) < 0.0001) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  // 最終的なデータで統計を計算
+  if (finalValues.length >= 2) {
+    finalStats = calculateStatistics(finalValues);
+  } else {
+    // データが不足している場合は非表示
+    hide('yieldStatsResults');
+    return;
+  }
 
   // 統計タイプに応じた単位を設定
   let unit = '';
@@ -1564,8 +1597,9 @@ function displayCurrentStatistics() {
     typeName = '加工後重量';
   }
 
-  displayStatistics(stats, unit);
-  renderStatsChart(values, stats, typeName, unit);
+  // 除外後のデータで統計を表示
+  displayStatistics(finalStats, unit);
+  renderStatsChart(finalValues, finalStats, typeName, unit);
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
@@ -1803,6 +1837,7 @@ function displaySampleSizeValidation() {
 // 外れ値の除外状態を管理（値のインデックスで管理）
 let manuallyExcludedOutlierIndices = new Set();
 let currentOutlierValues = []; // 現在の外れ値リスト
+let currentStatsType = ''; // 現在の統計タイプを追跡
 
 /**
  * 外れ値情報を表示
@@ -1932,8 +1967,8 @@ function handleOutlierCheckboxChange() {
     }
   });
 
-  // サンプルサイズ妥当性判断を再実行
-  displaySampleSizeValidation();
+  // 統計を再計算・再表示（除外後のデータで）
+  displayCurrentStatistics();
 }
 
 /**
