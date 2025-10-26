@@ -247,84 +247,81 @@ export function calculateBoxCostFromMarkup(afterPrice, boxWeight, yieldRate, wei
 /**
  * 逆算シミュレーション: 目標値入率から必要な加工後重量を計算
  * @param {number} beforeWeight - 加工前重量（g）
- * @param {number} afterCost - 加工後100gあたり原価
+ * @param {number} beforeCost - 加工前100gあたり原価
  * @param {number} afterPrice - 加工後100gあたり売価
  * @param {number} weight - 1パックあたりの重量（g）
  * @param {number} targetMarkup - 目標値入率（%）
  * @param {number} consumable - 消耗品費
  * @returns {number|null} 必要な加工後重量（g）
  */
-export function calculateAfterWeightFromMarkup(beforeWeight, afterCost, afterPrice, weight, targetMarkup, consumable) {
-  // afterCost は加工後100gあたりなので、まず加工前100gあたり原価を求める
+export function calculateAfterWeightFromMarkup(beforeWeight, beforeCost, afterPrice, weight, targetMarkup, consumable) {
   // yieldRate = afterWeight / beforeWeight * 100
-  // afterCost = beforeCost / (yieldRate / 100) = beforeCost * 100 / yieldRate
-  // beforeCost = afterCost * yieldRate / 100 = afterCost * (afterWeight / beforeWeight)
-  //
-  // cost = beforeCost * weight / 100 + consumable
-  // cost = afterCost * (afterWeight / beforeWeight) * weight / 100 + consumable
-  //
-  // price = afterPrice * weight / 100
-  // markup/100 = (price - cost) / price
-  // cost = price * (1 - markup/100)
-  // afterCost * (afterWeight / beforeWeight) * weight / 100 + consumable = afterPrice * weight / 100 * (1 - markup/100)
-  // afterCost * (afterWeight / beforeWeight) * weight / 100 = afterPrice * weight / 100 * (1 - markup/100) - consumable
-  // afterWeight = beforeWeight * (afterPrice * weight / 100 * (1 - markup/100) - consumable) / (afterCost * weight / 100)
-  // afterWeight = beforeWeight * (afterPrice * (1 - markup/100) - consumable * 100 / weight) / afterCost
+  // afterCost = beforeCost / (yieldRate / 100) = beforeCost * beforeWeight / afterWeight
+  // finalCost = afterCost * weight / 100 + consumable = (beforeCost * beforeWeight / afterWeight) * weight / 100 + consumable
+  // finalPrice = afterPrice * weight / 100
+  // targetMarkup/100 = (finalPrice - finalCost) / finalPrice
+  // finalCost = finalPrice * (1 - targetMarkup/100)
+  // (beforeCost * beforeWeight / afterWeight) * weight / 100 + consumable = afterPrice * weight / 100 * (1 - targetMarkup/100)
+  // beforeCost * beforeWeight * weight / (afterWeight * 100) = afterPrice * weight / 100 * (1 - targetMarkup/100) - consumable
+  // beforeCost * beforeWeight * weight / afterWeight = afterPrice * weight * (1 - targetMarkup/100) - consumable * 100
+  // afterWeight = beforeCost * beforeWeight * weight / (afterPrice * weight * (1 - targetMarkup/100) - consumable * 100)
+  // afterWeight = beforeCost * beforeWeight / (afterPrice * (1 - targetMarkup/100) - consumable * 100 / weight)
 
-  if (!Number.isFinite(beforeWeight) || !Number.isFinite(afterCost) || !Number.isFinite(afterPrice) ||
+  if (!Number.isFinite(beforeWeight) || !Number.isFinite(beforeCost) || !Number.isFinite(afterPrice) ||
       !Number.isFinite(weight) || !Number.isFinite(targetMarkup) || !Number.isFinite(consumable) ||
-      beforeWeight <= 0 || weight <= 0 || afterCost <= 0) {
+      beforeWeight <= 0 || weight <= 0 || beforeCost <= 0) {
     return null;
   }
 
   const markupRatio = targetMarkup / PERCENT_MULTIPLIER;
-  const numerator = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
+  const denominator = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
 
-  if (numerator <= 0) {
+  if (denominator <= 0) {
     return null;
   }
 
-  const afterWeight = beforeWeight * numerator / afterCost;
+  const afterWeight = (beforeCost * beforeWeight) / denominator;
 
   return afterWeight > 0 && afterWeight <= beforeWeight ? afterWeight : null;
 }
 
 /**
  * 逆算シミュレーション: 目標値入率から必要な歩留まり率を計算
- * @param {number} afterCost - 加工後100gあたり原価
+ * @param {number} beforeCost - 加工前100gあたり原価
  * @param {number} afterPrice - 加工後100gあたり売価
  * @param {number} weight - 1パックあたりの重量（g）
  * @param {number} targetMarkup - 目標値入率（%）
  * @param {number} consumable - 消耗品費
  * @returns {number|null} 必要な歩留まり率（%）
  */
-export function calculateYieldRateFromMarkup(afterCost, afterPrice, weight, targetMarkup, consumable) {
+export function calculateYieldRateFromMarkup(beforeCost, afterPrice, weight, targetMarkup, consumable) {
   // yieldRate = yr とする
-  // beforeCost = afterCost * (yr / 100)  (加工前100gあたり原価)
-  // cost = beforeCost * weight / 100 + consumable = afterCost * (yr / 100) * weight / 100 + consumable
-  // price = afterPrice * weight / 100
-  // markup/100 = (price - cost) / price
-  // cost = price * (1 - markup/100)
-  // afterCost * yr / 100 * weight / 100 + consumable = afterPrice * weight / 100 * (1 - markup/100)
-  // afterCost * yr * weight / 10000 = afterPrice * weight / 100 * (1 - markup/100) - consumable
-  // yr = (afterPrice * weight / 100 * (1 - markup/100) - consumable) * 10000 / (afterCost * weight)
-  // yr = ((afterPrice * (1 - markup/100) - consumable * 100 / weight) * 10000) / (afterCost * 100)
-  // yr = (afterPrice * (1 - markup/100) - consumable * 100 / weight) * 100 / afterCost
+  // afterCost = beforeCost / (yr / 100)  (加工後100gあたり原価)
+  // finalCost = afterCost * weight / 100 + consumable = (beforeCost / (yr / 100)) * weight / 100 + consumable
+  // finalCost = beforeCost * (100 / yr) * weight / 100 + consumable
+  // finalCost = beforeCost * weight / yr + consumable
+  // finalPrice = afterPrice * weight / 100
+  // markup/100 = (finalPrice - finalCost) / finalPrice
+  // finalCost = finalPrice * (1 - markup/100)
+  // beforeCost * weight / yr + consumable = afterPrice * weight / 100 * (1 - markup/100)
+  // beforeCost * weight / yr = afterPrice * weight / 100 * (1 - markup/100) - consumable
+  // yr = beforeCost * weight / (afterPrice * weight / 100 * (1 - markup/100) - consumable)
+  // yr = beforeCost * 100 / (afterPrice * (1 - markup/100) - consumable * 100 / weight)
 
-  if (!Number.isFinite(afterCost) || !Number.isFinite(afterPrice) ||
+  if (!Number.isFinite(beforeCost) || !Number.isFinite(afterPrice) ||
       !Number.isFinite(weight) || !Number.isFinite(targetMarkup) || !Number.isFinite(consumable) ||
-      weight <= 0 || afterCost <= 0) {
+      weight <= 0 || beforeCost <= 0) {
     return null;
   }
 
   const markupRatio = targetMarkup / PERCENT_MULTIPLIER;
-  const numerator = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
+  const denominator = afterPrice * (1 - markupRatio) - (consumable * GRAMS_PER_100G / weight);
 
-  if (numerator <= 0) {
+  if (denominator <= 0) {
     return null;
   }
 
-  const yieldRate = (numerator / afterCost) * PERCENT_MULTIPLIER;
+  const yieldRate = (beforeCost * PERCENT_MULTIPLIER) / denominator;
 
   return yieldRate > 0 && yieldRate <= 100 ? yieldRate : null;
 }

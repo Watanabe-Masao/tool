@@ -635,6 +635,8 @@ function getReverseSimulationInputs() {
           inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRate);
         }
       }
+      // beforeCostを計算（歩留まり率逆算用）
+      inputs.beforeCost = per100FromPerUnit(inputs.unitCost, inputs.beforeWeight);
     } else {
       // 歩留まり率を直接入力モード
       inputs.unitCost = num(FIXED_FIELDS.DIRECT.UNIT_COST);
@@ -652,6 +654,8 @@ function getReverseSimulationInputs() {
           inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRateDirect);
         }
       }
+      // beforeCostを計算（歩留まり率逆算用）
+      inputs.beforeCost = per100FromPerUnit(inputs.unitCost, inputs.beforeWeight);
     }
   } else {
     // 計量売価→計量加工
@@ -680,6 +684,8 @@ function getReverseSimulationInputs() {
           inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRate);
         }
       }
+      // beforeCostを計算（歩留まり率逆算用）
+      inputs.beforeCost = per100FromBox(inputs.boxCost, inputs.boxWeight);
     } else {
       // 歩留まり率を直接入力モード
       inputs.boxCost = num(WEIGHT_FIELDS.DIRECT.BOX_COST);
@@ -697,6 +703,8 @@ function getReverseSimulationInputs() {
           inputs.afterCost = afterCostPer100(beforeCost, inputs.yieldRateDirect);
         }
       }
+      // beforeCostを計算（歩留まり率逆算用）
+      inputs.beforeCost = per100FromBox(inputs.boxCost, inputs.boxWeight);
     }
   }
 
@@ -949,9 +957,13 @@ function handleReverseCalculation() {
           displayReverseError('加工後重量', '加工前重量を入力してください');
           return;
         }
+        if (!Number.isFinite(inputs.beforeCost) || inputs.beforeCost <= 0) {
+          displayReverseError('加工後重量', '加工前の原価を入力してください');
+          return;
+        }
         result = calculateAfterWeightFromMarkup(
           beforeWeight,
-          inputs.afterCost,
+          inputs.beforeCost,
           inputs.afterPrice,
           inputs.weight,
           targetMarkup,
@@ -961,9 +973,13 @@ function handleReverseCalculation() {
         unit = 'g';
         if (result === null) {
           // 目標値入率と現在の値入率を比較してメッセージを分岐
-          const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
-          if (targetMarkup < currentMarkup) {
-            errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+          if (Number.isFinite(inputs.afterCost)) {
+            const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+            if (targetMarkup < currentMarkup) {
+              errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+            } else {
+              errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+            }
           } else {
             errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
           }
@@ -972,8 +988,12 @@ function handleReverseCalculation() {
         // ========================================
         // 歩留まり率を直接入力モード: 歩留まり率を逆算
         // ========================================
+        if (!Number.isFinite(inputs.beforeCost) || inputs.beforeCost <= 0) {
+          displayReverseError('歩留まり率', '加工前の原価を入力してください');
+          return;
+        }
         result = calculateYieldRateFromMarkup(
-          inputs.afterCost,
+          inputs.beforeCost,
           inputs.afterPrice,
           inputs.weight,
           targetMarkup,
@@ -983,9 +1003,13 @@ function handleReverseCalculation() {
         unit = '%';
         if (result === null) {
           // 目標値入率と現在の値入率を比較してメッセージを分岐
-          const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
-          if (targetMarkup < currentMarkup) {
-            errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+          if (Number.isFinite(inputs.afterCost)) {
+            const currentMarkup = ((inputs.afterPrice - inputs.afterCost) / inputs.afterPrice) * PERCENT_MULTIPLIER;
+            if (targetMarkup < currentMarkup) {
+              errorMsg = '目標値入率が現在よりも低いため、必要な歩留まり率が100%を超えてしまいます。目標値入率を上げるか、条件を見直してください。';
+            } else {
+              errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
+            }
           } else {
             errorMsg = '目標値入率が高すぎます。目標値入率を下げるか、条件を見直してください。';
           }
