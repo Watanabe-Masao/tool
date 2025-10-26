@@ -115,7 +115,7 @@
         <div id="fixedDirectStep2" class="is-hidden">
           <h3 class="step-title">ステップ 2️⃣ 歩留まり率を入力</h3>
           <div class="grid">
-            <label class="field"><span>歩留まり率（%）</span><input type="number" id="yieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" /></label>
+            <label class="field"><span>歩留まり率（%）</span><input type="number" id="yieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" /></label>
           </div>
         </div>
 
@@ -253,7 +253,7 @@
         <div id="weightDirectStep2" class="is-hidden">
           <h3 class="step-title">ステップ 2️⃣ 歩留まり率を入力</h3>
           <div class="grid">
-            <label class="field"><span>歩留まり率（%）</span><input type="number" id="yieldRateDirectW" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" /></label>
+            <label class="field"><span>歩留まり率（%）</span><input type="number" id="yieldRateDirectW" step="0.01" inputmode="decimal" placeholder="50" min="0" /></label>
           </div>
         </div>
 
@@ -392,7 +392,11 @@
       </div>
 
       <div class="btn-row" style="margin-top: 1.5em;">
+        <!-- 新規計算時の保存ボタン -->
         <button id="saveBtn" class="btn btn-primary">💾 この計算を保存</button>
+        <!-- 履歴から読み込んだ計算の保存ボタン（初期状態で非表示） -->
+        <button id="overwriteSaveBtn" class="btn btn-primary" style="display: none;">💾 上書き保存</button>
+        <button id="newSaveBtn" class="btn btn-primary" style="display: none;">💾 新規保存</button>
         <button id="clearBtn" class="btn btn-secondary">クリア</button>
       </div>
     </section>

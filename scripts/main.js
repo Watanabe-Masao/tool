@@ -20,7 +20,7 @@ import {
   calculateYieldRateFromMarkup,
   calculateDiscountRateFromGross
 } from './product-simulator.js';
-import { initHistoryUI } from './history-ui.js';
+import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
 
 /**
  * モード切替処理
@@ -1156,6 +1156,8 @@ function clearAll() {
     resetWeightSteps();
   }
   appState.resetAll();
+  // 保存ボタンの表示を更新（履歴IDがクリアされたので通常の保存ボタンを表示）
+  updateSaveButtonsVisibility();
 }
 
 /**
@@ -1314,6 +1316,9 @@ function init() {
 
   // 履歴機能の初期化
   initHistoryUI();
+
+  // 保存ボタンの表示を初期化
+  updateSaveButtonsVisibility();
 
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
