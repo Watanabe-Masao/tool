@@ -57,10 +57,21 @@ export async function renderHistoryList(items = null) {
   // データを取得
   const history = items || await getHistory();
 
-  // 空の場合
-  if (history.length === 0) {
+  // 商品名候補を更新するために常に全履歴を取得
+  const allHistory = await getHistory();
+
+  // 全履歴が空の場合
+  if (allHistory.length === 0) {
     listContainer.innerHTML = '<li class="history-empty">保存済みのデータがありません</li>';
     updateProductNameSuggestions([]);
+    return;
+  }
+
+  // 絞り込み結果が空の場合
+  if (history.length === 0) {
+    listContainer.innerHTML = '<li class="history-empty">該当するデータがありません</li>';
+    // 商品名候補は全履歴から生成（絞り込み後でも全ての商品名を表示）
+    updateProductNameSuggestions(allHistory);
     return;
   }
 
@@ -70,8 +81,8 @@ export async function renderHistoryList(items = null) {
   // グループごとにHTMLを生成
   listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
-  // 商品名候補を更新
-  updateProductNameSuggestions(history);
+  // 商品名候補を更新（常に全履歴から生成）
+  updateProductNameSuggestions(allHistory);
 
   // イベントリスナーをバインド
   bindHistoryItemEvents();
@@ -86,6 +97,9 @@ function updateProductNameSuggestions(history) {
   const selectElement = qs('#historySearch');
   if (!selectElement) return;
 
+  // 現在の選択値を保存
+  const currentValue = selectElement.value;
+
   // ユニークな商品名を抽出
   const uniqueNames = [...new Set(history.map(item => item.name).filter(Boolean))];
 
@@ -95,6 +109,11 @@ function updateProductNameSuggestions(history) {
       .sort((a, b) => a.localeCompare(b, 'ja'))
       .map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`)
       .join('');
+
+  // 以前の選択値を復元
+  if (currentValue && uniqueNames.includes(currentValue)) {
+    selectElement.value = currentValue;
+  }
 }
 
 /**
