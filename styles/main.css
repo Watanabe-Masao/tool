@@ -429,6 +429,16 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   border: 2px solid var(--brand);
 }
 
+/* 統計グラフエリア */
+.stats-chart {
+  width: 100%;
+  height: 300px;
+  margin: 16px 0 20px 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
 /* 統計タイプ選択 */
 .stats-type-selector {
   display: flex;
