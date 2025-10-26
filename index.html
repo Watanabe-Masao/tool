@@ -321,23 +321,14 @@
         <h3 class="section-subtitle">📈 統計分析結果</h3>
 
         <!-- 統計タイプ選択 -->
-        <fieldset class="stats-type-selector">
-          <legend class="stats-type-legend">表示する統計</legend>
-          <div class="stats-type-radios">
-            <label class="stats-radio-label">
-              <input type="radio" name="statsType" value="yieldRate" checked />
-              <span>歩留まり率</span>
-            </label>
-            <label class="stats-radio-label">
-              <input type="radio" name="statsType" value="beforeWeight" />
-              <span>加工前重量</span>
-            </label>
-            <label class="stats-radio-label">
-              <input type="radio" name="statsType" value="afterWeight" />
-              <span>加工後重量</span>
-            </label>
-          </div>
-        </fieldset>
+        <div class="stats-type-selector">
+          <label for="statsTypeSelect" class="stats-type-label">表示する統計</label>
+          <select id="statsTypeSelect" class="stats-type-select">
+            <option value="yieldRate">歩留まり率</option>
+            <option value="beforeWeight">加工前重量</option>
+            <option value="afterWeight">加工後重量</option>
+          </select>
+        </div>
 
         <div class="stats-grid">
           <div class="stat-item">
