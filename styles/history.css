@@ -3,6 +3,19 @@
  */
 
 /* ============================================
+   モーダル表示時の背景固定
+   ============================================ */
+
+/* モーダルが開いている時に背景のスクロールとタッチ操作を無効化 */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ============================================
    ダイアログ基本スタイル
    ============================================ */
 
@@ -103,21 +116,49 @@
 .search-container {
   position: relative;
   width: 100%;
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
 }
 
-.history-toolbar input[type="text"] {
-  width: 100%;
+.history-toolbar select {
+  flex: 1;
   padding: 0.75em;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 1em;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  background: #fff;
+  cursor: pointer;
 }
 
-.history-toolbar input[type="text"]:focus {
+.history-toolbar select:focus {
   outline: none;
   border-color: #5c6bc0;
+}
+
+.btn-clear-search {
+  padding: 0.75em 1em;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-clear-search:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+  color: #333;
+}
+
+.btn-clear-search:active {
+  transform: scale(0.95);
 }
 
 /* ============================================

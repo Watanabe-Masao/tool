@@ -457,8 +457,10 @@
     <div class="dialog-body">
       <div class="history-toolbar">
         <div class="search-container">
-          <input type="text" id="historySearch" placeholder="🔍 商品名で検索..." list="productNameSuggestions" />
-          <datalist id="productNameSuggestions"></datalist>
+          <select id="historySearch">
+            <option value="">🔍 商品名で絞り込み...</option>
+          </select>
+          <button id="clearSearchBtn" class="btn-clear-search">選択を解除</button>
         </div>
       </div>
       <ul id="historyList" class="history-list">
