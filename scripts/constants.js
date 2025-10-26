@@ -10,7 +10,8 @@ export const PERCENT_MULTIPLIER = 100;
 // 計算モード
 export const MODE = {
   FIXED: 'fixed',
-  WEIGHT: 'weight'
+  WEIGHT: 'weight',
+  YIELD_STATS: 'yieldStats'
 };
 
 // 歩留まり計算方法
@@ -56,6 +57,14 @@ export const WEIGHT_FIELDS = {
   }
 };
 
+// 入力フィールドプレフィックス（歩留まり率統計モード）
+export const YIELD_STATS_FIELDS = {
+  PRODUCT_NAME: 'productName',
+  BEFORE_WEIGHT: 'beforeWeightYS',
+  AFTER_WEIGHT: 'afterWeightYS',
+  YIELD_RATE: 'yieldRateYS'
+};
+
 // 表示用ラベル
 export const LABELS = {
   FINISHED_PRICE_FIXED: '1個あたりの仕上がり売価',
@@ -67,11 +76,14 @@ export const UI_ELEMENTS = {
   // モード切替ボタン
   FIXED_BTN: 'fixedBtn',
   WEIGHT_BTN: 'weightBtn',
+  YIELD_STATS_BTN: 'yieldStatsBtn',
   CLEAR_BTN: 'clearBtn',
 
   // セクション
   FIXED_INPUTS: 'fixedInputs',
   WEIGHT_INPUTS: 'weightInputs',
+  YIELD_STATS_INPUTS: 'yieldStatsInputs',
+  YIELD_STATS_ENTRIES_CONTAINER: 'yieldStatsEntriesContainer',
   FIXED_CALCULATE_INPUTS: 'fixedCalculateInputs',
   FIXED_DIRECT_INPUTS: 'fixedDirectInputs',
   WEIGHT_CALCULATE_INPUTS: 'weightCalculateInputs',

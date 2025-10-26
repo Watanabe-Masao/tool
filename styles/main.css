@@ -295,3 +295,29 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 .footer-icon {
   flex-shrink: 0;
 }
+
+/* 歩留まり率統計モード */
+.section-description {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 8px 0 16px;
+  line-height: 1.5;
+}
+
+.yield-stats-entry {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  transition: border-color 0.2s;
+}
+
+.yield-stats-entry:hover {
+  border-color: #dee2e6;
+}
+
+.yield-stats-entry:last-child {
+  border-color: var(--brand);
+  background: #f0f4ff;
+}

@@ -25,6 +25,7 @@
       <div class="btn-row" role="tablist">
         <button id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true">定額売価→計量加工</button>
         <button id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false">計量売価→計量加工</button>
+        <button id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false">歩留まり率統計</button>
       </div>
     </section>
 
@@ -282,6 +283,16 @@
             <div class="stat stat--success"><div class="stat-label">加工後値入率</div><div id="afterMarkupWeightDirectStep3" class="stat-value">-</div></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 歩留まり率統計モード -->
+    <section id="yieldStatsInputs" class="card section is-hidden" aria-labelledby="yieldStatsHeading">
+      <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり率統計</h2>
+      <p class="section-description">複数の商品について加工前後の重量を入力し、歩留まり率を計算します。</p>
+
+      <div id="yieldStatsEntriesContainer">
+        <!-- 動的に入力欄が追加される -->
       </div>
     </section>
 

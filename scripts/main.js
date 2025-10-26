@@ -5,9 +5,10 @@
 import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed, afterCostPer100 } from './calculation.js';
 import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES } from './constants.js';
+import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
+import { calculateYieldRate } from './calculator-yield-stats.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -29,21 +30,38 @@ function switchMode(newMode) {
   appState.setMode(newMode);
 
   const isFixed = newMode === MODE.FIXED;
-  toggleActive(
-    qs(isFixed ? `#${UI_ELEMENTS.FIXED_BTN}` : `#${UI_ELEMENTS.WEIGHT_BTN}`),
-    qs(isFixed ? `#${UI_ELEMENTS.WEIGHT_BTN}` : `#${UI_ELEMENTS.FIXED_BTN}`)
-  );
+  const isWeight = newMode === MODE.WEIGHT;
+  const isYieldStats = newMode === MODE.YIELD_STATS;
 
+  // ボタンのアクティブ状態を更新
+  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN].forEach(btnId => {
+    const btn = qs(`#${btnId}`);
+    if (btn) {
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+  });
+
+  const activeBtn = qs(`#${isFixed ? UI_ELEMENTS.FIXED_BTN : isWeight ? UI_ELEMENTS.WEIGHT_BTN : UI_ELEMENTS.YIELD_STATS_BTN}`);
+  if (activeBtn) {
+    activeBtn.classList.add('is-active');
+    activeBtn.setAttribute('aria-selected', 'true');
+  }
+
+  // セクションの表示/非表示を切り替え
   qs(`#${UI_ELEMENTS.FIXED_INPUTS}`).classList.toggle('is-hidden', !isFixed);
-  qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`).classList.toggle('is-hidden', isFixed);
+  qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`).classList.toggle('is-hidden', !isWeight);
+  qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`).classList.toggle('is-hidden', !isYieldStats);
   hide(UI_ELEMENTS.RESULTS);
   hide(UI_ELEMENTS.WARNING);
 
   // ステップをリセット
   if (isFixed) {
     resetSteps();
-  } else {
+  } else if (isWeight) {
     resetWeightSteps();
+  } else if (isYieldStats) {
+    resetYieldStatsEntries();
   }
 }
 
@@ -1155,14 +1173,114 @@ function handleDiscountUpdate() {
 }
 
 /**
+ * 歩留まり率統計モード: エントリ数カウンター
+ */
+let yieldStatsEntryCounter = 0;
+
+/**
+ * 歩留まり率統計モード: エントリをリセット
+ */
+function resetYieldStatsEntries() {
+  yieldStatsEntryCounter = 0;
+  const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
+  if (container) {
+    container.innerHTML = '';
+    // 初期エントリを1つ追加
+    addYieldStatsEntry();
+  }
+}
+
+/**
+ * 歩留まり率統計モード: 新しいエントリを追加
+ */
+function addYieldStatsEntry() {
+  const container = qs(`#${UI_ELEMENTS.YIELD_STATS_ENTRIES_CONTAINER}`);
+  if (!container) return;
+
+  const entryId = yieldStatsEntryCounter++;
+  const entryDiv = document.createElement('div');
+  entryDiv.className = 'yield-stats-entry';
+  entryDiv.id = `yieldStatsEntry${entryId}`;
+
+  entryDiv.innerHTML = `
+    <div class="grid">
+      <label class="field">
+        <span>品名</span>
+        <input type="text" id="${YIELD_STATS_FIELDS.PRODUCT_NAME}${entryId}"
+               class="yield-stats-product-name"
+               placeholder="例: トマト" />
+      </label>
+      <label class="field">
+        <span>加工前重量（g）</span>
+        <input type="number" id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${entryId}"
+               class="yield-stats-before-weight"
+               step="0.01"
+               inputmode="decimal"
+               placeholder="300" />
+      </label>
+      <label class="field">
+        <span>加工後重量（g）</span>
+        <input type="number" id="${YIELD_STATS_FIELDS.AFTER_WEIGHT}${entryId}"
+               class="yield-stats-after-weight"
+               step="0.01"
+               inputmode="decimal"
+               placeholder="150" />
+      </label>
+      <div class="stat">
+        <div class="stat-label">歩留まり率</div>
+        <div id="${YIELD_STATS_FIELDS.YIELD_RATE}${entryId}" class="stat-value">-</div>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(entryDiv);
+
+  // 入力イベントリスナーを追加
+  const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${entryId}`);
+  const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${entryId}`);
+
+  const handleYieldStatsInput = () => {
+    const beforeWeight = parseFloat(beforeWeightInput.value) || 0;
+    const afterWeight = parseFloat(afterWeightInput.value) || 0;
+    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${entryId}`);
+
+    if (beforeWeight > 0 && afterWeight > 0) {
+      const yieldRate = calculateYieldRate(beforeWeight, afterWeight);
+      if (yieldRate !== null) {
+        yieldRateDisplay.textContent = pct(toFixed(yieldRate));
+        yieldRateDisplay.parentElement.classList.add('stat--success');
+
+        // 最後のエントリに値が入力されたら、新しいエントリを追加
+        const allEntries = container.querySelectorAll('.yield-stats-entry');
+        const lastEntry = allEntries[allEntries.length - 1];
+        if (lastEntry.id === `yieldStatsEntry${entryId}`) {
+          addYieldStatsEntry();
+        }
+      } else {
+        yieldRateDisplay.textContent = '-';
+        yieldRateDisplay.parentElement.classList.remove('stat--success');
+      }
+    } else {
+      yieldRateDisplay.textContent = '-';
+      yieldRateDisplay.parentElement.classList.remove('stat--success');
+    }
+  };
+
+  beforeWeightInput?.addEventListener('input', handleYieldStatsInput);
+  afterWeightInput?.addEventListener('input', handleYieldStatsInput);
+}
+
+/**
  * 全クリア処理
  */
 function clearAll() {
   const currentMode = appState.getMode();
   if (currentMode === MODE.FIXED) {
     resetSteps();
-  } else {
+  } else if (currentMode === MODE.WEIGHT) {
     resetWeightSteps();
+  } else if (currentMode === MODE.YIELD_STATS) {
+    resetYieldStatsEntries();
   }
   appState.resetAll();
   // 保存ボタンの表示を更新（履歴IDがクリアされたので通常の保存ボタンを表示）
@@ -1176,6 +1294,7 @@ function init() {
   // モード切替ボタン
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => switchMode(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => switchMode(MODE.WEIGHT));
+  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => switchMode(MODE.YIELD_STATS));
   qs(`#${UI_ELEMENTS.CLEAR_BTN}`)?.addEventListener('click', clearAll);
 
   // 歩留まり率入力方法の切り替え（定額モード）
