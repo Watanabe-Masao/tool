@@ -1648,19 +1648,14 @@ function displaySampleSizeValidation() {
   const statsTypeSelect = qs('#statsTypeSelect');
   const statsType = statsTypeSelect?.value || 'yieldRate';
 
-  const entries = appState.getYieldStatsEntries();
-  let values = [];
-
-  if (statsType === 'yieldRate') {
-    values = entries.map(e => e.yieldRate).filter(v => v !== null && v !== undefined);
-  } else if (statsType === 'beforeWeight') {
-    values = entries.map(e => e.beforeWeight).filter(v => v !== null && v !== undefined);
-  } else if (statsType === 'afterWeight') {
-    values = entries.map(e => e.afterWeight).filter(v => v !== null && v !== undefined);
+  const data = window.yieldStatsData;
+  if (!data) {
+    resultDiv.classList.add('is-hidden');
+    return;
   }
 
-  // データがない場合は非表示
-  if (values.length === 0) {
+  const values = data[statsType];
+  if (!values || values.length === 0) {
     resultDiv.classList.add('is-hidden');
     return;
   }
