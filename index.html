@@ -435,6 +435,23 @@
       <div class="dialog-header-actions">
         <button id="historyMenuBtn" class="btn-icon" aria-label="メニュー" title="データ管理">⋮</button>
         <button id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
+
+        <!-- データ管理メニュー（ドロップダウン） -->
+        <div id="historyMenu" class="history-menu is-hidden">
+          <button id="exportBtn" class="history-menu-item">
+            <span class="menu-icon">📤</span>
+            <span class="menu-text">データをエクスポート</span>
+          </button>
+          <button id="importBtn" class="history-menu-item">
+            <span class="menu-icon">📥</span>
+            <span class="menu-text">データをインポート</span>
+          </button>
+          <hr class="history-menu-divider">
+          <button id="clearAllBtn" class="history-menu-item history-menu-item--danger">
+            <span class="menu-icon">🗑️</span>
+            <span class="menu-text">すべて削除</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="dialog-body">
@@ -449,23 +466,6 @@
       </ul>
     </div>
   </dialog>
-
-  <!-- データ管理メニュー（ドロップダウン） -->
-  <div id="historyMenu" class="history-menu is-hidden">
-    <button id="exportBtn" class="history-menu-item">
-      <span class="menu-icon">📤</span>
-      <span class="menu-text">データをエクスポート</span>
-    </button>
-    <button id="importBtn" class="history-menu-item">
-      <span class="menu-icon">📥</span>
-      <span class="menu-text">データをインポート</span>
-    </button>
-    <hr class="history-menu-divider">
-    <button id="clearAllBtn" class="history-menu-item history-menu-item--danger">
-      <span class="menu-icon">🗑️</span>
-      <span class="menu-text">すべて削除</span>
-    </button>
-  </div>
 
   <!-- 更新通知スナックバー -->
   <div id="updateNotification" class="update-notification is-hidden">

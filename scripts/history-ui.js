@@ -1190,23 +1190,13 @@ function showToast(message, type = 'success') {
  */
 function toggleHistoryMenu() {
   const menu = qs('#historyMenu');
-  const menuBtn = qs('#historyMenuBtn');
-  if (!menu || !menuBtn) return;
-
-  const isHidden = menu.classList.contains('is-hidden');
-
-  if (isHidden) {
-    // メニューを表示
-    menu.classList.remove('is-hidden');
-
-    // ボタンの位置を取得してメニューを配置
-    const btnRect = menuBtn.getBoundingClientRect();
-    menu.style.top = `${btnRect.bottom + 5}px`;
-    menu.style.right = `${window.innerWidth - btnRect.right}px`;
-  } else {
-    // メニューを非表示
-    menu.classList.add('is-hidden');
+  if (!menu) {
+    console.error('履歴メニューが見つかりません');
+    return;
   }
+
+  menu.classList.toggle('is-hidden');
+  console.log('メニュー表示切り替え:', !menu.classList.contains('is-hidden'));
 }
 
 /**
