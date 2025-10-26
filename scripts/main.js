@@ -1708,8 +1708,70 @@ function displaySampleSizeValidation() {
     }
   }
 
+  // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
+  displayRecommendedValue(stats, isValid);
+
   // 結果を表示
   resultDiv.classList.remove('is-hidden');
+}
+
+/**
+ * 推奨代表値を表示
+ * @param {Object} stats - 統計データ
+ * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
+ */
+function displayRecommendedValue(stats, isSampleSizeValid) {
+  const recommendedValueDiv = qs('#recommendedValue');
+  const recommendedBadge = qs('#recommendedBadge');
+  const recommendedReason = qs('#recommendedReason');
+
+  if (!recommendedValueDiv || !recommendedBadge || !recommendedReason) {
+    return;
+  }
+
+  // サンプルサイズが妥当な場合のみ表示
+  if (!isSampleSizeValid) {
+    recommendedValueDiv.classList.add('is-hidden');
+    return;
+  }
+
+  const skewness = stats.skewness;
+  const absSkewness = Math.abs(skewness);
+
+  // 統計タイプに応じた単位を取得
+  const statsTypeSelect = qs('#statsTypeSelect');
+  const statsType = statsTypeSelect?.value || 'yieldRate';
+  const unit = statsType === 'yieldRate' ? '%' : 'g';
+
+  const formatValue = (value) => {
+    if (unit === '%') {
+      return `${toFixed(value)}%`;
+    } else {
+      return `${toFixed(value)}${unit}`;
+    }
+  };
+
+  let recommendedType = '';
+  let reason = '';
+
+  // 歪度に基づいて推奨値を判定
+  if (absSkewness <= 0.5) {
+    // 分布が正規分布に近い → 平均値を推奨
+    recommendedType = '平均値';
+    const meanValue = formatValue(stats.mean);
+    reason = `データの分布が正規分布に近く（歪度: ${toFixed(skewness, 3)}）、外れ値の影響が少ないと考えられます。代表値として平均値（${meanValue}）の使用を推奨します。`;
+  } else {
+    // 分布が歪んでいる → 中央値を推奨
+    recommendedType = '中央値';
+    const medianValue = formatValue(stats.median);
+    const direction = skewness > 0 ? '右に歪んでおり（正の歪度）' : '左に歪んでおり（負の歪度）';
+    reason = `データの分布が${direction}、外れ値の影響を受けやすい状態です（歪度: ${toFixed(skewness, 3)}）。より頑健な代表値として中央値（${medianValue}）の使用を推奨します。`;
+  }
+
+  recommendedBadge.textContent = recommendedType;
+  recommendedReason.textContent = reason;
+
+  recommendedValueDiv.classList.remove('is-hidden');
 }
 
 /**
