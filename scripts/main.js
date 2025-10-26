@@ -1707,14 +1707,48 @@ function displaySampleSizeValidation() {
   const stats = calculateStatistics(values);
   const confidenceLevel = parseInt(confidenceLevelSelect.value);
 
-  // 必要サンプルサイズを計算
+  // 外れ値を検出
+  const outlierResult = detectOutliers(values, stats);
+
+  // 手動除外された外れ値を反映したデータを計算
+  let finalValues = values;
+  let finalStats = stats;
+
+  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
+    // 手動除外する外れ値のセットを作成
+    const excludedValues = new Set();
+    manuallyExcludedOutlierIndices.forEach(index => {
+      if (index < currentOutlierValues.length) {
+        excludedValues.add(currentOutlierValues[index]);
+      }
+    });
+
+    // 除外する外れ値以外のデータをフィルタリング
+    finalValues = values.filter(v => {
+      // 浮動小数点数の比較のため、非常に小さい差を許容
+      for (const excludedValue of excludedValues) {
+        if (Math.abs(v - excludedValue) < 0.0001) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // 除外後のデータが2件以上ある場合のみ再計算
+    if (finalValues.length >= 2) {
+      finalStats = calculateStatistics(finalValues);
+    }
+  }
+
+  // 必要サンプルサイズを計算（除外後のデータの統計を使用）
   const requiredSampleSize = calculateRequiredSampleSize(
-    stats.stdDev,
+    finalStats.stdDev,
     toleranceError,
     confidenceLevel
   );
 
-  const actualSampleSize = stats.count;
+  // 実際のサンプルサイズ（除外後のデータ数）
+  const actualSampleSize = finalStats.count;
   const isValid = actualSampleSize >= requiredSampleSize;
 
   // 結果を表示
@@ -1752,40 +1786,12 @@ function displaySampleSizeValidation() {
   }
 
   // 外れ値を検出して表示
-  const outlierResult = detectOutliers(values, stats);
   displayOutlierInfo(outlierResult, statsType, isValid);
 
-  // 手動除外された外れ値を反映したデータを計算
-  let manuallyCleanedValues = values;
-  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
-    // 手動除外する外れ値のセットを作成
-    const excludedValues = new Set();
-    manuallyExcludedOutlierIndices.forEach(index => {
-      if (index < currentOutlierValues.length) {
-        excludedValues.add(currentOutlierValues[index]);
-      }
-    });
-
-    // 除外する外れ値以外のデータをフィルタリング
-    manuallyCleanedValues = values.filter(v => {
-      // 浮動小数点数の比較のため、非常に小さい差を許容
-      for (const excludedValue of excludedValues) {
-        if (Math.abs(v - excludedValue) < 0.0001) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }
-
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
-  // 手動除外がある場合はそれを優先、なければ自動検出の除外を使用
-  if (manuallyExcludedOutlierIndices.size > 0 && manuallyCleanedValues.length >= 2) {
-    const cleanedStats = calculateStatistics(manuallyCleanedValues);
-    displayRecommendedValue(cleanedStats, isValid);
-  } else if (outlierResult.outliers.length > 0 && outlierResult.cleanedValues.length >= 2) {
-    const cleanedStats = calculateStatistics(outlierResult.cleanedValues);
-    displayRecommendedValue(cleanedStats, isValid);
+  // 手動除外後のデータで計算
+  if (finalValues.length >= 2) {
+    displayRecommendedValue(finalStats, isValid);
   } else {
     displayRecommendedValue(stats, isValid);
   }
