@@ -1513,13 +1513,20 @@ function displayCurrentStatistics() {
 
   // 統計タイプに応じた単位を設定
   let unit = '';
+  let typeName = '';
   if (selectedType === 'yieldRate') {
     unit = '%';
-  } else if (selectedType === 'beforeWeight' || selectedType === 'afterWeight') {
+    typeName = '歩留まり率';
+  } else if (selectedType === 'beforeWeight') {
     unit = 'g';
+    typeName = '加工前重量';
+  } else if (selectedType === 'afterWeight') {
+    unit = 'g';
+    typeName = '加工後重量';
   }
 
   displayStatistics(stats, unit);
+  renderStatsChart(values, stats, typeName, unit);
 }
 
 /**
@@ -1543,6 +1550,147 @@ function displayStatistics(stats, unit = '%') {
   setText('statsSigma1', `${formatValue(stats.sigma1.lower)} ～ ${formatValue(stats.sigma1.upper)}`);
   setText('statsSigma2', `${formatValue(stats.sigma2.lower)} ～ ${formatValue(stats.sigma2.upper)}`);
   setText('statsSigma3', `${formatValue(stats.sigma3.lower)} ～ ${formatValue(stats.sigma3.upper)}`);
+}
+
+/**
+ * EChartsで箱ひげ図を描画
+ */
+let statsChartInstance = null;
+
+function renderStatsChart(values, stats, typeName, unit) {
+  const chartDom = qs('#statsChart');
+  if (!chartDom) return;
+
+  // EChartsが読み込まれていない場合は何もしない
+  if (typeof echarts === 'undefined') {
+    console.warn('ECharts is not loaded');
+    return;
+  }
+
+  // 既存のインスタンスがあれば破棄
+  if (statsChartInstance) {
+    statsChartInstance.dispose();
+  }
+
+  // EChartsインスタンスを初期化
+  statsChartInstance = echarts.init(chartDom);
+
+  // 箱ひげ図用のデータを準備
+  // EChartsの箱ひげ図は [min, Q1, median, Q3, max] の形式
+  const sorted = [...values].sort((a, b) => a - b);
+  const n = sorted.length;
+
+  // 四分位数を計算
+  const q1Index = Math.floor(n * 0.25);
+  const q3Index = Math.floor(n * 0.75);
+  const q1 = sorted[q1Index];
+  const q3 = sorted[q3Index];
+
+  const boxplotData = [
+    [stats.min, q1, stats.median, q3, stats.max]
+  ];
+
+  const option = {
+    title: {
+      text: `${typeName}の分布`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: function(param) {
+        if (param.componentSubType === 'boxplot') {
+          const data = param.data;
+          return `
+            <div style="font-weight: 600; margin-bottom: 4px;">${typeName}</div>
+            最大値: ${toFixed(data[4])}${unit}<br/>
+            第3四分位数: ${toFixed(data[3])}${unit}<br/>
+            中央値: ${toFixed(data[2])}${unit}<br/>
+            第1四分位数: ${toFixed(data[1])}${unit}<br/>
+            最小値: ${toFixed(data[0])}${unit}
+          `;
+        } else {
+          return `データ: ${toFixed(param.data[1])}${unit}`;
+        }
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'category',
+      data: [typeName],
+      boundaryGap: true,
+      nameGap: 30,
+      splitArea: {
+        show: false
+      },
+      axisLabel: {
+        fontSize: 12
+      },
+      splitLine: {
+        show: false
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: unit,
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      },
+      splitArea: {
+        show: true
+      },
+      axisLabel: {
+        fontSize: 11,
+        formatter: (value) => `${toFixed(value)}`
+      }
+    },
+    series: [
+      {
+        name: 'boxplot',
+        type: 'boxplot',
+        data: boxplotData,
+        itemStyle: {
+          color: 'rgba(102, 126, 234, 0.8)',
+          borderColor: '#667eea',
+          borderWidth: 2
+        },
+        tooltip: {
+          show: true
+        }
+      },
+      {
+        name: 'データポイント',
+        type: 'scatter',
+        data: values.map((val, idx) => [0, val]),
+        itemStyle: {
+          color: 'rgba(118, 75, 162, 0.5)'
+        },
+        symbolSize: 6
+      }
+    ]
+  };
+
+  statsChartInstance.setOption(option);
+
+  // ウィンドウリサイズ時にチャートもリサイズ
+  window.addEventListener('resize', () => {
+    if (statsChartInstance) {
+      statsChartInstance.resize();
+    }
+  });
 }
 
 /**
