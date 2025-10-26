@@ -2128,6 +2128,88 @@ function deleteOutlierRows() {
 }
 
 /**
+ * 計算式詳細モーダルのセットアップ
+ */
+function setupFormulaModal() {
+  const modal = qs('#formulaModal');
+  const modalClose = qs('#formulaModalClose');
+  const modalOverlay = modal?.querySelector('.modal-overlay');
+  const modalTitle = qs('#formulaModalTitle');
+  const modalBody = qs('#formulaModalBody');
+
+  if (!modal || !modalClose || !modalOverlay || !modalTitle || !modalBody) {
+    return;
+  }
+
+  // モーダルを開く関数
+  const openModal = (formulaName, formula, description, example) => {
+    modalTitle.textContent = formulaName;
+
+    let html = '<div class="formula-section">';
+
+    if (formula) {
+      html += '<div class="formula-label">計算式</div>';
+      html += `<div class="formula-expression">${formula}</div>`;
+    }
+
+    if (description) {
+      html += `<div class="formula-description">${description}</div>`;
+    }
+
+    if (example) {
+      html += `<div class="formula-example"><strong>例：</strong> ${example}</div>`;
+    }
+
+    html += '</div>';
+
+    modalBody.innerHTML = html;
+    modal.classList.add('is-open');
+    document.body.style.overflow = 'hidden'; // スクロール防止
+  };
+
+  // モーダルを閉じる関数
+  const closeModal = () => {
+    modal.classList.remove('is-open');
+    document.body.style.overflow = ''; // スクロール復元
+  };
+
+  // 閉じるボタンのクリック
+  modalClose.addEventListener('click', closeModal);
+
+  // オーバーレイのクリック
+  modalOverlay.addEventListener('click', closeModal);
+
+  // Escキーで閉じる
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+
+  // 全ての?マークにイベントリスナーを追加
+  const helpIcons = qsa('.help-icon');
+  helpIcons.forEach(icon => {
+    const formulaName = icon.dataset.formulaName;
+    const formula = icon.dataset.formula;
+    const description = icon.dataset.formulaDesc;
+    const example = icon.dataset.formulaExample;
+
+    // data属性がある場合のみクリック/タップイベントを追加
+    if (formulaName && formula) {
+      icon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openModal(formulaName, formula, description, example);
+      });
+
+      // タッチデバイス用
+      icon.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+      });
+    }
+  });
+}
+
+/**
  * 推奨代表値を表示
  * @param {Object} stats - 統計データ
  * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
@@ -3115,6 +3197,9 @@ function init() {
 
   // 外れ値を含む行を削除
   qs('#deleteOutlierRows')?.addEventListener('click', deleteOutlierRows);
+
+  // 計算式詳細モーダル
+  setupFormulaModal();
 
   // 商品化シミュレーション
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
