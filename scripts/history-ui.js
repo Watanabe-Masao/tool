@@ -55,6 +55,7 @@ export async function renderHistoryList(items = null) {
   // 空の場合
   if (history.length === 0) {
     listContainer.innerHTML = '<li class="history-empty">保存済みのデータがありません</li>';
+    updateProductNameSuggestions([]);
     return;
   }
 
@@ -64,9 +65,30 @@ export async function renderHistoryList(items = null) {
   // グループごとにHTMLを生成
   listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
+  // 商品名候補を更新
+  updateProductNameSuggestions(history);
+
   // イベントリスナーをバインド
   bindHistoryItemEvents();
   initializeCarousels();
+}
+
+/**
+ * 商品名の候補をdatalistに設定
+ * @param {Array} history - 履歴データ配列
+ */
+function updateProductNameSuggestions(history) {
+  const datalist = qs('#productNameSuggestions');
+  if (!datalist) return;
+
+  // ユニークな商品名を抽出
+  const uniqueNames = [...new Set(history.map(item => item.name).filter(Boolean))];
+
+  // datalistを更新
+  datalist.innerHTML = uniqueNames
+    .sort((a, b) => a.localeCompare(b, 'ja'))
+    .map(name => `<option value="${name}">`)
+    .join('');
 }
 
 /**
@@ -1164,6 +1186,40 @@ function showToast(message, type = 'success') {
 }
 
 /**
+ * 履歴メニューの表示/非表示を切り替え
+ */
+function toggleHistoryMenu() {
+  const menu = qs('#historyMenu');
+  const menuBtn = qs('#historyMenuBtn');
+  if (!menu || !menuBtn) return;
+
+  const isHidden = menu.classList.contains('is-hidden');
+
+  if (isHidden) {
+    // メニューを表示
+    menu.classList.remove('is-hidden');
+
+    // ボタンの位置を取得してメニューを配置
+    const btnRect = menuBtn.getBoundingClientRect();
+    menu.style.top = `${btnRect.bottom + 5}px`;
+    menu.style.right = `${window.innerWidth - btnRect.right}px`;
+  } else {
+    // メニューを非表示
+    menu.classList.add('is-hidden');
+  }
+}
+
+/**
+ * 履歴メニューを非表示にする
+ */
+function hideHistoryMenu() {
+  const menu = qs('#historyMenu');
+  if (menu) {
+    menu.classList.add('is-hidden');
+  }
+}
+
+/**
  * 履歴機能の初期化
  */
 export function initHistoryUI() {
@@ -1189,6 +1245,23 @@ export function initHistoryUI() {
   const closeHistoryBtn = qs('#closeHistoryModal');
   if (closeHistoryBtn) {
     closeHistoryBtn.addEventListener('click', closeHistoryModal);
+  }
+
+  // 履歴メニューボタン（⋮）
+  const historyMenuBtn = qs('#historyMenuBtn');
+  const historyMenu = qs('#historyMenu');
+  if (historyMenuBtn && historyMenu) {
+    historyMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleHistoryMenu();
+    });
+
+    // メニュー外をクリックしたら閉じる
+    document.addEventListener('click', (e) => {
+      if (!historyMenu.contains(e.target) && e.target !== historyMenuBtn) {
+        hideHistoryMenu();
+      }
+    });
   }
 
   // 保存ボタン
@@ -1244,18 +1317,27 @@ export function initHistoryUI() {
   // エクスポート
   const exportBtn = qs('#exportBtn');
   if (exportBtn) {
-    exportBtn.addEventListener('click', handleExport);
+    exportBtn.addEventListener('click', () => {
+      hideHistoryMenu();
+      handleExport();
+    });
   }
 
   // インポート
   const importBtn = qs('#importBtn');
   if (importBtn) {
-    importBtn.addEventListener('click', handleImport);
+    importBtn.addEventListener('click', () => {
+      hideHistoryMenu();
+      handleImport();
+    });
   }
 
   // すべてクリア
   const clearAllBtn = qs('#clearAllBtn');
   if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', handleClearAll);
+    clearAllBtn.addEventListener('click', () => {
+      hideHistoryMenu();
+      handleClearAll();
+    });
   }
 }

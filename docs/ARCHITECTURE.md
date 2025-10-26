@@ -484,6 +484,57 @@ stateDiagram-v2
     }
 ```
 
+### 自動バージョニングの仕組み
+
+**問題**: 手動でキャッシュバージョンを更新するのは面倒で、忘れやすい
+
+**解決策**: GitHub Actionsで自動的にビルドタイムスタンプを注入
+
+```mermaid
+sequenceDiagram
+    participant Dev as 開発者
+    participant Git as GitHub
+    participant Actions as GitHub Actions
+    participant Pages as GitHub Pages
+    participant User as ユーザー
+
+    Dev->>Git: コードをpush
+    Git->>Actions: デプロイワークフロー起動
+    Actions->>Actions: タイムスタンプ生成<br/>(YYYYMMDD-HHMMSS-HASH)
+    Actions->>Actions: sw.js内のプレースホルダーを置換<br/>__BUILD_TIMESTAMP__ → 20250126-153045-a1b2c3d
+    Actions->>Pages: 更新されたファイルをデプロイ
+    Pages->>User: 新しいsw.jsを配信
+    User->>User: Service Worker更新検出
+    User->>User: 更新通知表示
+```
+
+**実装詳細**:
+
+1. **sw.js内のプレースホルダー**:
+   ```javascript
+   const CACHE_BUILD = '__BUILD_TIMESTAMP__';
+   ```
+
+2. **GitHub Actionsでの置換処理**:
+   ```bash
+   # タイムスタンプ生成
+   BUILD_TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")-${GITHUB_SHA:0:7}
+
+   # プレースホルダーを置換
+   sed -i "s/__BUILD_TIMESTAMP__/${BUILD_TIMESTAMP}/g" sw.js
+   ```
+
+3. **結果**:
+   ```javascript
+   const CACHE_BUILD = '20250126-153045-a1b2c3d';
+   ```
+
+**メリット**:
+- 開発者は手動でバージョンを変更する必要なし
+- デプロイごとに自動的にユニークなバージョンが生成される
+- コミットハッシュ含有でトレーサビリティが向上
+- ビルドツール不要（sedのみ使用）
+
 ### キャッシュ戦略
 
 ```mermaid

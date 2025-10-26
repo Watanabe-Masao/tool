@@ -2,10 +2,10 @@
  * Service Worker - 完全オフライン対応
  */
 
-// バージョン更新時はここを変更（例: v1 → v2 → v3...）
-// タイムスタンプを含めることで確実に更新を検出
+// バージョン管理: GitHub Actionsデプロイ時に自動的にタイムスタンプが注入されます
+// ローカル開発時は 'dev' として動作します
 const CACHE_VERSION = 3;
-const CACHE_BUILD = '20250126-001'; // YYYYMMDD-XXX形式（v3.3: ドキュメント整備）
+const CACHE_BUILD = '__BUILD_TIMESTAMP__'; // デプロイ時に置換されます（例: 20250126-153045-a1b2c3d）
 const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
 const urlsToCache = [

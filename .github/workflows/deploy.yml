@@ -25,6 +25,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate build timestamp
+        id: timestamp
+        run: |
+          # タイムスタンプを生成（YYYYMMDD-HHMMSS-HASH形式）
+          BUILD_TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")-${GITHUB_SHA:0:7}
+          echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "Generated build timestamp: ${BUILD_TIMESTAMP}"
+
+      - name: Update Service Worker version
+        run: |
+          # sw.jsのプレースホルダーをビルドタイムスタンプに置換
+          sed -i "s/__BUILD_TIMESTAMP__/${{ steps.timestamp.outputs.BUILD_TIMESTAMP }}/g" sw.js
+          echo "Service Worker updated with build timestamp: ${{ steps.timestamp.outputs.BUILD_TIMESTAMP }}"
+
+          # 確認のため置換後の内容を表示
+          grep "CACHE_BUILD" sw.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
