@@ -6,6 +6,17 @@
 [![Offline First](https://img.shields.io/badge/Offline-First-green.svg)](https://web.dev/offline-first/)
 [![Mobile Friendly](https://img.shields.io/badge/Mobile-Friendly-orange.svg)](https://search.google.com/test/mobile-friendly)
 
+## 目次
+- [主な機能](#-主な機能)
+- [フローチャート](#-フローチャート)
+- [使い方](#-使い方)
+- [PWAとしてインストール](#pwaとしてインストール)
+- [プロジェクト構成](#-プロジェクト構成)
+- [技術スタック](#-技術スタック)
+- [設計のポイント](#-設計のポイント)
+- [ドキュメント](#-ドキュメント)
+- [今後の拡張案](#-今後の拡張案)
+
 ## ✨ 主な機能
 
 ### 📊 計算機能
@@ -49,6 +60,61 @@
 - **スワイプUI**: 同一商品名の履歴を横スワイプで閲覧
 - **トースト通知**: 操作結果をわかりやすく通知
 - **アニメーション効果**: 直感的な操作フィードバック
+
+## 📊 フローチャート
+
+### ユーザー操作フロー
+
+```mermaid
+graph TD
+    A[アプリ起動] --> B{モード選択}
+    B -->|定額売価| C1[Step 1: 基本情報入力<br/>原価・売価・重量]
+    B -->|計量売価| C2[Step 1: 基本情報入力<br/>箱原価・箱売価・箱重量]
+
+    C1 --> D[Step 2: 歩留まり率設定]
+    C2 --> D
+
+    D -->|重量から計算| E1[加工前・後重量入力]
+    D -->|直接入力| E2[歩留まり率入力]
+
+    E1 --> F[Step 3: 加工後売価設定]
+    E2 --> F
+
+    F --> G[Step 4: 商品化シミュレーション<br/>パック重量・消耗品費]
+    G --> H[Step 5: 値引きシミュレーション<br/>値引率調整]
+
+    H --> I{保存する?}
+    I -->|はい| J[カテゴリー選択]
+    J --> K[商品名入力]
+    K --> L[IndexedDBに保存]
+    I -->|いいえ| M[計算完了]
+    L --> M
+
+    M --> N{次の操作}
+    N -->|新規計算| A
+    N -->|履歴閲覧| O[履歴モーダル表示]
+    N -->|逆算| P[逆算シミュレーション]
+```
+
+### データフロー
+
+```mermaid
+graph LR
+    A[ユーザー入力] --> B[計算関数]
+    B --> C[状態管理<br/>AppState]
+    C --> D[表示更新]
+
+    E[保存操作] --> F[storage.js]
+    F --> G[IndexedDB]
+
+    H[読込操作] --> I[db.js]
+    I --> G
+    G --> J[データ復元]
+    J --> C
+
+    K[Service Worker] --> L[キャッシュ]
+    L --> M[オフライン動作]
+```
 
 ## 🚀 使い方
 
@@ -189,9 +255,15 @@ yield-calculator/
 
 ## 📝 ドキュメント
 
+### ユーザー向け
+- [README.md](./README.md) - このファイル（使い方ガイド）
 - [CHANGELOG.md](./CHANGELOG.md) - 変更履歴
-- [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) - MVP実装の詳細
+
+### 開発者向け
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - アーキテクチャ設計、フローチャート詳細
+- [docs/FEATURES.md](./docs/FEATURES.md) - 機能詳細仕様
 - [docs/reverse-sim-spec.md](./docs/reverse-sim-spec.md) - 逆算シミュレーション仕様
+- [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) - MVP実装の詳細、開発ガイド
 
 ## 🐛 問題が発生した場合
 
@@ -206,11 +278,17 @@ yield-calculator/
 
 ---
 
-**バージョン**: v3.2
-**最終更新**: 2025-01-25
+**バージョン**: v3.3
+**最終更新**: 2025-01-26
 **開発**: Claude Code
 
 ## 📝 最近の更新内容
+
+### v3.3 (2025-01-26)
+- ドキュメント整備：READMEにフローチャート追加（ユーザー操作フロー、データフロー）
+- 新規ドキュメント作成：`docs/ARCHITECTURE.md`（アーキテクチャ設計、各種フローチャート）
+- ドキュメント構造改善：ユーザー向けと開発者向けに分類
+- 各ドキュメント間の相互リンク強化
 
 ### v3.2 (2025-01-25)
 - 履歴表示を改善：加工前値入率と加工後値入率を分けて表示

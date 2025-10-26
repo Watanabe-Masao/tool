@@ -65,11 +65,12 @@ yield-calculator/
 ├── index.html              # PWA対応、履歴UI、更新通知
 ├── manifest.json           # PWA設定
 ├── sw.js                   # Service Worker（バージョン管理強化）
-├── CHANGELOG.md            # 🆕 変更履歴
-├── README.md               # 更新済み
-├── MVP_IMPLEMENTATION.md   # このファイル（更新済み）
+├── CHANGELOG.md            # 変更履歴
+├── README.md               # ユーザー向けガイド
+├── MVP_IMPLEMENTATION.md   # このファイル（実装詳細）
 ├── docs/
-│   ├── FEATURES.md         # 🆕 機能詳細ドキュメント
+│   ├── ARCHITECTURE.md     # アーキテクチャ設計、フローチャート
+│   ├── FEATURES.md         # 機能詳細ドキュメント
 │   └── reverse-sim-spec.md # 逆算シミュレーション仕様
 ├── icons/                  # アプリアイコン（8サイズ）
 │   └── README.md           # アイコン生成ガイド
