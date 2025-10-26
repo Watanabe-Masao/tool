@@ -282,7 +282,7 @@ export function calculateAfterWeightFromMarkup(beforeWeight, beforeCost, afterPr
 
   const afterWeight = (beforeCost * beforeWeight) / denominator;
 
-  return afterWeight > 0 && afterWeight <= beforeWeight ? afterWeight : null;
+  return afterWeight > 0 ? afterWeight : null;
 }
 
 /**
@@ -323,7 +323,7 @@ export function calculateYieldRateFromMarkup(beforeCost, afterPrice, weight, tar
 
   const yieldRate = (beforeCost * PERCENT_MULTIPLIER) / denominator;
 
-  return yieldRate > 0 && yieldRate <= 100 ? yieldRate : null;
+  return yieldRate > 0 ? yieldRate : null;
 }
 
 /**
