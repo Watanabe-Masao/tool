@@ -32,7 +32,7 @@
     <!-- 定額売価→計量加工（段階的フォーム） -->
     <section id="fixedInputs" class="card section" aria-labelledby="fixedHeading">
       <div class="section-header">
-        <h2 id="fixedHeading" class="section-title">📦 基本情報（定額売価→計量加工）</h2>
+        <h2 id="fixedHeading" class="section-title">📦 基本情報（定額→計量加工）</h2>
         <button id="historyBtn" class="btn btn-secondary btn-header">📂 履歴</button>
       </div>
 
@@ -157,7 +157,7 @@
     <!-- 計量売価→計量加工 -->
     <section id="weightInputs" class="card section is-hidden" aria-labelledby="weightHeading">
       <div class="section-header">
-        <h2 id="weightHeading" class="section-title">📦 基本情報（計量売価→計量加工）</h2>
+        <h2 id="weightHeading" class="section-title">📦 基本情報（計量→計量加工）</h2>
         <button id="historyBtnWeight" class="btn btn-secondary btn-header">📂 履歴</button>
       </div>
 
@@ -288,7 +288,7 @@
 
     <!-- 歩留まり率統計モード -->
     <section id="yieldStatsInputs" class="card section is-hidden" aria-labelledby="yieldStatsHeading">
-      <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり率統計</h2>
+      <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり統計</h2>
       <p class="section-description">商品の加工前後の重量を入力し、歩留まり率を計算・統計分析します。</p>
 
       <!-- 品名入力欄 -->
@@ -355,49 +355,49 @@
           <div class="stat-item">
             <div class="stat-label">
               最大値
-              <span class="help-icon" title="データの中で最も大きい値">?</span>
+              <span class="help-icon" title="データの中で最も大きい値" data-formula-name="最大値" data-formula="max(x₁, x₂, ..., xₙ)" data-formula-desc="データセットの中で最も大きい値を選択します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、最大値 = 52">?</span>
             </div>
             <div id="statsMax" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               最小値
-              <span class="help-icon" title="データの中で最も小さい値">?</span>
+              <span class="help-icon" title="データの中で最も小さい値" data-formula-name="最小値" data-formula="min(x₁, x₂, ..., xₙ)" data-formula-desc="データセットの中で最も小さい値を選択します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、最小値 = 47">?</span>
             </div>
             <div id="statsMin" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               範囲
-              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します">?</span>
+              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します" data-formula-name="範囲（レンジ）" data-formula="範囲 = 最大値 - 最小値" data-formula-desc="データの広がりを示す最も単純な指標です。" data-formula-example="最大値が52、最小値が47の場合、範囲 = 52 - 47 = 5">?</span>
             </div>
             <div id="statsRange" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               平均値
-              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します">?</span>
+              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します" data-formula-name="平均値（算術平均）" data-formula="x̄ = (x₁ + x₂ + ... + xₙ) / n" data-formula-desc="全てのデータの合計をデータ数で割った値です。データの中心位置を表します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、平均値 = (50+48+52+47+51) / 5 = 49.6">?</span>
             </div>
             <div id="statsAvg" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               中央値
-              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です" data-formula-name="中央値（メディアン）" data-formula="データを昇順に並べ、nが奇数なら中央の値、偶数なら中央2つの平均" data-formula-desc="データを小さい順に並べたときの中央の値です。極端な値の影響を受けにくい特徴があります。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、中央値 = 50（3番目の値）">?</span>
             </div>
             <div id="statsMedian" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               標準偏差
-              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています">?</span>
+              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています" data-formula-name="標準偏差" data-formula="σ = √(Σ(xᵢ - x̄)² / n)" data-formula-desc="各データが平均値からどれだけ離れているかを示す指標です。値が大きいほどデータのばらつきが大きくなります。" data-formula-example="データが [50, 48, 52, 47, 51]、平均49.6の場合、σ = √((0.4²+1.6²+2.4²+2.6²+1.4²)/5) ≈ 1.85">?</span>
             </div>
             <div id="statsStdDev" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               変動係数（CV）
-              <span class="help-icon" title="標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます">?</span>
+              <span class="help-icon" title="標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます" data-formula-name="変動係数（CV）" data-formula="CV = (σ / x̄) × 100 (%)" data-formula-desc="標準偏差を平均値で割ったもので、異なる単位や規模のデータのばらつきを比較できます。" data-formula-example="標準偏差が1.85、平均が49.6の場合、CV = (1.85 / 49.6) × 100 ≈ 3.73%">?</span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -409,21 +409,21 @@
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
-              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です" data-formula-name="第1四分位数（Q1）" data-formula="ソート後のデータでn×0.25の位置の値" data-formula-desc="データを小さい順に並べたとき、25%の位置にある値です。下位25%のデータの境界を示します。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、Q1 ≈ 48（25%の位置）">?</span>
             </div>
             <div id="statsQ1" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               第3四分位数（Q3）
-              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です" data-formula-name="第3四分位数（Q3）" data-formula="ソート後のデータでn×0.75の位置の値" data-formula-desc="データを小さい順に並べたとき、75%の位置にある値です。上位25%のデータの境界を示します。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、Q3 ≈ 51（75%の位置）">?</span>
             </div>
             <div id="statsQ3" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               四分位範囲（IQR）
-              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です">?</span>
+              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です" data-formula-name="四分位範囲（IQR）" data-formula="IQR = Q3 - Q1" data-formula-desc="第3四分位数と第1四分位数の差です。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です。" data-formula-example="Q3が51、Q1が48の場合、IQR = 51 - 48 = 3">?</span>
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
@@ -435,14 +435,14 @@
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
-              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です">?</span>
+              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です" data-formula-name="歪度（わいど）" data-formula="Skewness = Σ((xᵢ - x̄) / σ)³ / n" data-formula-desc="分布の左右対称性を示す指標です。0に近いほど左右対称、正なら右に裾が長い（右に偏っている）、負なら左に裾が長い（左に偏っている）分布です。" data-formula-example="正規分布の場合は0、右に長い裾がある分布（高所得者が少数いる）は正の値になります">?</span>
             </div>
             <div id="statsSkewness" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               尖度（Kurtosis）
-              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです">?</span>
+              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです" data-formula-name="尖度（せんど）" data-formula="Kurtosis = Σ((xᵢ - x̄) / σ)⁴ / n - 3" data-formula-desc="分布の尖り具合を示す指標です。0なら正規分布と同じ尖り具合、正なら正規分布より尖っている（外れ値が多い）、負ならなだらか（データが均一）です。" data-formula-example="正規分布の場合は0、外れ値が多い分布は正の値、均一な分布は負の値になります">?</span>
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
@@ -451,27 +451,27 @@
         <!-- σ範囲 -->
         <h4 class="stats-section-title">
           正規分布における信頼区間
-          <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します">?</span>
+          <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
         </h4>
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               σ1範囲（68.3%）
-              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます" data-formula-name="σ1範囲" data-formula="[x̄ - σ, x̄ + σ]" data-formula-desc="平均値±1標準偏差の範囲です。正規分布に従う場合、約68.3%のデータがこの範囲に含まれます。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]">?</span>
             </div>
             <div id="statsSigma1" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ2範囲（95.4%）
-              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます" data-formula-name="σ2範囲" data-formula="[x̄ - 2σ, x̄ + 2σ]" data-formula-desc="平均値±2標準偏差の範囲です。正規分布に従う場合、約95.4%のデータがこの範囲に含まれます。" data-formula-example="平均が50、標準偏差が2の場合、σ2範囲 = [46, 54]">?</span>
             </div>
             <div id="statsSigma2" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ3範囲（99.7%）
-              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます" data-formula-name="σ3範囲" data-formula="[x̄ - 3σ, x̄ + 3σ]" data-formula-desc="平均値±3標準偏差の範囲です。正規分布に従う場合、約99.7%のデータがこの範囲に含まれます。この範囲外はほぼ外れ値と見なせます。" data-formula-example="平均が50、標準偏差が2の場合、σ3範囲 = [44, 56]">?</span>
             </div>
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
@@ -480,7 +480,7 @@
         <!-- サンプルサイズの妥当性判断 -->
         <h4 class="stats-section-title">
           サンプルサイズの妥当性判断
-          <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます">?</span>
+          <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
         </h4>
         <div class="sample-size-validation">
           <div class="validation-inputs">
@@ -528,7 +528,7 @@
             <div id="outlierInfo" class="outlier-info is-hidden">
               <div class="outlier-info-header">
                 <strong>⚠️ 外れ値の検出</strong>
-                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します">?</span>
+                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します" data-formula-name="外れ値検出（IQR法）" data-formula="外れ値 = データ < Q1 - 1.5×IQR または データ > Q3 + 1.5×IQR" data-formula-desc="四分位範囲法により外れ値を検出します。Q1から1.5×IQR下、またはQ3から1.5×IQR上のデータを外れ値とします。" data-formula-example="Q1=48、Q3=51、IQR=3の場合、外れ値は 43.5未満 または 55.5超のデータです">?</span>
               </div>
               <div class="outlier-info-content">
                 <div class="outlier-details">
@@ -570,7 +570,7 @@
             <div id="recommendedValue" class="recommended-value is-hidden">
               <div class="recommended-value-header">
                 <strong>📌 推奨代表値</strong>
-                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します">?</span>
+                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します" data-formula-name="推奨代表値の判定" data-formula="歪度の絶対値 ≤ 0.5 なら平均値、> 0.5 なら中央値を推奨" data-formula-desc="データの分布形状（歪度）に基づいて、適切な代表値を推奨します。分布が対称的なら平均値、歪んでいれば中央値を推奨します。" data-formula-example="歪度が0.3の場合は平均値を推奨、歪度が1.2の場合は中央値を推奨します">?</span>
               </div>
               <div class="recommended-value-content">
                 <div class="recommended-badge-wrapper">
@@ -793,6 +793,20 @@
       <a href="https://github.com/Watanabe-Masao/tool/tree/main/docs" target="_blank" rel="noopener noreferrer" class="footer-link">📚 機能一覧</a>
     </div>
   </footer>
+
+  <!-- 計算式詳細モーダル -->
+  <div id="formulaModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="formulaModalTitle" class="modal-title">計算式</h3>
+        <button id="formulaModalClose" class="modal-close" aria-label="閉じる">✕</button>
+      </div>
+      <div id="formulaModalBody" class="modal-body">
+        <!-- 動的に生成 -->
+      </div>
+    </div>
+  </div>
 
   <!-- ECharts ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>

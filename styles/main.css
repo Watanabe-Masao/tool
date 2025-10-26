@@ -1055,3 +1055,180 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     font-size: 1.2rem;
   }
 }
+
+/* 計算式詳細モーダル */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal.is-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand);
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.modal-close:hover {
+  background: #f8f9fa;
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.formula-section {
+  margin-bottom: 20px;
+}
+
+.formula-section:last-child {
+  margin-bottom: 0;
+}
+
+.formula-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.formula-expression {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  color: var(--brand);
+  margin-bottom: 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.formula-description {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.formula-example {
+  background: #e8f5e9;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #2e7d32;
+  border-left: 4px solid #4caf50;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* help-iconをクリック可能にする */
+.help-icon {
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.help-icon:hover {
+  color: var(--brand);
+  transform: scale(1.1);
+}
+
+.help-icon:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95%;
+    max-height: 90vh;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .formula-expression {
+    font-size: 1rem;
+    padding: 12px;
+  }
+}
