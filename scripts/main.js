@@ -1474,6 +1474,29 @@ function calculateStatistics(values) {
   const max = sorted[n - 1];
   const min = sorted[0];
 
+  // 範囲
+  const range = max - min;
+
+  // 四分位数
+  const q1Index = Math.floor(n * 0.25);
+  const q3Index = Math.floor(n * 0.75);
+  const q1 = sorted[q1Index];
+  const q3 = sorted[q3Index];
+  const iqr = q3 - q1; // 四分位範囲
+
+  // 変動係数（CV）
+  const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
+
+  // 歪度（Skewness）
+  const skewness = n > 2
+    ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 3), 0) / n
+    : 0;
+
+  // 尖度（Kurtosis）- 超過尖度
+  const kurtosis = n > 3
+    ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 4), 0) / n - 3
+    : 0;
+
   // σ範囲
   const sigma1 = { lower: mean - stdDev, upper: mean + stdDev };
   const sigma2 = { lower: mean - 2 * stdDev, upper: mean + 2 * stdDev };
@@ -1486,9 +1509,17 @@ function calculateStatistics(values) {
     stdDev,
     max,
     min,
+    range,
+    q1,
+    q3,
+    iqr,
+    cv,
+    skewness,
+    kurtosis,
     sigma1,
     sigma2,
-    sigma3
+    sigma3,
+    sorted // ソート済みデータも返す（グラフ描画用）
   };
 }
 
@@ -1541,12 +1572,26 @@ function displayStatistics(stats, unit = '%') {
     }
   };
 
+  // 基本統計量
   setText('statsCount', `${stats.count}個`);
   setText('statsMax', formatValue(stats.max));
   setText('statsMin', formatValue(stats.min));
+  setText('statsRange', formatValue(stats.range));
   setText('statsAvg', formatValue(stats.mean));
   setText('statsMedian', formatValue(stats.median));
   setText('statsStdDev', formatValue(stats.stdDev));
+  setText('statsCV', `${toFixed(stats.cv)}%`);
+
+  // 四分位数
+  setText('statsQ1', formatValue(stats.q1));
+  setText('statsQ3', formatValue(stats.q3));
+  setText('statsIQR', formatValue(stats.iqr));
+
+  // 分布の形状
+  setText('statsSkewness', toFixed(stats.skewness, 3));
+  setText('statsKurtosis', toFixed(stats.kurtosis, 3));
+
+  // σ範囲
   setText('statsSigma1', `${formatValue(stats.sigma1.lower)} ～ ${formatValue(stats.sigma1.upper)}`);
   setText('statsSigma2', `${formatValue(stats.sigma2.lower)} ～ ${formatValue(stats.sigma2.upper)}`);
   setText('statsSigma3', `${formatValue(stats.sigma3.lower)} ～ ${formatValue(stats.sigma3.upper)}`);
@@ -1595,6 +1640,15 @@ function renderStatsChart(values, stats, typeName, unit) {
       break;
     case 'normal':
       option = createNormalDistOption(values, stats, typeName, unit);
+      break;
+    case 'violin':
+      option = createViolinOption(values, stats, typeName, unit);
+      break;
+    case 'cdf':
+      option = createCDFOption(values, stats, typeName, unit);
+      break;
+    case 'qqplot':
+      option = createQQPlotOption(values, stats, typeName, unit);
       break;
     default:
       option = createBoxplotOption(values, stats, typeName, unit);
@@ -2034,6 +2088,306 @@ function createNormalDistOption(values, stats, typeName, unit) {
       }
     ]
   };
+}
+
+/**
+ * バイオリンプロットのオプションを生成（箱ひげ図＋密度推定の近似）
+ */
+function createViolinOption(values, stats, typeName, unit) {
+  // カーネル密度推定（簡易版）
+  const kde = (x, bandwidth) => {
+    return values.reduce((sum, val) => {
+      const u = (x - val) / bandwidth;
+      return sum + Math.exp(-0.5 * u * u);
+    }, 0) / (values.length * bandwidth * Math.sqrt(2 * Math.PI));
+  };
+
+  const bandwidth = 1.06 * stats.stdDev * Math.pow(values.length, -0.2);
+  const rangeMin = stats.min - stats.stdDev;
+  const rangeMax = stats.max + stats.stdDev;
+  const step = (rangeMax - rangeMin) / 50;
+
+  // 密度データを生成
+  const densityData = [];
+  for (let y = rangeMin; y <= rangeMax; y += step) {
+    const density = kde(y, bandwidth);
+    densityData.push([density, y]);
+    densityData.unshift([-density, y]); // 左右対称
+  }
+
+  // 箱ひげ図データ
+  const boxplotData = [
+    [stats.min, stats.q1, stats.median, stats.q3, stats.max]
+  ];
+
+  return {
+    title: {
+      text: `${typeName}のバイオリンプロット`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    grid: {
+      left: '15%',
+      right: '15%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      show: false
+    },
+    yAxis: {
+      type: 'value',
+      name: unit,
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [
+      {
+        type: 'line',
+        data: densityData,
+        areaStyle: {
+          color: 'rgba(102, 126, 234, 0.4)'
+        },
+        lineStyle: {
+          color: 'rgba(102, 126, 234, 0.8)',
+          width: 2
+        },
+        smooth: true,
+        symbol: 'none'
+      },
+      {
+        type: 'boxplot',
+        data: boxplotData,
+        itemStyle: {
+          color: 'rgba(255, 255, 255, 0.8)',
+          borderColor: '#667eea',
+          borderWidth: 2
+        },
+        boxWidth: [0.1, 0.1]
+      }
+    ]
+  };
+}
+
+/**
+ * 累積分布関数（CDF）のオプションを生成
+ */
+function createCDFOption(values, stats, typeName, unit) {
+  // ソート済みデータから累積分布を計算
+  const sorted = stats.sorted;
+  const n = sorted.length;
+  const cdfData = sorted.map((val, idx) => [val, (idx + 1) / n]);
+
+  return {
+    title: {
+      text: `${typeName}の累積分布関数（CDF）`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        return `値: ${toFixed(params[0].data[0])}${unit}<br/>累積確率: ${(params[0].data[1] * 100).toFixed(1)}%`;
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      name: unit,
+      nameLocation: 'middle',
+      nameGap: 30
+    },
+    yAxis: {
+      type: 'value',
+      name: '累積確率',
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      },
+      min: 0,
+      max: 1,
+      axisLabel: {
+        formatter: (value) => `${(value * 100).toFixed(0)}%`
+      }
+    },
+    series: [{
+      data: cdfData,
+      type: 'line',
+      step: 'end',
+      itemStyle: {
+        color: 'rgba(102, 126, 234, 0.8)'
+      },
+      lineStyle: {
+        width: 2
+      },
+      areaStyle: {
+        color: 'rgba(102, 126, 234, 0.2)'
+      },
+      markLine: {
+        data: [
+          { yAxis: 0.25, name: 'Q1', lineStyle: { color: '#f39c12', type: 'dashed' }, label: { formatter: 'Q1(25%)' } },
+          { yAxis: 0.5, name: 'Median', lineStyle: { color: '#e74c3c', type: 'dashed' }, label: { formatter: '中央値(50%)' } },
+          { yAxis: 0.75, name: 'Q3', lineStyle: { color: '#f39c12', type: 'dashed' }, label: { formatter: 'Q3(75%)' } }
+        ]
+      }
+    }]
+  };
+}
+
+/**
+ * Q-Qプロットのオプションを生成
+ */
+function createQQPlotOption(values, stats, typeName, unit) {
+  // 標準正規分位数を計算
+  const sorted = stats.sorted;
+  const n = sorted.length;
+  const qqData = [];
+
+  for (let i = 0; i < n; i++) {
+    // 理論的な分位数（標準正規分布）
+    const p = (i + 0.5) / n;
+    // 標準正規分布の逆累積分布関数の近似
+    const theoreticalQuantile = approximateNormalQuantile(p);
+    // 標準化したサンプル分位数
+    const sampleQuantile = (sorted[i] - stats.mean) / stats.stdDev;
+    qqData.push([theoreticalQuantile, sampleQuantile]);
+  }
+
+  // 理論的な直線（y=x）
+  const minQ = Math.min(...qqData.map(d => d[0]));
+  const maxQ = Math.max(...qqData.map(d => d[0]));
+  const referenceLine = [[minQ, minQ], [maxQ, maxQ]];
+
+  return {
+    title: {
+      text: `${typeName}のQ-Qプロット（正規性検定）`,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        return `理論分位数: ${toFixed(params.data[0], 2)}<br/>サンプル分位数: ${toFixed(params.data[1], 2)}`;
+      }
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '20%'
+    },
+    xAxis: {
+      type: 'value',
+      name: '理論分位数（標準正規分布）',
+      nameLocation: 'middle',
+      nameGap: 30
+    },
+    yAxis: {
+      type: 'value',
+      name: 'サンプル分位数（標準化）',
+      nameTextStyle: {
+        fontSize: 12,
+        color: '#666'
+      }
+    },
+    series: [
+      {
+        name: '理論直線',
+        type: 'line',
+        data: referenceLine,
+        lineStyle: {
+          color: '#e74c3c',
+          width: 2,
+          type: 'dashed'
+        },
+        symbol: 'none',
+        z: 1
+      },
+      {
+        name: 'データポイント',
+        data: qqData,
+        type: 'scatter',
+        itemStyle: {
+          color: 'rgba(102, 126, 234, 0.6)'
+        },
+        symbolSize: 8,
+        z: 2
+      }
+    ]
+  };
+}
+
+/**
+ * 標準正規分布の逆累積分布関数の近似（Beasley-Springer-Moro algorithm）
+ */
+function approximateNormalQuantile(p) {
+  if (p <= 0 || p >= 1) return p < 0.5 ? -10 : 10;
+
+  const a = [
+    2.50662823884,
+    -18.61500062529,
+    41.39119773534,
+    -25.44106049637
+  ];
+
+  const b = [
+    -8.47351093090,
+    23.08336743743,
+    -21.06224101826,
+    3.13082909833
+  ];
+
+  const c = [
+    0.3374754822726147,
+    0.9761690190917186,
+    0.1607979714918209,
+    0.0276438810333863,
+    0.0038405729373609,
+    0.0003951896511919,
+    0.0000321767881768,
+    0.0000002888167364,
+    0.0000003960315187
+  ];
+
+  const y = p - 0.5;
+
+  if (Math.abs(y) < 0.42) {
+    const r = y * y;
+    return y * (((a[3] * r + a[2]) * r + a[1]) * r + a[0]) /
+           ((((b[3] * r + b[2]) * r + b[1]) * r + b[0]) * r + 1);
+  }
+
+  const r = p < 0.5 ? p : 1 - p;
+  const s = Math.log(-Math.log(r));
+  let t = c[0];
+  for (let i = 1; i < c.length; i++) {
+    t += c[i] * Math.pow(s, i);
+  }
+
+  return p < 0.5 ? -t : t;
 }
 
 /**
