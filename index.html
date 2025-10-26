@@ -432,15 +432,16 @@
   <dialog id="historyModal" class="dialog dialog--large">
     <div class="dialog-header">
       <h3 class="dialog-title">📂 保存済みの計算</h3>
-      <button id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
+      <div class="dialog-header-actions">
+        <button id="historyMenuBtn" class="btn-icon" aria-label="メニュー" title="データ管理">⋮</button>
+        <button id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
+      </div>
     </div>
     <div class="dialog-body">
       <div class="history-toolbar">
-        <input type="text" id="historySearch" placeholder="🔍 商品名で検索..." />
-        <div class="history-toolbar-actions">
-          <button id="exportBtn" class="btn btn-small">📤 エクスポート</button>
-          <button id="importBtn" class="btn btn-small">📥 インポート</button>
-          <button id="clearAllBtn" class="btn btn-small btn-danger">🗑️ すべて削除</button>
+        <div class="search-container">
+          <input type="text" id="historySearch" placeholder="🔍 商品名で検索..." list="productNameSuggestions" />
+          <datalist id="productNameSuggestions"></datalist>
         </div>
       </div>
       <ul id="historyList" class="history-list">
@@ -448,6 +449,23 @@
       </ul>
     </div>
   </dialog>
+
+  <!-- データ管理メニュー（ドロップダウン） -->
+  <div id="historyMenu" class="history-menu is-hidden">
+    <button id="exportBtn" class="history-menu-item">
+      <span class="menu-icon">📤</span>
+      <span class="menu-text">データをエクスポート</span>
+    </button>
+    <button id="importBtn" class="history-menu-item">
+      <span class="menu-icon">📥</span>
+      <span class="menu-text">データをインポート</span>
+    </button>
+    <hr class="history-menu-divider">
+    <button id="clearAllBtn" class="history-menu-item history-menu-item--danger">
+      <span class="menu-icon">🗑️</span>
+      <span class="menu-text">すべて削除</span>
+    </button>
+  </div>
 
   <!-- 更新通知スナックバー -->
   <div id="updateNotification" class="update-notification is-hidden">

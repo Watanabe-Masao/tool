@@ -42,6 +42,12 @@
   color: #333;
 }
 
+.dialog-header-actions {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+
 .dialog-body {
   padding: 1.5em;
   max-height: 82vh;
@@ -57,7 +63,8 @@
   background: #f9f9f9;
 }
 
-.btn-close {
+.btn-close,
+.btn-icon {
   background: transparent;
   border: none;
   font-size: 1.5em;
@@ -68,11 +75,19 @@
   height: 32px;
   border-radius: 50%;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-close:hover {
+.btn-close:hover,
+.btn-icon:hover {
   background: #f0f0f0;
   color: #333;
+}
+
+.btn-icon:active {
+  background: #e0e0e0;
 }
 
 /* ============================================
@@ -80,10 +95,12 @@
    ============================================ */
 
 .history-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
   margin-bottom: 1.5em;
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
 }
 
 .history-toolbar input[type="text"] {
@@ -93,6 +110,7 @@
   border-radius: 8px;
   font-size: 1em;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .history-toolbar input[type="text"]:focus {
@@ -100,10 +118,73 @@
   border-color: #5c6bc0;
 }
 
-.history-toolbar-actions {
+/* ============================================
+   履歴メニュー（ドロップダウン）
+   ============================================ */
+
+.history-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.5em 0;
+  min-width: 200px;
+  z-index: 10001;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.history-menu.is-hidden {
+  display: none;
+}
+
+.history-menu-item {
   display: flex;
-  gap: 0.5em;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75em;
+  width: 100%;
+  padding: 0.75em 1em;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-align: left;
+}
+
+.history-menu-item:hover {
+  background: #f5f5f5;
+}
+
+.history-menu-item:active {
+  background: #e8e8e8;
+}
+
+.history-menu-item--danger {
+  color: #ef5350;
+}
+
+.history-menu-item--danger:hover {
+  background: #ffebee;
+}
+
+.menu-icon {
+  font-size: 1.1em;
+  width: 1.5em;
+  text-align: center;
+}
+
+.menu-text {
+  flex: 1;
+}
+
+.history-menu-divider {
+  margin: 0.5em 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
 }
 
 /* ============================================
@@ -344,11 +425,19 @@
   background: #5c6bc0;
   color: #fff;
   border-color: #5c6bc0;
+  padding: 0.4em 0.8em;
+  font-size: 0.85em;
 }
 
 .btn-load:hover {
   background: #4a5bb8;
   border-color: #4a5bb8;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 0.25em 0.5em;
+  font-size: 0.7em;
 }
 
 .btn-edit {
