@@ -1558,6 +1558,10 @@ function displayCurrentStatistics() {
 
   displayStatistics(stats, unit);
   renderStatsChart(values, stats, typeName, unit);
+
+  // サンプルサイズ妥当性判断の単位と表示を更新
+  updateToleranceUnit();
+  displaySampleSizeValidation();
 }
 
 /**
@@ -1595,6 +1599,142 @@ function displayStatistics(stats, unit = '%') {
   setText('statsSigma1', `${formatValue(stats.sigma1.lower)} ～ ${formatValue(stats.sigma1.upper)}`);
   setText('statsSigma2', `${formatValue(stats.sigma2.lower)} ～ ${formatValue(stats.sigma2.upper)}`);
   setText('statsSigma3', `${formatValue(stats.sigma3.lower)} ～ ${formatValue(stats.sigma3.upper)}`);
+}
+
+/**
+ * 必要サンプルサイズを計算
+ * @param {number} stdDev - 標準偏差
+ * @param {number} toleranceError - 許容誤差（E）
+ * @param {number} confidenceLevel - 信頼水準（90, 95, 99）
+ * @returns {number} 必要サンプルサイズ
+ */
+function calculateRequiredSampleSize(stdDev, toleranceError, confidenceLevel) {
+  // Z値のマッピング
+  const zValues = {
+    90: 1.645,
+    95: 1.960,
+    99: 2.576
+  };
+
+  const z = zValues[confidenceLevel] || 1.960;
+
+  // n = (Z * s / E)²
+  const n = Math.pow((z * stdDev) / toleranceError, 2);
+
+  return Math.ceil(n); // 切り上げ
+}
+
+/**
+ * サンプルサイズ妥当性を表示
+ */
+function displaySampleSizeValidation() {
+  const toleranceErrorInput = qs('#toleranceError');
+  const confidenceLevelSelect = qs('#confidenceLevel');
+  const resultDiv = qs('#sampleSizeResult');
+
+  if (!toleranceErrorInput || !confidenceLevelSelect || !resultDiv) {
+    return;
+  }
+
+  const toleranceError = parseFloat(toleranceErrorInput.value);
+
+  // 入力値が無効な場合は結果を非表示
+  if (!toleranceError || toleranceError <= 0) {
+    resultDiv.classList.add('is-hidden');
+    return;
+  }
+
+  // 現在の統計データを取得
+  const statsTypeSelect = qs('#statsTypeSelect');
+  const statsType = statsTypeSelect?.value || 'yieldRate';
+
+  const entries = appState.getYieldStatsEntries();
+  let values = [];
+
+  if (statsType === 'yieldRate') {
+    values = entries.map(e => e.yieldRate).filter(v => v !== null && v !== undefined);
+  } else if (statsType === 'beforeWeight') {
+    values = entries.map(e => e.beforeWeight).filter(v => v !== null && v !== undefined);
+  } else if (statsType === 'afterWeight') {
+    values = entries.map(e => e.afterWeight).filter(v => v !== null && v !== undefined);
+  }
+
+  // データがない場合は非表示
+  if (values.length === 0) {
+    resultDiv.classList.add('is-hidden');
+    return;
+  }
+
+  // 統計値を計算
+  const stats = calculateStatistics(values);
+  const confidenceLevel = parseInt(confidenceLevelSelect.value);
+
+  // 必要サンプルサイズを計算
+  const requiredSampleSize = calculateRequiredSampleSize(
+    stats.stdDev,
+    toleranceError,
+    confidenceLevel
+  );
+
+  const actualSampleSize = stats.count;
+  const isValid = actualSampleSize >= requiredSampleSize;
+
+  // 結果を表示
+  const actualSampleSizeSpan = qs('#actualSampleSize');
+  const requiredSampleSizeSpan = qs('#requiredSampleSize');
+  const validityBadge = qs('#validityJudgment');
+  const validityExplanation = qs('#validityExplanation');
+
+  if (actualSampleSizeSpan) {
+    actualSampleSizeSpan.textContent = actualSampleSize;
+  }
+
+  if (requiredSampleSizeSpan) {
+    requiredSampleSizeSpan.textContent = requiredSampleSize;
+  }
+
+  if (validityBadge) {
+    if (isValid) {
+      validityBadge.textContent = '妥当';
+      validityBadge.className = 'validity-badge valid';
+    } else {
+      validityBadge.textContent = '不十分';
+      validityBadge.className = 'validity-badge invalid';
+    }
+  }
+
+  if (validityExplanation) {
+    if (isValid) {
+      const surplus = actualSampleSize - requiredSampleSize;
+      validityExplanation.textContent = `実際のサンプル数が必要数を${surplus}個上回っており、統計的に十分なデータ量です。`;
+    } else {
+      const shortage = requiredSampleSize - actualSampleSize;
+      validityExplanation.textContent = `実際のサンプル数が必要数より${shortage}個不足しています。より多くのデータを収集することを推奨します。`;
+    }
+  }
+
+  // 結果を表示
+  resultDiv.classList.remove('is-hidden');
+}
+
+/**
+ * 許容誤差の単位を更新
+ */
+function updateToleranceUnit() {
+  const statsTypeSelect = qs('#statsTypeSelect');
+  const toleranceUnit = qs('#toleranceUnit');
+
+  if (!statsTypeSelect || !toleranceUnit) {
+    return;
+  }
+
+  const statsType = statsTypeSelect.value;
+
+  if (statsType === 'yieldRate') {
+    toleranceUnit.textContent = '%';
+  } else {
+    toleranceUnit.textContent = 'g';
+  }
 }
 
 /**
@@ -2485,6 +2625,15 @@ function init() {
   // 歩留まり率統計モード - グラフタイプ選択
   qs('#chartTypeSelect')?.addEventListener('change', () => {
     displayCurrentStatistics();
+  });
+
+  // 歩留まり率統計モード - サンプルサイズ妥当性判断
+  qs('#toleranceError')?.addEventListener('input', () => {
+    displaySampleSizeValidation();
+  });
+
+  qs('#confidenceLevel')?.addEventListener('change', () => {
+    displaySampleSizeValidation();
   });
 
   // 商品化シミュレーション

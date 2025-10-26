@@ -431,6 +431,46 @@
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
         </div>
+
+        <!-- サンプルサイズの妥当性判断 -->
+        <h4 class="stats-section-title">サンプルサイズの妥当性判断</h4>
+        <div class="sample-size-validation">
+          <div class="validation-inputs">
+            <div class="validation-input-group">
+              <label for="toleranceError" class="validation-label">許容誤差（E）</label>
+              <div class="input-with-unit">
+                <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" placeholder="例: 2.0" />
+                <span class="input-unit" id="toleranceUnit">%</span>
+              </div>
+              <small class="validation-help">どの程度の誤差を許せるか</small>
+            </div>
+            <div class="validation-input-group">
+              <label for="confidenceLevel" class="validation-label">信頼水準</label>
+              <select id="confidenceLevel" class="validation-select">
+                <option value="90">90%（Z=1.645）</option>
+                <option value="95" selected>95%（Z=1.960）</option>
+                <option value="99">99%（Z=2.576）</option>
+              </select>
+              <small class="validation-help">統計的信頼度の水準</small>
+            </div>
+          </div>
+
+          <div id="sampleSizeResult" class="sample-size-result is-hidden">
+            <div class="result-row">
+              <span class="result-label">実際のサンプル数：</span>
+              <span id="actualSampleSize" class="result-value">-</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">必要サンプル数：</span>
+              <span id="requiredSampleSize" class="result-value">-</span>
+            </div>
+            <div class="result-row result-row-judgment">
+              <span class="result-label">判定：</span>
+              <span id="validityJudgment" class="validity-badge">-</span>
+            </div>
+            <p id="validityExplanation" class="validity-explanation"></p>
+          </div>
+        </div>
       </div>
     </section>
 
