@@ -1246,12 +1246,22 @@ function addYieldStatsRow() {
     const hasBeforeWeight = beforeWeightInput.value.trim() !== '';
     const hasAfterWeight = afterWeightInput.value.trim() !== '';
 
-    // 両方空の場合は上詰め処理
+    // 両方空の場合は上詰め処理（複数行ある場合のみ）
     if (!hasBeforeWeight && !hasAfterWeight) {
-      // この行にデータがあったかチェック
-      if (yieldRateDisplay.textContent !== '-') {
-        compactYieldStatsRows();
-      }
+      // 結果をクリア
+      yieldRateDisplay.textContent = '-';
+      yieldRateDisplay.classList.remove('calculated', 'error');
+
+      // 複数行ある場合のみ上詰め処理を実行
+      setTimeout(() => {
+        const allRows = tbody.querySelectorAll('.yield-stats-row');
+        if (allRows.length > 1) {
+          compactYieldStatsRows();
+        } else {
+          // 1行しかない場合は統計を非表示
+          updateYieldStatsStatistics();
+        }
+      }, 100);
       return;
     }
 
@@ -1311,7 +1321,11 @@ function compactYieldStatsRows() {
     const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
     const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
 
-    if (beforeInput.value.trim() !== '' || afterInput.value.trim() !== '') {
+    const hasBeforeWeight = beforeInput && beforeInput.value.trim() !== '';
+    const hasAfterWeight = afterInput && afterInput.value.trim() !== '';
+
+    // どちらか一方でも値がある行は残す
+    if (hasBeforeWeight || hasAfterWeight) {
       validRows.push({
         beforeValue: beforeInput.value,
         afterValue: afterInput.value
@@ -1324,21 +1338,41 @@ function compactYieldStatsRows() {
   tbody.innerHTML = '';
 
   // 有効な行を追加
-  validRows.forEach(rowData => {
-    addYieldStatsRow();
-    const newRowId = yieldStatsEntryCounter - 1;
-    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${newRowId}`);
-    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${newRowId}`);
+  if (validRows.length > 0) {
+    validRows.forEach(rowData => {
+      addYieldStatsRow();
+      const newRowId = yieldStatsEntryCounter - 1;
+      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${newRowId}`);
+      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${newRowId}`);
 
-    beforeInput.value = rowData.beforeValue;
-    afterInput.value = rowData.afterValue;
+      beforeInput.value = rowData.beforeValue;
+      afterInput.value = rowData.afterValue;
 
-    // 計算をトリガー
-    beforeInput.dispatchEvent(new Event('input'));
-  });
+      // 計算を直接実行（イベント発火ではなく）
+      const hasBeforeWeight = rowData.beforeValue.trim() !== '';
+      const hasAfterWeight = rowData.afterValue.trim() !== '';
+      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${newRowId}`);
 
-  // 少なくとも1行は残す
-  if (validRows.length === 0) {
+      if (hasBeforeWeight && hasAfterWeight) {
+        const beforeWeight = parseFloat(rowData.beforeValue);
+        const afterWeight = parseFloat(rowData.afterValue);
+        if (beforeWeight > 0 && afterWeight > 0) {
+          const yieldRate = calculateYieldRate(beforeWeight, afterWeight);
+          if (yieldRate !== null) {
+            yieldRateDisplay.textContent = pct(toFixed(yieldRate));
+            yieldRateDisplay.classList.add('calculated');
+            yieldRateDisplay.classList.remove('error');
+          }
+        }
+      } else if (hasBeforeWeight || hasAfterWeight) {
+        // 片方だけ入力されている場合はエラー
+        yieldRateDisplay.textContent = 'エラー';
+        yieldRateDisplay.classList.add('error');
+        yieldRateDisplay.classList.remove('calculated');
+      }
+    });
+  } else {
+    // データがない場合は1行追加
     addYieldStatsRow();
   }
 
