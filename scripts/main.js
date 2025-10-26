@@ -1496,7 +1496,8 @@ function calculateStatistics(values) {
  * 現在選択されている統計タイプの統計を表示
  */
 function displayCurrentStatistics() {
-  const selectedType = document.querySelector('input[name="statsType"]:checked')?.value || 'yieldRate';
+  const selectElement = qs('#statsTypeSelect');
+  const selectedType = selectElement?.value || 'yieldRate';
   const data = window.yieldStatsData;
 
   if (!data) return;
@@ -1632,10 +1633,8 @@ function init() {
   qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightDirectStep3);
 
   // 歩留まり率統計モード - 統計タイプ選択
-  qsa('input[name="statsType"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      displayCurrentStatistics();
-    });
+  qs('#statsTypeSelect')?.addEventListener('change', () => {
+    displayCurrentStatistics();
   });
 
   // 商品化シミュレーション
