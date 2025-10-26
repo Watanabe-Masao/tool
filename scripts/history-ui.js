@@ -2,12 +2,15 @@
  * 履歴機能のUI管理
  */
 
-import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
+import { getHistory, searchHistory, deleteHistory, updateCalculationName, updateCalculation, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
 import { qs, num, show, hide, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup, toFixed } from './calculation.js';
 import { displayProductSimulation } from './display.js';
+
+// 保存ダイアログを開いたボタンの種類を記録（'new', 'overwrite', 'normal'）
+let saveDialogMode = 'normal';
 
 /**
  * 履歴モーダルを表示
@@ -432,6 +435,9 @@ async function handleLoadCalculation(id) {
   try {
     const data = await loadCalculation(id);
 
+    // 履歴から読み込んだ計算のIDを保存（上書き保存用）
+    appState.setLoadedHistoryId(id);
+
     // モーダルを閉じる（先に閉じる）
     closeHistoryModal();
 
@@ -466,6 +472,9 @@ async function handleLoadCalculation(id) {
           expWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
         }
       }
+
+      // 保存ボタンの表示を更新
+      updateSaveButtonsVisibility();
 
       showToast('✅ データを読み込みました');
     }, 100);
@@ -890,6 +899,129 @@ async function updateProductNamePresets(category = null) {
 }
 
 /**
+ * 保存ボタンの表示を更新（履歴から読み込んだ場合は上書き/新規を表示）
+ */
+export function updateSaveButtonsVisibility() {
+  const loadedHistoryId = appState.getLoadedHistoryId();
+  const saveBtn = qs('#saveBtn');
+  const overwriteSaveBtn = qs('#overwriteSaveBtn');
+  const newSaveBtn = qs('#newSaveBtn');
+
+  if (loadedHistoryId) {
+    // 履歴から読み込んだ場合: 上書き保存と新規保存を表示
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (overwriteSaveBtn) overwriteSaveBtn.style.display = '';
+    if (newSaveBtn) newSaveBtn.style.display = '';
+  } else {
+    // 新規計算の場合: 通常の保存ボタンを表示
+    if (saveBtn) saveBtn.style.display = '';
+    if (overwriteSaveBtn) overwriteSaveBtn.style.display = 'none';
+    if (newSaveBtn) newSaveBtn.style.display = 'none';
+  }
+}
+
+/**
+ * 上書き保存（履歴から読み込んだ計算を更新）
+ */
+export async function handleOverwriteSave() {
+  const loadedHistoryId = appState.getLoadedHistoryId();
+  if (!loadedHistoryId) {
+    showToast('❌ 上書き保存できる履歴がありません', 'error');
+    return;
+  }
+
+  const nameInput = qs('#saveName');
+  const categorySelect = qs('#saveCategory');
+
+  if (!nameInput) return;
+
+  const name = nameInput.value.trim();
+  if (name === '') {
+    showToast('❌ 商品名を入力してください', 'error');
+    return;
+  }
+
+  const category = categorySelect ? categorySelect.value : null;
+  if (!category) {
+    showToast('❌ カテゴリを選択してください', 'error');
+    return;
+  }
+
+  // 現在の入力値と計算結果を取得
+  const mode = appState.getMode();
+  const inputData = collectInputValues(mode);
+  const resultData = appState.getSnapshot(); // 計算結果
+  const productData = appState.getProductData(); // 商品化データ
+
+  // 値引後最終粗利率を計算して追加
+  if (productData && Number.isFinite(productData.markup)) {
+    const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
+    const discountGross = grossFromMarkup(productData.markup, discountRate);
+    resultData.discountGross = discountGross;
+  }
+
+  try {
+    await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
+    closeSaveDialog();
+    showToast('✅ 上書き保存しました');
+    // 商品名プリセットを更新
+    await updateProductNamePresets();
+  } catch (error) {
+    console.error('Overwrite save error:', error);
+    showToast('❌ 上書き保存に失敗しました', 'error');
+  }
+}
+
+/**
+ * 新規保存（履歴から読み込んだ計算を新しいエントリとして保存）
+ */
+export async function handleNewSave() {
+  const nameInput = qs('#saveName');
+  const categorySelect = qs('#saveCategory');
+
+  if (!nameInput) return;
+
+  const name = nameInput.value.trim();
+  if (name === '') {
+    showToast('❌ 商品名を入力してください', 'error');
+    return;
+  }
+
+  const category = categorySelect ? categorySelect.value : null;
+  if (!category) {
+    showToast('❌ カテゴリを選択してください', 'error');
+    return;
+  }
+
+  // 現在の入力値と計算結果を取得
+  const mode = appState.getMode();
+  const inputData = collectInputValues(mode);
+  const resultData = appState.getSnapshot(); // 計算結果
+  const productData = appState.getProductData(); // 商品化データ
+
+  // 値引後最終粗利率を計算して追加
+  if (productData && Number.isFinite(productData.markup)) {
+    const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
+    const discountGross = grossFromMarkup(productData.markup, discountRate);
+    resultData.discountGross = discountGross;
+  }
+
+  try {
+    await saveCalculation(name, mode, inputData, resultData, category, productData);
+    // 新規保存後、履歴IDをクリア
+    appState.clearLoadedHistoryId();
+    updateSaveButtonsVisibility();
+    closeSaveDialog();
+    showToast('✅ 新規保存しました');
+    // 商品名プリセットを更新
+    await updateProductNamePresets();
+  } catch (error) {
+    console.error('New save error:', error);
+    showToast('❌ 新規保存に失敗しました', 'error');
+  }
+}
+
+/**
  * 現在の計算を保存
  */
 export async function handleSaveCalculation() {
@@ -1056,13 +1188,43 @@ export function initHistoryUI() {
   // 保存ボタン
   const saveBtn = qs('#saveBtn');
   if (saveBtn) {
-    saveBtn.addEventListener('click', showSaveDialog);
+    saveBtn.addEventListener('click', () => {
+      saveDialogMode = 'normal';
+      showSaveDialog();
+    });
+  }
+
+  // 上書き保存ボタン
+  const overwriteSaveBtn = qs('#overwriteSaveBtn');
+  if (overwriteSaveBtn) {
+    overwriteSaveBtn.addEventListener('click', () => {
+      saveDialogMode = 'overwrite';
+      showSaveDialog();
+    });
+  }
+
+  // 新規保存ボタン
+  const newSaveBtn = qs('#newSaveBtn');
+  if (newSaveBtn) {
+    newSaveBtn.addEventListener('click', () => {
+      saveDialogMode = 'new';
+      showSaveDialog();
+    });
   }
 
   // 保存ダイアログ - 保存
   const confirmSaveBtn = qs('#confirmSaveBtn');
   if (confirmSaveBtn) {
-    confirmSaveBtn.addEventListener('click', handleSaveCalculation);
+    confirmSaveBtn.addEventListener('click', () => {
+      // 保存モードに応じて適切なハンドラを呼び出す
+      if (saveDialogMode === 'overwrite') {
+        handleOverwriteSave();
+      } else if (saveDialogMode === 'new') {
+        handleNewSave();
+      } else {
+        handleSaveCalculation();
+      }
+    });
   }
 
   // 保存ダイアログ - キャンセル

@@ -72,6 +72,7 @@ export class AppState {
     this.currentStep = 1;  // 現在のステップ（1, 2, 3）
     this.snapshot = new CalculationSnapshot();
     this.productData = new ProductSimulationData();
+    this.loadedHistoryId = null;  // 履歴から読み込んだ計算のID（上書き保存用）
   }
 
   setMode(mode) {
@@ -118,10 +119,24 @@ export class AppState {
     return this.productData;
   }
 
+  // 履歴ID管理
+  setLoadedHistoryId(id) {
+    this.loadedHistoryId = id;
+  }
+
+  getLoadedHistoryId() {
+    return this.loadedHistoryId;
+  }
+
+  clearLoadedHistoryId() {
+    this.loadedHistoryId = null;
+  }
+
   resetAll() {
     this.snapshot.reset();
     this.productData.reset();
     this.currentStep = 1;
+    this.loadedHistoryId = null;  // 履歴IDもリセット
   }
 }
 

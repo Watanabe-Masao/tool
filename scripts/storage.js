@@ -119,6 +119,37 @@ export async function deleteHistory(id) {
 }
 
 /**
+ * 既存の計算データを更新（上書き保存）
+ * @param {number} id - 更新するレコードのID
+ * @param {string} name - 商品名
+ * @param {string} mode - 計算モード (fixed/weight)
+ * @param {Object} inputData - 入力データ
+ * @param {Object} resultData - 計算結果データ
+ * @param {string} category - カテゴリ（オプション）
+ * @param {Object} productData - 商品化データ（オプション）
+ * @returns {Promise<void>}
+ */
+export async function updateCalculation(id, name, mode, inputData, resultData, category = null, productData = null) {
+  const updates = {
+    name,
+    mode,
+    category,
+    input: inputData,
+    result: resultData,
+    product: productData,
+    timestamp: Date.now() // タイムスタンプを現在時刻に更新
+  };
+
+  try {
+    await db.update(id, updates);
+    console.log(`Updated calculation with ID: ${id}`);
+  } catch (error) {
+    console.error('Failed to update calculation:', error);
+    throw error;
+  }
+}
+
+/**
  * 商品名を更新
  * @param {number} id - レコードID
  * @param {string} name - 新しい商品名
