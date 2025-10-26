@@ -23,6 +23,9 @@ export async function showHistoryModal() {
   }
 
   try {
+    // 背景のスクロールを無効化
+    document.body.classList.add('modal-open');
+
     modal.showModal();
     await renderHistoryList();
   } catch (error) {
@@ -38,6 +41,8 @@ export function closeHistoryModal() {
   const modal = qs('#historyModal');
   if (modal) {
     modal.close();
+    // 背景のスクロールを再び有効化
+    document.body.classList.remove('modal-open');
   }
 }
 
@@ -794,6 +799,9 @@ export async function showSaveDialog() {
   const dialog = qs('#saveDialog');
   if (!dialog) return;
 
+  // 背景のスクロールを無効化
+  document.body.classList.add('modal-open');
+
   // ダイアログのタイトルとボタンテキストを保存モードに応じて変更
   const dialogTitle = qs('#saveDialog .dialog-title');
   const confirmBtn = qs('#confirmSaveBtn');
@@ -849,6 +857,8 @@ export function closeSaveDialog() {
   const dialog = qs('#saveDialog');
   if (dialog) {
     dialog.close();
+    // 背景のスクロールを再び有効化
+    document.body.classList.remove('modal-open');
   }
 }
 
