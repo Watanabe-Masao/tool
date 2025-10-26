@@ -1246,12 +1246,18 @@ export function initHistoryUI() {
       toggleHistoryMenu();
     });
 
-    // メニュー外をクリックしたら閉じる
-    document.addEventListener('click', (e) => {
+    // メニュー外をクリック/タッチしたら閉じる
+    const closeMenuOnOutsideInteraction = (e) => {
       if (!historyMenu.contains(e.target) && e.target !== historyMenuBtn) {
         hideHistoryMenu();
       }
-    });
+    };
+
+    // クリックイベント（PC、タップ）
+    document.addEventListener('click', closeMenuOnOutsideInteraction);
+
+    // タッチイベント（スワイプ操作を含む）
+    document.addEventListener('touchstart', closeMenuOnOutsideInteraction);
   }
 
   // 保存ボタン
