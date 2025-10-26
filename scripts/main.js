@@ -1195,6 +1195,10 @@ function resetYieldStatsEntries() {
   }
   // 統計結果をリセット
   hide('yieldStatsResults');
+
+  // 外れ値の除外状態をリセット
+  manuallyExcludedOutlierIndices.clear();
+  currentOutlierValues = [];
 }
 
 /**
@@ -1532,7 +1536,8 @@ function displayCurrentStatistics() {
   const data = window.yieldStatsData;
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
-  manuallyExcludedOutliers.clear();
+  manuallyExcludedOutlierIndices.clear();
+  currentOutlierValues = [];
 
   if (!data) return;
 
@@ -1751,11 +1756,31 @@ function displaySampleSizeValidation() {
   displayOutlierInfo(outlierResult, statsType, isValid);
 
   // 手動除外された外れ値を反映したデータを計算
-  const manuallyCleanedValues = values.filter(v => !manuallyExcludedOutliers.has(v));
+  let manuallyCleanedValues = values;
+  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
+    // 手動除外する外れ値のセットを作成
+    const excludedValues = new Set();
+    manuallyExcludedOutlierIndices.forEach(index => {
+      if (index < currentOutlierValues.length) {
+        excludedValues.add(currentOutlierValues[index]);
+      }
+    });
+
+    // 除外する外れ値以外のデータをフィルタリング
+    manuallyCleanedValues = values.filter(v => {
+      // 浮動小数点数の比較のため、非常に小さい差を許容
+      for (const excludedValue of excludedValues) {
+        if (Math.abs(v - excludedValue) < 0.0001) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
 
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   // 手動除外がある場合はそれを優先、なければ自動検出の除外を使用
-  if (manuallyExcludedOutliers.size > 0 && manuallyCleanedValues.length >= 2) {
+  if (manuallyExcludedOutlierIndices.size > 0 && manuallyCleanedValues.length >= 2) {
     const cleanedStats = calculateStatistics(manuallyCleanedValues);
     displayRecommendedValue(cleanedStats, isValid);
   } else if (outlierResult.outliers.length > 0 && outlierResult.cleanedValues.length >= 2) {
@@ -1769,8 +1794,9 @@ function displaySampleSizeValidation() {
   resultDiv.classList.remove('is-hidden');
 }
 
-// 外れ値の除外状態を管理
-let manuallyExcludedOutliers = new Set();
+// 外れ値の除外状態を管理（値のインデックスで管理）
+let manuallyExcludedOutlierIndices = new Set();
+let currentOutlierValues = []; // 現在の外れ値リスト
 
 /**
  * 外れ値情報を表示
@@ -1792,9 +1818,22 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   // 外れ値がない場合は非表示
   if (outlierResult.outliers.length === 0) {
     outlierInfoDiv.classList.add('is-hidden');
-    manuallyExcludedOutliers.clear();
+    manuallyExcludedOutlierIndices.clear();
+    currentOutlierValues = [];
     return;
   }
+
+  // 現在の外れ値リストを更新
+  currentOutlierValues = [...outlierResult.outliers];
+
+  // 前回の除外状態をクリア（新しい検出結果に合わせる）
+  const validIndices = new Set();
+  manuallyExcludedOutlierIndices.forEach(index => {
+    if (index < currentOutlierValues.length) {
+      validIndices.add(index);
+    }
+  });
+  manuallyExcludedOutlierIndices = validIndices;
 
   // 統計タイプに応じた単位を取得
   const unit = statsType === 'yieldRate' ? '%' : 'g';
@@ -1830,8 +1869,8 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.id = `outlier-${index}`;
-      checkbox.value = outlierValue;
-      checkbox.checked = manuallyExcludedOutliers.has(outlierValue);
+      checkbox.dataset.index = index;
+      checkbox.checked = manuallyExcludedOutlierIndices.has(index);
       checkbox.addEventListener('change', () => handleOutlierCheckboxChange());
 
       const label = document.createElement('label');
@@ -1846,7 +1885,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   }
 
   // 手動除外数を計算
-  const manuallyExcludedCount = manuallyExcludedOutliers.size;
+  const manuallyExcludedCount = manuallyExcludedOutlierIndices.size;
   const remainingOutliersCount = outlierResult.outliers.length - manuallyExcludedCount;
   const remainingDataCount = outlierResult.cleanedValues.length + remainingOutliersCount;
 
@@ -1872,11 +1911,14 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
  */
 function handleOutlierCheckboxChange() {
   // チェックボックスの状態を読み取り
-  manuallyExcludedOutliers.clear();
+  manuallyExcludedOutlierIndices.clear();
 
   const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]:checked');
   checkboxes.forEach(checkbox => {
-    manuallyExcludedOutliers.add(parseFloat(checkbox.value));
+    const index = parseInt(checkbox.dataset.index, 10);
+    if (!isNaN(index)) {
+      manuallyExcludedOutlierIndices.add(index);
+    }
   });
 
   // サンプルサイズ妥当性判断を再実行
