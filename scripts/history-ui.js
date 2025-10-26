@@ -771,6 +771,21 @@ export async function showSaveDialog() {
   const dialog = qs('#saveDialog');
   if (!dialog) return;
 
+  // ダイアログのタイトルとボタンテキストを保存モードに応じて変更
+  const dialogTitle = qs('#saveDialog .dialog-title');
+  const confirmBtn = qs('#confirmSaveBtn');
+
+  if (saveDialogMode === 'overwrite') {
+    if (dialogTitle) dialogTitle.textContent = '💾 上書き保存';
+    if (confirmBtn) confirmBtn.textContent = '上書き保存';
+  } else if (saveDialogMode === 'new') {
+    if (dialogTitle) dialogTitle.textContent = '💾 新規保存';
+    if (confirmBtn) confirmBtn.textContent = '新規保存';
+  } else {
+    if (dialogTitle) dialogTitle.textContent = '💾 計算を保存';
+    if (confirmBtn) confirmBtn.textContent = '保存';
+  }
+
   // カテゴリー選択をクリア
   const categorySelect = qs('#saveCategory');
   if (categorySelect) {
