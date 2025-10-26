@@ -1390,14 +1390,19 @@ function updateYieldStatsStatistics() {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
   if (!tbody) return;
 
-  // 有効な歩留まり率を収集
+  // 3種類のデータを収集
   const yieldRates = [];
+  const beforeWeights = [];
+  const afterWeights = [];
   const allRows = tbody.querySelectorAll('.yield-stats-row');
 
   allRows.forEach(row => {
     const rowId = row.dataset.rowId;
+    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
     const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
 
+    // 歩留まり率
     if (yieldRateDisplay.classList.contains('calculated')) {
       const rateText = yieldRateDisplay.textContent.replace('%', '');
       const rate = parseFloat(rateText);
@@ -1405,12 +1410,36 @@ function updateYieldStatsStatistics() {
         yieldRates.push(rate);
       }
     }
+
+    // 加工前重量
+    if (beforeInput && beforeInput.value.trim() !== '') {
+      const beforeWeight = parseFloat(beforeInput.value);
+      if (!isNaN(beforeWeight) && beforeWeight > 0) {
+        beforeWeights.push(beforeWeight);
+      }
+    }
+
+    // 加工後重量
+    if (afterInput && afterInput.value.trim() !== '') {
+      const afterWeight = parseFloat(afterInput.value);
+      if (!isNaN(afterWeight) && afterWeight > 0) {
+        afterWeights.push(afterWeight);
+      }
+    }
   });
 
+  // データを保存（表示切り替えに使用）
+  window.yieldStatsData = {
+    yieldRate: yieldRates,
+    beforeWeight: beforeWeights,
+    afterWeight: afterWeights
+  };
+
   // データが2つ以上ある場合のみ統計を表示
-  if (yieldRates.length >= 2) {
-    const stats = calculateStatistics(yieldRates);
-    displayStatistics(stats);
+  const hasEnoughData = yieldRates.length >= 2 || beforeWeights.length >= 2 || afterWeights.length >= 2;
+
+  if (hasEnoughData) {
+    displayCurrentStatistics();
     show('yieldStatsResults');
   } else {
     hide('yieldStatsResults');
@@ -1459,18 +1488,55 @@ function calculateStatistics(values) {
 }
 
 /**
+ * 現在選択されている統計タイプの統計を表示
+ */
+function displayCurrentStatistics() {
+  const selectedType = document.querySelector('input[name="statsType"]:checked')?.value || 'yieldRate';
+  const data = window.yieldStatsData;
+
+  if (!data) return;
+
+  const values = data[selectedType];
+  if (!values || values.length < 2) {
+    // データが不足している場合は非表示
+    hide('yieldStatsResults');
+    return;
+  }
+
+  const stats = calculateStatistics(values);
+
+  // 統計タイプに応じた単位を設定
+  let unit = '';
+  if (selectedType === 'yieldRate') {
+    unit = '%';
+  } else if (selectedType === 'beforeWeight' || selectedType === 'afterWeight') {
+    unit = 'g';
+  }
+
+  displayStatistics(stats, unit);
+}
+
+/**
  * 統計値を表示
  */
-function displayStatistics(stats) {
+function displayStatistics(stats, unit = '%') {
+  const formatValue = (value) => {
+    if (unit === '%') {
+      return pct(toFixed(value));
+    } else {
+      return `${toFixed(value)}${unit}`;
+    }
+  };
+
   setText('statsCount', `${stats.count}個`);
-  setText('statsMax', pct(toFixed(stats.max)));
-  setText('statsMin', pct(toFixed(stats.min)));
-  setText('statsAvg', pct(toFixed(stats.mean)));
-  setText('statsMedian', pct(toFixed(stats.median)));
-  setText('statsStdDev', pct(toFixed(stats.stdDev)));
-  setText('statsSigma1', `${pct(toFixed(stats.sigma1.lower))} ～ ${pct(toFixed(stats.sigma1.upper))}`);
-  setText('statsSigma2', `${pct(toFixed(stats.sigma2.lower))} ～ ${pct(toFixed(stats.sigma2.upper))}`);
-  setText('statsSigma3', `${pct(toFixed(stats.sigma3.lower))} ～ ${pct(toFixed(stats.sigma3.upper))}`);
+  setText('statsMax', formatValue(stats.max));
+  setText('statsMin', formatValue(stats.min));
+  setText('statsAvg', formatValue(stats.mean));
+  setText('statsMedian', formatValue(stats.median));
+  setText('statsStdDev', formatValue(stats.stdDev));
+  setText('statsSigma1', `${formatValue(stats.sigma1.lower)} ～ ${formatValue(stats.sigma1.upper)}`);
+  setText('statsSigma2', `${formatValue(stats.sigma2.lower)} ～ ${formatValue(stats.sigma2.upper)}`);
+  setText('statsSigma3', `${formatValue(stats.sigma3.lower)} ～ ${formatValue(stats.sigma3.upper)}`);
 }
 
 /**
@@ -1559,6 +1625,13 @@ function init() {
 
   // 計量モード - 歩留まり率直接入力モード - Step 3の入力監視
   qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightDirectStep3);
+
+  // 歩留まり率統計モード - 統計タイプ選択
+  qsa('input[name="statsType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      displayCurrentStatistics();
+    });
+  });
 
   // 商品化シミュレーション
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
