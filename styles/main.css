@@ -304,6 +304,28 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   line-height: 1.5;
 }
 
+/* 品名入力欄 */
+.product-name-section {
+  margin-bottom: 20px;
+}
+
+.product-name-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  min-height: 44px;
+}
+
+.product-name-input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 /* Excel風テーブルスタイル */
 .table-container {
   overflow-x: auto;
@@ -392,6 +414,53 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   background-color: #e8f5e9;
 }
 
+.yield-stats-table .yield-result.error {
+  color: #dc3545;
+  background-color: #ffebee;
+  font-size: 0.85em;
+}
+
+/* 統計情報ウィンドウ */
+.stats-results {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 2px solid var(--brand);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stat-item {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.stat-item .stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.stat-item .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.stat-item .stat-value--small {
+  font-size: 1rem;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .yield-stats-table {
@@ -406,5 +475,18 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   .yield-stats-table .table-input {
     padding: 6px;
     font-size: 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-item {
+    padding: 12px;
+  }
+
+  .stat-item .stat-value {
+    font-size: 1.2rem;
   }
 }

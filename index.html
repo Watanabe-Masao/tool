@@ -289,14 +289,22 @@
     <!-- 歩留まり率統計モード -->
     <section id="yieldStatsInputs" class="card section is-hidden" aria-labelledby="yieldStatsHeading">
       <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり率統計</h2>
-      <p class="section-description">複数の商品について加工前後の重量を入力し、歩留まり率を計算します。Excel風の表形式で入力できます。</p>
+      <p class="section-description">商品の加工前後の重量を入力し、歩留まり率を計算・統計分析します。</p>
 
+      <!-- 品名入力欄 -->
+      <div class="product-name-section">
+        <label class="field">
+          <span>品名</span>
+          <input type="text" id="yieldStatsProductName" class="product-name-input" placeholder="例: トマト" />
+        </label>
+      </div>
+
+      <!-- データテーブル -->
       <div class="table-container">
         <table id="yieldStatsTable" class="yield-stats-table">
           <thead>
             <tr>
               <th>No.</th>
-              <th>品名</th>
               <th>加工前重量（g）</th>
               <th>加工後重量（g）</th>
               <th>歩留まり率</th>
@@ -306,6 +314,49 @@
             <!-- 動的に行が追加される -->
           </tbody>
         </table>
+      </div>
+
+      <!-- 統計情報ウィンドウ -->
+      <div id="yieldStatsResults" class="stats-results is-hidden">
+        <h3 class="section-subtitle">📈 統計分析結果</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">データ数</div>
+            <div id="statsCount" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">最大値</div>
+            <div id="statsMax" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">最小値</div>
+            <div id="statsMin" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">平均値</div>
+            <div id="statsAvg" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">中央値</div>
+            <div id="statsMedian" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">標準偏差</div>
+            <div id="statsStdDev" class="stat-value">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">σ1範囲（68.3%）</div>
+            <div id="statsSigma1" class="stat-value stat-value--small">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">σ2範囲（95.4%）</div>
+            <div id="statsSigma2" class="stat-value stat-value--small">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">σ3範囲（99.7%）</div>
+            <div id="statsSigma3" class="stat-value stat-value--small">-</div>
+          </div>
+        </div>
       </div>
     </section>
 
