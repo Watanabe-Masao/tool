@@ -320,14 +320,26 @@
       <div id="yieldStatsResults" class="stats-results is-hidden">
         <h3 class="section-subtitle">📈 統計分析結果</h3>
 
-        <!-- 統計タイプ選択 -->
-        <div class="stats-type-selector">
-          <label for="statsTypeSelect" class="stats-type-label">表示する統計</label>
-          <select id="statsTypeSelect" class="stats-type-select">
-            <option value="yieldRate">歩留まり率</option>
-            <option value="beforeWeight">加工前重量</option>
-            <option value="afterWeight">加工後重量</option>
-          </select>
+        <!-- 統計・グラフ選択エリア -->
+        <div class="stats-controls">
+          <div class="stats-type-selector">
+            <label for="statsTypeSelect" class="stats-type-label">表示する統計</label>
+            <select id="statsTypeSelect" class="stats-type-select">
+              <option value="yieldRate">歩留まり率</option>
+              <option value="beforeWeight">加工前重量</option>
+              <option value="afterWeight">加工後重量</option>
+            </select>
+          </div>
+          <div class="stats-type-selector">
+            <label for="chartTypeSelect" class="stats-type-label">グラフ種類</label>
+            <select id="chartTypeSelect" class="stats-type-select">
+              <option value="boxplot">箱ひげ図</option>
+              <option value="histogram">ヒストグラム</option>
+              <option value="scatter">散布図</option>
+              <option value="line">折れ線グラフ</option>
+              <option value="normal">正規分布曲線</option>
+            </select>
+          </div>
         </div>
 
         <!-- グラフ表示エリア -->

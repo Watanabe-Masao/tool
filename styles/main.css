@@ -439,12 +439,19 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
+/* 統計・グラフ選択コントロール */
+.stats-controls {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0 0 16px 0;
+}
+
 /* 統計タイプ選択 */
 .stats-type-selector {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 16px 0;
   padding: 0;
 }
 
