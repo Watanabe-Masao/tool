@@ -980,6 +980,9 @@ export async function showSaveDialog() {
     if (confirmBtn) confirmBtn.textContent = '保存';
   }
 
+  // ダイアログをすぐに表示（UIの応答性を向上）
+  dialog.showModal();
+
   // 履歴から読み込んだ場合は、そのカテゴリーと商品名を設定
   const loadedHistoryId = appState.getLoadedHistoryId();
   const categorySelect = qs('#saveCategory');
@@ -1046,8 +1049,6 @@ export async function showSaveDialog() {
       await updateProductNamePresets(selectedCategory || null);
     });
   }
-
-  dialog.showModal();
 }
 
 /**
@@ -1188,20 +1189,20 @@ async function updateProductNamePresets(category = null) {
  */
 export function updateSaveButtonsVisibility() {
   const loadedHistoryId = appState.getLoadedHistoryId();
-  const saveBtn = qs('#saveBtn');
-  const overwriteSaveBtn = qs('#overwriteSaveBtn');
-  const newSaveBtn = qs('#newSaveBtn');
+  const saveBtns = qsa('#saveBtn');
+  const overwriteSaveBtns = qsa('#overwriteSaveBtn');
+  const newSaveBtns = qsa('#newSaveBtn');
 
   if (loadedHistoryId) {
     // 履歴から読み込んだ場合: 上書き保存と新規保存を表示
-    if (saveBtn) saveBtn.style.display = 'none';
-    if (overwriteSaveBtn) overwriteSaveBtn.style.display = '';
-    if (newSaveBtn) newSaveBtn.style.display = '';
+    saveBtns.forEach(btn => { btn.style.display = 'none'; });
+    overwriteSaveBtns.forEach(btn => { btn.style.display = ''; });
+    newSaveBtns.forEach(btn => { btn.style.display = ''; });
   } else {
     // 新規計算の場合: 通常の保存ボタンを表示
-    if (saveBtn) saveBtn.style.display = '';
-    if (overwriteSaveBtn) overwriteSaveBtn.style.display = 'none';
-    if (newSaveBtn) newSaveBtn.style.display = 'none';
+    saveBtns.forEach(btn => { btn.style.display = ''; });
+    overwriteSaveBtns.forEach(btn => { btn.style.display = 'none'; });
+    newSaveBtns.forEach(btn => { btn.style.display = 'none'; });
   }
 }
 
@@ -1563,29 +1564,29 @@ export function initHistoryUI() {
     document.addEventListener('touchstart', closeMenuOnOutsideInteraction);
   }
 
-  // 保存ボタン
-  const saveBtn = qs('#saveBtn');
-  if (saveBtn) {
+  // 保存ボタン（複数あるのですべてに設定）
+  const saveBtns = qsa('#saveBtn');
+  saveBtns.forEach(saveBtn => {
     saveBtn.addEventListener('click', () => {
       saveDialogMode = 'normal';
       showSaveDialog();
     });
-  }
+  });
 
-  // 上書き保存ボタン（ダイアログを表示せず直接保存）
-  const overwriteSaveBtn = qs('#overwriteSaveBtn');
-  if (overwriteSaveBtn) {
+  // 上書き保存ボタン（複数あるのですべてに設定）
+  const overwriteSaveBtns = qsa('#overwriteSaveBtn');
+  overwriteSaveBtns.forEach(overwriteSaveBtn => {
     overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
-  }
+  });
 
-  // 新規保存ボタン
-  const newSaveBtn = qs('#newSaveBtn');
-  if (newSaveBtn) {
+  // 新規保存ボタン（複数あるのですべてに設定）
+  const newSaveBtns = qsa('#newSaveBtn');
+  newSaveBtns.forEach(newSaveBtn => {
     newSaveBtn.addEventListener('click', () => {
       saveDialogMode = 'new';
       showSaveDialog();
     });
-  }
+  });
 
   // 保存ダイアログ - 保存
   const confirmSaveBtn = qs('#confirmSaveBtn');
