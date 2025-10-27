@@ -5,7 +5,7 @@
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, updateCalculation, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
 import { qs, num, show, hide, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
+import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup, toFixed } from './calculation.js';
 import { displayProductSimulation } from './display.js';
 
@@ -538,7 +538,16 @@ async function handleLoadCalculation(id) {
  */
 function switchToMode(mode) {
   // モードボタンをクリックしてUIを切り替え
-  const modeBtn = qs(mode === MODE.FIXED ? '#fixedBtn' : '#weightBtn');
+  let btnId;
+  if (mode === MODE.FIXED) {
+    btnId = '#fixedBtn';
+  } else if (mode === MODE.WEIGHT) {
+    btnId = '#weightBtn';
+  } else if (mode === MODE.YIELD_STATS) {
+    btnId = '#yieldStatsBtn';
+  }
+
+  const modeBtn = qs(btnId);
   if (modeBtn) {
     modeBtn.click();
   }
@@ -606,7 +615,7 @@ function restoreAllInputFields(mode, input) {
       const afterPrice100El = qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
     }
-  } else {
+  } else if (mode === MODE.WEIGHT) {
     if (input.yieldMethod === 'calculate') {
       // 重量から計算モード
       const boxCostEl = qs(`#${WEIGHT_FIELDS.CALCULATE.BOX_COST}`);
@@ -642,6 +651,17 @@ function restoreAllInputFields(mode, input) {
 
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
+    }
+  } else if (mode === MODE.YIELD_STATS) {
+    // 歩留まり統計モード
+    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (productNameEl && input.productName != null) {
+      productNameEl.value = input.productName;
+    }
+
+    // テーブルデータを復元（window.restoreYieldStatsTable関数を使用）
+    if (input.tableData && window.restoreYieldStatsTable) {
+      window.restoreYieldStatsTable(input.tableData);
     }
   }
 }
@@ -914,7 +934,7 @@ function collectInputValues(mode) {
       inputData.yieldRate = num(FIXED_FIELDS.DIRECT.YIELD_RATE);
       inputData.afterPrice100 = num(FIXED_FIELDS.DIRECT.AFTER_PRICE_100);
     }
-  } else {
+  } else if (mode === MODE.WEIGHT) {
     // 計量売価モード
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
     inputData.yieldMethod = methodRadio ? methodRadio.value : 'calculate';
@@ -935,6 +955,38 @@ function collectInputValues(mode) {
       inputData.yieldRate = num(WEIGHT_FIELDS.DIRECT.YIELD_RATE);
       inputData.afterPrice100 = num(WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100);
     }
+  } else if (mode === MODE.YIELD_STATS) {
+    // 歩留まり統計モード
+    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    inputData.productName = productNameEl ? productNameEl.value : '';
+
+    // テーブルデータを収集
+    const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+    const tableData = [];
+
+    if (tbody) {
+      const rows = tbody.querySelectorAll('.yield-stats-row');
+      rows.forEach((row) => {
+        const rowId = row.dataset.rowId;
+        if (rowId !== undefined) {
+          const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+          const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+
+          const beforeWeight = beforeWeightInput ? beforeWeightInput.value : '';
+          const afterWeight = afterWeightInput ? afterWeightInput.value : '';
+
+          // 空の行はスキップ（両方が空の場合）
+          if (beforeWeight !== '' || afterWeight !== '') {
+            tableData.push({
+              beforeWeight: beforeWeight,
+              afterWeight: afterWeight
+            });
+          }
+        }
+      });
+    }
+
+    inputData.tableData = tableData;
   }
 
   return inputData;
@@ -1010,11 +1062,19 @@ export async function handleOverwriteSave() {
     // 現在の入力値と計算結果を取得
     const mode = appState.getMode();
     const inputData = collectInputValues(mode);
-    const resultData = appState.getSnapshot(); // 計算結果
+
+    // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
+    let resultData;
+    if (mode === MODE.YIELD_STATS) {
+      resultData = window.yieldStatsData || {};
+    } else {
+      resultData = appState.getSnapshot(); // 計算結果
+    }
+
     const productData = appState.getProductData(); // 商品化データ
 
-    // 値引後最終粗利率を計算して追加
-    if (productData && Number.isFinite(productData.markup)) {
+    // 値引後最終粗利率を計算して追加（歩留まり統計モード以外）
+    if (mode !== MODE.YIELD_STATS && productData && Number.isFinite(productData.markup)) {
       const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
       const discountGross = grossFromMarkup(productData.markup, discountRate);
       resultData.discountGross = discountGross;
@@ -1054,11 +1114,19 @@ export async function handleNewSave() {
   // 現在の入力値と計算結果を取得
   const mode = appState.getMode();
   const inputData = collectInputValues(mode);
-  const resultData = appState.getSnapshot(); // 計算結果
+
+  // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
+  let resultData;
+  if (mode === MODE.YIELD_STATS) {
+    resultData = window.yieldStatsData || {};
+  } else {
+    resultData = appState.getSnapshot(); // 計算結果
+  }
+
   const productData = appState.getProductData(); // 商品化データ
 
-  // 値引後最終粗利率を計算して追加
-  if (productData && Number.isFinite(productData.markup)) {
+  // 値引後最終粗利率を計算して追加（歩留まり統計モード以外）
+  if (mode !== MODE.YIELD_STATS && productData && Number.isFinite(productData.markup)) {
     const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
     const discountGross = grossFromMarkup(productData.markup, discountRate);
     resultData.discountGross = discountGross;
@@ -1103,11 +1171,19 @@ export async function handleSaveCalculation() {
   // 現在の入力値と計算結果を取得
   const mode = appState.getMode();
   const inputData = collectInputValues(mode);
-  const resultData = appState.getSnapshot(); // 計算結果
+
+  // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
+  let resultData;
+  if (mode === MODE.YIELD_STATS) {
+    resultData = window.yieldStatsData || {};
+  } else {
+    resultData = appState.getSnapshot(); // 計算結果
+  }
+
   const productData = appState.getProductData(); // 商品化データ
 
-  // 値引後最終粗利率を計算して追加
-  if (productData && Number.isFinite(productData.markup)) {
+  // 値引後最終粗利率を計算して追加（歩留まり統計モード以外）
+  if (mode !== MODE.YIELD_STATS && productData && Number.isFinite(productData.markup)) {
     const discountRate = num(UI_ELEMENTS.DISC_INPUT) || 0;
     const discountGross = grossFromMarkup(productData.markup, discountRate);
     resultData.discountGross = discountGross;
