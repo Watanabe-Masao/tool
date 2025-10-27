@@ -38,6 +38,9 @@ body.modal-open {
   max-width: 98%;
   max-height: 95vh;
   width: 98%;
+  margin-top: 2vh;
+  margin-bottom: auto;
+  align-self: flex-start;
 }
 
 .dialog-header {
@@ -127,6 +130,40 @@ body.modal-open {
   font-weight: 600;
   color: #333;
   margin: 0;
+}
+
+/* 履歴モーダル内のフィルタリングボタンのスタイル */
+.history-filter-section .btn-mode {
+  border: 2px solid #5c6bc0;
+  background: #fff;
+  color: #5c6bc0;
+  transition: all 0.2s ease;
+}
+
+.history-filter-section .btn-mode:hover {
+  background: #f5f7ff;
+  border-color: #3f51b5;
+}
+
+.history-filter-section .btn-mode.is-active {
+  background: linear-gradient(135deg, #5c6bc0, #3f51b5);
+  color: #fff;
+  border-color: #3f51b5;
+}
+
+.history-filter-section .btn-mode:active {
+  transform: scale(0.98);
+  background: linear-gradient(135deg, #3f51b5, #303f9f);
+  border-color: #303f9f;
+}
+
+.history-filter-section .btn-mode.is-active:active {
+  background: linear-gradient(135deg, #303f9f, #283593);
+}
+
+.history-filter-section .btn-small {
+  padding: 0.6em 1em;
+  font-size: 0.9em;
 }
 
 .search-container {
