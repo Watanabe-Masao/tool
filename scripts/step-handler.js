@@ -25,6 +25,7 @@ function getStepConfig(mode, method) {
 /**
  * Step 1の処理: 基本情報入力→加工前の計算
  * @param {Object} config - ステップ設定オブジェクト
+ * @returns {Object|null} Step 1の計算結果（directモードで使用）
  */
 function handleGenericStep1(config) {
   const { mode, fields, steps, displayElement } = config;
@@ -54,11 +55,11 @@ function handleGenericStep1(config) {
 
   // すべて入力されているかチェック
   if (![cost, price, weight].every(v => Number.isFinite(v) && v > 0)) {
-    hide(steps.step1.result);
+    if (steps.step1.result) hide(steps.step1.result);
     hide(steps.step2.input);
     if (steps.step2.result) hide(steps.step2.result);
     hide(steps.step3.input);
-    return;
+    return null;
   }
 
   // 加工前の100gあたり計算
@@ -80,16 +81,15 @@ function handleGenericStep1(config) {
 
   show(steps.step2.input);
 
-  // 次のステップの処理をトリガー
   return { beforeCost100, beforePrice100, beforeMarkup };
 }
 
 /**
  * Step 2の処理: 歩留まり率の計算または入力
  * @param {Object} config - ステップ設定オブジェクト
- * @param {Object} step1Data - Step 1の計算結果（directモードで使用）
+ * @returns {Object|null} Step 2の計算結果
  */
-function handleGenericStep2(config, step1Data = null) {
+function handleGenericStep2(config) {
   const { mode, method, fields, steps } = config;
   const isFixedMode = mode === MODE.FIXED;
   const isCalculateMethod = method === 'calculate';
@@ -106,7 +106,7 @@ function handleGenericStep2(config, step1Data = null) {
     if (![beforeWeight, afterWeight].every(v => Number.isFinite(v) && v > 0)) {
       hide(steps.step2.result);
       hide(steps.step3.input);
-      return;
+      return null;
     }
 
     yieldRate = calcYield(beforeWeight, afterWeight);
@@ -120,17 +120,38 @@ function handleGenericStep2(config, step1Data = null) {
     if (!Number.isFinite(yieldRate) || yieldRate <= 0) {
       hide(steps.step2.result);
       hide(steps.step3.input);
-      return;
+      return null;
     }
 
-    // 歩留まり率と加工前の情報を表示
+    // 歩留まり率を表示
     setText(steps.step2.resultFields.yieldRate, pct(toFixed(yieldRate)));
 
-    // directモードでは加工前情報も表示
-    if (steps.step2.resultFields.beforeCost && step1Data) {
-      setText(steps.step2.resultFields.beforeCost, yen(toFixed(step1Data.beforeCost100)));
-      setText(steps.step2.resultFields.beforePrice, yen(toFixed(step1Data.beforePrice100)));
-      setText(steps.step2.resultFields.beforeMarkup, pct(toFixed(step1Data.beforeMarkup)));
+    // directモードでは加工前情報も計算して表示
+    if (steps.step2.resultFields.beforeCost) {
+      // 加工前の入力値を取得
+      let cost, price, weight;
+      if (isFixedMode) {
+        cost = num(fields.UNIT_COST);
+        price = num(fields.UNIT_PRICE);
+        weight = num(fields.BEFORE_WEIGHT);
+      } else {
+        cost = num(fields.BOX_COST);
+        price = num(fields.BOX_PRICE);
+        weight = num(fields.BOX_WEIGHT);
+      }
+
+      // 加工前の100gあたり計算
+      const beforeCost100 = isFixedMode
+        ? per100FromPerUnit(cost, weight)
+        : per100FromBox(cost, weight);
+      const beforePrice100 = isFixedMode
+        ? per100FromPerUnit(price, weight)
+        : per100FromBox(price, weight);
+      const beforeMarkup = markup(beforeCost100, beforePrice100);
+
+      setText(steps.step2.resultFields.beforeCost, yen(toFixed(beforeCost100)));
+      setText(steps.step2.resultFields.beforePrice, yen(toFixed(beforePrice100)));
+      setText(steps.step2.resultFields.beforeMarkup, pct(toFixed(beforeMarkup)));
     }
   }
 
@@ -144,6 +165,7 @@ function handleGenericStep2(config, step1Data = null) {
  * Step 3の処理: 加工後設定売価入力→最終結果表示
  * @param {Object} config - ステップ設定オブジェクト
  * @param {Function} productCalculationCallback - 商品化シミュレーション処理のコールバック
+ * @returns {Object|null} 計算結果
  */
 function handleGenericStep3(config, productCalculationCallback) {
   const { mode, method, steps } = config;
@@ -156,7 +178,7 @@ function handleGenericStep3(config, productCalculationCallback) {
   if (!result) {
     hide(steps.step3.result);
     hide(UI_ELEMENTS.RESULTS);
-    return;
+    return null;
   }
 
   // Step 3結果セクションに加工後の詳細を表示
@@ -174,10 +196,13 @@ function handleGenericStep3(config, productCalculationCallback) {
   if (productCalculationCallback) {
     productCalculationCallback();
   }
+
+  return result;
 }
 
 /**
  * 統合されたステップ処理関数
+ * 元のコードの動作を再現：各ステップは次のステップの入力欄を表示し、次のステップの処理も呼び出す
  * @param {string} mode - 'fixed' or 'weight'
  * @param {string} method - 'calculate' or 'direct'
  * @param {number} step - ステップ番号 (1, 2, 3)
@@ -193,15 +218,13 @@ export function handleStep(mode, method, step, productCalculationCallback = null
 
   if (step === 1) {
     const step1Data = handleGenericStep1(config);
-    // Step 1が成功したら自動的にStep 2を処理
+    // Step 1が成功したら、Step 2の処理を呼び出す（入力チェックのため）
     if (step1Data) {
       handleStep(mode, method, 2, productCalculationCallback);
     }
   } else if (step === 2) {
-    // directモードの場合はstep1のデータが必要
-    const step1Data = method === 'direct' ? handleGenericStep1(config) : null;
-    const step2Data = handleGenericStep2(config, step1Data);
-    // Step 2が成功したら自動的にStep 3を処理
+    const step2Data = handleGenericStep2(config);
+    // Step 2が成功したら、Step 3の処理を呼び出す（入力チェックのため）
     if (step2Data) {
       handleStep(mode, method, 3, productCalculationCallback);
     }
