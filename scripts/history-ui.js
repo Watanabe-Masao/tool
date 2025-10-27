@@ -595,7 +595,8 @@ async function handleLoadCalculation(id) {
 
     // 少し待ってからフィールドに値を復元（UIの切り替えが完了するまで）
     setTimeout(() => {
-      restoreAllInputFields(data.mode, data.input);
+      // 履歴の商品名を品名フィールドに設定
+      restoreAllInputFields(data.mode, data.input, data.name);
 
       // 結果データがある場合はappStateに復元（歩留まり統計モードは除く）
       if (data.result && data.mode !== MODE.YIELD_STATS) {
@@ -671,23 +672,24 @@ function switchYieldMethod(mode, yieldMethod) {
  * 全ての入力フィールドに値を復元
  * @param {string} mode
  * @param {Object} input
+ * @param {string} productName - 履歴の商品名（品名フィールドに設定）
  */
-function restoreAllInputFields(mode, input) {
-  // 品名フィールドを復元
+function restoreAllInputFields(mode, input, productName = '') {
+  // 品名フィールドを復元（履歴の商品名を使用）
   if (mode === MODE.FIXED) {
     const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
-    if (fixedProductNameEl && input.productName != null) {
-      fixedProductNameEl.value = input.productName;
+    if (fixedProductNameEl) {
+      fixedProductNameEl.value = productName || '';
     }
   } else if (mode === MODE.WEIGHT) {
     const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
-    if (weightProductNameEl && input.productName != null) {
-      weightProductNameEl.value = input.productName;
+    if (weightProductNameEl) {
+      weightProductNameEl.value = productName || '';
     }
   } else if (mode === MODE.YIELD_STATS) {
     const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
-    if (yieldStatsProductNameEl && input.productName != null) {
-      yieldStatsProductNameEl.value = input.productName;
+    if (yieldStatsProductNameEl) {
+      yieldStatsProductNameEl.value = productName || '';
     }
   }
 
