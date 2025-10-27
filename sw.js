@@ -4,7 +4,7 @@
 
 // バージョン管理: GitHub Actionsデプロイ時に自動的にタイムスタンプが注入されます
 // ローカル開発時は 'dev' として動作します
-const CACHE_VERSION = 24;
+const CACHE_VERSION = 23;
 const CACHE_BUILD = '__BUILD_TIMESTAMP__'; // デプロイ時に置換されます（例: 20250126-153045-a1b2c3d）
 const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
@@ -27,7 +27,6 @@ const urlsToCache = [
   '/tool/scripts/db.js',
   '/tool/scripts/storage.js',
   '/tool/scripts/history-ui.js',
-  '/tool/scripts/step-handler.js',
   '/tool/manifest.json',
   '/tool/icons/icon-192.png',
   '/tool/icons/icon-512.png'
