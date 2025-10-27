@@ -1425,9 +1425,12 @@ export async function handleNewSave() {
     const currentFieldName = getCurrentProductNameFromField(mode);
     const nameChanged = currentFieldName !== name;
 
-    await saveCalculation(name, mode, inputData, resultData, category, productData);
-    // 新規保存後、履歴IDをクリア
-    appState.clearLoadedHistoryId();
+    // 新規保存して、新しいIDを取得
+    const newId = await saveCalculation(name, mode, inputData, resultData, category, productData);
+
+    // 新規保存した計算を「現在読み込んでいる履歴」として設定
+    // これにより、「上書き保存」と「新規保存」のボタンが表示される
+    appState.setLoadedHistoryId(newId);
     updateSaveButtonsVisibility();
     closeSaveDialog();
 
@@ -1512,7 +1515,12 @@ export async function handleSaveCalculation() {
         showToast('✅ 上書き保存しました');
       }
     } else {
-      await saveCalculation(name, mode, inputData, resultData, category, productData);
+      // 新規保存して、新しいIDを取得
+      const newId = await saveCalculation(name, mode, inputData, resultData, category, productData);
+
+      // 新規保存した計算を「現在読み込んでいる履歴」として設定
+      appState.setLoadedHistoryId(newId);
+      updateSaveButtonsVisibility();
 
       // 保存した商品名を元のフィールドにも反映
       if (nameChanged) {
