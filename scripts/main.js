@@ -1697,6 +1697,16 @@ function updateYieldStatsStatistics() {
     afterWeight: afterWeights
   };
 
+  // 歩留まり率の統計値を計算して保存（履歴表示用）
+  if (yieldRates.length >= 2) {
+    const stats = calculateStatistics(yieldRates);
+    window.yieldStatsData.avgYieldRate = stats.mean;
+    window.yieldStatsData.medianYieldRate = stats.median;
+    window.yieldStatsData.stdDevYieldRate = stats.stdDev;
+    window.yieldStatsData.minYieldRate = stats.min;
+    window.yieldStatsData.maxYieldRate = stats.max;
+  }
+
   // データが2つ以上ある場合のみ統計を表示
   const hasEnoughData = yieldRates.length >= 2 || beforeWeights.length >= 2 || afterWeights.length >= 2;
 
