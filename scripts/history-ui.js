@@ -101,7 +101,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
 
       // 定額・計量モードの場合、yieldMethodでもフィルタリング
       if (filterYieldMethod) {
-        return item.input?.yieldMethod === filterYieldMethod;
+        // 古いデータでyieldMethodが保存されていない場合はデフォルトで'calculate'と見なす
+        const itemYieldMethod = item.input?.yieldMethod || 'calculate';
+        return itemYieldMethod === filterYieldMethod;
       }
 
       return true;
@@ -125,7 +127,10 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
     const filteredHistory = filterMode ? allHistory.filter(item => {
       if (item.mode !== filterMode) return false;
       if (filterMode === MODE.YIELD_STATS) return true;
-      if (filterYieldMethod) return item.input?.yieldMethod === filterYieldMethod;
+      if (filterYieldMethod) {
+        const itemYieldMethod = item.input?.yieldMethod || 'calculate';
+        return itemYieldMethod === filterYieldMethod;
+      }
       return true;
     }) : allHistory;
     updateProductNameSuggestions(filteredHistory);
@@ -142,7 +147,10 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   const filteredHistory = filterMode ? allHistory.filter(item => {
     if (item.mode !== filterMode) return false;
     if (filterMode === MODE.YIELD_STATS) return true;
-    if (filterYieldMethod) return item.input?.yieldMethod === filterYieldMethod;
+    if (filterYieldMethod) {
+      const itemYieldMethod = item.input?.yieldMethod || 'calculate';
+      return itemYieldMethod === filterYieldMethod;
+    }
     return true;
   }) : allHistory;
   updateProductNameSuggestions(filteredHistory);
