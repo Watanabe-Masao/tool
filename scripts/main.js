@@ -105,8 +105,11 @@ function switchYieldMethod() {
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
 
-  // セッション状態を保存
-  saveSessionState(appState.getMode());
+  // クリア後にセッション状態を保存（確実に空の値を保存）
+  // setTimeoutを使用してDOMの更新が完了してから保存
+  setTimeout(() => {
+    saveSessionState(appState.getMode());
+  }, 0);
 }
 
 /**
@@ -144,8 +147,11 @@ function switchWeightYieldMethod() {
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
 
-  // セッション状態を保存
-  saveSessionState(appState.getMode());
+  // クリア後にセッション状態を保存（確実に空の値を保存）
+  // setTimeoutを使用してDOMの更新が完了してから保存
+  setTimeout(() => {
+    saveSessionState(appState.getMode());
+  }, 0);
 }
 
 /**
