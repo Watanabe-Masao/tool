@@ -189,6 +189,9 @@ export function applySessionState(sessionData) {
 
       const afterPrice100El = qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && inputs.afterPrice100) afterPrice100El.value = inputs.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
       const unitCostEl = qs(`#${FIXED_FIELDS.DIRECT.UNIT_COST}`);
       if (unitCostEl && inputs.unitCost) unitCostEl.value = inputs.unitCost;
@@ -204,6 +207,9 @@ export function applySessionState(sessionData) {
 
       const afterPrice100El = qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && inputs.afterPrice100) afterPrice100El.value = inputs.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
   } else if (mode === MODE.WEIGHT) {
     if (yieldMethod === 'calculate') {
@@ -224,6 +230,9 @@ export function applySessionState(sessionData) {
 
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && inputs.afterPrice100) afterPrice100El.value = inputs.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeSampleEl) beforeSampleEl.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
       const boxCostEl = qs(`#${WEIGHT_FIELDS.DIRECT.BOX_COST}`);
       if (boxCostEl && inputs.boxCost) boxCostEl.value = inputs.boxCost;
@@ -239,6 +248,9 @@ export function applySessionState(sessionData) {
 
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && inputs.afterPrice100) afterPrice100El.value = inputs.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (boxWeightEl) boxWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
   } else if (mode === MODE.YIELD_STATS) {
     const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
