@@ -3,7 +3,7 @@
  */
 
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, updateCalculation, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
-import { qs, num, show, hide, setText, yen, pct } from './dom-utils.js';
+import { qs, qsa, num, show, hide, setText, yen, pct } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup, toFixed } from './calculation.js';
