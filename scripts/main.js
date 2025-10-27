@@ -32,6 +32,10 @@ function hasInputValues() {
   const currentMode = appState.getMode();
 
   if (currentMode === MODE.FIXED) {
+    // 品名フィールドをチェック
+    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    if (fixedProductNameEl && fixedProductNameEl.value.trim() !== '') return true;
+
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
     const method = methodRadio ? methodRadio.value : 'calculate';
 
@@ -63,6 +67,10 @@ function hasInputValues() {
       });
     }
   } else if (currentMode === MODE.WEIGHT) {
+    // 品名フィールドをチェック
+    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    if (weightProductNameEl && weightProductNameEl.value.trim() !== '') return true;
+
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
     const method = methodRadio ? methodRadio.value : 'calculate';
 
@@ -150,6 +158,10 @@ function switchMode(newMode) {
 
   // 現在のモードの入力値をクリア
   if (currentMode === MODE.FIXED) {
+    // 品名フィールドをクリア
+    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    if (fixedProductNameEl) fixedProductNameEl.value = '';
+
     // 定額モードの入力フィールドをクリア
     [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
      FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
@@ -164,6 +176,10 @@ function switchMode(newMode) {
       if (el) el.value = '';
     });
   } else if (currentMode === MODE.WEIGHT) {
+    // 品名フィールドをクリア
+    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    if (weightProductNameEl) weightProductNameEl.value = '';
+
     // 計量モードの入力フィールドをクリア
     [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
      WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
@@ -3323,6 +3339,10 @@ function clearAll() {
   // UI表示のリセット
   if (currentMode === MODE.FIXED) {
     resetSteps();
+    // 品名フィールドをクリア
+    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    if (fixedProductNameEl) fixedProductNameEl.value = '';
+
     // 定額モードの入力フィールドをクリア
     [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
      FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
@@ -3338,6 +3358,10 @@ function clearAll() {
     });
   } else if (currentMode === MODE.WEIGHT) {
     resetWeightSteps();
+    // 品名フィールドをクリア
+    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    if (weightProductNameEl) weightProductNameEl.value = '';
+
     // 計量モードの入力フィールドをクリア
     [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
      WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
