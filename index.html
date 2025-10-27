@@ -23,9 +23,9 @@
     <section class="card section" aria-labelledby="modeHeading">
       <h2 id="modeHeading" class="section-title">⚙️ 計算モード選択</h2>
       <div class="btn-row" role="tablist">
-        <button id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true">定額→計量加工</button>
-        <button id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false">計量→計量加工</button>
-        <button id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false">歩留まり統計</button>
+        <button type="button" id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true">定額→計量加工</button>
+        <button type="button" id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false">計量→計量加工</button>
+        <button type="button" id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false">歩留まり統計</button>
       </div>
     </section>
 
@@ -33,7 +33,7 @@
     <section id="fixedInputs" class="card section" aria-labelledby="fixedHeading">
       <div class="section-header">
         <h2 id="fixedHeading" class="section-title">📦 基本情報（定額→計量加工）</h2>
-        <button id="historyBtn" class="btn btn-secondary btn-header">📂 履歴</button>
+        <button type="button" id="historyBtn" class="btn btn-secondary btn-header">📂 履歴</button>
       </div>
 
       <!-- 品名入力欄 -->
@@ -164,11 +164,11 @@
       <!-- 保存ボタン -->
       <div class="btn-row save-buttons-container" style="margin-top: 1.5em;">
         <!-- 新規計算時の保存ボタン -->
-        <button class="save-btn btn btn-primary">💾 この計算を保存</button>
+        <button type="button" class="save-btn btn btn-primary">💾 この計算を保存</button>
         <!-- 履歴から読み込んだ計算の保存ボタン（初期状態で非表示） -->
-        <button class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
-        <button class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
-        <button class="clear-btn btn btn-secondary">クリア</button>
+        <button type="button" class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
+        <button type="button" class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
+        <button type="button" class="clear-btn btn btn-secondary">クリア</button>
       </div>
     </section>
 
@@ -176,7 +176,7 @@
     <section id="weightInputs" class="card section is-hidden" aria-labelledby="weightHeading">
       <div class="section-header">
         <h2 id="weightHeading" class="section-title">📦 基本情報（計量→計量加工）</h2>
-        <button id="historyBtnWeight" class="btn btn-secondary btn-header">📂 履歴</button>
+        <button type="button" id="historyBtnWeight" class="btn btn-secondary btn-header">📂 履歴</button>
       </div>
 
       <!-- 品名入力欄 -->
@@ -314,11 +314,11 @@
       <!-- 保存ボタン -->
       <div class="btn-row save-buttons-container" style="margin-top: 1.5em;">
         <!-- 新規計算時の保存ボタン -->
-        <button class="save-btn btn btn-primary">💾 この計算を保存</button>
+        <button type="button" class="save-btn btn btn-primary">💾 この計算を保存</button>
         <!-- 履歴から読み込んだ計算の保存ボタン（初期状態で非表示） -->
-        <button class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
-        <button class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
-        <button class="clear-btn btn btn-secondary">クリア</button>
+        <button type="button" class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
+        <button type="button" class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
+        <button type="button" class="clear-btn btn btn-secondary">クリア</button>
       </div>
     </section>
 
@@ -326,7 +326,7 @@
     <section id="yieldStatsInputs" class="card section is-hidden" aria-labelledby="yieldStatsHeading">
       <div class="section-header">
         <h2 id="yieldStatsHeading" class="section-title">📊 歩留まり統計</h2>
-        <button id="historyBtnYieldStats" class="btn btn-secondary btn-header">📂 履歴</button>
+        <button type="button" id="historyBtnYieldStats" class="btn btn-secondary btn-header">📂 履歴</button>
       </div>
       <p class="section-description">商品の加工前後の重量を入力し、歩留まり率を計算・統計分析します。</p>
 
@@ -625,11 +625,11 @@
       <!-- 保存ボタン -->
       <div class="btn-row save-buttons-container" style="margin-top: 1.5em;">
         <!-- 新規計算時の保存ボタン -->
-        <button class="save-btn btn btn-primary">💾 この計算を保存</button>
+        <button type="button" class="save-btn btn btn-primary">💾 この計算を保存</button>
         <!-- 履歴から読み込んだ計算の保存ボタン（初期状態で非表示） -->
-        <button class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
-        <button class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
-        <button class="clear-btn btn btn-secondary">クリア</button>
+        <button type="button" class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
+        <button type="button" class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
+        <button type="button" class="clear-btn btn btn-secondary">クリア</button>
       </div>
     </section>
 
@@ -741,11 +741,11 @@
 
       <div class="btn-row save-buttons-container" style="margin-top: 1.5em;">
         <!-- 新規計算時の保存ボタン -->
-        <button class="save-btn btn btn-primary">💾 この計算を保存</button>
+        <button type="button" class="save-btn btn btn-primary">💾 この計算を保存</button>
         <!-- 履歴から読み込んだ計算の保存ボタン（初期状態で非表示） -->
-        <button class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
-        <button class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
-        <button class="clear-btn btn btn-secondary">クリア</button>
+        <button type="button" class="overwrite-save-btn btn btn-primary" style="display: none;">💾 上書き保存</button>
+        <button type="button" class="new-save-btn btn btn-primary" style="display: none;">💾 新規保存</button>
+        <button type="button" class="clear-btn btn btn-secondary">クリア</button>
       </div>
     </section>
   </main>
@@ -771,8 +771,8 @@
       </label>
     </div>
     <div class="dialog-actions">
-      <button id="cancelSaveBtn" class="btn btn-secondary">キャンセル</button>
-      <button id="confirmSaveBtn" class="btn btn-primary">保存</button>
+      <button type="button" id="cancelSaveBtn" class="btn btn-secondary">キャンセル</button>
+      <button type="button" id="confirmSaveBtn" class="btn btn-primary">保存</button>
     </div>
   </dialog>
 
@@ -781,21 +781,21 @@
     <div class="dialog-header">
       <h3 class="dialog-title">📂 保存済みの計算</h3>
       <div class="dialog-header-actions">
-        <button id="historyMenuBtn" class="btn-icon" aria-label="メニュー" title="データ管理">⋮</button>
-        <button id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
+        <button type="button" id="historyMenuBtn" class="btn-icon" aria-label="メニュー" title="データ管理">⋮</button>
+        <button type="button" id="closeHistoryModal" class="btn-close" aria-label="閉じる">✕</button>
 
         <!-- データ管理メニュー（ドロップダウン） -->
         <div id="historyMenu" class="history-menu is-hidden">
-          <button id="exportBtn" class="history-menu-item">
+          <button type="button" id="exportBtn" class="history-menu-item">
             <span class="menu-icon">📤</span>
             <span class="menu-text">データをエクスポート</span>
           </button>
-          <button id="importBtn" class="history-menu-item">
+          <button type="button" id="importBtn" class="history-menu-item">
             <span class="menu-icon">📥</span>
             <span class="menu-text">データをインポート</span>
           </button>
           <hr class="history-menu-divider">
-          <button id="clearAllBtn" class="history-menu-item history-menu-item--danger">
+          <button type="button" id="clearAllBtn" class="history-menu-item history-menu-item--danger">
             <span class="menu-icon">🗑️</span>
             <span class="menu-text">すべて削除</span>
           </button>
@@ -808,9 +808,9 @@
         <div class="history-filter-section">
           <label class="history-filter-label">⚙️ 計算モード選択</label>
           <div class="btn-row">
-            <button id="historyFilterFixed" class="btn btn-mode btn-small is-active" data-mode="fixed">定額→計量加工</button>
-            <button id="historyFilterWeight" class="btn btn-mode btn-small" data-mode="weight">計量→計量加工</button>
-            <button id="historyFilterYieldStats" class="btn btn-mode btn-small" data-mode="yield_stats">歩留まり統計</button>
+            <button type="button" id="historyFilterFixed" class="btn btn-mode btn-small is-active" data-mode="fixed">定額→計量加工</button>
+            <button type="button" id="historyFilterWeight" class="btn btn-mode btn-small" data-mode="weight">計量→計量加工</button>
+            <button type="button" id="historyFilterYieldStats" class="btn btn-mode btn-small" data-mode="yield_stats">歩留まり統計</button>
           </div>
         </div>
 
@@ -833,7 +833,7 @@
           <select id="historySearch">
             <option value="">🔍 商品名で絞り込み...</option>
           </select>
-          <button id="clearSearchBtn" class="btn-clear-search">選択を解除</button>
+          <button type="button" id="clearSearchBtn" class="btn-clear-search">選択を解除</button>
         </div>
       </div>
       <ul id="historyList" class="history-list">
@@ -847,8 +847,8 @@
     <div class="update-notification-content">
       <span class="update-notification-icon">🔄</span>
       <span class="update-notification-text">新しいバージョンが利用可能です</span>
-      <button id="updateBtn" class="btn-update">更新</button>
-      <button id="dismissUpdateBtn" class="btn-dismiss" aria-label="閉じる">✕</button>
+      <button type="button" id="updateBtn" class="btn-update">更新</button>
+      <button type="button" id="dismissUpdateBtn" class="btn-dismiss" aria-label="閉じる">✕</button>
     </div>
   </div>
 
@@ -874,7 +874,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="formulaModalTitle" class="modal-title">計算式</h3>
-        <button id="formulaModalClose" class="modal-close" aria-label="閉じる">✕</button>
+        <button type="button" id="formulaModalClose" class="modal-close" aria-label="閉じる">✕</button>
       </div>
       <div id="formulaModalBody" class="modal-body">
         <!-- 動的に生成 -->
