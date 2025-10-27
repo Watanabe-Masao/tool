@@ -1399,6 +1399,15 @@ export function initHistoryUI() {
     console.error('履歴ボタン（計量モード）が見つかりません');
   }
 
+  // 履歴ボタン（歩留まり統計モード）
+  const historyBtnYieldStats = qs('#historyBtnYieldStats');
+  if (historyBtnYieldStats) {
+    historyBtnYieldStats.addEventListener('click', showHistoryModal);
+    console.log('履歴ボタン（歩留まり統計モード）のイベントリスナーを設定しました');
+  } else {
+    console.error('履歴ボタン（歩留まり統計モード）が見つかりません');
+  }
+
   // 履歴モーダルを閉じる
   const closeHistoryBtn = qs('#closeHistoryModal');
   if (closeHistoryBtn) {
