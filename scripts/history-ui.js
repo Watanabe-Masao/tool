@@ -1398,6 +1398,11 @@ export async function handleNewSave() {
   const mode = appState.getMode();
   const inputData = collectInputValues(mode);
 
+  // 保存ダイアログで変更した商品名をinputDataに反映（重要！）
+  // collectInputValues()は画面のフィールドから収集するため、
+  // 保存ダイアログで変更した商品名が反映されていない
+  inputData.productName = name;
+
   // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
   let resultData;
   if (mode === MODE.YIELD_STATS) {
@@ -1466,6 +1471,11 @@ export async function handleSaveCalculation() {
   // 現在の入力値と計算結果を取得
   const mode = appState.getMode();
   const inputData = collectInputValues(mode);
+
+  // 保存ダイアログで変更した商品名をinputDataに反映（重要！）
+  // collectInputValues()は画面のフィールドから収集するため、
+  // 保存ダイアログで変更した商品名が反映されていない
+  inputData.productName = name;
 
   // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
   let resultData;
