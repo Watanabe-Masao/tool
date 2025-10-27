@@ -1109,12 +1109,9 @@ export async function showSaveDialog() {
 
     newCategorySelect.addEventListener('change', async (e) => {
       const selectedCategory = e.target.value;
-      // 商品名をクリア
-      const nameInput = qs('#saveName');
-      if (nameInput) {
-        nameInput.value = '';
-      }
-      // 選択されたカテゴリーに応じて商品名をフィルタリング
+      // カテゴリー変更時は商品名をクリアせず、プリセットのみ更新
+      // これにより、ユーザーが既に入力した商品名が保持される
+      // 選択されたカテゴリーに応じて商品名プリセットをフィルタリング
       await updateProductNamePresets(selectedCategory || null);
     });
   }
@@ -1129,6 +1126,43 @@ export function closeSaveDialog() {
     dialog.close();
     // 背景のスクロールを再び有効化
     document.body.classList.remove('modal-open');
+  }
+}
+
+/**
+ * 現在のフィールドから商品名を取得
+ * @param {string} mode - 計算モード
+ * @returns {string} 商品名
+ */
+function getCurrentProductNameFromField(mode) {
+  if (mode === MODE.FIXED) {
+    const el = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    return el ? el.value.trim() : '';
+  } else if (mode === MODE.WEIGHT) {
+    const el = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    return el ? el.value.trim() : '';
+  } else if (mode === MODE.YIELD_STATS) {
+    const el = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    return el ? el.value.trim() : '';
+  }
+  return '';
+}
+
+/**
+ * フィールドの商品名を更新
+ * @param {string} mode - 計算モード
+ * @param {string} name - 新しい商品名
+ */
+function updateProductNameField(mode, name) {
+  if (mode === MODE.FIXED) {
+    const el = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    if (el) el.value = name;
+  } else if (mode === MODE.WEIGHT) {
+    const el = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    if (el) el.value = name;
+  } else if (mode === MODE.YIELD_STATS) {
+    const el = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (el) el.value = name;
   }
 }
 
@@ -1382,12 +1416,24 @@ export async function handleNewSave() {
   }
 
   try {
+    // 保存前に元のフィールドの商品名を取得
+    const currentFieldName = getCurrentProductNameFromField(mode);
+    const nameChanged = currentFieldName !== name;
+
     await saveCalculation(name, mode, inputData, resultData, category, productData);
     // 新規保存後、履歴IDをクリア
     appState.clearLoadedHistoryId();
     updateSaveButtonsVisibility();
     closeSaveDialog();
-    showToast('✅ 新規保存しました');
+
+    // 保存した商品名を元のフィールドにも反映
+    if (nameChanged) {
+      updateProductNameField(mode, name);
+      showToast('✅ 新規保存しました（商品名も更新しました）');
+    } else {
+      showToast('✅ 新規保存しました');
+    }
+
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
@@ -1439,14 +1485,32 @@ export async function handleSaveCalculation() {
   }
 
   try {
+    // 保存前に元のフィールドの商品名を取得
+    const currentFieldName = getCurrentProductNameFromField(mode);
+    const nameChanged = currentFieldName !== name;
+
     // 履歴から読み込んだIDがある場合は上書き保存
     const loadedHistoryId = appState.getLoadedHistoryId();
     if (loadedHistoryId) {
       await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
-      showToast('✅ 上書き保存しました');
+
+      // 保存した商品名を元のフィールドにも反映
+      if (nameChanged) {
+        updateProductNameField(mode, name);
+        showToast('✅ 上書き保存しました（商品名も更新しました）');
+      } else {
+        showToast('✅ 上書き保存しました');
+      }
     } else {
       await saveCalculation(name, mode, inputData, resultData, category, productData);
-      showToast('✅ 保存しました');
+
+      // 保存した商品名を元のフィールドにも反映
+      if (nameChanged) {
+        updateProductNameField(mode, name);
+        showToast('✅ 保存しました（商品名も更新しました）');
+      } else {
+        showToast('✅ 保存しました');
+      }
     }
     closeSaveDialog();
     // 商品名プリセットを更新
