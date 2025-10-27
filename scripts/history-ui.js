@@ -962,9 +962,15 @@ async function handleDeleteCalculation(id) {
  * 保存ダイアログを表示
  */
 export async function showSaveDialog() {
+  console.log('[showSaveDialog] 関数が呼び出されました');
   const dialog = qs('#saveDialog');
-  if (!dialog) return;
+  console.log('[showSaveDialog] dialog要素:', dialog);
+  if (!dialog) {
+    console.error('[showSaveDialog] エラー: dialog要素が見つかりません!');
+    return;
+  }
 
+  console.log('[showSaveDialog] modal-openクラスを追加');
   // 背景のスクロールを無効化
   document.body.classList.add('modal-open');
 
@@ -981,7 +987,13 @@ export async function showSaveDialog() {
   }
 
   // ダイアログをすぐに表示（UIの応答性を向上）
-  dialog.showModal();
+  console.log('[showSaveDialog] dialog.showModal()を呼び出します');
+  try {
+    dialog.showModal();
+    console.log('[showSaveDialog] ダイアログを表示しました');
+  } catch (error) {
+    console.error('[showSaveDialog] ダイアログ表示エラー:', error);
+  }
 
   // 履歴から読み込んだ場合は、そのカテゴリーと商品名を設定
   const loadedHistoryId = appState.getLoadedHistoryId();
@@ -1569,9 +1581,15 @@ export function initHistoryUI() {
 
   // 保存ボタン（クラスベースで全てのボタンに設定）
   const saveBtns = qsa('.save-btn');
-  saveBtns.forEach(saveBtn => {
-    saveBtn.addEventListener('click', () => {
+  console.log('[initHistoryUI] 保存ボタンの数:', saveBtns.length);
+  console.log('[initHistoryUI] 保存ボタン要素:', saveBtns);
+  saveBtns.forEach((saveBtn, index) => {
+    console.log(`[initHistoryUI] 保存ボタン${index}にイベントリスナーを設定:`, saveBtn);
+    saveBtn.addEventListener('click', (e) => {
+      console.log(`[保存ボタン${index}] クリックされました!`, e);
+      console.log('[保存ボタン] saveDialogModeを"normal"に設定');
       saveDialogMode = 'normal';
+      console.log('[保存ボタン] showSaveDialog()を呼び出します');
       showSaveDialog();
     });
   });
