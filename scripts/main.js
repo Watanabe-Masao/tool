@@ -22,6 +22,7 @@ import {
   calculateDiscountRateFromGross
 } from './product-simulator.js';
 import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
+import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
 
 /**
  * モード切替処理
@@ -68,6 +69,9 @@ function switchMode(newMode) {
   } else if (isYieldStats) {
     resetYieldStatsEntries();
   }
+
+  // セッション状態を保存
+  saveSessionState(newMode);
 }
 
 /**
@@ -86,6 +90,9 @@ function switchYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
+
+  // セッション状態を保存
+  saveSessionState(appState.getMode());
 }
 
 /**
@@ -104,6 +111,9 @@ function switchWeightYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
+
+  // セッション状態を保存
+  saveSessionState(appState.getMode());
 }
 
 /**
@@ -1276,6 +1286,8 @@ function addYieldStatsRow() {
       yieldRateDisplay.classList.add('error');
       yieldRateDisplay.classList.remove('calculated');
       updateYieldStatsStatistics();
+      // セッション状態を保存
+      saveSessionState(appState.getMode());
       return;
     }
 
@@ -1296,6 +1308,9 @@ function addYieldStatsRow() {
 
         // 統計情報を更新
         updateYieldStatsStatistics();
+
+        // セッション状態を保存
+        saveSessionState(appState.getMode());
       } else {
         yieldRateDisplay.textContent = '-';
         yieldRateDisplay.classList.remove('calculated', 'error');
@@ -3162,6 +3177,47 @@ function clearAll() {
   appState.resetAll();
   // 保存ボタンの表示を更新（履歴IDがクリアされたので通常の保存ボタンを表示）
   updateSaveButtonsVisibility();
+  // セッション状態をクリア
+  clearSessionState();
+}
+
+/**
+ * セッション状態を復元
+ */
+function restoreSession() {
+  const sessionData = restoreSessionState();
+  if (!sessionData) {
+    return; // セッションデータがない場合は何もしない
+  }
+
+  const { mode, yieldMethod } = sessionData;
+
+  // モードを復元
+  if (mode && mode !== appState.getMode()) {
+    // モードボタンをクリックして切り替え
+    const btnId = mode === MODE.FIXED ? UI_ELEMENTS.FIXED_BTN :
+                  mode === MODE.WEIGHT ? UI_ELEMENTS.WEIGHT_BTN :
+                  UI_ELEMENTS.YIELD_STATS_BTN;
+    const modeBtn = qs(`#${btnId}`);
+    if (modeBtn) {
+      modeBtn.click(); // switchMode が呼ばれる
+    }
+  }
+
+  // 歩留まり率計算方法を復元
+  if ((mode === MODE.FIXED || mode === MODE.WEIGHT) && yieldMethod) {
+    const radioName = mode === MODE.FIXED ? RADIO_NAMES.YIELD_METHOD_FIXED : RADIO_NAMES.YIELD_METHOD_WEIGHT;
+    const radio = document.querySelector(`input[name="${radioName}"][value="${yieldMethod}"]`);
+    if (radio && !radio.checked) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  // 少し待ってから入力値を復元（UIの切り替えが完了するまで）
+  setTimeout(() => {
+    applySessionState(sessionData);
+  }, 100);
 }
 
 /**
@@ -3366,6 +3422,49 @@ function init() {
 
   // 保存ボタンの表示を初期化
   updateSaveButtonsVisibility();
+
+  // すべての入力フィールドに変更時のセッション保存を追加
+  const sessionSaveFields = [
+    // 定額モード - 重量から計算
+    FIXED_FIELDS.CALCULATE.UNIT_COST,
+    FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+    FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT,
+    FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+    FIXED_FIELDS.CALCULATE.AFTER_PRICE_100,
+    // 定額モード - 歩留まり率直接入力
+    FIXED_FIELDS.DIRECT.UNIT_COST,
+    FIXED_FIELDS.DIRECT.UNIT_PRICE,
+    FIXED_FIELDS.DIRECT.BEFORE_WEIGHT,
+    FIXED_FIELDS.DIRECT.YIELD_RATE,
+    FIXED_FIELDS.DIRECT.AFTER_PRICE_100,
+    // 計量モード - 重量から計算
+    WEIGHT_FIELDS.CALCULATE.BOX_COST,
+    WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+    WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT,
+    WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+    WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT,
+    WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100,
+    // 計量モード - 歩留まり率直接入力
+    WEIGHT_FIELDS.DIRECT.BOX_COST,
+    WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+    WEIGHT_FIELDS.DIRECT.BOX_WEIGHT,
+    WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+    WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100,
+    // 歩留まり統計モード
+    UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME,
+    // 商品化シミュレーション
+    UI_ELEMENTS.EXP_WEIGHT,
+    UI_ELEMENTS.CONSUMABLE
+  ];
+
+  sessionSaveFields.forEach(fieldId => {
+    qs(`#${fieldId}`)?.addEventListener('input', () => {
+      saveSessionState(appState.getMode());
+    });
+  });
+
+  // セッション状態を復元（ページリロード時）
+  restoreSession();
 
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
