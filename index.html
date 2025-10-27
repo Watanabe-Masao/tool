@@ -768,6 +768,31 @@
     </div>
     <div class="dialog-body">
       <div class="history-toolbar">
+        <!-- 計算モード選択 -->
+        <div class="history-filter-section">
+          <label class="history-filter-label">⚙️ 計算モード選択</label>
+          <div class="btn-row">
+            <button id="historyFilterFixed" class="btn btn-mode btn-small is-active" data-mode="fixed">定額→計量加工</button>
+            <button id="historyFilterWeight" class="btn btn-mode btn-small" data-mode="weight">計量→計量加工</button>
+            <button id="historyFilterYieldStats" class="btn btn-mode btn-small" data-mode="yield_stats">歩留まり統計</button>
+          </div>
+        </div>
+
+        <!-- 計算方法選択（定額・計量モードの場合のみ表示） -->
+        <div id="historyFilterMethodSection" class="history-filter-section">
+          <label class="history-filter-label">歩留まり率の入力方法</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="historyFilterMethod" value="calculate" checked>
+              <span>重量から計算</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="historyFilterMethod" value="direct">
+              <span>歩留まり率を直接入力</span>
+            </label>
+          </div>
+        </div>
+
         <div class="search-container">
           <select id="historySearch">
             <option value="">🔍 商品名で絞り込み...</option>

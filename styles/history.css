@@ -111,6 +111,22 @@ body.modal-open {
 
 .history-toolbar {
   margin-bottom: 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.history-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.history-filter-label {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
 }
 
 .search-container {

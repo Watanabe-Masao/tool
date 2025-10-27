@@ -27,7 +27,8 @@ export async function showHistoryModal() {
     document.body.classList.add('modal-open');
 
     modal.showModal();
-    // 現在のモードと計算方法でフィルタリングして表示
+
+    // 現在のモードと計算方法を取得
     const currentMode = appState.getMode();
     let currentYieldMethod = null;
 
@@ -39,6 +40,12 @@ export async function showHistoryModal() {
       const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
       currentYieldMethod = methodRadio ? methodRadio.value : 'calculate';
     }
+
+    // フィルタリングUIを初期化
+    initHistoryFilterUI(currentMode, currentYieldMethod);
+
+    // フィルタリングUIのイベントリスナーを設定（初回のみ）
+    setupHistoryFilterListeners();
 
     await renderHistoryList(null, currentMode, currentYieldMethod);
   } catch (error) {
@@ -1567,4 +1574,117 @@ export function initHistoryUI() {
       handleClearAll();
     });
   }
+}
+
+/**
+ * 履歴フィルタリングUIを初期化
+ * @param {string} mode - 現在のモード
+ * @param {string} yieldMethod - 現在の計算方法
+ */
+function initHistoryFilterUI(mode, yieldMethod) {
+  // モード選択ボタンの初期化
+  const fixedBtn = qs('#historyFilterFixed');
+  const weightBtn = qs('#historyFilterWeight');
+  const yieldStatsBtn = qs('#historyFilterYieldStats');
+
+  // すべてのボタンからis-activeを削除
+  [fixedBtn, weightBtn, yieldStatsBtn].forEach(btn => {
+    if (btn) btn.classList.remove('is-active');
+  });
+
+  // 現在のモードに応じてボタンをアクティブ化
+  if (mode === MODE.FIXED && fixedBtn) {
+    fixedBtn.classList.add('is-active');
+  } else if (mode === MODE.WEIGHT && weightBtn) {
+    weightBtn.classList.add('is-active');
+  } else if (mode === MODE.YIELD_STATS && yieldStatsBtn) {
+    yieldStatsBtn.classList.add('is-active');
+  }
+
+  // 計算方法セクションの表示/非表示
+  const methodSection = qs('#historyFilterMethodSection');
+  if (methodSection) {
+    if (mode === MODE.YIELD_STATS) {
+      methodSection.style.display = 'none';
+    } else {
+      methodSection.style.display = '';
+      // ラジオボタンの初期化
+      const calculateRadio = qs('input[name="historyFilterMethod"][value="calculate"]');
+      const directRadio = qs('input[name="historyFilterMethod"][value="direct"]');
+      if (yieldMethod === 'direct' && directRadio) {
+        directRadio.checked = true;
+      } else if (calculateRadio) {
+        calculateRadio.checked = true;
+      }
+    }
+  }
+}
+
+// イベントリスナーが重複して登録されないようにフラグを管理
+let historyFilterListenersSetup = false;
+
+/**
+ * 履歴フィルタリングUIのイベントリスナーを設定
+ */
+function setupHistoryFilterListeners() {
+  if (historyFilterListenersSetup) return;
+  historyFilterListenersSetup = true;
+
+  // モード選択ボタンのイベントリスナー
+  const filterButtons = [
+    { id: '#historyFilterFixed', mode: MODE.FIXED },
+    { id: '#historyFilterWeight', mode: MODE.WEIGHT },
+    { id: '#historyFilterYieldStats', mode: MODE.YIELD_STATS }
+  ];
+
+  filterButtons.forEach(({ id, mode }) => {
+    const btn = qs(id);
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        // すべてのボタンからis-activeを削除
+        filterButtons.forEach(({ id }) => {
+          const b = qs(id);
+          if (b) b.classList.remove('is-active');
+        });
+        // クリックされたボタンをアクティブ化
+        btn.classList.add('is-active');
+
+        // 計算方法セクションの表示/非表示
+        const methodSection = qs('#historyFilterMethodSection');
+        if (methodSection) {
+          if (mode === MODE.YIELD_STATS) {
+            methodSection.style.display = 'none';
+          } else {
+            methodSection.style.display = '';
+          }
+        }
+
+        // 現在選択されている計算方法を取得
+        let yieldMethod = null;
+        if (mode !== MODE.YIELD_STATS) {
+          const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+          yieldMethod = methodRadio ? methodRadio.value : 'calculate';
+        }
+
+        // 履歴リストを再描画
+        await renderHistoryList(null, mode, yieldMethod);
+      });
+    }
+  });
+
+  // 計算方法ラジオボタンのイベントリスナー
+  const methodRadios = document.querySelectorAll('input[name="historyFilterMethod"]');
+  methodRadios.forEach(radio => {
+    radio.addEventListener('change', async () => {
+      // 現在選択されているモードを取得
+      const activeBtn = qs('.btn-mode.is-active[data-mode]');
+      if (!activeBtn) return;
+
+      const mode = activeBtn.dataset.mode;
+      const yieldMethod = radio.value;
+
+      // 履歴リストを再描画
+      await renderHistoryList(null, mode, yieldMethod);
+    });
+  });
 }
