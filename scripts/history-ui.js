@@ -237,6 +237,7 @@ function createHistoryItemHTML(item, isFirst = true) {
     // 統計データを取得
     const avgYieldRate = item.result?.avgYieldRate;
     const medianYieldRate = item.result?.medianYieldRate;
+    const stdDevYieldRate = item.result?.stdDevYieldRate;
     const minYieldRate = item.result?.minYieldRate;
     const maxYieldRate = item.result?.maxYieldRate;
 
@@ -255,14 +256,17 @@ function createHistoryItemHTML(item, isFirst = true) {
           </div>
           <div class="history-stats-row">
             <span class="history-stat">中央値: <strong>${typeof medianYieldRate === 'number' ? medianYieldRate.toFixed(1) : '-'}%</strong></span>
+            <span class="history-stat">標準偏差: <strong>${typeof stdDevYieldRate === 'number' ? stdDevYieldRate.toFixed(1) : '-'}%</strong></span>
+          </div>
+          <div class="history-stats-row">
             <span class="history-stat">範囲: <strong>${typeof minYieldRate === 'number' ? minYieldRate.toFixed(1) : '-'}% ~ ${typeof maxYieldRate === 'number' ? maxYieldRate.toFixed(1) : '-'}%</strong></span>
           </div>
         </div>
         <div class="history-item-date">${dateStr}</div>
         <div class="history-item-actions">
-          <button class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
-          <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
-          <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+          <button type="button" class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
+          <button type="button" class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
+          <button type="button" class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
         </div>
       </div>
     `;
