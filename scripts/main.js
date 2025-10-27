@@ -212,6 +212,8 @@ function switchMode(newMode) {
 
   // 履歴から読み込んだIDをクリア（入力値をクリアしたので新規保存に戻す）
   appState.clearLoadedHistoryId();
+  // UI状態フラグを更新：新規計算
+  appState.markAsNewCalculation();
 
   appState.setMode(newMode);
 
@@ -3774,6 +3776,26 @@ function init() {
       notification.classList.add('is-hidden');
     }, { once: true });
   }
+
+  // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
+  document.addEventListener('input', (e) => {
+    // 入力フィールド（number, text）または select要素が変更された場合
+    if (e.target.matches('input[type="number"], input[type="text"], select, textarea')) {
+      // 保存ダイアログ内の入力は除外（これらは保存処理で別途処理される）
+      if (!e.target.closest('#saveDialog')) {
+        appState.markAsChanged();
+        updateSaveButtonsVisibility();
+      }
+    }
+  });
+
+  // 歩留まり統計モードのテーブル行削除時も変更としてマーク
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.delete-row-btn')) {
+      appState.markAsChanged();
+      updateSaveButtonsVisibility();
+    }
+  });
 }
 
 // アプリケーション起動

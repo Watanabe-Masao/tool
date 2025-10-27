@@ -608,6 +608,8 @@ async function handleLoadCalculation(id) {
 
     // 履歴から読み込んだ計算のIDを保存（上書き保存用）
     appState.setLoadedHistoryId(id);
+    // UI状態フラグを更新：履歴から呼び出された、変更なし
+    appState.markAsFromHistory();
 
     // モーダルを閉じる（先に閉じる）
     closeHistoryModal();
@@ -1295,27 +1297,49 @@ async function updateProductNamePresets(category = null) {
 }
 
 /**
- * 保存ボタンの表示を更新
- * - デフォルト: 「この計算を保存」ボタンのみ表示
- * - 履歴から読み込んだ場合: 「上書き保存」と「新規保存」の2つを表示
- * - モード切り替え時: デフォルトに戻る（履歴IDがクリアされるため）
+ * 保存ボタンの表示切り替え
+ * isFromHistory と hasUnsavedChanges の2つのフラグで判断
+ *
+ * | isFromHistory | hasChanges | 表示するボタン |
+ * |--------------|-----------|---------------|
+ * | false        | false     | 「この計算を保存」（無効化） |
+ * | false        | true      | 「この計算を保存」 |
+ * | true         | false     | 「上書き保存」「新規保存」（無効化） |
+ * | true         | true      | 「上書き保存」「新規保存」 |
  */
 export function updateSaveButtonsVisibility() {
-  const loadedHistoryId = appState.getLoadedHistoryId();
+  const isFromHistory = appState.isFromHistoryRecord();
+  const hasChanges = appState.hasChanges();
+
   const saveBtns = qsa('.save-btn');
   const overwriteSaveBtns = qsa('.overwrite-save-btn');
   const newSaveBtns = qsa('.new-save-btn');
 
-  if (loadedHistoryId) {
+  if (isFromHistory) {
     // 履歴から読み込んだ場合: 上書き保存と新規保存を表示
-    saveBtns.forEach(btn => { btn.style.display = 'none'; });
-    overwriteSaveBtns.forEach(btn => { btn.style.display = ''; });
-    newSaveBtns.forEach(btn => { btn.style.display = ''; });
+    saveBtns.forEach(btn => {
+      btn.style.display = 'none';
+    });
+    overwriteSaveBtns.forEach(btn => {
+      btn.style.display = '';
+      btn.disabled = !hasChanges;
+    });
+    newSaveBtns.forEach(btn => {
+      btn.style.display = '';
+      btn.disabled = !hasChanges;
+    });
   } else {
     // 新規計算の場合: 通常の保存ボタンを表示
-    saveBtns.forEach(btn => { btn.style.display = ''; });
-    overwriteSaveBtns.forEach(btn => { btn.style.display = 'none'; });
-    newSaveBtns.forEach(btn => { btn.style.display = 'none'; });
+    saveBtns.forEach(btn => {
+      btn.style.display = '';
+      btn.disabled = !hasChanges;
+    });
+    overwriteSaveBtns.forEach(btn => {
+      btn.style.display = 'none';
+    });
+    newSaveBtns.forEach(btn => {
+      btn.style.display = 'none';
+    });
   }
 }
 
@@ -1364,6 +1388,11 @@ export async function handleOverwriteSave() {
     }
 
     await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
+
+    // UI状態フラグを更新：保存済み（変更なし）
+    appState.markAsSaved();
+    updateSaveButtonsVisibility();
+
     showToast('✅ 上書き保存しました');
     // 商品名プリセットを更新
     await updateProductNamePresets();
@@ -1431,6 +1460,8 @@ export async function handleNewSave() {
     // 新規保存した計算を「現在読み込んでいる履歴」として設定
     // これにより、「上書き保存」と「新規保存」のボタンが表示される
     appState.setLoadedHistoryId(newId);
+    // UI状態フラグを更新：保存済み（変更なし、履歴から扱う）
+    appState.markAsSaved();
     updateSaveButtonsVisibility();
     closeSaveDialog();
 
@@ -1507,6 +1538,10 @@ export async function handleSaveCalculation() {
     if (loadedHistoryId) {
       await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
 
+      // UI状態フラグを更新：保存済み（変更なし）
+      appState.markAsSaved();
+      updateSaveButtonsVisibility();
+
       // 保存した商品名を元のフィールドにも反映
       if (nameChanged) {
         updateProductNameField(mode, name);
@@ -1520,6 +1555,8 @@ export async function handleSaveCalculation() {
 
       // 新規保存した計算を「現在読み込んでいる履歴」として設定
       appState.setLoadedHistoryId(newId);
+      // UI状態フラグを更新：保存済み（変更なし、履歴から扱う）
+      appState.markAsSaved();
       updateSaveButtonsVisibility();
 
       // 保存した商品名を元のフィールドにも反映
