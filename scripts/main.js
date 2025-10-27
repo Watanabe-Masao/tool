@@ -25,6 +25,124 @@ import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
 
 /**
+ * 現在のモードに入力値があるかチェック
+ * @returns {boolean} 入力値があればtrue
+ */
+function hasInputValues() {
+  const currentMode = appState.getMode();
+
+  if (currentMode === MODE.FIXED) {
+    const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+    const method = methodRadio ? methodRadio.value : 'calculate';
+
+    if (method === 'calculate') {
+      // 重量から計算モード
+      const fields = [
+        FIXED_FIELDS.CALCULATE.UNIT_COST,
+        FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+        FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT,
+        FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+        FIXED_FIELDS.CALCULATE.AFTER_PRICE_100
+      ];
+      return fields.some(id => {
+        const el = qs(`#${id}`);
+        return el && el.value.trim() !== '';
+      });
+    } else {
+      // 歩留まり率直接入力モード
+      const fields = [
+        FIXED_FIELDS.DIRECT.UNIT_COST,
+        FIXED_FIELDS.DIRECT.UNIT_PRICE,
+        FIXED_FIELDS.DIRECT.BEFORE_WEIGHT,
+        FIXED_FIELDS.DIRECT.YIELD_RATE,
+        FIXED_FIELDS.DIRECT.AFTER_PRICE_100
+      ];
+      return fields.some(id => {
+        const el = qs(`#${id}`);
+        return el && el.value.trim() !== '';
+      });
+    }
+  } else if (currentMode === MODE.WEIGHT) {
+    const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+    const method = methodRadio ? methodRadio.value : 'calculate';
+
+    if (method === 'calculate') {
+      // 重量から計算モード
+      const fields = [
+        WEIGHT_FIELDS.CALCULATE.BOX_COST,
+        WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+        WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT,
+        WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+        WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT,
+        WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100
+      ];
+      return fields.some(id => {
+        const el = qs(`#${id}`);
+        return el && el.value.trim() !== '';
+      });
+    } else {
+      // 歩留まり率直接入力モード
+      const fields = [
+        WEIGHT_FIELDS.DIRECT.BOX_COST,
+        WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+        WEIGHT_FIELDS.DIRECT.BOX_WEIGHT,
+        WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+        WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100
+      ];
+      return fields.some(id => {
+        const el = qs(`#${id}`);
+        return el && el.value.trim() !== '';
+      });
+    }
+  } else if (currentMode === MODE.YIELD_STATS) {
+    // 歩留まり統計モード：品名または行データがあるかチェック
+    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (productNameEl && productNameEl.value.trim() !== '') return true;
+
+    // テーブルに入力があるかチェック
+    const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+    if (tbody) {
+      const rows = tbody.querySelectorAll('.yield-stats-row');
+      for (const row of rows) {
+        const rowId = row.dataset.rowId;
+        if (rowId !== undefined) {
+          const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+          const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+          if ((beforeWeightInput && beforeWeightInput.value.trim() !== '') ||
+              (afterWeightInput && afterWeightInput.value.trim() !== '')) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * モード切替のハンドリング（入力値がある場合は確認ダイアログを表示）
+ * @param {string} newMode - 切り替え先のモード
+ */
+function handleModeSwitch(newMode) {
+  // 同じモードへの切り替えはスキップ
+  if (appState.getMode() === newMode) {
+    return;
+  }
+
+  // 現在のモードに入力値があるかチェック
+  if (hasInputValues()) {
+    if (confirm('入力されている値が消えますが、よろしいですか？')) {
+      switchMode(newMode);
+    }
+    // ユーザーがキャンセルした場合は何もしない
+  } else {
+    // 入力値がない場合は直接切り替え
+    switchMode(newMode);
+  }
+}
+
+/**
  * モード切替処理
  */
 function switchMode(newMode) {
@@ -69,9 +187,6 @@ function switchMode(newMode) {
   } else if (isYieldStats) {
     resetYieldStatsEntries();
   }
-
-  // セッション状態を保存
-  saveSessionState(newMode);
 }
 
 /**
@@ -104,12 +219,6 @@ function switchYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
-
-  // クリア後にセッション状態を保存（確実に空の値を保存）
-  // setTimeoutを使用してDOMの更新が完了してから保存
-  setTimeout(() => {
-    saveSessionState(appState.getMode());
-  }, 0);
 }
 
 /**
@@ -146,12 +255,6 @@ function switchWeightYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
-
-  // クリア後にセッション状態を保存（確実に空の値を保存）
-  // setTimeoutを使用してDOMの更新が完了してから保存
-  setTimeout(() => {
-    saveSessionState(appState.getMode());
-  }, 0);
 }
 
 /**
@@ -1286,8 +1389,6 @@ function addYieldStatsRow() {
       yieldRateDisplay.classList.add('error');
       yieldRateDisplay.classList.remove('calculated');
       updateYieldStatsStatistics();
-      // セッション状態を保存
-      saveSessionState(appState.getMode());
       return;
     }
 
@@ -1308,9 +1409,6 @@ function addYieldStatsRow() {
 
         // 統計情報を更新
         updateYieldStatsStatistics();
-
-        // セッション状態を保存
-        saveSessionState(appState.getMode());
       } else {
         yieldRateDisplay.textContent = '-';
         yieldRateDisplay.classList.remove('calculated', 'error');
@@ -3274,9 +3372,9 @@ function restoreSession() {
  */
 function init() {
   // モード切替ボタン
-  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => switchMode(MODE.FIXED));
-  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => switchMode(MODE.WEIGHT));
-  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => switchMode(MODE.YIELD_STATS));
+  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
+  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
+  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
   qs(`#${UI_ELEMENTS.CLEAR_BTN}`)?.addEventListener('click', clearAll);
 
   // 歩留まり率入力方法の切り替え（定額モード）
@@ -3506,14 +3604,15 @@ function init() {
     UI_ELEMENTS.CONSUMABLE
   ];
 
-  sessionSaveFields.forEach(fieldId => {
-    qs(`#${fieldId}`)?.addEventListener('input', () => {
-      saveSessionState(appState.getMode());
-    });
-  });
+  // セッション保存機能は無効化（モード切替時に確認ダイアログを表示する方式に変更）
+  // sessionSaveFields.forEach(fieldId => {
+  //   qs(`#${fieldId}`)?.addEventListener('input', () => {
+  //     saveSessionState(appState.getMode());
+  //   });
+  // });
 
-  // セッション状態を復元（ページリロード時）
-  restoreSession();
+  // セッション状態の復元は無効化（モード切替時に確認ダイアログを表示する方式に変更）
+  // restoreSession();
 
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
