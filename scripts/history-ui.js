@@ -69,10 +69,23 @@ export function closeHistoryModal() {
 /**
  * 履歴一覧を描画
  * @param {Array} items - 履歴データ配列（オプション）
+ * @param {string} filterMode - フィルタするモード（オプション）
+ * @param {string} filterYieldMethod - フィルタする歩留まり率入力方法（オプション）
  */
 export async function renderHistoryList(items = null, filterMode = null, filterYieldMethod = null) {
   const listContainer = qs('#historyList');
   if (!listContainer) return;
+
+  // フィルタ条件が渡されていない場合、現在のUIの状態から取得
+  if (filterMode === null) {
+    const activeBtn = qs('.btn-mode.is-active[data-mode]');
+    filterMode = activeBtn ? activeBtn.dataset.mode : null;
+  }
+
+  if (filterYieldMethod === null && filterMode && filterMode !== MODE.YIELD_STATS) {
+    const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+    filterYieldMethod = methodRadio ? methodRadio.value : null;
+  }
 
   // データを取得
   let history = items || await getHistory();
