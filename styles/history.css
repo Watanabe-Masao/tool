@@ -171,6 +171,18 @@ body.modal-open {
   gap: 0.4em;
 }
 
+.history-filter-section .radio-group {
+  display: flex;
+  gap: 1em;
+  flex-wrap: nowrap;
+}
+
+.history-filter-section .radio-label {
+  margin-bottom: 0;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
 .search-container {
   position: relative;
   width: 100%;
