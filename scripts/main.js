@@ -146,6 +146,54 @@ function handleModeSwitch(newMode) {
  * モード切替処理
  */
 function switchMode(newMode) {
+  const currentMode = appState.getMode();
+
+  // 現在のモードの入力値をクリア
+  if (currentMode === MODE.FIXED) {
+    // 定額モードの入力フィールドをクリア
+    [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+     FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+     FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
+     FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
+     FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+  } else if (currentMode === MODE.WEIGHT) {
+    // 計量モードの入力フィールドをクリア
+    [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+     WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+     WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+     WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+     WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    // 100gあたりの売価表示をクリア
+    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
+    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
+  } else if (currentMode === MODE.YIELD_STATS) {
+    // 品名フィールドをクリア
+    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (productNameEl) productNameEl.value = '';
+
+    // テーブルをクリア
+    yieldStatsEntryCounter = 0;
+    const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+    if (tbody) {
+      tbody.innerHTML = '';
+      addYieldStatsRow();
+    }
+  }
+
   appState.setMode(newMode);
 
   const isFixed = newMode === MODE.FIXED;
