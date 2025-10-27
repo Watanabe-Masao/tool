@@ -952,6 +952,13 @@ async function handleEditCalculation(id) {
     }
 
     await updateCalculationName(id, newName.trim());
+
+    // 商品名検索フィルタをクリア（品名が変わった場合、以前の検索条件は無効）
+    const searchInput = qs('#historySearch');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
     await renderHistoryList();
     showToast('✅ 更新しました');
   } catch (error) {
@@ -968,6 +975,13 @@ async function handleDeleteCalculation(id) {
 
   try {
     await deleteHistory(id);
+
+    // 商品名検索フィルタをクリア（削除後は全体を表示）
+    const searchInput = qs('#historySearch');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
     await renderHistoryList();
     showToast('✅ 削除しました');
   } catch (error) {
