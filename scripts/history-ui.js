@@ -597,8 +597,8 @@ async function handleLoadCalculation(id) {
     setTimeout(() => {
       restoreAllInputFields(data.mode, data.input);
 
-      // 結果データがある場合はappStateに復元
-      if (data.result) {
+      // 結果データがある場合はappStateに復元（歩留まり統計モードは除く）
+      if (data.result && data.mode !== MODE.YIELD_STATS) {
         restoreCalculationResults(data.mode, data.input.yieldMethod, data.result, data.input);
       }
 
