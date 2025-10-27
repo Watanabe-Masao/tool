@@ -117,7 +117,7 @@ function switchWeightYieldMethod() {
 }
 
 /**
- * ステップをリセット
+ * ステップをリセット（UIの表示/非表示のみ、入力値はクリアしない）
  */
 function resetSteps() {
   appState.resetStep();
@@ -133,14 +133,6 @@ function resetSteps() {
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP3);
     hide(UI_ELEMENTS.FIXED_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
-
-    // 入力フィールドをクリア
-    [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
-     FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
-     FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
   } else {
     // 重量から計算モード
     show(UI_ELEMENTS.FIXED_STEP1);
@@ -150,14 +142,6 @@ function resetSteps() {
     hide(UI_ELEMENTS.FIXED_STEP3);
     hide(UI_ELEMENTS.FIXED_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
-
-    // 入力フィールドをクリア
-    [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
-     FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
-     FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
   }
 }
 
@@ -333,7 +317,7 @@ function handleDirectStep3() {
 }
 
 /**
- * 計量モードのステップをリセット
+ * 計量モードのステップをリセット（UIの表示/非表示のみ、入力値はクリアしない）
  */
 function resetWeightSteps() {
   appState.resetStep();
@@ -349,17 +333,6 @@ function resetWeightSteps() {
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
     hide(UI_ELEMENTS.WEIGHT_DIRECT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
-
-    // 入力フィールドをクリア
-    [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
-     WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
-     WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-
-    // 100gあたりの売価表示をクリア
-    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
   } else {
     // 重量から計算モード
     show(UI_ELEMENTS.WEIGHT_STEP1);
@@ -369,17 +342,6 @@ function resetWeightSteps() {
     hide(UI_ELEMENTS.WEIGHT_STEP3);
     hide(UI_ELEMENTS.WEIGHT_STEP3_RESULT);
     hide(UI_ELEMENTS.RESULTS);
-
-    // 入力フィールドをクリア
-    [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
-     WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
-     WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-
-    // 100gあたりの売価表示をクリア
-    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
   }
 }
 
@@ -1193,23 +1155,23 @@ function handleDiscountUpdate() {
 let yieldStatsEntryCounter = 0;
 
 /**
- * 歩留まり率統計モード: テーブルをリセット
+ * 歩留まり率統計モード: 表示をリセット（入力値はクリアしない）
  */
 function resetYieldStatsEntries() {
-  yieldStatsEntryCounter = 0;
-  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
-  if (tbody) {
-    tbody.innerHTML = '';
-    // 初期行を1行追加
-    addYieldStatsRow();
-  }
-  // 統計結果をリセット
+  // 統計結果を非表示にする
   hide('yieldStatsResults');
 
   // 外れ値の除外状態をリセット
   manuallyExcludedOutlierIndices.clear();
   currentOutlierValues = [];
   currentStatsType = '';
+
+  // テーブルが空の場合のみ初期行を追加
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (tbody && tbody.querySelectorAll('.yield-stats-row').length === 0) {
+    yieldStatsEntryCounter = 0;
+    addYieldStatsRow();
+  }
 }
 
 /**
@@ -3163,17 +3125,66 @@ function approximateNormalQuantile(p) {
 }
 
 /**
- * 全クリア処理
+ * 全クリア処理（すべての入力フィールドをクリア）
  */
 function clearAll() {
   const currentMode = appState.getMode();
+
+  // UI表示のリセット
   if (currentMode === MODE.FIXED) {
     resetSteps();
+    // 定額モードの入力フィールドをクリア
+    [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+     FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+     FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
+     FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
+     FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
   } else if (currentMode === MODE.WEIGHT) {
     resetWeightSteps();
+    // 計量モードの入力フィールドをクリア
+    [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+     WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+     WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+     WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+     WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+      const el = qs(`#${id}`);
+      if (el) el.value = '';
+    });
+    // 100gあたりの売価表示をクリア
+    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
+    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
   } else if (currentMode === MODE.YIELD_STATS) {
+    // 品名フィールドをクリア
+    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (productNameEl) productNameEl.value = '';
+
+    // テーブルをクリア
+    yieldStatsEntryCounter = 0;
+    const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+    if (tbody) {
+      tbody.innerHTML = '';
+      addYieldStatsRow();
+    }
     resetYieldStatsEntries();
   }
+
+  // 商品化シミュレーションの入力フィールドをクリア
+  const expWeightEl = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
+  if (expWeightEl) expWeightEl.value = '';
+  const consumableEl = qs(`#${UI_ELEMENTS.CONSUMABLE}`);
+  if (consumableEl) consumableEl.value = '';
+
   appState.resetAll();
   // 保存ボタンの表示を更新（履歴IDがクリアされたので通常の保存ボタンを表示）
   updateSaveButtonsVisibility();
