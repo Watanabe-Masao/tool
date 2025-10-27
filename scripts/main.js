@@ -1394,6 +1394,75 @@ function compactYieldStatsRows() {
 }
 
 /**
+ * 歩留まり率統計モード: テーブルデータを復元
+ * @param {Array} tableData - 保存されたテーブルデータ
+ */
+function restoreYieldStatsTable(tableData) {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  // テーブルをリセット
+  yieldStatsEntryCounter = 0;
+  tbody.innerHTML = '';
+
+  // データがない場合は1行だけ追加
+  if (!tableData || tableData.length === 0) {
+    addYieldStatsRow();
+    return;
+  }
+
+  // 保存されたデータから行を再構築
+  tableData.forEach(rowData => {
+    addYieldStatsRow();
+    const rowId = yieldStatsEntryCounter - 1;
+    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+
+    if (beforeInput && rowData.beforeWeight !== undefined && rowData.beforeWeight !== null) {
+      beforeInput.value = rowData.beforeWeight;
+    }
+    if (afterInput && rowData.afterWeight !== undefined && rowData.afterWeight !== null) {
+      afterInput.value = rowData.afterWeight;
+    }
+
+    // 歩留まり率を計算して表示
+    const beforeWeight = beforeInput ? beforeInput.value.trim() : '';
+    const afterWeight = afterInput ? afterInput.value.trim() : '';
+    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+
+    if (beforeWeight !== '' && afterWeight !== '') {
+      const beforeVal = parseFloat(beforeWeight);
+      const afterVal = parseFloat(afterWeight);
+      if (beforeVal > 0 && afterVal > 0) {
+        const yieldRate = calculateYieldRate(beforeVal, afterVal);
+        if (yieldRate !== null) {
+          yieldRateDisplay.textContent = pct(toFixed(yieldRate));
+          yieldRateDisplay.classList.add('calculated');
+          yieldRateDisplay.classList.remove('error');
+        }
+      }
+    } else if (beforeWeight !== '' || afterWeight !== '') {
+      // 片方だけ入力されている場合はエラー
+      yieldRateDisplay.textContent = 'エラー';
+      yieldRateDisplay.classList.add('error');
+      yieldRateDisplay.classList.remove('calculated');
+    }
+  });
+
+  // 最後の行に値がある場合、新しい空行を追加
+  const lastData = tableData[tableData.length - 1];
+  if (lastData && lastData.beforeWeight && lastData.afterWeight) {
+    addYieldStatsRow();
+  }
+
+  // 統計情報を更新
+  updateYieldStatsStatistics();
+}
+
+// window オブジェクトに関数を公開（history-ui.js から呼び出すため）
+window.restoreYieldStatsTable = restoreYieldStatsTable;
+
+/**
  * 歩留まり率統計モード: 統計情報を更新
  */
 function updateYieldStatsStatistics() {
