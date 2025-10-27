@@ -961,6 +961,22 @@ async function handleEditCalculation(id) {
 
     await updateCalculationName(id, newName.trim());
 
+    // 編集した履歴が現在読み込まれているものと同じ場合、品名フィールドも更新
+    const loadedHistoryId = appState.getLoadedHistoryId();
+    if (loadedHistoryId === id) {
+      const currentMode = appState.getMode();
+      if (currentMode === MODE.FIXED) {
+        const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+        if (fixedProductNameEl) fixedProductNameEl.value = newName.trim();
+      } else if (currentMode === MODE.WEIGHT) {
+        const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+        if (weightProductNameEl) weightProductNameEl.value = newName.trim();
+      } else if (currentMode === MODE.YIELD_STATS) {
+        const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+        if (yieldStatsProductNameEl) yieldStatsProductNameEl.value = newName.trim();
+      }
+    }
+
     // 商品名検索フィルタをクリア（品名が変わった場合、以前の検索条件は無効）
     const searchInput = qs('#historySearch');
     if (searchInput) {
