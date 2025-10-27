@@ -88,6 +88,20 @@ function switchYieldMethod() {
   // ステップをリセット
   resetSteps();
 
+  // 定額モードの入力値をクリア
+  [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+   FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+   FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
+  [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
+   FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
+   FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
+
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
 
@@ -108,6 +122,24 @@ function switchWeightYieldMethod() {
 
   // ステップをリセット
   resetWeightSteps();
+
+  // 計量モードの入力値をクリア
+  [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+   WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+   WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
+  [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+   WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+   WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
+
+  // 100gあたりの売価表示をクリア
+  setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
+  setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();

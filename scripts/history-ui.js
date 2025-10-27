@@ -27,7 +27,9 @@ export async function showHistoryModal() {
     document.body.classList.add('modal-open');
 
     modal.showModal();
-    await renderHistoryList();
+    // 現在のモードでフィルタリングして表示
+    const currentMode = appState.getMode();
+    await renderHistoryList(null, currentMode);
   } catch (error) {
     console.error('履歴モーダルを開く際にエラーが発生しました:', error);
     showToast('❌ 履歴を読み込めませんでした', 'error');
@@ -50,14 +52,19 @@ export function closeHistoryModal() {
  * 履歴一覧を描画
  * @param {Array} items - 履歴データ配列（オプション）
  */
-export async function renderHistoryList(items = null) {
+export async function renderHistoryList(items = null, filterMode = null) {
   const listContainer = qs('#historyList');
   if (!listContainer) return;
 
   // データを取得
-  const history = items || await getHistory();
+  let history = items || await getHistory();
 
-  // 商品名候補を更新するために常に全履歴を取得
+  // モードでフィルタリング（filterModeが指定されている場合）
+  if (filterMode) {
+    history = history.filter(item => item.mode === filterMode);
+  }
+
+  // 商品名候補を更新するために常に全履歴を取得（フィルタリング前）
   const allHistory = await getHistory();
 
   // 全履歴が空の場合
@@ -70,8 +77,9 @@ export async function renderHistoryList(items = null) {
   // 絞り込み結果が空の場合
   if (history.length === 0) {
     listContainer.innerHTML = '<li class="history-empty">該当するデータがありません</li>';
-    // 商品名候補は全履歴から生成（絞り込み後でも全ての商品名を表示）
-    updateProductNameSuggestions(allHistory);
+    // 商品名候補は現在のモードの履歴から生成
+    const filteredHistory = filterMode ? allHistory.filter(item => item.mode === filterMode) : allHistory;
+    updateProductNameSuggestions(filteredHistory);
     return;
   }
 
@@ -81,8 +89,9 @@ export async function renderHistoryList(items = null) {
   // グループごとにHTMLを生成
   listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
-  // 商品名候補を更新（常に全履歴から生成）
-  updateProductNameSuggestions(allHistory);
+  // 商品名候補を更新（現在のモードの履歴から生成）
+  const filteredHistory = filterMode ? allHistory.filter(item => item.mode === filterMode) : allHistory;
+  updateProductNameSuggestions(filteredHistory);
 
   // イベントリスナーをバインド
   bindHistoryItemEvents();
@@ -176,10 +185,48 @@ function createHistoryItemHTML(item, isFirst = true) {
   const date = new Date(item.timestamp);
   const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-  const modeLabel = item.mode === 'fixed' ? '定額売価' : '計量売価';
   const modeIcon = getModeIcon(item.mode);
 
-  // モードに応じて表示ラベルと値を取得
+  // 歩留まり統計モードの場合は異なる表示
+  if (item.mode === MODE.YIELD_STATS) {
+    const productName = item.input?.productName || '品名なし';
+    const tableDataCount = item.input?.tableData?.length || 0;
+
+    // 統計データを取得
+    const avgYieldRate = item.result?.avgYieldRate;
+    const medianYieldRate = item.result?.medianYieldRate;
+    const minYieldRate = item.result?.minYieldRate;
+    const maxYieldRate = item.result?.maxYieldRate;
+
+    return `
+      <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
+        <div class="history-item-header">
+          <div class="history-item-title">
+            <span class="history-item-mode-label">${modeIcon}</span>
+            <span class="history-item-name">${escapeHTML(productName)}</span>
+          </div>
+        </div>
+        <div class="history-item-stats">
+          <div class="history-stats-row">
+            <span class="history-stat">データ数: <strong>${tableDataCount}件</strong></span>
+            <span class="history-stat">平均歩留まり率: <strong>${typeof avgYieldRate === 'number' ? avgYieldRate.toFixed(1) : '-'}%</strong></span>
+          </div>
+          <div class="history-stats-row">
+            <span class="history-stat">中央値: <strong>${typeof medianYieldRate === 'number' ? medianYieldRate.toFixed(1) : '-'}%</strong></span>
+            <span class="history-stat">範囲: <strong>${typeof minYieldRate === 'number' ? minYieldRate.toFixed(1) : '-'}% ~ ${typeof maxYieldRate === 'number' ? maxYieldRate.toFixed(1) : '-'}%</strong></span>
+          </div>
+        </div>
+        <div class="history-item-date">${dateStr}</div>
+        <div class="history-item-actions">
+          <button class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
+          <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
+          <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // 定額売価・計量売価モードの表示
   const isFixedMode = item.mode === 'fixed';
   const costLabel = isFixedMode ? '1個あたりの原価' : '1箱あたりの原価';
   const priceLabel = isFixedMode ? '1個あたりの売価' : '1箱あたりの売価';
@@ -243,7 +290,10 @@ function createHistoryItemHTML(item, isFirst = true) {
  * @returns {string}
  */
 function getModeIcon(mode) {
-  return mode === 'fixed' ? '定額売価' : '計量売価';
+  if (mode === MODE.FIXED) return '定額売価';
+  if (mode === MODE.WEIGHT) return '計量売価';
+  if (mode === MODE.YIELD_STATS) return '歩留まり統計';
+  return '不明';
 }
 
 /**
@@ -598,6 +648,9 @@ function restoreAllInputFields(mode, input) {
 
       const afterPrice100El = qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
       // 歩留まり率直接入力モード
       const unitCostEl = qs(`#${FIXED_FIELDS.DIRECT.UNIT_COST}`);
@@ -614,6 +667,9 @@ function restoreAllInputFields(mode, input) {
 
       const afterPrice100El = qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
   } else if (mode === MODE.WEIGHT) {
     if (input.yieldMethod === 'calculate') {
@@ -635,6 +691,9 @@ function restoreAllInputFields(mode, input) {
 
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (beforeSampleEl) beforeSampleEl.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
       // 歩留まり率直接入力モード
       const boxCostEl = qs(`#${WEIGHT_FIELDS.DIRECT.BOX_COST}`);
@@ -651,6 +710,9 @@ function restoreAllInputFields(mode, input) {
 
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
+
+      // ステップを復元するためにinputイベントを発火
+      if (boxWeightEl) boxWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
   } else if (mode === MODE.YIELD_STATS) {
     // 歩留まり統計モード
