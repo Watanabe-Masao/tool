@@ -252,7 +252,7 @@ function createHistoryItemHTML(item, isFirst = true) {
 
   // 歩留まり統計モードの場合は異なる表示
   if (item.mode === MODE.YIELD_STATS) {
-    const productName = item.input?.productName || '品名なし';
+    const productName = item.input?.productName || '商品名なし';
     const tableDataCount = item.input?.tableData?.length || 0;
 
     // 統計データを取得
@@ -620,7 +620,7 @@ async function handleLoadCalculation(id) {
 
     // 少し待ってからフィールドに値を復元（UIの切り替えが完了するまで）
     setTimeout(() => {
-      // 履歴の商品名を品名フィールドに設定
+      // 履歴の商品名を商品名フィールドに設定
       restoreAllInputFields(data.mode, data.input, data.name);
 
       // 結果データがある場合はappStateに復元（歩留まり統計モードは除く）
@@ -697,10 +697,10 @@ function switchYieldMethod(mode, yieldMethod) {
  * 全ての入力フィールドに値を復元
  * @param {string} mode
  * @param {Object} input
- * @param {string} productName - 履歴の商品名（品名フィールドに設定）
+ * @param {string} productName - 履歴の商品名（商品名フィールドに設定）
  */
 function restoreAllInputFields(mode, input, productName = '') {
-  // 品名フィールドを復元（履歴の商品名を使用）
+  // 商品名フィールドを復元（履歴の商品名を使用）
   if (mode === MODE.FIXED) {
     const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
     if (fixedProductNameEl) {
@@ -718,12 +718,14 @@ function restoreAllInputFields(mode, input, productName = '') {
     }
   }
 
-  // 商品化シミュレーション
-  const expWeightEl = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
-  if (expWeightEl && input.expWeight != null) expWeightEl.value = input.expWeight;
+  // 商品化シミュレーション（定額・計量モードのみ）
+  if (mode === MODE.FIXED || mode === MODE.WEIGHT) {
+    const expWeightEl = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
+    if (expWeightEl && input.expWeight != null) expWeightEl.value = input.expWeight;
 
-  const consumableEl = qs(`#${UI_ELEMENTS.CONSUMABLE}`);
-  if (consumableEl && input.consumable != null) consumableEl.value = input.consumable;
+    const consumableEl = qs(`#${UI_ELEMENTS.CONSUMABLE}`);
+    if (consumableEl && input.consumable != null) consumableEl.value = input.consumable;
+  }
 
   if (mode === MODE.FIXED) {
     if (input.yieldMethod === 'calculate') {
@@ -961,7 +963,23 @@ async function handleEditCalculation(id) {
 
     await updateCalculationName(id, newName.trim());
 
-    // 商品名検索フィルタをクリア（品名が変わった場合、以前の検索条件は無効）
+    // 編集した履歴が現在読み込まれているものと同じ場合、商品名フィールドも更新
+    const loadedHistoryId = appState.getLoadedHistoryId();
+    if (loadedHistoryId === id) {
+      const currentMode = appState.getMode();
+      if (currentMode === MODE.FIXED) {
+        const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+        if (fixedProductNameEl) fixedProductNameEl.value = newName.trim();
+      } else if (currentMode === MODE.WEIGHT) {
+        const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+        if (weightProductNameEl) weightProductNameEl.value = newName.trim();
+      } else if (currentMode === MODE.YIELD_STATS) {
+        const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+        if (yieldStatsProductNameEl) yieldStatsProductNameEl.value = newName.trim();
+      }
+    }
+
+    // 商品名検索フィルタをクリア（商品名が変わった場合、以前の検索条件は無効）
     const searchInput = qs('#historySearch');
     if (searchInput) {
       searchInput.value = '';
@@ -1121,17 +1139,18 @@ export function closeSaveDialog() {
  */
 function collectInputValues(mode) {
   const inputData = {
-    mode: mode,
-    // 商品化シミュレーション
-    expWeight: num(UI_ELEMENTS.EXP_WEIGHT),
-    consumable: num(UI_ELEMENTS.CONSUMABLE)
+    mode: mode
   };
 
   if (mode === MODE.FIXED) {
     // 定額売価モード
-    // 品名を収集
+    // 商品名を収集
     const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
     inputData.productName = fixedProductNameEl ? fixedProductNameEl.value : '';
+
+    // 商品化シミュレーション（定額・計量モードのみ）
+    inputData.expWeight = num(UI_ELEMENTS.EXP_WEIGHT);
+    inputData.consumable = num(UI_ELEMENTS.CONSUMABLE);
 
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
     inputData.yieldMethod = methodRadio ? methodRadio.value : 'calculate';
@@ -1153,9 +1172,13 @@ function collectInputValues(mode) {
     }
   } else if (mode === MODE.WEIGHT) {
     // 計量売価モード
-    // 品名を収集
+    // 商品名を収集
     const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
     inputData.productName = weightProductNameEl ? weightProductNameEl.value : '';
+
+    // 商品化シミュレーション（定額・計量モードのみ）
+    inputData.expWeight = num(UI_ELEMENTS.EXP_WEIGHT);
+    inputData.consumable = num(UI_ELEMENTS.CONSUMABLE);
 
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
     inputData.yieldMethod = methodRadio ? methodRadio.value : 'calculate';
@@ -1178,6 +1201,7 @@ function collectInputValues(mode) {
     }
   } else if (mode === MODE.YIELD_STATS) {
     // 歩留まり統計モード
+    // 商品名を収集
     const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
     inputData.productName = productNameEl ? productNameEl.value : '';
 
@@ -1208,6 +1232,7 @@ function collectInputValues(mode) {
     }
 
     inputData.tableData = tableData;
+    // 歩留まり統計モードでは商品化シミュレーション機能を使用しないため、expWeightとconsumableは保存しない
   }
 
   return inputData;
