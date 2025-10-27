@@ -194,6 +194,9 @@ function switchMode(newMode) {
     }
   }
 
+  // 履歴から読み込んだIDをクリア（入力値をクリアしたので新規保存に戻す）
+  appState.clearLoadedHistoryId();
+
   appState.setMode(newMode);
 
   const isFixed = newMode === MODE.FIXED;
@@ -235,6 +238,9 @@ function switchMode(newMode) {
   } else if (isYieldStats) {
     resetYieldStatsEntries();
   }
+
+  // 保存ボタンの表示を更新（新規保存に戻す）
+  updateSaveButtonsVisibility();
 }
 
 /**
