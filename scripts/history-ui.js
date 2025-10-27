@@ -1185,13 +1185,16 @@ async function updateProductNamePresets(category = null) {
 }
 
 /**
- * 保存ボタンの表示を更新（履歴から読み込んだ場合は上書き/新規を表示）
+ * 保存ボタンの表示を更新
+ * - デフォルト: 「この計算を保存」ボタンのみ表示
+ * - 履歴から読み込んだ場合: 「上書き保存」と「新規保存」の2つを表示
+ * - モード切り替え時: デフォルトに戻る（履歴IDがクリアされるため）
  */
 export function updateSaveButtonsVisibility() {
   const loadedHistoryId = appState.getLoadedHistoryId();
-  const saveBtns = qsa('#saveBtn');
-  const overwriteSaveBtns = qsa('#overwriteSaveBtn');
-  const newSaveBtns = qsa('#newSaveBtn');
+  const saveBtns = qsa('.save-btn');
+  const overwriteSaveBtns = qsa('.overwrite-save-btn');
+  const newSaveBtns = qsa('.new-save-btn');
 
   if (loadedHistoryId) {
     // 履歴から読み込んだ場合: 上書き保存と新規保存を表示
@@ -1564,8 +1567,8 @@ export function initHistoryUI() {
     document.addEventListener('touchstart', closeMenuOnOutsideInteraction);
   }
 
-  // 保存ボタン（複数あるのですべてに設定）
-  const saveBtns = qsa('#saveBtn');
+  // 保存ボタン（クラスベースで全てのボタンに設定）
+  const saveBtns = qsa('.save-btn');
   saveBtns.forEach(saveBtn => {
     saveBtn.addEventListener('click', () => {
       saveDialogMode = 'normal';
@@ -1573,14 +1576,14 @@ export function initHistoryUI() {
     });
   });
 
-  // 上書き保存ボタン（複数あるのですべてに設定）
-  const overwriteSaveBtns = qsa('#overwriteSaveBtn');
+  // 上書き保存ボタン（クラスベースで全てのボタンに設定）
+  const overwriteSaveBtns = qsa('.overwrite-save-btn');
   overwriteSaveBtns.forEach(overwriteSaveBtn => {
     overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
   });
 
-  // 新規保存ボタン（複数あるのですべてに設定）
-  const newSaveBtns = qsa('#newSaveBtn');
+  // 新規保存ボタン（クラスベースで全てのボタンに設定）
+  const newSaveBtns = qsa('.new-save-btn');
   newSaveBtns.forEach(newSaveBtn => {
     newSaveBtn.addEventListener('click', () => {
       saveDialogMode = 'new';
