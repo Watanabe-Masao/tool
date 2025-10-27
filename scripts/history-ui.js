@@ -673,6 +673,24 @@ function switchYieldMethod(mode, yieldMethod) {
  * @param {Object} input
  */
 function restoreAllInputFields(mode, input) {
+  // 品名フィールドを復元
+  if (mode === MODE.FIXED) {
+    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    if (fixedProductNameEl && input.productName != null) {
+      fixedProductNameEl.value = input.productName;
+    }
+  } else if (mode === MODE.WEIGHT) {
+    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    if (weightProductNameEl && input.productName != null) {
+      weightProductNameEl.value = input.productName;
+    }
+  } else if (mode === MODE.YIELD_STATS) {
+    const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+    if (yieldStatsProductNameEl && input.productName != null) {
+      yieldStatsProductNameEl.value = input.productName;
+    }
+  }
+
   // 商品化シミュレーション
   const expWeightEl = qs(`#${UI_ELEMENTS.EXP_WEIGHT}`);
   if (expWeightEl && input.expWeight != null) expWeightEl.value = input.expWeight;
@@ -970,10 +988,24 @@ export async function showSaveDialog() {
     categorySelect.value = '';
   }
 
-  // 商品名入力フィールドをクリア
+  // 現在のモードから品名を取得して商品名入力欄に自動入力
   const nameInput = qs('#saveName');
   if (nameInput) {
-    nameInput.value = '';
+    const currentMode = appState.getMode();
+    let productName = '';
+
+    if (currentMode === MODE.FIXED) {
+      const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+      productName = fixedProductNameEl?.value?.trim() || '';
+    } else if (currentMode === MODE.WEIGHT) {
+      const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+      productName = weightProductNameEl?.value?.trim() || '';
+    } else if (currentMode === MODE.YIELD_STATS) {
+      const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+      productName = yieldStatsProductNameEl?.value?.trim() || '';
+    }
+
+    nameInput.value = productName;
   }
 
   // 商品名プリセットをクリア（カテゴリー未選択のため）
@@ -1027,6 +1059,10 @@ function collectInputValues(mode) {
 
   if (mode === MODE.FIXED) {
     // 定額売価モード
+    // 品名を収集
+    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+    inputData.productName = fixedProductNameEl ? fixedProductNameEl.value : '';
+
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
     inputData.yieldMethod = methodRadio ? methodRadio.value : 'calculate';
 
@@ -1047,6 +1083,10 @@ function collectInputValues(mode) {
     }
   } else if (mode === MODE.WEIGHT) {
     // 計量売価モード
+    // 品名を収集
+    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+    inputData.productName = weightProductNameEl ? weightProductNameEl.value : '';
+
     const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
     inputData.yieldMethod = methodRadio ? methodRadio.value : 'calculate';
 
