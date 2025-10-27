@@ -962,8 +962,13 @@ async function handleDeleteCalculation(id) {
  * 保存ダイアログを表示
  */
 export async function showSaveDialog() {
+  console.log('[showSaveDialog] 関数が呼び出されました');
   const dialog = qs('#saveDialog');
-  if (!dialog) return;
+  console.log('[showSaveDialog] dialog要素:', dialog);
+  if (!dialog) {
+    console.error('[showSaveDialog] dialog要素が見つかりません');
+    return;
+  }
 
   // 背景のスクロールを無効化
   document.body.classList.add('modal-open');
@@ -1569,8 +1574,10 @@ export function initHistoryUI() {
 
   // 保存ボタン（クラスベースで全てのボタンに設定）
   const saveBtns = qsa('.save-btn');
+  console.log('[initHistoryUI] 保存ボタン数:', saveBtns.length);
   saveBtns.forEach(saveBtn => {
     saveBtn.addEventListener('click', () => {
+      console.log('[保存ボタン] クリックされました');
       saveDialogMode = 'normal';
       showSaveDialog();
     });
@@ -1578,12 +1585,14 @@ export function initHistoryUI() {
 
   // 上書き保存ボタン（クラスベースで全てのボタンに設定）
   const overwriteSaveBtns = qsa('.overwrite-save-btn');
+  console.log('[initHistoryUI] 上書き保存ボタン数:', overwriteSaveBtns.length);
   overwriteSaveBtns.forEach(overwriteSaveBtn => {
     overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
   });
 
   // 新規保存ボタン（クラスベースで全てのボタンに設定）
   const newSaveBtns = qsa('.new-save-btn');
+  console.log('[initHistoryUI] 新規保存ボタン数:', newSaveBtns.length);
   newSaveBtns.forEach(newSaveBtn => {
     newSaveBtn.addEventListener('click', () => {
       saveDialogMode = 'new';
