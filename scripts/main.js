@@ -3453,7 +3453,11 @@ function init() {
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
-  qs(`#${UI_ELEMENTS.CLEAR_BTN}`)?.addEventListener('click', clearAll);
+
+  // クリアボタン（複数あるのですべてに設定）
+  qsa(`#${UI_ELEMENTS.CLEAR_BTN}`).forEach(btn => {
+    btn.addEventListener('click', clearAll);
+  });
 
   // 歩留まり率入力方法の切り替え（定額モード）
   qsa(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]`).forEach(r => {
