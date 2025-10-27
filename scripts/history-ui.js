@@ -1321,11 +1321,23 @@ export async function handleSearch() {
 
   const query = searchInput.value.trim();
 
+  // 現在選択されている計算モードと歩留まり入力方法を取得
+  const activeBtn = qs('.btn-mode.is-active[data-mode]');
+  const mode = activeBtn ? activeBtn.dataset.mode : null;
+
+  let yieldMethod = null;
+  if (mode && mode !== MODE.YIELD_STATS) {
+    const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+    yieldMethod = methodRadio ? methodRadio.value : 'calculate';
+  }
+
   if (query === '') {
-    await renderHistoryList();
+    // 商品名検索を解除した場合、計算モードと歩留まり入力方法のフィルタは維持
+    await renderHistoryList(null, mode, yieldMethod);
   } else {
     const results = await searchHistory(query);
-    await renderHistoryList(results);
+    // 商品名で検索した結果をさらに計算モードと歩留まり入力方法でフィルタ
+    await renderHistoryList(results, mode, yieldMethod);
   }
 }
 
@@ -1543,7 +1555,19 @@ export function initHistoryUI() {
       const searchInput = qs('#historySearch');
       if (searchInput) {
         searchInput.value = ''; // 選択を解除
-        await renderHistoryList(); // 全ての履歴を再表示
+
+        // 現在選択されている計算モードと歩留まり入力方法を取得
+        const activeBtn = qs('.btn-mode.is-active[data-mode]');
+        const mode = activeBtn ? activeBtn.dataset.mode : null;
+
+        let yieldMethod = null;
+        if (mode && mode !== MODE.YIELD_STATS) {
+          const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+          yieldMethod = methodRadio ? methodRadio.value : 'calculate';
+        }
+
+        // 計算モードと歩留まり入力方法のフィルタを維持して再表示
+        await renderHistoryList(null, mode, yieldMethod);
       }
     });
   }
