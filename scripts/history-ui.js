@@ -27,9 +27,20 @@ export async function showHistoryModal() {
     document.body.classList.add('modal-open');
 
     modal.showModal();
-    // 現在のモードでフィルタリングして表示
+    // 現在のモードと計算方法でフィルタリングして表示
     const currentMode = appState.getMode();
-    await renderHistoryList(null, currentMode);
+    let currentYieldMethod = null;
+
+    // 定額モードまたは計量モードの場合、現在選択されている計算方法を取得
+    if (currentMode === MODE.FIXED) {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_FIXED}"]:checked`);
+      currentYieldMethod = methodRadio ? methodRadio.value : 'calculate';
+    } else if (currentMode === MODE.WEIGHT) {
+      const methodRadio = document.querySelector(`input[name="${RADIO_NAMES.YIELD_METHOD_WEIGHT}"]:checked`);
+      currentYieldMethod = methodRadio ? methodRadio.value : 'calculate';
+    }
+
+    await renderHistoryList(null, currentMode, currentYieldMethod);
   } catch (error) {
     console.error('履歴モーダルを開く際にエラーが発生しました:', error);
     showToast('❌ 履歴を読み込めませんでした', 'error');
@@ -52,16 +63,29 @@ export function closeHistoryModal() {
  * 履歴一覧を描画
  * @param {Array} items - 履歴データ配列（オプション）
  */
-export async function renderHistoryList(items = null, filterMode = null) {
+export async function renderHistoryList(items = null, filterMode = null, filterYieldMethod = null) {
   const listContainer = qs('#historyList');
   if (!listContainer) return;
 
   // データを取得
   let history = items || await getHistory();
 
-  // モードでフィルタリング（filterModeが指定されている場合）
+  // モードと計算方法でフィルタリング
   if (filterMode) {
-    history = history.filter(item => item.mode === filterMode);
+    history = history.filter(item => {
+      // モードが一致するかチェック
+      if (item.mode !== filterMode) return false;
+
+      // 歩留まり統計モードの場合は、モードのみでフィルタリング
+      if (filterMode === MODE.YIELD_STATS) return true;
+
+      // 定額・計量モードの場合、yieldMethodでもフィルタリング
+      if (filterYieldMethod) {
+        return item.input?.yieldMethod === filterYieldMethod;
+      }
+
+      return true;
+    });
   }
 
   // 商品名候補を更新するために常に全履歴を取得（フィルタリング前）
@@ -77,8 +101,13 @@ export async function renderHistoryList(items = null, filterMode = null) {
   // 絞り込み結果が空の場合
   if (history.length === 0) {
     listContainer.innerHTML = '<li class="history-empty">該当するデータがありません</li>';
-    // 商品名候補は現在のモードの履歴から生成
-    const filteredHistory = filterMode ? allHistory.filter(item => item.mode === filterMode) : allHistory;
+    // 商品名候補は現在のフィルタ条件の履歴から生成
+    const filteredHistory = filterMode ? allHistory.filter(item => {
+      if (item.mode !== filterMode) return false;
+      if (filterMode === MODE.YIELD_STATS) return true;
+      if (filterYieldMethod) return item.input?.yieldMethod === filterYieldMethod;
+      return true;
+    }) : allHistory;
     updateProductNameSuggestions(filteredHistory);
     return;
   }
@@ -89,8 +118,13 @@ export async function renderHistoryList(items = null, filterMode = null) {
   // グループごとにHTMLを生成
   listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
-  // 商品名候補を更新（現在のモードの履歴から生成）
-  const filteredHistory = filterMode ? allHistory.filter(item => item.mode === filterMode) : allHistory;
+  // 商品名候補を更新（現在のフィルタ条件の履歴から生成）
+  const filteredHistory = filterMode ? allHistory.filter(item => {
+    if (item.mode !== filterMode) return false;
+    if (filterMode === MODE.YIELD_STATS) return true;
+    if (filterYieldMethod) return item.input?.yieldMethod === filterYieldMethod;
+    return true;
+  }) : allHistory;
   updateProductNameSuggestions(filteredHistory);
 
   // イベントリスナーをバインド
@@ -185,7 +219,8 @@ function createHistoryItemHTML(item, isFirst = true) {
   const date = new Date(item.timestamp);
   const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-  const modeIcon = getModeIcon(item.mode);
+  const yieldMethod = item.input?.yieldMethod;
+  const modeIcon = getModeIcon(item.mode, yieldMethod);
 
   // 歩留まり統計モードの場合は異なる表示
   if (item.mode === MODE.YIELD_STATS) {
@@ -285,13 +320,20 @@ function createHistoryItemHTML(item, isFirst = true) {
 }
 
 /**
- * モードに応じたラベルを返す
+ * モードと計算方法に応じたラベルを返す
  * @param {string} mode
+ * @param {string} yieldMethod
  * @returns {string}
  */
-function getModeIcon(mode) {
-  if (mode === MODE.FIXED) return '定額売価';
-  if (mode === MODE.WEIGHT) return '計量売価';
+function getModeIcon(mode, yieldMethod = null) {
+  if (mode === MODE.FIXED) {
+    if (yieldMethod === 'direct') return '定額売価（歩留まり率直接入力）';
+    return '定額売価（重量から計算）';
+  }
+  if (mode === MODE.WEIGHT) {
+    if (yieldMethod === 'direct') return '計量売価（歩留まり率直接入力）';
+    return '計量売価（重量から計算）';
+  }
   if (mode === MODE.YIELD_STATS) return '歩留まり統計';
   return '不明';
 }
@@ -1397,6 +1439,15 @@ export function initHistoryUI() {
     console.log('履歴ボタン（計量モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（計量モード）が見つかりません');
+  }
+
+  // 履歴ボタン（歩留まり統計モード）
+  const historyBtnYieldStats = qs('#historyBtnYieldStats');
+  if (historyBtnYieldStats) {
+    historyBtnYieldStats.addEventListener('click', showHistoryModal);
+    console.log('履歴ボタン（歩留まり統計モード）のイベントリスナーを設定しました');
+  } else {
+    console.error('履歴ボタン（歩留まり統計モード）が見つかりません');
   }
 
   // 履歴モーダルを閉じる
