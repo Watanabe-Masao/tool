@@ -718,8 +718,7 @@ function restoreAllInputFields(mode, input, productName = '') {
       const afterPrice100El = qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
 
-      // ステップを復元するためにinputイベントを発火
-      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
+      // inputイベントを発火させない（restoreCalculationResultsで結果を直接表示）
     } else {
       // 歩留まり率直接入力モード
       const unitCostEl = qs(`#${FIXED_FIELDS.DIRECT.UNIT_COST}`);
@@ -737,8 +736,7 @@ function restoreAllInputFields(mode, input, productName = '') {
       const afterPrice100El = qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
 
-      // ステップを復元するためにinputイベントを発火
-      if (beforeWeightEl) beforeWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
+      // inputイベントを発火させない（restoreCalculationResultsで結果を直接表示）
     }
   } else if (mode === MODE.WEIGHT) {
     if (input.yieldMethod === 'calculate') {
@@ -761,8 +759,7 @@ function restoreAllInputFields(mode, input, productName = '') {
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
 
-      // ステップを復元するためにinputイベントを発火
-      if (beforeSampleEl) beforeSampleEl.dispatchEvent(new Event('input', { bubbles: true }));
+      // inputイベントを発火させない（restoreCalculationResultsで結果を直接表示）
     } else {
       // 歩留まり率直接入力モード
       const boxCostEl = qs(`#${WEIGHT_FIELDS.DIRECT.BOX_COST}`);
@@ -780,8 +777,7 @@ function restoreAllInputFields(mode, input, productName = '') {
       const afterPrice100El = qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`);
       if (afterPrice100El && input.afterPrice100 != null) afterPrice100El.value = input.afterPrice100;
 
-      // ステップを復元するためにinputイベントを発火
-      if (boxWeightEl) boxWeightEl.dispatchEvent(new Event('input', { bubbles: true }));
+      // inputイベントを発火させない（restoreCalculationResultsで結果を直接表示）
     }
   } else if (mode === MODE.YIELD_STATS) {
     // 歩留まり統計モード
@@ -984,34 +980,54 @@ export async function showSaveDialog() {
     if (confirmBtn) confirmBtn.textContent = '保存';
   }
 
-  // カテゴリー選択をクリア
+  // 履歴から読み込んだ場合は、そのカテゴリーと商品名を設定
+  const loadedHistoryId = appState.getLoadedHistoryId();
   const categorySelect = qs('#saveCategory');
-  if (categorySelect) {
-    categorySelect.value = '';
-  }
-
-  // 現在のモードから品名を取得して商品名入力欄に自動入力
   const nameInput = qs('#saveName');
-  if (nameInput) {
-    const currentMode = appState.getMode();
-    let productName = '';
 
-    if (currentMode === MODE.FIXED) {
-      const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
-      productName = fixedProductNameEl?.value?.trim() || '';
-    } else if (currentMode === MODE.WEIGHT) {
-      const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
-      productName = weightProductNameEl?.value?.trim() || '';
-    } else if (currentMode === MODE.YIELD_STATS) {
-      const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
-      productName = yieldStatsProductNameEl?.value?.trim() || '';
+  if (loadedHistoryId && saveDialogMode !== 'new') {
+    // 履歴データを取得してカテゴリーと商品名を設定
+    try {
+      const historyData = await loadCalculation(loadedHistoryId);
+      if (categorySelect) {
+        categorySelect.value = historyData.category || '';
+      }
+      if (nameInput) {
+        nameInput.value = historyData.name || '';
+      }
+      // カテゴリーに応じた商品名プリセットを更新
+      await updateProductNamePresets(historyData.category);
+    } catch (error) {
+      console.error('Failed to load history data for dialog:', error);
+    }
+  } else {
+    // 新規保存または履歴IDがない場合
+    if (categorySelect) {
+      categorySelect.value = '';
     }
 
-    nameInput.value = productName;
-  }
+    // 現在のモードから品名を取得して商品名入力欄に自動入力
+    if (nameInput) {
+      const currentMode = appState.getMode();
+      let productName = '';
 
-  // 商品名プリセットをクリア（カテゴリー未選択のため）
-  await updateProductNamePresets();
+      if (currentMode === MODE.FIXED) {
+        const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+        productName = fixedProductNameEl?.value?.trim() || '';
+      } else if (currentMode === MODE.WEIGHT) {
+        const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+        productName = weightProductNameEl?.value?.trim() || '';
+      } else if (currentMode === MODE.YIELD_STATS) {
+        const yieldStatsProductNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+        productName = yieldStatsProductNameEl?.value?.trim() || '';
+      }
+
+      nameInput.value = productName;
+    }
+
+    // 商品名プリセットをクリア（カテゴリー未選択のため）
+    await updateProductNamePresets();
+  }
 
   // カテゴリー変更時のイベントリスナーを設定
   if (categorySelect) {
@@ -1301,7 +1317,7 @@ export async function handleNewSave() {
 }
 
 /**
- * 現在の計算を保存
+ * 現在の計算を保存（履歴IDがある場合は上書き、なければ新規保存）
  */
 export async function handleSaveCalculation() {
   const nameInput = qs('#saveName');
@@ -1343,9 +1359,16 @@ export async function handleSaveCalculation() {
   }
 
   try {
-    await saveCalculation(name, mode, inputData, resultData, category, productData);
+    // 履歴から読み込んだIDがある場合は上書き保存
+    const loadedHistoryId = appState.getLoadedHistoryId();
+    if (loadedHistoryId) {
+      await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
+      showToast('✅ 上書き保存しました');
+    } else {
+      await saveCalculation(name, mode, inputData, resultData, category, productData);
+      showToast('✅ 保存しました');
+    }
     closeSaveDialog();
-    showToast('✅ 保存しました');
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
