@@ -3454,8 +3454,8 @@ function init() {
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
 
-  // クリアボタン（複数あるのですべてに設定）
-  qsa(`#${UI_ELEMENTS.CLEAR_BTN}`).forEach(btn => {
+  // クリアボタン（クラスベースで全てのボタンに設定）
+  qsa('.clear-btn').forEach(btn => {
     btn.addEventListener('click', clearAll);
   });
 
