@@ -1055,12 +1055,13 @@ export async function showSaveDialog() {
   }
 
   // 履歴から読み込んだ場合は、そのカテゴリーと商品名を設定
-  const loadedHistoryId = appState.getLoadedHistoryId();
   const categorySelect = qs('#saveCategory');
   const nameInput = qs('#saveName');
 
-  if (loadedHistoryId && saveDialogMode !== 'new') {
-    // 履歴データを取得してカテゴリーと商品名を設定
+  // フラグで履歴から読み込まれたかチェック（一貫性のため）
+  if (appState.isFromHistoryRecord() && saveDialogMode !== 'new') {
+    // 実際のIDを取得して履歴データを読み込む
+    const loadedHistoryId = appState.getLoadedHistoryId();
     try {
       const historyData = await loadCalculation(loadedHistoryId);
       if (categorySelect) {
@@ -1348,11 +1349,14 @@ export function updateSaveButtonsVisibility() {
  * ダイアログを表示せず、既存の商品名・カテゴリで直接保存
  */
 export async function handleOverwriteSave() {
-  const loadedHistoryId = appState.getLoadedHistoryId();
-  if (!loadedHistoryId) {
+  // フラグで履歴から読み込まれたかチェック（一貫性のため）
+  if (!appState.isFromHistoryRecord()) {
     showToast('❌ 上書き保存できる履歴がありません', 'error');
     return;
   }
+
+  // 実際のIDを取得
+  const loadedHistoryId = appState.getLoadedHistoryId();
 
   try {
     // 既存の履歴データを取得して商品名とカテゴリを使用
@@ -1533,9 +1537,10 @@ export async function handleSaveCalculation() {
     const currentFieldName = getCurrentProductNameFromField(mode);
     const nameChanged = currentFieldName !== name;
 
-    // 履歴から読み込んだIDがある場合は上書き保存
-    const loadedHistoryId = appState.getLoadedHistoryId();
-    if (loadedHistoryId) {
+    // フラグで履歴から読み込まれたかチェック（一貫性のため）
+    if (appState.isFromHistoryRecord()) {
+      // 実際のIDを取得して上書き保存
+      const loadedHistoryId = appState.getLoadedHistoryId();
       await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
 
       // UI状態フラグを更新：保存済み（変更なし）
