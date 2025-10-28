@@ -27,11 +27,13 @@ graph TB
         State[state.js<br/>状態管理]
         Display[display.js<br/>表示制御]
         InputHandler[input-handler.js<br/>入力処理]
+        Session[session.js<br/>セッション管理]
     end
 
     subgraph "ビジネスロジック層"
         CalcFixed[calculator-fixed.js<br/>定額モード計算]
         CalcWeight[calculator-weight.js<br/>計量モード計算]
+        CalcYieldStats[calculator-yield-stats.js<br/>歩留まり統計計算]
         Calc[calculation.js<br/>計算ユーティリティ]
         Simulator[product-simulator.js<br/>シミュレーション]
     end
@@ -171,10 +173,12 @@ graph LR
 |-----------|---------|--------|---------|
 | **main.js** | アプリ初期化、イベント統合 | すべて | - |
 | **state.js** | 状態管理、スナップショット | なし | AppState |
+| **session.js** | セッション状態の永続化 | dom-utils.js, constants.js | saveSessionState(), restoreSessionState() |
 | **constants.js** | 定数、ID定義 | なし | すべての定数 |
 | **calculation.js** | 基本計算関数 | なし | 各種計算関数 |
 | **calculator-fixed.js** | 定額モード計算 | calculation.js, state.js | calculateFixed() |
 | **calculator-weight.js** | 計量モード計算 | calculation.js, state.js | calculateWeight() |
+| **calculator-yield-stats.js** | 歩留まり統計計算 | calculation.js | calculateYieldRate(), validateEntry() |
 | **display.js** | 表示更新 | dom-utils.js | displayResults() |
 | **input-handler.js** | 入力管理 | calculator-*.js | setupInputListeners() |
 | **product-simulator.js** | シミュレーション | state.js | simulate*() |
@@ -284,6 +288,10 @@ classDiagram
         -calculationSnapshot: Object
         -productSimulationData: Object
         -loadedHistoryId: number|null
+        -isFromHistory: boolean
+        -hasUnsavedChanges: boolean
+        -yieldStatsData: Object|null
+        -saveDialogMode: string
         +setMode(mode)
         +getMode()
         +setStep(step)
@@ -295,7 +303,17 @@ classDiagram
         +setLoadedHistoryId(id)
         +getLoadedHistoryId()
         +clearLoadedHistoryId()
-        +reset()
+        +markAsFromHistory()
+        +markAsNewCalculation()
+        +markAsChanged()
+        +markAsSaved()
+        +isFromHistoryRecord()
+        +hasChanges()
+        +setYieldStatsData(data)
+        +getYieldStatsData()
+        +setSaveDialogMode(mode)
+        +getSaveDialogMode()
+        +resetAll()
     }
 
     class CalculationSnapshot {
@@ -711,9 +729,11 @@ tool/
 │   ├── main.js            # アプリケーションエントリーポイント
 │   ├── constants.js       # 定数・ID定義
 │   ├── state.js           # 状態管理クラス
+│   ├── session.js         # セッション状態の永続化
 │   ├── calculation.js     # 計算ユーティリティ関数
-│   ├── calculator-fixed.js    # 定額モード計算ロジック
-│   ├── calculator-weight.js   # 計量モード計算ロジック
+│   ├── calculator-fixed.js        # 定額モード計算ロジック
+│   ├── calculator-weight.js       # 計量モード計算ロジック
+│   ├── calculator-yield-stats.js  # 歩留まり統計計算ロジック
 │   ├── display.js         # UI表示制御
 │   ├── input-handler.js   # 入力イベント処理
 │   ├── product-simulator.js  # シミュレーション機能
@@ -929,8 +949,69 @@ graph TD
 - **保守性**: 明確なモジュール分割、一貫した命名規則
 - **拡張性**: プラグイン的に機能追加可能
 
+## セッション管理フロー
+
+### セッション保存・復元
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant App as アプリ
+    participant Session as SessionStorage
+    participant LS as LocalStorage
+
+    rect rgb(200, 220, 250)
+    Note over User,LS: セッション保存フロー
+    User->>App: 入力値を変更
+    App->>App: 入力イベント検知
+    App->>Session: saveSessionState()
+    Session->>Session: 入力値を収集
+    Session->>Session: モード情報を収集
+    Session->>LS: データを保存（タイムスタンプ付き）
+    end
+
+    rect rgb(250, 220, 200)
+    Note over User,LS: セッション復元フロー
+    User->>App: ページをリロード
+    App->>Session: restoreSessionState()
+    Session->>LS: セッションデータを読み込み
+    Session->>Session: 有効期限チェック（24時間）
+
+    alt 有効期限内
+        Session-->>App: セッションデータ
+        App->>Session: applySessionState()
+        Session->>App: 入力フィールドを復元
+        Session->>App: モードを復元
+        App->>User: 復元完了
+    else 期限切れ
+        Session->>LS: データを削除
+        Session-->>App: null
+    end
+    end
+```
+
+### セッションデータ構造
+
+```javascript
+{
+  mode: "fixed" | "weight" | "yieldStats",
+  yieldMethod: "calculate" | "direct",
+  timestamp: 1706400000000,
+  inputs: {
+    // モード別の入力値
+  },
+  simulation: {
+    expWeight: "100",
+    consumable: "10"
+  },
+  tableData: [
+    // 歩留まり統計のテーブルデータ（yieldStatsモードのみ）
+  ]
+}
+```
+
 ---
 
-**最終更新**: 2025-01-26
-**バージョン**: v3.2
+**最終更新**: 2025-01-28
+**バージョン**: v3.5
 **ドキュメント作成**: Claude Code
