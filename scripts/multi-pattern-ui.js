@@ -3,7 +3,6 @@
  */
 
 import { calculatePattern } from './calculator-multi-pattern.js';
-import { num } from './dom-utils.js';
 import { toFixed } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
@@ -11,40 +10,53 @@ import { PERCENT_MULTIPLIER } from './constants.js';
 let patternIdCounter = 1;
 const patterns = [];
 
-// DOM要素の取得
-const elements = {
-  // ステップ1
-  yieldRate: document.getElementById('multiYieldRate'),
-  beforeWeight: document.getElementById('multiBeforeWeight'),
-  step1Result: document.getElementById('multiPatternStep1Result'),
-  afterWeightDisplay: document.getElementById('multiAfterWeightDisplay'),
-
-  // ステップ2
-  step2: document.getElementById('multiPatternStep2'),
-  tableBody: document.getElementById('multiPatternTableBody'),
-  addPatternBtn: document.getElementById('addPatternBtn'),
-
-  // 結果
-  step2Result: document.getElementById('multiPatternStep2Result'),
-  resultsTableBody: document.getElementById('multiPatternResultsTableBody'),
-
-  // クリアボタン
-  clearBtn: document.getElementById('multiPatternClearBtn')
-};
+// DOM要素（初期化時に取得）
+let elements = {};
 
 /**
  * 初期化
  */
 export function initMultiPatternUI() {
+  // DOM要素を取得
+  elements = {
+    // ステップ1
+    yieldRate: document.getElementById('multiYieldRate'),
+    beforeWeight: document.getElementById('multiBeforeWeight'),
+    step1Result: document.getElementById('multiPatternStep1Result'),
+    afterWeightDisplay: document.getElementById('multiAfterWeightDisplay'),
+
+    // ステップ2
+    step2: document.getElementById('multiPatternStep2'),
+    tableBody: document.getElementById('multiPatternTableBody'),
+    addPatternBtn: document.getElementById('addPatternBtn'),
+
+    // 結果
+    step2Result: document.getElementById('multiPatternStep2Result'),
+    resultsTableBody: document.getElementById('multiPatternResultsTableBody'),
+
+    // クリアボタン
+    clearBtn: document.getElementById('multiPatternClearBtn')
+  };
+
+  // 要素が存在しない場合は初期化しない
+  if (!elements.yieldRate || !elements.beforeWeight) {
+    console.warn('[MultiPattern] Required elements not found');
+    return;
+  }
+
   // ステップ1の入力イベント
   elements.yieldRate.addEventListener('input', handleStep1Input);
   elements.beforeWeight.addEventListener('input', handleStep1Input);
 
   // パターン追加ボタン
-  elements.addPatternBtn.addEventListener('click', addPattern);
+  if (elements.addPatternBtn) {
+    elements.addPatternBtn.addEventListener('click', addPattern);
+  }
 
   // クリアボタン
-  elements.clearBtn.addEventListener('click', clearAll);
+  if (elements.clearBtn) {
+    elements.clearBtn.addEventListener('click', clearAll);
+  }
 
   // 初期パターンを3つ追加
   addPattern();
@@ -53,11 +65,20 @@ export function initMultiPatternUI() {
 }
 
 /**
+ * 要素から数値を取得
+ */
+function getNumValue(element) {
+  if (!element) return null;
+  const v = parseFloat(element.value);
+  return Number.isFinite(v) ? v : null;
+}
+
+/**
  * ステップ1の入力処理
  */
 function handleStep1Input() {
-  const yr = num(elements.yieldRate);
-  const bw = num(elements.beforeWeight);
+  const yr = getNumValue(elements.yieldRate);
+  const bw = getNumValue(elements.beforeWeight);
 
   if (!Number.isFinite(yr) || !Number.isFinite(bw) || yr <= 0 || bw <= 0) {
     elements.step1Result.classList.add('is-hidden');
@@ -148,9 +169,9 @@ function handlePatternInput(patternId) {
   const row = elements.tableBody.querySelector(`tr[data-pattern-id="${patternId}"]`);
   if (!row) return;
 
-  const unitCost = num(row.querySelector('.pattern-unit-cost'));
-  const unitPrice = num(row.querySelector('.pattern-unit-price'));
-  const afterPrice100 = num(row.querySelector('.pattern-after-price'));
+  const unitCost = getNumValue(row.querySelector('.pattern-unit-cost'));
+  const unitPrice = getNumValue(row.querySelector('.pattern-unit-price'));
+  const afterPrice100 = getNumValue(row.querySelector('.pattern-after-price'));
 
   // パターンデータを更新
   const pattern = patterns.find(p => p.id === patternId);
@@ -168,8 +189,8 @@ function handlePatternInput(patternId) {
  * 全パターンを再計算
  */
 function recalculateAll() {
-  const yr = num(elements.yieldRate);
-  const bw = num(elements.beforeWeight);
+  const yr = getNumValue(elements.yieldRate);
+  const bw = getNumValue(elements.beforeWeight);
 
   if (!Number.isFinite(yr) || !Number.isFinite(bw) || yr <= 0 || bw <= 0) {
     elements.step2Result.classList.add('is-hidden');
