@@ -1152,6 +1152,29 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   font-weight: 600;
 }
 
+/* 複数パターン分析へのリンク */
+.multi-pattern-link {
+  margin-top: 1.5em;
+}
+
+.multi-pattern-link .info-box {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-left: 4px solid #667eea;
+  padding: 1.5em;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.multi-pattern-link .info-box p {
+  margin: 0.5em 0;
+  color: #333;
+}
+
+.multi-pattern-link .info-box strong {
+  color: #667eea;
+  font-size: 1.1em;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .yield-stats-table {

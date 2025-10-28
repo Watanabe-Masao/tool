@@ -9,7 +9,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
-import { initMultiPatternUI, resetMultiPatternUI } from './multi-pattern-ui.js';
+import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -2142,8 +2142,12 @@ function displaySampleSizeValidation() {
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   // 手動除外後のデータで計算
   if (finalValues.length >= 2) {
+    // グローバルに保存（複数パターン分析への遷移用）
+    window.lastCalculatedStats = finalStats;
     displayRecommendedValue(finalStats, isValid);
   } else {
+    // グローバルに保存（複数パターン分析への遷移用）
+    window.lastCalculatedStats = stats;
     displayRecommendedValue(stats, isValid);
   }
 
@@ -2589,6 +2593,12 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
   recommendedReason.textContent = reason;
 
   recommendedValueDiv.classList.remove('is-hidden');
+
+  // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
+  const multiPatternLink = qs('#multiPatternLink');
+  if (multiPatternLink && statsType === 'yieldRate') {
+    multiPatternLink.classList.remove('is-hidden');
+  }
 }
 
 /**
@@ -3833,6 +3843,38 @@ function init() {
       notification.classList.add('is-hidden');
     }, { once: true });
   }
+
+  // 複数パターン分析への遷移ボタン
+  qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    // 現在の統計データから推奨代表値を取得
+    const recommendedBadge = qs('#recommendedBadge');
+    const recommendedType = recommendedBadge?.textContent || '平均値';
+
+    // 統計データから歩留まり率を取得
+    const statsData = window.lastCalculatedStats; // グローバルに保存されていると仮定
+    let yieldRate = null;
+
+    if (statsData) {
+      // 推奨値に応じて歩留まり率を取得
+      if (recommendedType === '平均値') {
+        yieldRate = statsData.mean;
+      } else if (recommendedType === '中央値') {
+        yieldRate = statsData.median;
+      }
+    }
+
+    // 商品名を取得
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    // 複数パターン分析モードに切り替え
+    handleModeSwitch(MODE.MULTI_PATTERN);
+
+    // 歩留まり率と商品名を設定
+    if (yieldRate !== null) {
+      setFromYieldStats(yieldRate, productName);
+    }
+  });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
   document.addEventListener('input', (e) => {

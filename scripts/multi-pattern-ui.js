@@ -3,12 +3,13 @@
  */
 
 import { calculatePattern } from './calculator-multi-pattern.js';
-import { toFixed } from './calculation.js';
+import { toFixed, calcYield } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
 // 状態管理
 let patternIdCounter = 1;
 const patterns = [];
+let currentYieldMethod = 'calculate'; // 'calculate' or 'direct'
 
 // DOM要素（初期化時に取得）
 let elements = {};
@@ -19,11 +20,22 @@ let elements = {};
 export function initMultiPatternUI() {
   // DOM要素を取得
   elements = {
-    // ステップ1
-    yieldRate: document.getElementById('multiYieldRate'),
-    beforeWeight: document.getElementById('multiBeforeWeight'),
-    step1Result: document.getElementById('multiPatternStep1Result'),
-    afterWeightDisplay: document.getElementById('multiAfterWeightDisplay'),
+    // モード切り替え
+    calculateMode: document.getElementById('multiPatternCalculateMode'),
+    directMode: document.getElementById('multiPatternDirectMode'),
+
+    // 重量から計算モード
+    beforeWeightCalc: document.getElementById('multiBeforeWeightCalc'),
+    afterWeightCalc: document.getElementById('multiAfterWeightCalc'),
+    step1ResultCalc: document.getElementById('multiPatternStep1ResultCalc'),
+    yieldRateDisplayCalc: document.getElementById('multiYieldRateDisplayCalc'),
+
+    // 歩留まり率直接入力モード
+    beforeWeightDirect: document.getElementById('multiBeforeWeightDirect'),
+    yieldRateDirect: document.getElementById('multiYieldRateDirect'),
+    step1ResultDirect: document.getElementById('multiPatternStep1ResultDirect'),
+    yieldRateDisplayDirect: document.getElementById('multiYieldRateDisplayDirect'),
+    afterWeightDisplayDirect: document.getElementById('multiAfterWeightDisplayDirect'),
 
     // ステップ2
     step2: document.getElementById('multiPatternStep2'),
@@ -39,14 +51,24 @@ export function initMultiPatternUI() {
   };
 
   // 要素が存在しない場合は初期化しない
-  if (!elements.yieldRate || !elements.beforeWeight) {
+  if (!elements.beforeWeightCalc || !elements.beforeWeightDirect) {
     console.warn('[MultiPattern] Required elements not found');
     return;
   }
 
-  // ステップ1の入力イベント
-  elements.yieldRate.addEventListener('input', handleStep1Input);
-  elements.beforeWeight.addEventListener('input', handleStep1Input);
+  // モード切り替えラジオボタン
+  const yieldMethodRadios = document.querySelectorAll('input[name="yieldMethodMultiPattern"]');
+  yieldMethodRadios.forEach(radio => {
+    radio.addEventListener('change', handleYieldMethodChange);
+  });
+
+  // 重量から計算モードの入力イベント
+  elements.beforeWeightCalc.addEventListener('input', handleCalculateModeInput);
+  elements.afterWeightCalc.addEventListener('input', handleCalculateModeInput);
+
+  // 歩留まり率直接入力モードの入力イベント
+  elements.beforeWeightDirect.addEventListener('input', handleDirectModeInput);
+  elements.yieldRateDirect.addEventListener('input', handleDirectModeInput);
 
   // パターン追加ボタン
   if (elements.addPatternBtn) {
@@ -74,25 +96,76 @@ function getNumValue(element) {
 }
 
 /**
- * ステップ1の入力処理
+ * 歩留まり率入力方法の切り替え
  */
-function handleStep1Input() {
-  const yr = getNumValue(elements.yieldRate);
-  const bw = getNumValue(elements.beforeWeight);
+function handleYieldMethodChange(e) {
+  currentYieldMethod = e.target.value;
+  const isDirect = currentYieldMethod === 'direct';
 
-  if (!Number.isFinite(yr) || !Number.isFinite(bw) || yr <= 0 || bw <= 0) {
-    elements.step1Result.classList.add('is-hidden');
+  // モードの表示切り替え
+  if (elements.calculateMode) elements.calculateMode.classList.toggle('is-hidden', isDirect);
+  if (elements.directMode) elements.directMode.classList.toggle('is-hidden', !isDirect);
+
+  // 結果を非表示
+  if (elements.step2) elements.step2.classList.add('is-hidden');
+  if (elements.step2Result) elements.step2Result.classList.add('is-hidden');
+  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add('is-hidden');
+  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add('is-hidden');
+}
+
+/**
+ * 重量から計算モードの入力処理
+ */
+function handleCalculateModeInput() {
+  const bw = getNumValue(elements.beforeWeightCalc);
+  const aw = getNumValue(elements.afterWeightCalc);
+
+  if (!Number.isFinite(bw) || !Number.isFinite(aw) || bw <= 0 || aw <= 0) {
+    elements.step1ResultCalc.classList.add('is-hidden');
     elements.step2.classList.add('is-hidden');
     elements.step2Result.classList.add('is-hidden');
     return;
   }
 
-  // 加工後重量を計算して表示
-  const afterWeight = bw * (yr / PERCENT_MULTIPLIER);
-  elements.afterWeightDisplay.textContent = `${toFixed(afterWeight, 2)}g`;
+  // 歩留まり率を計算
+  const yr = calcYield(bw, aw);
+  if (!Number.isFinite(yr)) {
+    elements.step1ResultCalc.classList.add('is-hidden');
+    elements.step2.classList.add('is-hidden');
+    elements.step2Result.classList.add('is-hidden');
+    return;
+  }
 
-  // ステップ1結果とステップ2を表示
-  elements.step1Result.classList.remove('is-hidden');
+  // 歩留まり率を表示
+  elements.yieldRateDisplayCalc.textContent = `${toFixed(yr, 2)}%`;
+  elements.step1ResultCalc.classList.remove('is-hidden');
+  elements.step2.classList.remove('is-hidden');
+
+  // パターンが入力されていれば計算を更新
+  recalculateAll();
+}
+
+/**
+ * 歩留まり率直接入力モードの入力処理
+ */
+function handleDirectModeInput() {
+  const bw = getNumValue(elements.beforeWeightDirect);
+  const yr = getNumValue(elements.yieldRateDirect);
+
+  if (!Number.isFinite(bw) || !Number.isFinite(yr) || bw <= 0 || yr <= 0) {
+    elements.step1ResultDirect.classList.add('is-hidden');
+    elements.step2.classList.add('is-hidden');
+    elements.step2Result.classList.add('is-hidden');
+    return;
+  }
+
+  // 加工後重量を計算
+  const aw = bw * (yr / PERCENT_MULTIPLIER);
+
+  // 結果を表示
+  elements.yieldRateDisplayDirect.textContent = `${toFixed(yr, 2)}%`;
+  elements.afterWeightDisplayDirect.textContent = `${toFixed(aw, 2)}g`;
+  elements.step1ResultDirect.classList.remove('is-hidden');
   elements.step2.classList.remove('is-hidden');
 
   // パターンが入力されていれば計算を更新
@@ -189,8 +262,24 @@ function handlePatternInput(patternId) {
  * 全パターンを再計算
  */
 function recalculateAll() {
-  const yr = getNumValue(elements.yieldRate);
-  const bw = getNumValue(elements.beforeWeight);
+  // 現在のモードに応じて歩留まり率と加工前重量を取得
+  let yr, bw;
+
+  if (currentYieldMethod === 'calculate') {
+    const beforeWeight = getNumValue(elements.beforeWeightCalc);
+    const afterWeight = getNumValue(elements.afterWeightCalc);
+
+    if (!Number.isFinite(beforeWeight) || !Number.isFinite(afterWeight) || beforeWeight <= 0 || afterWeight <= 0) {
+      elements.step2Result.classList.add('is-hidden');
+      return;
+    }
+
+    yr = calcYield(beforeWeight, afterWeight);
+    bw = beforeWeight;
+  } else {
+    yr = getNumValue(elements.yieldRateDirect);
+    bw = getNumValue(elements.beforeWeightDirect);
+  }
 
   if (!Number.isFinite(yr) || !Number.isFinite(bw) || yr <= 0 || bw <= 0) {
     elements.step2Result.classList.add('is-hidden');
@@ -261,9 +350,13 @@ function clearAll() {
   const productNameEl = document.getElementById('multiPatternProductName');
   if (productNameEl) productNameEl.value = '';
 
-  // 入力値をクリア
-  if (elements.yieldRate) elements.yieldRate.value = '';
-  if (elements.beforeWeight) elements.beforeWeight.value = '';
+  // 重量から計算モードの入力値をクリア
+  if (elements.beforeWeightCalc) elements.beforeWeightCalc.value = '';
+  if (elements.afterWeightCalc) elements.afterWeightCalc.value = '';
+
+  // 歩留まり率直接入力モードの入力値をクリア
+  if (elements.beforeWeightDirect) elements.beforeWeightDirect.value = '';
+  if (elements.yieldRateDirect) elements.yieldRateDirect.value = '';
 
   // パターンテーブルをクリア
   if (elements.tableBody) elements.tableBody.innerHTML = '';
@@ -271,7 +364,8 @@ function clearAll() {
   patternIdCounter = 1;
 
   // 結果を非表示
-  if (elements.step1Result) elements.step1Result.classList.add('is-hidden');
+  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add('is-hidden');
+  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add('is-hidden');
   if (elements.step2) elements.step2.classList.add('is-hidden');
   if (elements.step2Result) elements.step2Result.classList.add('is-hidden');
 
@@ -286,4 +380,32 @@ function clearAll() {
  */
 export function resetMultiPatternUI() {
   clearAll();
+}
+
+/**
+ * 歩留まり統計から値を設定
+ * @param {number} yieldRate - 歩留まり率（%）
+ * @param {string} productName - 商品名
+ */
+export function setFromYieldStats(yieldRate, productName = '') {
+  // 商品名を設定
+  const productNameEl = document.getElementById('multiPatternProductName');
+  if (productNameEl && productName) {
+    productNameEl.value = productName;
+  }
+
+  // 歩留まり率直接入力モードに切り替え
+  const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+  if (directRadio) {
+    directRadio.checked = true;
+    // change イベントを発火
+    directRadio.dispatchEvent(new Event('change'));
+  }
+
+  // 歩留まり率を設定
+  if (elements.yieldRateDirect && Number.isFinite(yieldRate)) {
+    elements.yieldRateDirect.value = yieldRate.toFixed(2);
+    // input イベントを発火して計算を実行
+    handleDirectModeInput();
+  }
 }

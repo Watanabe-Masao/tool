@@ -619,6 +619,17 @@
                 <p id="recommendedReason" class="recommended-reason"></p>
               </div>
             </div>
+
+            <!-- 複数パターン分析への遷移 -->
+            <div id="multiPatternLink" class="multi-pattern-link is-hidden">
+              <div class="info-box">
+                <p><strong>📊 複数パターン分析を使う</strong></p>
+                <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
+                <button type="button" id="goToMultiPatternBtn" class="btn btn-primary" style="margin-top: 0.5em;">
+                  📊 複数パターン分析へ移動
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -765,26 +776,66 @@
         </label>
       </div>
 
-      <!-- ステップ1: 共通条件設定 -->
-      <div id="multiPatternStep1">
-        <h3 class="step-title">ステップ 1️⃣ 共通条件を設定</h3>
-        <div class="grid">
-          <label class="field">
-            <span>歩留まり率（%）</span>
-            <input type="number" id="multiYieldRate" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" />
-          </label>
-          <label class="field">
-            <span>加工前重量（g）</span>
-            <input type="number" id="multiBeforeWeight" step="0.01" inputmode="decimal" placeholder="300" min="0" />
-          </label>
+      <!-- 歩留まり率の入力方法選択 -->
+      <fieldset class="fieldset">
+        <legend class="legend">歩留まり率の入力方法</legend>
+        <label class="radio"><input type="radio" name="yieldMethodMultiPattern" value="calculate" checked /> 重量から計算</label>
+        <label class="radio"><input type="radio" name="yieldMethodMultiPattern" value="direct" /> 歩留まり率を直接入力</label>
+      </fieldset>
+
+      <!-- 重量から計算モード -->
+      <div id="multiPatternCalculateMode">
+        <!-- ステップ1: 重量入力 -->
+        <div id="multiPatternStep1Calculate">
+          <h3 class="step-title">ステップ 1️⃣ 加工前後の重量を入力</h3>
+          <div class="grid">
+            <label class="field">
+              <span>加工前重量（g）</span>
+              <input type="number" id="multiBeforeWeightCalc" step="0.01" inputmode="decimal" placeholder="300" min="0" />
+            </label>
+            <label class="field">
+              <span>加工後重量（g）</span>
+              <input type="number" id="multiAfterWeightCalc" step="0.01" inputmode="decimal" placeholder="150" min="0" />
+            </label>
+          </div>
+        </div>
+
+        <!-- ステップ1結果: 歩留まり率 -->
+        <div id="multiPatternStep1ResultCalc" class="is-hidden step-result">
+          <div class="result-block">
+            <div class="result-label">歩留まり率</div>
+            <div id="multiYieldRateDisplayCalc" class="result-value">-</div>
+          </div>
         </div>
       </div>
 
-      <!-- ステップ1結果: 加工後重量 -->
-      <div id="multiPatternStep1Result" class="is-hidden step-result">
-        <div class="result-block">
-          <div class="result-label">加工後重量</div>
-          <div id="multiAfterWeightDisplay" class="result-value">-</div>
+      <!-- 歩留まり率直接入力モード -->
+      <div id="multiPatternDirectMode" class="is-hidden">
+        <!-- ステップ1: 歩留まり率と加工前重量入力 -->
+        <div id="multiPatternStep1Direct">
+          <h3 class="step-title">ステップ 1️⃣ 歩留まり率と加工前重量を入力</h3>
+          <div class="grid">
+            <label class="field">
+              <span>加工前重量（g）</span>
+              <input type="number" id="multiBeforeWeightDirect" step="0.01" inputmode="decimal" placeholder="300" min="0" />
+            </label>
+            <label class="field">
+              <span>歩留まり率（%）</span>
+              <input type="number" id="multiYieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" />
+            </label>
+          </div>
+        </div>
+
+        <!-- ステップ1結果: 歩留まり率確認 -->
+        <div id="multiPatternStep1ResultDirect" class="is-hidden step-result">
+          <div class="result-block">
+            <div class="result-label">歩留まり率</div>
+            <div id="multiYieldRateDisplayDirect" class="result-value">-</div>
+          </div>
+          <div class="result-block">
+            <div class="result-label">加工後重量</div>
+            <div id="multiAfterWeightDisplayDirect" class="result-value">-</div>
+          </div>
         </div>
       </div>
 
