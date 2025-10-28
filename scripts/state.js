@@ -73,6 +73,10 @@ export class AppState {
     this.snapshot = new CalculationSnapshot();
     this.productData = new ProductSimulationData();
     this.loadedHistoryId = null;  // 履歴から読み込んだ計算のID（上書き保存用）
+
+    // UI状態フラグ（データベースには保存されない、ランタイムのみ）
+    this.isFromHistory = false;     // 履歴から呼び出されたものか
+    this.hasUnsavedChanges = false; // 未保存の変更があるか
   }
 
   setMode(mode) {
@@ -132,11 +136,42 @@ export class AppState {
     this.loadedHistoryId = null;
   }
 
+  // UI状態フラグの管理
+  markAsFromHistory() {
+    this.isFromHistory = true;
+    this.hasUnsavedChanges = false;
+  }
+
+  markAsNewCalculation() {
+    this.isFromHistory = false;
+    this.hasUnsavedChanges = false;
+  }
+
+  markAsChanged() {
+    this.hasUnsavedChanges = true;
+  }
+
+  markAsSaved() {
+    this.hasUnsavedChanges = false;
+    // 保存後は履歴から呼び出したものとして扱う
+    this.isFromHistory = true;
+  }
+
+  isFromHistoryRecord() {
+    return this.isFromHistory;
+  }
+
+  hasChanges() {
+    return this.hasUnsavedChanges;
+  }
+
   resetAll() {
     this.snapshot.reset();
     this.productData.reset();
     this.currentStep = 1;
     this.loadedHistoryId = null;  // 履歴IDもリセット
+    this.isFromHistory = false;
+    this.hasUnsavedChanges = false;
   }
 }
 
