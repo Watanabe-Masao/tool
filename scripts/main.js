@@ -1920,7 +1920,20 @@ function displayCurrentStatistics() {
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
+
+  // グローバルに保存（複数パターン分析への遷移用）
+  window.lastCalculatedStats = finalStats;
+
+  // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
+  const toleranceErrorInput = qs('#toleranceError');
+  const hasTolerance = toleranceErrorInput && parseFloat(toleranceErrorInput.value) > 0;
+
   displaySampleSizeValidation();
+
+  // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
+  if (!hasTolerance) {
+    displayRecommendedValue(finalStats, true);
+  }
 }
 
 /**
