@@ -89,6 +89,32 @@ input[type="number"]:focus { outline: none; border-color: var(--brand); box-shad
 .btn-mode.is-active, .btn-primary { background: linear-gradient(135deg, var(--bg1), var(--bg2)); color: #fff; }
 .btn-secondary { background: #f0f0f0; color: #666; }
 
+/* Disabled button styles */
+button:disabled, .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  color: #999;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+button:disabled:hover, .btn:disabled:hover {
+  background: #f5f5f5;
+  transform: none;
+}
+
+.btn-primary:disabled {
+  background: #e0e0e0;
+  color: #999;
+}
+
+.btn-mode:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  border-color: #ddd;
+}
+
 .notice { display: none; margin: 10px 0; padding: 12px; border-radius: 6px; }
 .notice-warn { display: none; background: #fff3cd; border-left: 4px solid #ffc107; }
 

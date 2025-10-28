@@ -291,6 +291,10 @@ function switchYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
+
+  // UI状態を更新：計算方法を変更したので変更フラグを立てる
+  appState.markAsChanged();
+  updateSaveButtonsVisibility();
 }
 
 /**
@@ -327,6 +331,10 @@ function switchWeightYieldMethod() {
 
   // 逆算シミュレーションが表示されている場合、ラベルのみ更新
   updateReverseSimulationLabels();
+
+  // UI状態を更新：計算方法を変更したので変更フラグを立てる
+  appState.markAsChanged();
+  updateSaveButtonsVisibility();
 }
 
 /**
@@ -1493,6 +1501,12 @@ function addYieldStatsRow() {
 
   beforeWeightInput?.addEventListener('input', handleYieldStatsInput);
   afterWeightInput?.addEventListener('input', handleYieldStatsInput);
+
+  // テーブル行を追加したのでUI状態を更新
+  // 注: 行追加だけでは保存すべきデータがないが、
+  // テーブル構造が変更されたことを記録する
+  appState.markAsChanged();
+  updateSaveButtonsVisibility();
 }
 
 /**
