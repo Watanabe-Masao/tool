@@ -77,6 +77,10 @@ export class AppState {
     // UI状態フラグ（データベースには保存されない、ランタイムのみ）
     this.isFromHistory = false;     // 履歴から呼び出されたものか
     this.hasUnsavedChanges = false; // 未保存の変更があるか
+
+    // 一元化された状態管理
+    this.yieldStatsData = null;     // 歩留まり統計データ（旧 window.yieldStatsData）
+    this.saveDialogMode = 'normal'; // 保存ダイアログのモード（'normal' or 'new'）
   }
 
   setMode(mode) {
@@ -165,6 +169,24 @@ export class AppState {
     return this.hasUnsavedChanges;
   }
 
+  // 歩留まり統計データの管理
+  setYieldStatsData(data) {
+    this.yieldStatsData = data;
+  }
+
+  getYieldStatsData() {
+    return this.yieldStatsData;
+  }
+
+  // 保存ダイアログモードの管理
+  setSaveDialogMode(mode) {
+    this.saveDialogMode = mode;
+  }
+
+  getSaveDialogMode() {
+    return this.saveDialogMode;
+  }
+
   resetAll() {
     this.snapshot.reset();
     this.productData.reset();
@@ -172,6 +194,8 @@ export class AppState {
     this.loadedHistoryId = null;  // 履歴IDもリセット
     this.isFromHistory = false;
     this.hasUnsavedChanges = false;
+    this.yieldStatsData = null;     // 歩留まり統計データもリセット
+    this.saveDialogMode = 'normal'; // ダイアログモードもリセット
   }
 }
 
