@@ -657,6 +657,10 @@ async function handleLoadCalculation(id) {
         }
       }
 
+      // 値の復元でinputイベントが発火してmarkAsChanged()が呼ばれている可能性があるため、
+      // 明示的にmarkAsFromHistory()を呼び直して「変更なし」状態に戻す
+      appState.markAsFromHistory();
+
       // 保存ボタンの表示を更新
       updateSaveButtonsVisibility();
 
