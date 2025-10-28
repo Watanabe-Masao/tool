@@ -291,6 +291,8 @@ function switchMode(newMode) {
     resetYieldStatsEntries();
   } else if (isMultiPattern) {
     // 複数パターン分析モードは特別なリセット処理は不要（既にresetMultiPatternUIで処理済み）
+    // 歩留まり統計から読み込むボタンの状態を更新
+    updateLoadStatsButtons();
   }
 
   // 保存ボタンの表示を更新（新規保存に戻す）
@@ -2638,6 +2640,41 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
 }
 
 /**
+ * 歩留まり統計から読み込むボタンの状態を更新
+ */
+function updateLoadStatsButtons() {
+  const loadStatsButtons = qs('#loadStatsButtons');
+  const loadStatsNoData = qs('#loadStatsNoData');
+  const loadMeanValueDisplay = qs('#loadMeanValueDisplay');
+  const loadMedianValueDisplay = qs('#loadMedianValueDisplay');
+
+  if (!loadStatsButtons || !loadStatsNoData) {
+    return;
+  }
+
+  // 保存された統計データをチェック
+  const stats = window.lastCalculatedStats;
+
+  if (stats && stats.count >= 2) {
+    // データがある場合、ボタンに値を表示
+    if (loadMeanValueDisplay) {
+      loadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}%`;
+    }
+    if (loadMedianValueDisplay) {
+      loadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}%`;
+    }
+
+    // ボタンを表示、メッセージを非表示
+    loadStatsButtons.classList.remove('is-hidden');
+    loadStatsNoData.classList.add('is-hidden');
+  } else {
+    // データがない場合、メッセージを表示
+    loadStatsButtons.classList.add('is-hidden');
+    loadStatsNoData.classList.remove('is-hidden');
+  }
+}
+
+/**
  * 許容誤差の単位を更新
  */
 function updateToleranceUnit() {
@@ -3913,6 +3950,50 @@ function init() {
     // 歩留まり率と商品名を設定
     if (yieldRate !== null) {
       setFromYieldStats(yieldRate, productName);
+    }
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（平均値）
+  qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
+    const statsData = window.lastCalculatedStats;
+    if (!statsData) return;
+
+    const yieldRate = statsData.mean;
+
+    // 直接入力モードに切り替えて値を設定
+    const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+    if (directRadio) {
+      directRadio.checked = true;
+      directRadio.dispatchEvent(new Event('change'));
+    }
+
+    // 歩留まり率を設定
+    const yieldRateInput = qs('#multiYieldRateDirect');
+    if (yieldRateInput) {
+      yieldRateInput.value = toFixed(yieldRate, 2);
+      yieldRateInput.dispatchEvent(new Event('input'));
+    }
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（中央値）
+  qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
+    const statsData = window.lastCalculatedStats;
+    if (!statsData) return;
+
+    const yieldRate = statsData.median;
+
+    // 直接入力モードに切り替えて値を設定
+    const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+    if (directRadio) {
+      directRadio.checked = true;
+      directRadio.dispatchEvent(new Event('change'));
+    }
+
+    // 歩留まり率を設定
+    const yieldRateInput = qs('#multiYieldRateDirect');
+    if (yieldRateInput) {
+      yieldRateInput.value = toFixed(yieldRate, 2);
+      yieldRateInput.dispatchEvent(new Event('input'));
     }
   });
 

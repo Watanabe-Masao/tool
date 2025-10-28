@@ -846,6 +846,36 @@
               <input type="number" id="multiYieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" />
             </label>
           </div>
+
+          <!-- 歩留まり統計から読み込み -->
+          <div id="loadFromYieldStats" class="load-from-stats-section">
+            <div class="info-box" style="background: #f8f9fa;">
+              <p style="font-size: 0.9em; margin-bottom: 0.75em; color: #666;">
+                <strong>📊 歩留まり統計から読み込む</strong>
+              </p>
+
+              <!-- データがある場合のボタン -->
+              <div id="loadStatsButtons" class="multi-pattern-buttons is-hidden">
+                <button type="button" id="loadStatsMeanBtn" class="btn btn-primary multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">平均値</span>
+                  <span id="loadMeanValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+                <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">中央値</span>
+                  <span id="loadMedianValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+              </div>
+
+              <!-- データがない場合のメッセージ -->
+              <div id="loadStatsNoData" class="data-insufficient-message">
+                <p style="color: #999; margin: 0; font-size: 0.85em;">
+                  歩留まり統計で計算を実行すると、ここから値を読み込めます。
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ステップ1結果: 歩留まり率確認 -->
