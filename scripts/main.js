@@ -9,6 +9,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
+import { initMultiPatternUI, resetMultiPatternUI } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -208,6 +209,9 @@ function switchMode(newMode) {
       tbody.innerHTML = '';
       addYieldStatsRow();
     }
+  } else if (currentMode === MODE.MULTI_PATTERN) {
+    // 複数パターン分析モードのクリア処理
+    resetMultiPatternUI();
   }
 
   // 履歴から読み込んだIDをクリア（入力値をクリアしたので新規保存に戻す）
@@ -220,9 +224,10 @@ function switchMode(newMode) {
   const isFixed = newMode === MODE.FIXED;
   const isWeight = newMode === MODE.WEIGHT;
   const isYieldStats = newMode === MODE.YIELD_STATS;
+  const isMultiPattern = newMode === MODE.MULTI_PATTERN;
 
   // ボタンのアクティブ状態を更新
-  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN].forEach(btnId => {
+  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN, UI_ELEMENTS.MULTI_PATTERN_BTN].forEach(btnId => {
     const btn = qs(`#${btnId}`);
     if (btn) {
       btn.classList.remove('is-active');
@@ -230,7 +235,13 @@ function switchMode(newMode) {
     }
   });
 
-  const activeBtn = qs(`#${isFixed ? UI_ELEMENTS.FIXED_BTN : isWeight ? UI_ELEMENTS.WEIGHT_BTN : UI_ELEMENTS.YIELD_STATS_BTN}`);
+  let activeBtnId;
+  if (isFixed) activeBtnId = UI_ELEMENTS.FIXED_BTN;
+  else if (isWeight) activeBtnId = UI_ELEMENTS.WEIGHT_BTN;
+  else if (isYieldStats) activeBtnId = UI_ELEMENTS.YIELD_STATS_BTN;
+  else if (isMultiPattern) activeBtnId = UI_ELEMENTS.MULTI_PATTERN_BTN;
+
+  const activeBtn = qs(`#${activeBtnId}`);
   if (activeBtn) {
     activeBtn.classList.add('is-active');
     activeBtn.setAttribute('aria-selected', 'true');
@@ -240,10 +251,12 @@ function switchMode(newMode) {
   const fixedInputs = qs(`#${UI_ELEMENTS.FIXED_INPUTS}`);
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+  const multiPatternInputs = qs(`#${UI_ELEMENTS.MULTI_PATTERN_INPUTS}`);
 
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
   if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
+  if (multiPatternInputs) multiPatternInputs.classList.toggle('is-hidden', !isMultiPattern);
 
   hide(UI_ELEMENTS.RESULTS);
   hide(UI_ELEMENTS.WARNING);
@@ -255,6 +268,8 @@ function switchMode(newMode) {
     resetWeightSteps();
   } else if (isYieldStats) {
     resetYieldStatsEntries();
+  } else if (isMultiPattern) {
+    // 複数パターン分析モードは特別なリセット処理は不要（既にresetMultiPatternUIで処理済み）
   }
 
   // 保存ボタンの表示を更新（新規保存に戻す）
@@ -3482,6 +3497,7 @@ function init() {
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
+  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.MULTI_PATTERN));
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
@@ -3677,6 +3693,9 @@ function init() {
 
   // 履歴機能の初期化
   initHistoryUI();
+
+  // 複数パターン分析モードの初期化
+  initMultiPatternUI();
 
   // 保存ボタンの表示を初期化
   updateSaveButtonsVisibility();

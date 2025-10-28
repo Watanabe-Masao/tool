@@ -998,6 +998,160 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   font-size: 1rem;
 }
 
+/* ===========================
+   複数パターン分析モード
+   =========================== */
+
+/* パターン入力テーブル */
+.multi-pattern-table-container {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.multi-pattern-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.multi-pattern-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.multi-pattern-table th,
+.multi-pattern-table td {
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.multi-pattern-table th {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.multi-pattern-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.multi-pattern-table tbody tr:hover {
+  background-color: #f0f4ff;
+  transition: background-color 0.2s;
+}
+
+.multi-pattern-table input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.multi-pattern-table input[type="number"]:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.multi-pattern-table .pattern-number {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.multi-pattern-table .btn-remove {
+  padding: 6px 12px;
+  background: #ef5350;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.multi-pattern-table .btn-remove:hover {
+  background: #d32f2f;
+}
+
+/* 比較結果テーブル */
+.multi-pattern-results-container {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.multi-pattern-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+}
+
+.multi-pattern-results-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.multi-pattern-results-table th {
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.multi-pattern-results-table td {
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.multi-pattern-results-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.multi-pattern-results-table tbody tr:hover {
+  background-color: #f0f4ff;
+  transition: background-color 0.2s;
+}
+
+.multi-pattern-results-table .result-number {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 1rem;
+}
+
+.multi-pattern-results-table .result-value {
+  font-weight: 500;
+  color: #333;
+}
+
+.multi-pattern-results-table .result-positive {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.multi-pattern-results-table .result-negative {
+  color: #ef5350;
+  font-weight: 600;
+}
+
+.multi-pattern-results-table .result-highlight {
+  background-color: #fff3e0;
+  font-weight: 600;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .yield-stats-table {

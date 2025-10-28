@@ -11,7 +11,8 @@ export const PERCENT_MULTIPLIER = 100;
 export const MODE = {
   FIXED: 'fixed',
   WEIGHT: 'weight',
-  YIELD_STATS: 'yieldStats'
+  YIELD_STATS: 'yieldStats',
+  MULTI_PATTERN: 'multiPattern'
 };
 
 // 歩留まり計算方法
@@ -77,6 +78,7 @@ export const UI_ELEMENTS = {
   FIXED_BTN: 'fixedBtn',
   WEIGHT_BTN: 'weightBtn',
   YIELD_STATS_BTN: 'yieldStatsBtn',
+  MULTI_PATTERN_BTN: 'multiPatternBtn',
   CLEAR_BTN: 'clearBtn',
 
   // セクション
@@ -84,6 +86,7 @@ export const UI_ELEMENTS = {
   WEIGHT_INPUTS: 'weightInputs',
   YIELD_STATS_INPUTS: 'yieldStatsInputs',
   YIELD_STATS_TABLE_BODY: 'yieldStatsTableBody',
+  MULTI_PATTERN_INPUTS: 'multiPatternInputs',
 
   // 品名フィールド
   FIXED_PRODUCT_NAME: 'fixedProductName',
