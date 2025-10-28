@@ -1839,20 +1839,20 @@ export function initHistoryUI() {
       const searchInput = qs('#historySearch');
       if (searchInput) {
         searchInput.value = ''; // 商品名選択を解除
+
+        // 現在選択されている計算モードと歩留まり入力方法を取得
+        const activeBtn = qs('.btn-mode.is-active[data-mode]');
+        const mode = activeBtn ? activeBtn.dataset.mode : null;
+
+        let yieldMethod = null;
+        if (mode && mode !== MODE.YIELD_STATS) {
+          const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+          yieldMethod = methodRadio ? methodRadio.value : 'calculate';
+        }
+
+        // 計算モードと歩留まり入力方法のフィルタを維持して再表示
+        await renderHistoryList(null, mode, yieldMethod);
       }
-
-      // すべてのモードボタンのis-activeを削除
-      const modeBtns = document.querySelectorAll('.btn-mode[data-mode]');
-      modeBtns.forEach(btn => btn.classList.remove('is-active'));
-
-      // 計算方法セクションを非表示
-      const methodSection = qs('#historyFilterMethodSection');
-      if (methodSection) {
-        methodSection.style.display = 'none';
-      }
-
-      // すべてのフィルタをクリアして全データを表示
-      await renderHistoryList(null, null, null);
     });
   }
 
