@@ -670,28 +670,55 @@ async function handleLoadCalculation(id) {
 }
 
 /**
- * モードを切り替え
+ * モードを切り替え（履歴読み込み専用）
+ * モードボタンのクリックイベントを経由せず、UIを直接切り替える
+ * これにより、appStateのフラグがリセットされるのを防ぐ
  * @param {string} mode
  */
 function switchToMode(mode) {
-  // モードボタンをクリックしてUIを切り替え
-  let btnId;
-  if (mode === MODE.FIXED) {
-    btnId = '#fixedBtn';
-  } else if (mode === MODE.WEIGHT) {
-    btnId = '#weightBtn';
-  } else if (mode === MODE.YIELD_STATS) {
-    btnId = '#yieldStatsBtn';
+  const isFixed = mode === MODE.FIXED;
+  const isWeight = mode === MODE.WEIGHT;
+  const isYieldStats = mode === MODE.YIELD_STATS;
+
+  // appStateのモードを更新
+  appState.setMode(mode);
+
+  // ボタンのアクティブ状態を更新
+  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN].forEach(btnId => {
+    const btn = qs(`#${btnId}`);
+    if (btn) {
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+  });
+
+  const activeBtnId = isFixed ? UI_ELEMENTS.FIXED_BTN :
+                      isWeight ? UI_ELEMENTS.WEIGHT_BTN :
+                      UI_ELEMENTS.YIELD_STATS_BTN;
+  const activeBtn = qs(`#${activeBtnId}`);
+  if (activeBtn) {
+    activeBtn.classList.add('is-active');
+    activeBtn.setAttribute('aria-selected', 'true');
   }
 
-  const modeBtn = qs(btnId);
-  if (modeBtn) {
-    modeBtn.click();
-  }
+  // セクションの表示/非表示を切り替え
+  const fixedInputs = qs(`#${UI_ELEMENTS.FIXED_INPUTS}`);
+  const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
+  const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+
+  if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
+  if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
+  if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
+
+  // 結果と警告を非表示
+  hide(UI_ELEMENTS.RESULTS);
+  hide(UI_ELEMENTS.WARNING);
 }
 
 /**
- * 歩留まり計算方法を切り替え
+ * 歩留まり計算方法を切り替え（履歴読み込み専用）
+ * changeイベントを経由せず、UIを直接切り替える
+ * これにより、入力値クリアやフラグ変更を防ぐ
  * @param {string} mode
  * @param {string} yieldMethod
  */
@@ -700,8 +727,22 @@ function switchYieldMethod(mode, yieldMethod) {
   const radio = document.querySelector(`input[name="${radioName}"][value="${yieldMethod}"]`);
   if (radio) {
     radio.checked = true;
-    // changeイベントをトリガー
-    radio.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  const isDirect = yieldMethod === 'direct';
+
+  if (mode === MODE.FIXED) {
+    // 定額モードの表示切り替え
+    const calculateMode = qs(`#${UI_ELEMENTS.FIXED_CALCULATE_MODE}`);
+    const directMode = qs(`#${UI_ELEMENTS.FIXED_DIRECT_MODE}`);
+    if (calculateMode) calculateMode.classList.toggle('is-hidden', isDirect);
+    if (directMode) directMode.classList.toggle('is-hidden', !isDirect);
+  } else if (mode === MODE.WEIGHT) {
+    // 計量モードの表示切り替え
+    const calculateMode = qs(`#${UI_ELEMENTS.WEIGHT_CALCULATE_MODE}`);
+    const directMode = qs(`#${UI_ELEMENTS.WEIGHT_DIRECT_MODE}`);
+    if (calculateMode) calculateMode.classList.toggle('is-hidden', isDirect);
+    if (directMode) directMode.classList.toggle('is-hidden', !isDirect);
   }
 }
 
