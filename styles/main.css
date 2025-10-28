@@ -1175,8 +1175,66 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   font-size: 1.1em;
 }
 
+/* 代表値選択ボタン */
+.multi-pattern-buttons {
+  display: flex;
+  gap: 1em;
+  margin-top: 1em;
+  flex-wrap: wrap;
+}
+
+.multi-pattern-btn {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1em;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.multi-pattern-btn .btn-label {
+  font-weight: 600;
+  font-size: 1em;
+  margin-bottom: 0.3em;
+}
+
+.multi-pattern-btn .btn-value {
+  font-size: 1.3em;
+  font-weight: 700;
+  margin-bottom: 0.3em;
+}
+
+.multi-pattern-btn .btn-arrow {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.multi-pattern-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* データ不足メッセージ */
+.data-insufficient-message {
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 4px;
+  padding: 1em;
+  margin-top: 1em;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
+  .multi-pattern-buttons {
+    flex-direction: column;
+  }
+
+  .multi-pattern-btn {
+    min-width: auto;
+  }
+
   .yield-stats-table {
     font-size: 12px;
   }

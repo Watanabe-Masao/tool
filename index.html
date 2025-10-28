@@ -625,9 +625,31 @@
               <div class="info-box">
                 <p><strong>📊 複数パターン分析を使う</strong></p>
                 <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
-                <button type="button" id="goToMultiPatternBtn" class="btn btn-primary" style="margin-top: 0.5em;">
-                  📊 複数パターン分析へ移動
-                </button>
+
+                <!-- データ不足メッセージ -->
+                <div id="multiPatternDataInsufficient" class="data-insufficient-message is-hidden">
+                  <p style="color: #ef5350; margin: 0.5em 0;">
+                    ⚠️ データが不足しています。歩留まり率を計算するには、2件以上のデータを入力してください。
+                  </p>
+                </div>
+
+                <!-- 代表値選択ボタン -->
+                <div id="multiPatternButtons" class="multi-pattern-buttons">
+                  <button type="button" id="goToMultiPatternMeanBtn" class="btn btn-primary multi-pattern-btn">
+                    <span class="btn-label">平均値</span>
+                    <span id="meanValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
+                  <button type="button" id="goToMultiPatternMedianBtn" class="btn btn-secondary multi-pattern-btn">
+                    <span class="btn-label">中央値</span>
+                    <span id="medianValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
+                </div>
+
+                <p style="font-size: 0.9em; color: #666; margin-top: 0.5em;">
+                  💡 推奨: <span id="recommendedHint" style="font-weight: bold; color: #667eea;">-</span>
+                </p>
               </div>
             </div>
           </div>

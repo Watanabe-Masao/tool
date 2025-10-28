@@ -2597,6 +2597,32 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
   // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
   const multiPatternLink = qs('#multiPatternLink');
   if (multiPatternLink && statsType === 'yieldRate') {
+    // データが十分にあるかチェック
+    if (isSampleSizeValid && stats.count >= 2) {
+      // ボタンの表示
+      const meanValueDisplay = qs('#meanValueDisplay');
+      const medianValueDisplay = qs('#medianValueDisplay');
+      const recommendedHint = qs('#recommendedHint');
+      const multiPatternButtons = qs('#multiPatternButtons');
+      const dataInsufficient = qs('#multiPatternDataInsufficient');
+
+      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(stats.mean, 2)}%`;
+      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(stats.median, 2)}%`;
+      if (recommendedHint) recommendedHint.textContent = recommendedType;
+
+      // ボタンを表示、データ不足メッセージは非表示
+      if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
+      if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
+    } else {
+      // データ不足の場合
+      const multiPatternButtons = qs('#multiPatternButtons');
+      const dataInsufficient = qs('#multiPatternDataInsufficient');
+
+      // ボタンを非表示、データ不足メッセージを表示
+      if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
+      if (dataInsufficient) dataInsufficient.classList.remove('is-hidden');
+    }
+
     multiPatternLink.classList.remove('is-hidden');
   }
 }
@@ -3844,26 +3870,30 @@ function init() {
     }, { once: true });
   }
 
-  // 複数パターン分析への遷移ボタン
-  qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
-    // 現在の統計データから推奨代表値を取得
-    const recommendedBadge = qs('#recommendedBadge');
-    const recommendedType = recommendedBadge?.textContent || '平均値';
+  // 複数パターン分析への遷移ボタン（平均値）
+  qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
+    const statsData = window.lastCalculatedStats;
+    if (!statsData) return;
 
-    // 統計データから歩留まり率を取得
-    const statsData = window.lastCalculatedStats; // グローバルに保存されていると仮定
-    let yieldRate = null;
+    const yieldRate = statsData.mean;
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
 
-    if (statsData) {
-      // 推奨値に応じて歩留まり率を取得
-      if (recommendedType === '平均値') {
-        yieldRate = statsData.mean;
-      } else if (recommendedType === '中央値') {
-        yieldRate = statsData.median;
-      }
+    // 複数パターン分析モードに切り替え
+    handleModeSwitch(MODE.MULTI_PATTERN);
+
+    // 歩留まり率と商品名を設定
+    if (yieldRate !== null) {
+      setFromYieldStats(yieldRate, productName);
     }
+  });
 
-    // 商品名を取得
+  // 複数パターン分析への遷移ボタン（中央値）
+  qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
+    const statsData = window.lastCalculatedStats;
+    if (!statsData) return;
+
+    const yieldRate = statsData.median;
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
