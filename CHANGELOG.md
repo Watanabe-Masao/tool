@@ -1,5 +1,34 @@
 # 変更履歴
 
+## [v3.5] - 2025-01-28
+
+### 追加
+- **セッション管理機能** (`scripts/session.js`): ページリロード後も入力値を保持
+  - 24時間の有効期限付き自動保存
+  - すべての入力フィールド、選択中のモード、計算方法を保持
+  - `saveSessionState()`, `restoreSessionState()`, `clearSessionState()`, `applySessionState()` 関数を実装
+
+### 変更
+- **AppState状態管理の拡張**:
+  - `isFromHistory`フラグ: 履歴から読み込まれた計算かどうかを追跡
+  - `hasUnsavedChanges`フラグ: 未保存の変更があるかどうかを追跡
+  - `yieldStatsData`: 歩留まり統計データの一元管理（旧 window.yieldStatsData から移行）
+  - `saveDialogMode`: 保存ダイアログのモード管理
+  - `markAsFromHistory()`, `markAsNewCalculation()`, `markAsChanged()`, `markAsSaved()` メソッドを追加
+
+### 修正
+- **保存ボタンの状態管理改善**:
+  - 履歴から読み込んだ計算は、変更がない場合は保存ボタンを無効化
+  - 履歴から異なるモードを読み込んだ際の保存ボタン表示バグを修正
+  - フラグベースのシンプルなロジックに変更（`loadedHistoryId` チェックを `isFromHistory` フラグに統一）
+- **歩留まり統計モードのフィルタリング問題を修正**
+- **保存済み計算のフィルタリング改善**: `yieldMethod` が未保存の古いデータでフィルタが動作しない問題を修正
+- **商品名/品名の統一**: 「品名」と「商品名」の表記を統一し、データ保存を最適化
+
+### リファクタリング
+- 分散していた状態を `AppState` クラスに一元化
+- UI状態管理をフラグベースのシンプルなロジックに変更
+
 ## [v3.4] - 2025-01-26
 
 ### 修正

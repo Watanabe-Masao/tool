@@ -25,6 +25,22 @@
 ✅ すべての履歴をクリア
 ✅ 入力値の完全な収集と復元
 ✅ モード切り替えと計算の自動実行
+✅ **保存ボタンの状態管理**（v3.5で追加）
+  - 履歴読み込み直後は保存ボタンを無効化
+  - 変更後のみ保存可能に
+
+### 1.5. セッション管理機能✅
+
+#### 実装ファイル
+- `scripts/session.js` - セッション状態の永続化（v3.5で追加）
+
+#### 機能
+✅ **ページリロード後も入力値を保持**
+✅ **24時間の有効期限付き自動保存**
+✅ **すべての入力フィールド、モード、計算方法を保存**
+✅ **歩留まり統計のテーブルデータも保存**
+✅ localStorage を使用したセッション管理
+✅ `saveSessionState()`, `restoreSessionState()`, `clearSessionState()`, `applySessionState()` 関数を実装
 
 ### 2. PWA機能✅
 
@@ -75,15 +91,17 @@ yield-calculator/
 ├── icons/                  # アプリアイコン（8サイズ）
 │   └── README.md           # アイコン生成ガイド
 ├── scripts/
-│   ├── main.js            # 履歴UI初期化、SW登録、更新通知
+│   ├── main.js            # 履歴UI初期化、SW登録、更新通知、セッション復元
 │   ├── db.js              # IndexedDB管理
 │   ├── storage.js         # データ保存ロジック（カテゴリー対応）
 │   ├── history-ui.js      # 履歴UI（スワイプ、フィルタリング対応）
+│   ├── session.js         # セッション状態の永続化（v3.5で追加）
 │   ├── calculation.js     # 計算関数
-│   ├── calculator-fixed.js    # 定額モード計算
-│   ├── calculator-weight.js   # 計量モード計算
+│   ├── calculator-fixed.js        # 定額モード計算
+│   ├── calculator-weight.js       # 計量モード計算
+│   ├── calculator-yield-stats.js  # 歩留まり統計計算（v3.5で追加）
 │   ├── constants.js       # 定数定義
-│   ├── state.js           # 状態管理
+│   ├── state.js           # 状態管理（v3.5で拡張）
 │   ├── display.js         # 表示処理
 │   ├── input-handler.js   # 入力管理
 │   ├── product-simulator.js  # シミュレーション
