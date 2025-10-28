@@ -1451,3 +1451,70 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     padding: 12px;
   }
 }
+
+/* アコーディオン（折りたたみ）スタイル */
+.accordion-item {
+  margin-bottom: 0.5em;
+}
+
+.accordion-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75em 0.5em;
+  margin: 0;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+.accordion-header:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.accordion-header.is-collapsed {
+  border-bottom: none;
+}
+
+.accordion-icon {
+  font-size: 0.8em;
+  transition: transform 0.3s ease;
+  color: var(--brand);
+  margin-left: 0.5em;
+}
+
+.accordion-header.is-collapsed .accordion-icon {
+  transform: rotate(0deg);
+}
+
+.accordion-header:not(.is-collapsed) .accordion-icon {
+  transform: rotate(90deg);
+}
+
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+  max-height: 5000px;
+  opacity: 1;
+  padding-top: 0.5em;
+}
+
+.accordion-content.is-hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* モバイル用の調整 */
+@media (max-width: 768px) {
+  .accordion-header {
+    padding: 0.5em 0.25em;
+    font-size: 0.95rem;
+  }
+
+  .accordion-icon {
+    font-size: 0.75em;
+  }
+}

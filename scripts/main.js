@@ -4016,6 +4016,29 @@ function init() {
       updateSaveButtonsVisibility();
     }
   });
+
+  // アコーディオン（折りたたみ）機能
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const contentId = header.getAttribute('data-accordion');
+      const content = document.getElementById(contentId);
+
+      if (!content) return;
+
+      // トグル処理
+      const isCollapsed = header.classList.contains('is-collapsed');
+
+      if (isCollapsed) {
+        // 展開
+        header.classList.remove('is-collapsed');
+        content.classList.remove('is-hidden');
+      } else {
+        // 折りたたみ
+        header.classList.add('is-collapsed');
+        content.classList.add('is-hidden');
+      }
+    });
+  });
 }
 
 // アプリケーション起動

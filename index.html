@@ -386,8 +386,13 @@
         <div id="statsChart" class="stats-chart"></div>
 
         <!-- 基本統計 -->
-        <h4 class="stats-section-title">基本統計量</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header" data-accordion="basic-stats">
+            <span>基本統計量</span>
+            <span class="accordion-icon">▼</span>
+          </h4>
+          <div class="accordion-content" id="basic-stats">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">データ数</div>
             <div id="statsCount" class="stat-value">-</div>
@@ -441,11 +446,18 @@
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- 四分位数 -->
-        <h4 class="stats-section-title">四分位数</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="quartiles">
+            <span>四分位数</span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="quartiles">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
@@ -467,11 +479,18 @@
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- 分布の形状 -->
-        <h4 class="stats-section-title">分布の形状</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="distribution">
+            <span>分布の形状</span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="distribution">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
@@ -486,14 +505,21 @@
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- σ範囲 -->
-        <h4 class="stats-section-title">
-          正規分布における信頼区間
-          <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
-        </h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range">
+            <span>
+              正規分布における信頼区間
+              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
+            </span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="sigma-range">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               σ1範囲（68.3%）
@@ -515,14 +541,21 @@
             </div>
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- サンプルサイズの妥当性判断 -->
-        <h4 class="stats-section-title">
-          サンプルサイズの妥当性判断
-          <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
-        </h4>
-        <div class="sample-size-validation">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">
+            <span>
+              サンプルサイズの妥当性判断
+              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
+            </span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="sample-size">
+            <div class="sample-size-validation">
           <div class="validation-inputs">
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
@@ -620,8 +653,12 @@
               </div>
             </div>
 
-            <!-- 複数パターン分析への遷移 -->
-            <div id="multiPatternLink" class="multi-pattern-link is-hidden">
+          </div>
+          </div>
+        </div>
+
+        <!-- 複数パターン分析への遷移 -->
+        <div id="multiPatternLink" class="multi-pattern-link is-hidden">
               <div class="info-box">
                 <p><strong>📊 複数パターン分析を使う</strong></p>
                 <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
