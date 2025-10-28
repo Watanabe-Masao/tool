@@ -2610,15 +2610,15 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
   // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
   const multiPatternLink = qs('#multiPatternLink');
   if (multiPatternLink && statsType === 'yieldRate') {
+    const meanValueDisplay = qs('#meanValueDisplay');
+    const medianValueDisplay = qs('#medianValueDisplay');
+    const recommendedHint = qs('#recommendedHint');
+    const multiPatternButtons = qs('#multiPatternButtons');
+    const dataInsufficient = qs('#multiPatternDataInsufficient');
+
     // データが十分にあるかチェック
     if (isSampleSizeValid && stats.count >= 2) {
-      // ボタンの表示
-      const meanValueDisplay = qs('#meanValueDisplay');
-      const medianValueDisplay = qs('#medianValueDisplay');
-      const recommendedHint = qs('#recommendedHint');
-      const multiPatternButtons = qs('#multiPatternButtons');
-      const dataInsufficient = qs('#multiPatternDataInsufficient');
-
+      // 値を設定
       if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(stats.mean, 2)}%`;
       if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(stats.median, 2)}%`;
       if (recommendedHint) recommendedHint.textContent = recommendedType;
@@ -2628,9 +2628,6 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
       if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
     } else {
       // データ不足の場合
-      const multiPatternButtons = qs('#multiPatternButtons');
-      const dataInsufficient = qs('#multiPatternDataInsufficient');
-
       // ボタンを非表示、データ不足メッセージを表示
       if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
       if (dataInsufficient) dataInsufficient.classList.remove('is-hidden');
