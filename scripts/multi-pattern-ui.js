@@ -257,19 +257,23 @@ function recalculateAll() {
  * すべてクリア
  */
 function clearAll() {
+  // 商品名をクリア
+  const productNameEl = document.getElementById('multiPatternProductName');
+  if (productNameEl) productNameEl.value = '';
+
   // 入力値をクリア
-  elements.yieldRate.value = '';
-  elements.beforeWeight.value = '';
+  if (elements.yieldRate) elements.yieldRate.value = '';
+  if (elements.beforeWeight) elements.beforeWeight.value = '';
 
   // パターンテーブルをクリア
-  elements.tableBody.innerHTML = '';
+  if (elements.tableBody) elements.tableBody.innerHTML = '';
   patterns.length = 0;
   patternIdCounter = 1;
 
   // 結果を非表示
-  elements.step1Result.classList.add('is-hidden');
-  elements.step2.classList.add('is-hidden');
-  elements.step2Result.classList.add('is-hidden');
+  if (elements.step1Result) elements.step1Result.classList.add('is-hidden');
+  if (elements.step2) elements.step2.classList.add('is-hidden');
+  if (elements.step2Result) elements.step2Result.classList.add('is-hidden');
 
   // 初期パターンを3つ追加
   addPattern();

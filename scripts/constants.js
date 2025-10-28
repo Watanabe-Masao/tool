@@ -92,6 +92,7 @@ export const UI_ELEMENTS = {
   FIXED_PRODUCT_NAME: 'fixedProductName',
   WEIGHT_PRODUCT_NAME: 'weightProductName',
   YIELD_STATS_PRODUCT_NAME: 'yieldStatsProductName',
+  MULTI_PATTERN_PRODUCT_NAME: 'multiPatternProductName',
 
   FIXED_CALCULATE_INPUTS: 'fixedCalculateInputs',
   FIXED_DIRECT_INPUTS: 'fixedDirectInputs',

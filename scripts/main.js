@@ -124,6 +124,27 @@ function hasInputValues() {
         }
       }
     }
+  } else if (currentMode === MODE.MULTI_PATTERN) {
+    // 複数パターン分析モード：品名または入力値があるかチェック
+    const productNameEl = qs(`#${UI_ELEMENTS.MULTI_PATTERN_PRODUCT_NAME}`);
+    if (productNameEl && productNameEl.value.trim() !== '') return true;
+
+    // 歩留まり率と加工前重量をチェック
+    const yieldRateEl = qs('#multiYieldRate');
+    const beforeWeightEl = qs('#multiBeforeWeight');
+    if ((yieldRateEl && yieldRateEl.value.trim() !== '') ||
+        (beforeWeightEl && beforeWeightEl.value.trim() !== '')) {
+      return true;
+    }
+
+    // パターンテーブルに入力があるかチェック
+    const tbody = qs('#multiPatternTableBody');
+    if (tbody) {
+      const inputs = tbody.querySelectorAll('input[type="number"]');
+      for (const input of inputs) {
+        if (input.value.trim() !== '') return true;
+      }
+    }
   }
 
   return false;
