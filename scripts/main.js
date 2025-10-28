@@ -1707,7 +1707,7 @@ function updateYieldStatsStatistics() {
   });
 
   // データを保存（表示切り替えに使用）
-  window.yieldStatsData = {
+  const yieldStatsData = {
     yieldRate: yieldRates,
     beforeWeight: beforeWeights,
     afterWeight: afterWeights
@@ -1716,12 +1716,15 @@ function updateYieldStatsStatistics() {
   // 歩留まり率の統計値を計算して保存（履歴表示用）
   if (yieldRates.length >= 2) {
     const stats = calculateStatistics(yieldRates);
-    window.yieldStatsData.avgYieldRate = stats.mean;
-    window.yieldStatsData.medianYieldRate = stats.median;
-    window.yieldStatsData.stdDevYieldRate = stats.stdDev;
-    window.yieldStatsData.minYieldRate = stats.min;
-    window.yieldStatsData.maxYieldRate = stats.max;
+    yieldStatsData.avgYieldRate = stats.mean;
+    yieldStatsData.medianYieldRate = stats.median;
+    yieldStatsData.stdDevYieldRate = stats.stdDev;
+    yieldStatsData.minYieldRate = stats.min;
+    yieldStatsData.maxYieldRate = stats.max;
   }
+
+  // AppStateに保存
+  appState.setYieldStatsData(yieldStatsData);
 
   // データが2つ以上ある場合のみ統計を表示
   const hasEnoughData = yieldRates.length >= 2 || beforeWeights.length >= 2 || afterWeights.length >= 2;
@@ -1812,7 +1815,7 @@ function calculateStatistics(values) {
 function displayCurrentStatistics() {
   const selectElement = qs('#statsTypeSelect');
   const selectedType = selectElement?.value || 'yieldRate';
-  const data = window.yieldStatsData;
+  const data = appState.getYieldStatsData();
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
   if (currentStatsType !== selectedType) {
@@ -2003,7 +2006,7 @@ function displaySampleSizeValidation() {
   const statsTypeSelect = qs('#statsTypeSelect');
   const statsType = statsTypeSelect?.value || 'yieldRate';
 
-  const data = window.yieldStatsData;
+  const data = appState.getYieldStatsData();
   if (!data) {
     resultDiv.classList.add('is-hidden');
     return;

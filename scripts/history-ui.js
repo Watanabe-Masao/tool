@@ -9,8 +9,7 @@ import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RAD
 import { grossFromMarkup, toFixed } from './calculation.js';
 import { displayProductSimulation } from './display.js';
 
-// 保存ダイアログを開いたボタンの種類を記録（'new', 'overwrite', 'normal'）
-let saveDialogMode = 'normal';
+// 保存ダイアログモードはappStateで管理（'new', 'overwrite', 'normal'）
 
 /**
  * 履歴モーダルを表示
@@ -1037,7 +1036,7 @@ export async function showSaveDialog() {
   const dialogTitle = qs('#saveDialog .dialog-title');
   const confirmBtn = qs('#confirmSaveBtn');
 
-  if (saveDialogMode === 'new') {
+  if (appState.getSaveDialogMode() === 'new') {
     if (dialogTitle) dialogTitle.textContent = '💾 新規保存';
     if (confirmBtn) confirmBtn.textContent = '新規保存';
   } else {
@@ -1059,7 +1058,7 @@ export async function showSaveDialog() {
   const nameInput = qs('#saveName');
 
   // フラグで履歴から読み込まれたかチェック（一貫性のため）
-  if (appState.isFromHistoryRecord() && saveDialogMode !== 'new') {
+  if (appState.isFromHistoryRecord() && appState.getSaveDialogMode() !== 'new') {
     // 実際のIDを取得して履歴データを読み込む
     const loadedHistoryId = appState.getLoadedHistoryId();
     try {
@@ -1377,7 +1376,7 @@ export async function handleOverwriteSave() {
     // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
     let resultData;
     if (mode === MODE.YIELD_STATS) {
-      resultData = window.yieldStatsData || {};
+      resultData = appState.getYieldStatsData() || {};
     } else {
       resultData = appState.getSnapshot(); // 計算結果
     }
@@ -1776,7 +1775,7 @@ export function initHistoryUI() {
     saveBtn.addEventListener('click', (e) => {
       console.log(`[保存ボタン${index}] クリックされました!`, e);
       console.log('[保存ボタン] saveDialogModeを"normal"に設定');
-      saveDialogMode = 'normal';
+      appState.setSaveDialogMode('normal');
       console.log('[保存ボタン] showSaveDialog()を呼び出します');
       showSaveDialog();
     });
@@ -1792,7 +1791,7 @@ export function initHistoryUI() {
   const newSaveBtns = qsa('.new-save-btn');
   newSaveBtns.forEach(newSaveBtn => {
     newSaveBtn.addEventListener('click', () => {
-      saveDialogMode = 'new';
+      appState.setSaveDialogMode('new');
       showSaveDialog();
     });
   });
@@ -1803,7 +1802,7 @@ export function initHistoryUI() {
     confirmSaveBtn.addEventListener('click', () => {
       // 保存モードに応じて適切なハンドラを呼び出す
       // 上書き保存はダイアログを表示しないので、ここではnewとnormalのみ
-      if (saveDialogMode === 'new') {
+      if (appState.getSaveDialogMode() === 'new') {
         handleNewSave();
       } else {
         handleSaveCalculation();
