@@ -121,7 +121,17 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
 
   // 絞り込み結果が空の場合
   if (history.length === 0) {
-    listContainer.innerHTML = '<li class="history-empty">該当するデータがありません</li>';
+    // フィルタ条件に応じた詳細なメッセージを生成
+    let message = '該当するデータがありません';
+    if (filterMode) {
+      const modeLabel = filterMode === MODE.FIXED ? '定額売価' :
+                       filterMode === MODE.WEIGHT ? '計量売価' :
+                       '歩留まり統計';
+      const methodLabel = filterYieldMethod === 'direct' ? '（歩留まり率直接入力）' :
+                         filterYieldMethod === 'calculate' ? '（重量から計算）' : '';
+      message = `${modeLabel}${methodLabel}モードのデータがありません（全${allHistory.length}件中0件）`;
+    }
+    listContainer.innerHTML = `<li class="history-empty">${message}</li>`;
     // 商品名候補は現在のフィルタ条件の履歴から生成
     const filteredHistory = filterMode ? allHistory.filter(item => {
       if (item.mode !== filterMode) return false;
@@ -1828,21 +1838,21 @@ export function initHistoryUI() {
     clearSearchBtn.addEventListener('click', async () => {
       const searchInput = qs('#historySearch');
       if (searchInput) {
-        searchInput.value = ''; // 選択を解除
-
-        // 現在選択されている計算モードと歩留まり入力方法を取得
-        const activeBtn = qs('.btn-mode.is-active[data-mode]');
-        const mode = activeBtn ? activeBtn.dataset.mode : null;
-
-        let yieldMethod = null;
-        if (mode && mode !== MODE.YIELD_STATS) {
-          const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
-          yieldMethod = methodRadio ? methodRadio.value : 'calculate';
-        }
-
-        // 計算モードと歩留まり入力方法のフィルタを維持して再表示
-        await renderHistoryList(null, mode, yieldMethod);
+        searchInput.value = ''; // 商品名選択を解除
       }
+
+      // すべてのモードボタンのis-activeを削除
+      const modeBtns = document.querySelectorAll('.btn-mode[data-mode]');
+      modeBtns.forEach(btn => btn.classList.remove('is-active'));
+
+      // 計算方法セクションを非表示
+      const methodSection = qs('#historyFilterMethodSection');
+      if (methodSection) {
+        methodSection.style.display = 'none';
+      }
+
+      // すべてのフィルタをクリアして全データを表示
+      await renderHistoryList(null, null, null);
     });
   }
 
