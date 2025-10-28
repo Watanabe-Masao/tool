@@ -127,8 +127,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
       const modeLabel = filterMode === MODE.FIXED ? '定額売価' :
                        filterMode === MODE.WEIGHT ? '計量売価' :
                        '歩留まり統計';
-      const methodLabel = filterYieldMethod === 'direct' ? '（歩留まり率直接入力）' :
-                         filterYieldMethod === 'calculate' ? '（重量から計算）' : '';
+      // 歩留まり統計モードには計算方法がないため、ラベルを付けない
+      const methodLabel = (filterMode !== MODE.YIELD_STATS && filterYieldMethod === 'direct') ? '（歩留まり率直接入力）' :
+                         (filterMode !== MODE.YIELD_STATS && filterYieldMethod === 'calculate') ? '（重量から計算）' : '';
       message = `${modeLabel}${methodLabel}モードのデータがありません（全${allHistory.length}件中0件）`;
     }
     listContainer.innerHTML = `<li class="history-empty">${message}</li>`;
