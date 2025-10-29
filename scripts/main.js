@@ -3235,9 +3235,6 @@ function openPresetModal() {
   }
 }
 
-// グローバルスコープに公開（インラインイベントハンドラから呼べるように）
-window.openPresetModal = openPresetModal;
-
 // モーダルを閉じる
 function closePresetModal() {
   qs('#presetModal').classList.remove('is-open');
@@ -4410,6 +4407,11 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
+  // グローバルスコープに関数を公開（最優先で実行）
+  window.openPresetModal = openPresetModal;
+  console.log('window.openPresetModal が設定されました:', typeof window.openPresetModal);
+  alert('デバッグ: window.openPresetModal = ' + typeof window.openPresetModal);
+
   // モード切替ボタン
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
