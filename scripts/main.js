@@ -4262,7 +4262,7 @@ function init() {
   });
 
   // プリセット管理機能のイベントリスナー
-  qs('#showPresetManagerBtn')?.addEventListener('click', openPresetModal);
+  // モーダル内のボタン（これらはモーダルが開いた後に存在する）
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
   qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
@@ -4273,15 +4273,25 @@ function init() {
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
 
-  // プリセット一覧のクリックイベント（編集・削除）
+  // イベント委譲でプリセット関連のボタンを処理
   document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('preset-btn-edit')) {
+    // プリセットから選択ボタン
+    if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
+      e.preventDefault();
+      openPresetModal();
+    }
+    // 編集ボタン
+    else if (e.target.classList.contains('preset-btn-edit')) {
       const presetId = parseInt(e.target.dataset.presetId);
       editPresetFromModal(presetId);
-    } else if (e.target.classList.contains('preset-btn-delete')) {
+    }
+    // 削除ボタン
+    else if (e.target.classList.contains('preset-btn-delete')) {
       const presetId = parseInt(e.target.dataset.presetId);
       deletePresetFromModal(presetId);
-    } else if (e.target.classList.contains('btn-remove-pair')) {
+    }
+    // ペア削除ボタン
+    else if (e.target.classList.contains('btn-remove-pair')) {
       const index = parseInt(e.target.dataset.pairIndex);
       removeTempPair(index);
     }
