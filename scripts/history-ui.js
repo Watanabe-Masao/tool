@@ -1784,32 +1784,31 @@ function hideHistoryMenu() {
  * 履歴機能の初期化
  */
 export function initHistoryUI() {
-  // 履歴ボタン（定額モード）
-  // 履歴ボタン（定額モード）
+  // 履歴ボタン（定額モード） - テスト用
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
-    addTapListener(historyBtn, showHistoryModal);
-    console.log('履歴ボタン（定額モード）のイベントリスナーを設定しました');
-  } else {
-    console.error('履歴ボタン（定額モード）が見つかりません');
+    historyBtn.addEventListener('click', () => {
+      alert('履歴ボタン（定額）がクリックされました');
+      showHistoryModal();
+    });
   }
 
-  // 履歴ボタン（計量モード）
+  // 履歴ボタン（計量モード） - テスト用
   const historyBtnWeight = qs('#historyBtnWeight');
   if (historyBtnWeight) {
-    addTapListener(historyBtnWeight, showHistoryModal);
-    console.log('履歴ボタン（計量モード）のイベントリスナーを設定しました');
-  } else {
-    console.error('履歴ボタン（計量モード）が見つかりません');
+    historyBtnWeight.addEventListener('click', () => {
+      alert('履歴ボタン（計量）がクリックされました');
+      showHistoryModal();
+    });
   }
 
-  // 履歴ボタン（歩留まり統計モード）
+  // 履歴ボタン（歩留まり統計モード） - テスト用
   const historyBtnYieldStats = qs('#historyBtnYieldStats');
   if (historyBtnYieldStats) {
-    addTapListener(historyBtnYieldStats, showHistoryModal);
-    console.log('履歴ボタン（歩留まり統計モード）のイベントリスナーを設定しました');
-  } else {
-    console.error('履歴ボタン（歩留まり統計モード）が見つかりません');
+    historyBtnYieldStats.addEventListener('click', () => {
+      alert('履歴ボタン（歩留まり統計）がクリックされました');
+      showHistoryModal();
+    });
   }
 
   // 履歴モーダルを閉じる
@@ -1846,13 +1845,11 @@ export function initHistoryUI() {
     document.addEventListener('touchstart', closeMenuOnOutsideInteraction);
   }
 
-  // 保存ボタン（クラスベースで全てのボタンに設定）
+  // 保存ボタン（クラスベースで全てのボタンに設定） - テスト用
   const saveBtns = qsa('.save-btn');
-  console.log('[initHistoryUI] 保存ボタンの数:', saveBtns.length);
   saveBtns.forEach((saveBtn, index) => {
-    console.log(`[initHistoryUI] 保存ボタン${index}にイベントリスナーを設定:`, saveBtn);
-    addTapListener(saveBtn, () => {
-      console.log(`[保存ボタン${index}] タップされました`);
+    saveBtn.addEventListener('click', () => {
+      alert(`保存ボタン${index}がクリックされました`);
       appState.setSaveDialogMode('normal');
       showSaveDialog();
     });
