@@ -1493,6 +1493,7 @@ function addYieldStatsRow() {
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
     <td class="relative-deviation" id="relativeDeviation${rowId}">-</td>
+    <td class="confidence-judgment" id="confidenceJudgment${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -1792,12 +1793,17 @@ function updateYieldStatsStatistics() {
     yieldStatsData.minYieldRate = stats.min;
     yieldStatsData.maxYieldRate = stats.max;
 
+    // 許容誤差を取得
+    const toleranceErrorInput = qs('#yieldStatsToleranceError');
+    const toleranceError = toleranceErrorInput ? parseFloat(toleranceErrorInput.value) : 3.0;
+
     // 各行の相対偏差率を計算して表示
     const avgYield = stats.mean;
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
       const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
       const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
 
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && relativeDeviationDisplay) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
@@ -1806,6 +1812,7 @@ function updateYieldStatsStatistics() {
         if (!isNaN(rate) && avgYield > 0) {
           // 相対偏差率 = (平均 - 個別値) / 平均 × 100
           const relativeDeviation = ((avgYield - rate) / avgYield) * 100;
+          const absDeviation = Math.abs(relativeDeviation);
 
           // 表示用のテキストを生成
           let displayText = `${toFixed(relativeDeviation, 1)}%`;
@@ -1823,23 +1830,72 @@ function updateYieldStatsStatistics() {
           }
 
           relativeDeviationDisplay.textContent = displayText;
+
+          // 判定を計算（許容誤差との比較）
+          if (confidenceJudgmentDisplay) {
+            let judgment = '';
+            let judgmentColor = '';
+
+            if (absDeviation <= toleranceError * 2 / 3) {
+              // 許容誤差の66%以内: 非常に良好 (1～2%の場合、許容誤差3.0なら2.0以内)
+              judgment = '✓ 非常に良好';
+              judgmentColor = '#1b5e20'; // 濃い緑
+            } else if (absDeviation <= toleranceError) {
+              // 許容誤差以内: 良好 (3～4%相当)
+              judgment = '○ 良好';
+              judgmentColor = '#388e3c'; // 緑
+            } else if (absDeviation <= toleranceError * 2) {
+              // 許容誤差の2倍以内: 許容範囲 (5～6%相当)
+              judgment = '△ 許容範囲';
+              judgmentColor = '#f57c00'; // オレンジ
+            } else if (absDeviation <= toleranceError * 2.67) {
+              // 許容誤差の2.67倍以内: 要注意 (7～8%相当)
+              judgment = '! 要注意';
+              judgmentColor = '#e64a19'; // 赤オレンジ
+            } else {
+              // それ以上: 要改善
+              judgment = '× 要改善';
+              judgmentColor = '#c62828'; // 赤
+            }
+
+            confidenceJudgmentDisplay.textContent = judgment;
+            confidenceJudgmentDisplay.style.color = judgmentColor;
+            confidenceJudgmentDisplay.style.fontWeight = 'bold';
+          }
         } else {
           relativeDeviationDisplay.textContent = '-';
           relativeDeviationDisplay.style.color = '';
+          if (confidenceJudgmentDisplay) {
+            confidenceJudgmentDisplay.textContent = '-';
+            confidenceJudgmentDisplay.style.color = '';
+            confidenceJudgmentDisplay.style.fontWeight = '';
+          }
         }
       } else if (relativeDeviationDisplay) {
         relativeDeviationDisplay.textContent = '-';
         relativeDeviationDisplay.style.color = '';
+        if (confidenceJudgmentDisplay) {
+          confidenceJudgmentDisplay.textContent = '-';
+          confidenceJudgmentDisplay.style.color = '';
+          confidenceJudgmentDisplay.style.fontWeight = '';
+        }
       }
     });
   } else {
-    // データが不足している場合は相対偏差率をクリア
+    // データが不足している場合は相対偏差率と判定をクリア
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
       const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+
       if (relativeDeviationDisplay) {
         relativeDeviationDisplay.textContent = '-';
         relativeDeviationDisplay.style.color = '';
+      }
+      if (confidenceJudgmentDisplay) {
+        confidenceJudgmentDisplay.textContent = '-';
+        confidenceJudgmentDisplay.style.color = '';
+        confidenceJudgmentDisplay.style.fontWeight = '';
       }
     });
   }
