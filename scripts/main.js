@@ -1923,8 +1923,17 @@ function displayCurrentStatistics() {
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
 
-  // グローバルに保存（複数パターン分析への遷移用）
+  // グローバルに保存（表示用と推奨代表値計算用）
   window.lastCalculatedStats = finalStats;
+
+  // 歩留まり率の統計を別途保存（複数パターン分析への遷移用）
+  // 選択された統計タイプに関係なく、常に歩留まり率の統計を保存
+  if (data.yieldRate && data.yieldRate.length >= 2) {
+    const yieldRateStats = calculateStatistics(data.yieldRate);
+    window.lastYieldRateStats = yieldRateStats;
+  } else {
+    window.lastYieldRateStats = null;
+  }
 
   // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
   const toleranceErrorInput = qs('#toleranceError');
@@ -2618,11 +2627,14 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
     const multiPatternButtons = qs('#multiPatternButtons');
     const dataInsufficient = qs('#multiPatternDataInsufficient');
 
+    // 歩留まり率の統計データを取得
+    const yieldRateStats = window.lastYieldRateStats;
+
     // データが十分にあるかチェック
-    if (isSampleSizeValid && stats.count >= 2) {
-      // 値を設定
-      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(stats.mean, 2)}%`;
-      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(stats.median, 2)}%`;
+    if (isSampleSizeValid && yieldRateStats && yieldRateStats.count >= 2) {
+      // 値を設定（歩留まり率の統計を使用）
+      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
+      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
       if (recommendedHint) recommendedHint.textContent = recommendedType;
 
       // ボタンを表示、データ不足メッセージは非表示
@@ -2652,8 +2664,8 @@ function updateLoadStatsButtons() {
     return;
   }
 
-  // 保存された統計データをチェック
-  const stats = window.lastCalculatedStats;
+  // 保存された歩留まり率統計データをチェック
+  const stats = window.lastYieldRateStats;
 
   if (stats && stats.count >= 2) {
     // データがある場合、ボタンに値を表示
@@ -4163,7 +4175,7 @@ function init() {
 
   // 複数パターン分析への遷移ボタン（平均値）
   qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
-    const statsData = window.lastCalculatedStats;
+    const statsData = window.lastYieldRateStats;
     if (!statsData) return;
 
     // 確認ダイアログを表示
@@ -4189,7 +4201,7 @@ function init() {
 
   // 複数パターン分析への遷移ボタン（中央値）
   qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
-    const statsData = window.lastCalculatedStats;
+    const statsData = window.lastYieldRateStats;
     if (!statsData) return;
 
     // 確認ダイアログを表示
@@ -4215,7 +4227,7 @@ function init() {
 
   // 複数パターン分析画面内の読み込みボタン（平均値）
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
-    const statsData = window.lastCalculatedStats;
+    const statsData = window.lastYieldRateStats;
     if (!statsData) return;
 
     const yieldRate = statsData.mean;
@@ -4241,7 +4253,7 @@ function init() {
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
-    const statsData = window.lastCalculatedStats;
+    const statsData = window.lastYieldRateStats;
     if (!statsData) return;
 
     const yieldRate = statsData.median;
