@@ -1492,6 +1492,7 @@ function addYieldStatsRow() {
              data-row-id="${rowId}" />
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
+    <td class="relative-deviation" id="relativeDeviation${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -1790,6 +1791,57 @@ function updateYieldStatsStatistics() {
     yieldStatsData.stdDevYieldRate = stats.stdDev;
     yieldStatsData.minYieldRate = stats.min;
     yieldStatsData.maxYieldRate = stats.max;
+
+    // 各行の相対偏差率を計算して表示
+    const avgYield = stats.mean;
+    allRows.forEach(row => {
+      const rowId = row.dataset.rowId;
+      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+
+      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && relativeDeviationDisplay) {
+        const rateText = yieldRateDisplay.textContent.replace('%', '');
+        const rate = parseFloat(rateText);
+
+        if (!isNaN(rate) && avgYield > 0) {
+          // 相対偏差率 = (平均 - 個別値) / 平均 × 100
+          const relativeDeviation = ((avgYield - rate) / avgYield) * 100;
+
+          // 表示用のテキストを生成
+          let displayText = `${toFixed(relativeDeviation, 1)}%`;
+
+          // 説明テキストを追加
+          if (relativeDeviation > 0) {
+            displayText += ` (平均より${toFixed(relativeDeviation, 1)}%低い)`;
+            relativeDeviationDisplay.style.color = '#d32f2f'; // 赤色
+          } else if (relativeDeviation < 0) {
+            displayText += ` (平均より${toFixed(Math.abs(relativeDeviation), 1)}%高い)`;
+            relativeDeviationDisplay.style.color = '#388e3c'; // 緑色
+          } else {
+            displayText = '0.0% (平均と同じ)';
+            relativeDeviationDisplay.style.color = '#666';
+          }
+
+          relativeDeviationDisplay.textContent = displayText;
+        } else {
+          relativeDeviationDisplay.textContent = '-';
+          relativeDeviationDisplay.style.color = '';
+        }
+      } else if (relativeDeviationDisplay) {
+        relativeDeviationDisplay.textContent = '-';
+        relativeDeviationDisplay.style.color = '';
+      }
+    });
+  } else {
+    // データが不足している場合は相対偏差率をクリア
+    allRows.forEach(row => {
+      const rowId = row.dataset.rowId;
+      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      if (relativeDeviationDisplay) {
+        relativeDeviationDisplay.textContent = '-';
+        relativeDeviationDisplay.style.color = '';
+      }
+    });
   }
 
   // AppStateに保存
