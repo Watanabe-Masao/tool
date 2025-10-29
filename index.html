@@ -928,57 +928,6 @@
         </div>
       </div>
 
-      <!-- プリセット管理 -->
-      <div id="multiPatternPresetSection" class="is-hidden">
-        <h3 class="step-title">📋 プリセット管理</h3>
-        <p class="section-description" style="margin-bottom: 1em;">よく使う原価・売価のパターンを保存して、簡単に呼び出せます。</p>
-
-        <!-- プリセット追加フォーム -->
-        <div class="preset-add-form card-sub" style="margin-bottom: 1.5em;">
-          <h4 style="margin-top: 0; margin-bottom: 1em; font-size: 1em; color: #667eea;">新規プリセット作成</h4>
-          <div class="grid">
-            <label class="field">
-              <span>プリセット名</span>
-              <input type="text" id="presetName" placeholder="例: 夏季仕入" />
-            </label>
-            <label class="field">
-              <span>1個原価（円）</span>
-              <input type="number" id="presetUnitCost" step="0.01" placeholder="例: 100" min="0" />
-            </label>
-            <label class="field">
-              <span>1個売価（円）</span>
-              <input type="number" id="presetUnitPrice" step="0.01" placeholder="例: 150" min="0" />
-            </label>
-          </div>
-          <div class="btn-row" style="margin-top: 1em;">
-            <button type="button" id="savePresetBtn" class="btn btn-primary">💾 プリセットを保存</button>
-            <button type="button" id="cancelPresetEditBtn" class="btn btn-secondary is-hidden">キャンセル</button>
-          </div>
-        </div>
-
-        <!-- 保存済みプリセット一覧 -->
-        <div class="preset-list-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
-            <h4 style="margin: 0; font-size: 1em; color: #667eea;">保存済みプリセット</h4>
-            <div>
-              <button type="button" id="selectAllPresetsBtn" class="btn-sm btn-secondary" style="margin-right: 0.5em;">すべて選択</button>
-              <button type="button" id="deselectAllPresetsBtn" class="btn-sm btn-secondary">選択解除</button>
-            </div>
-          </div>
-
-          <!-- プリセット一覧 -->
-          <div id="presetList" class="preset-list">
-            <!-- 動的に生成 -->
-            <p style="color: #999; text-align: center; padding: 2em;">保存されたプリセットはありません</p>
-          </div>
-
-          <!-- 選択したプリセットを追加ボタン -->
-          <div class="btn-row" style="margin-top: 1em;">
-            <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
-          </div>
-        </div>
-      </div>
-
       <!-- ステップ2: パターン入力 -->
       <div id="multiPatternStep2" class="is-hidden">
         <h3 class="step-title">ステップ 2️⃣ 各パターンを入力</h3>
@@ -987,7 +936,6 @@
         <!-- プリセット管理へのリンク -->
         <div class="btn-row" style="margin-bottom: 1em;">
           <button type="button" id="showPresetManagerBtn" class="btn btn-secondary">📋 プリセットから選択</button>
-          <button type="button" id="hidePresetManagerBtn" class="btn btn-secondary is-hidden">← パターン入力に戻る</button>
         </div>
 
         <!-- パターン入力テーブル -->
@@ -1179,6 +1127,95 @@
       </div>
       <div id="formulaModalBody" class="modal-body">
         <!-- 動的に生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- プリセット管理モーダル -->
+  <div id="presetModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 プリセット管理</h3>
+        <button type="button" id="presetModalClose" class="modal-close" aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- 新規プリセット作成 / 編集 -->
+        <div class="preset-editor">
+          <h4 class="preset-editor-title" id="presetEditorTitle">新規プリセット作成</h4>
+
+          <div class="field">
+            <label for="presetName">プリセット名</label>
+            <input type="text" id="presetName" placeholder="例: 夏季仕入" />
+          </div>
+
+          <!-- 原価・売価追加フォーム -->
+          <div class="preset-pair-form">
+            <h5 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #666;">原価・売価を追加</h5>
+            <div class="grid" style="gap: 0.75em;">
+              <div class="field">
+                <label for="tempUnitCost">1個原価（円）</label>
+                <input type="number" id="tempUnitCost" step="0.01" placeholder="150" min="0" />
+              </div>
+              <div class="field">
+                <label for="tempUnitPrice">1個売価（円）</label>
+                <input type="number" id="tempUnitPrice" step="0.01" placeholder="198" min="0" />
+              </div>
+              <div style="align-self: flex-end;">
+                <button type="button" id="addPairBtn" class="btn btn-secondary" style="width: 100%;">追加</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 原価・売価一覧テーブル -->
+          <div class="preset-pairs-section">
+            <h5 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #666;">登録済みパターン <span style="font-size: 0.85em; color: #999;">（売価が高い順）</span></h5>
+            <div class="preset-pairs-table-container">
+              <table class="preset-pairs-table">
+                <thead>
+                  <tr>
+                    <th>原価（円）</th>
+                    <th>売価（円）</th>
+                    <th style="width: 60px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="presetPairsTableBody">
+                  <tr class="empty-message">
+                    <td colspan="3" style="text-align: center; color: #999; padding: 2em;">原価・売価を追加してください</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 保存・キャンセルボタン -->
+          <div class="btn-row" style="margin-top: 1.5em;">
+            <button type="button" id="savePresetBtn" class="btn btn-primary">💾 プリセットを保存</button>
+            <button type="button" id="cancelPresetBtn" class="btn btn-secondary">キャンセル</button>
+          </div>
+        </div>
+
+        <hr style="margin: 2em 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <!-- 保存済みプリセット一覧 -->
+        <div class="preset-list-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
+            <h4 style="margin: 0; font-size: 1.1em;">保存済みプリセット</h4>
+            <div>
+              <button type="button" id="createNewPresetBtn" class="btn btn-primary btn-sm">+ 新規作成</button>
+            </div>
+          </div>
+
+          <!-- プリセット一覧 -->
+          <div id="presetList" class="preset-list">
+            <!-- 動的に生成 -->
+          </div>
+        </div>
+
+        <!-- 選択したプリセットを追加ボタン -->
+        <div class="modal-footer">
+          <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
+        </div>
       </div>
     </div>
   </div>

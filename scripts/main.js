@@ -2675,10 +2675,11 @@ function updateLoadStatsButtons() {
 }
 
 /**
- * プリセット管理機能
+ * プリセット管理機能（モーダル版）
  */
 const PRESET_STORAGE_KEY = 'multiPatternPresets';
-let currentEditingPresetId = null;
+let currentEditingPreset = null; // 編集中のプリセット
+let tempPairs = []; // 一時的な原価・売価ペア配列
 
 // プリセットをlocalStorageから読み込む
 function loadPresets() {
@@ -2687,8 +2688,117 @@ function loadPresets() {
 }
 
 // プリセットをlocalStorageに保存
-function savePresets(presets) {
+function savePresetsData(presets) {
   localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+}
+
+// モーダルを開く（新規作成）
+function openPresetModal() {
+  currentEditingPreset = null;
+  tempPairs = [];
+  qs('#presetEditorTitle').textContent = '新規プリセット作成';
+  qs('#presetName').value = '';
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+  renderPresetList();
+  qs('#presetModal').classList.add('is-open');
+}
+
+// モーダルを閉じる
+function closePresetModal() {
+  qs('#presetModal').classList.remove('is-open');
+  currentEditingPreset = null;
+  tempPairs = [];
+}
+
+// 一時ペアをテーブルに表示
+function renderTempPairs() {
+  const tbody = qs('#presetPairsTableBody');
+  if (!tbody) return;
+
+  if (tempPairs.length === 0) {
+    tbody.innerHTML = '<tr class="empty-message"><td colspan="3" style="text-align: center; color: #999; padding: 2em;">原価・売価を追加してください</td></tr>';
+    return;
+  }
+
+  // 売価基準で降順ソート
+  const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+
+  tbody.innerHTML = sorted.map((pair, index) => `
+    <tr>
+      <td>${pair.unitCost}</td>
+      <td>${pair.unitPrice}</td>
+      <td><button type="button" class="btn-remove-pair" data-pair-index="${index}">削除</button></td>
+    </tr>
+  `).join('');
+}
+
+// 原価・売価ペアを追加
+function addPairToTemp() {
+  const unitCost = parseFloat(qs('#tempUnitCost')?.value);
+  const unitPrice = parseFloat(qs('#tempUnitPrice')?.value);
+
+  if (!Number.isFinite(unitCost) || !Number.isFinite(unitPrice) || unitCost <= 0 || unitPrice <= 0) {
+    alert('原価と売価を正しく入力してください。');
+    return;
+  }
+
+  tempPairs.push({ unitCost, unitPrice });
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+}
+
+// 一時ペアを削除
+function removeTempPair(index) {
+  // ソート済みの配列から実際のインデックスを見つける
+  const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+  const pairToRemove = sorted[index];
+  const realIndex = tempPairs.findIndex(p => p.unitCost === pairToRemove.unitCost && p.unitPrice === pairToRemove.unitPrice);
+
+  if (realIndex !== -1) {
+    tempPairs.splice(realIndex, 1);
+  }
+  renderTempPairs();
+}
+
+// プリセットを保存
+function savePresetFromModal() {
+  const name = qs('#presetName')?.value.trim();
+
+  if (!name) {
+    alert('プリセット名を入力してください。');
+    return;
+  }
+
+  if (tempPairs.length === 0) {
+    alert('少なくとも1つの原価・売価ペアを追加してください。');
+    return;
+  }
+
+  const presets = loadPresets();
+  const patterns = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+
+  if (currentEditingPreset) {
+    // 編集モード
+    const index = presets.findIndex(p => p.id === currentEditingPreset.id);
+    if (index !== -1) {
+      presets[index] = { id: currentEditingPreset.id, name, patterns };
+    }
+  } else {
+    // 新規追加
+    const newPreset = {
+      id: Date.now(),
+      name,
+      patterns
+    };
+    presets.push(newPreset);
+  }
+
+  savePresetsData(presets);
+  renderPresetList();
+  closePresetModal();
 }
 
 // プリセット一覧を表示
@@ -2703,123 +2813,55 @@ function renderPresetList() {
     return;
   }
 
-  presetList.innerHTML = presets.map(preset => `
-    <div class="preset-item" data-preset-id="${preset.id}">
-      <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
-      <div class="preset-info">
-        <div class="preset-name">${preset.name}</div>
-        <div class="preset-values">原価: ${preset.unitCost}円 / 売価: ${preset.unitPrice}円</div>
+  presetList.innerHTML = presets.map(preset => {
+    const patternsDisplay = preset.patterns
+      .slice(0, 3)
+      .map(p => `<span class="preset-pattern-badge">${p.unitCost}円→${p.unitPrice}円</span>`)
+      .join('');
+    const moreText = preset.patterns.length > 3 ? ` <span style="color: #999;">他${preset.patterns.length - 3}件</span>` : '';
+
+    return `
+      <div class="preset-item" data-preset-id="${preset.id}">
+        <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
+        <div class="preset-info">
+          <div class="preset-name">${preset.name}</div>
+          <div class="preset-item-patterns">${patternsDisplay}${moreText}</div>
+        </div>
+        <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>
+        <button class="preset-btn preset-btn-delete" data-preset-id="${preset.id}">削除</button>
       </div>
-      <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>
-      <button class="preset-btn preset-btn-delete" data-preset-id="${preset.id}">削除</button>
-    </div>
-  `).join('');
-}
-
-// プリセットを保存
-function savePreset() {
-  const name = qs('#presetName')?.value.trim();
-  const unitCost = parseFloat(qs('#presetUnitCost')?.value);
-  const unitPrice = parseFloat(qs('#presetUnitPrice')?.value);
-
-  if (!name || !Number.isFinite(unitCost) || !Number.isFinite(unitPrice)) {
-    alert('すべての項目を正しく入力してください。');
-    return;
-  }
-
-  const presets = loadPresets();
-
-  if (currentEditingPresetId) {
-    // 編集モード
-    const index = presets.findIndex(p => p.id === currentEditingPresetId);
-    if (index !== -1) {
-      presets[index] = { id: currentEditingPresetId, name, unitCost, unitPrice };
-    }
-    currentEditingPresetId = null;
-    qs('#cancelPresetEditBtn')?.classList.add('is-hidden');
-    qs('#savePresetBtn').textContent = '💾 プリセットを保存';
-  } else {
-    // 新規追加モード
-    const newPreset = {
-      id: Date.now(),
-      name,
-      unitCost,
-      unitPrice
-    };
-    presets.push(newPreset);
-  }
-
-  savePresets(presets);
-  renderPresetList();
-
-  // フォームをクリア
-  qs('#presetName').value = '';
-  qs('#presetUnitCost').value = '';
-  qs('#presetUnitPrice').value = '';
+    `;
+  }).join('');
 }
 
 // プリセットを編集
-function editPreset(id) {
+function editPresetFromModal(id) {
   const presets = loadPresets();
   const preset = presets.find(p => p.id === id);
 
   if (!preset) return;
 
-  currentEditingPresetId = id;
+  currentEditingPreset = preset;
+  tempPairs = [...preset.patterns];
+  qs('#presetEditorTitle').textContent = 'プリセット編集';
   qs('#presetName').value = preset.name;
-  qs('#presetUnitCost').value = preset.unitCost;
-  qs('#presetUnitPrice').value = preset.unitPrice;
-  qs('#savePresetBtn').textContent = '💾 更新';
-  qs('#cancelPresetEditBtn')?.classList.remove('is-hidden');
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+  renderPresetList();
 
-  // フォームまでスクロール
-  qs('#presetName')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// プリセット編集をキャンセル
-function cancelPresetEdit() {
-  currentEditingPresetId = null;
-  qs('#presetName').value = '';
-  qs('#presetUnitCost').value = '';
-  qs('#presetUnitPrice').value = '';
-  qs('#savePresetBtn').textContent = '💾 プリセットを保存';
-  qs('#cancelPresetEditBtn')?.classList.add('is-hidden');
+  // モーダルを開く
+  qs('#presetModal').classList.add('is-open');
 }
 
 // プリセットを削除
-function deletePreset(id) {
+function deletePresetFromModal(id) {
   if (!confirm('このプリセットを削除してもよろしいですか？')) return;
 
   const presets = loadPresets();
   const filtered = presets.filter(p => p.id !== id);
-  savePresets(filtered);
+  savePresetsData(filtered);
   renderPresetList();
-}
-
-// すべてのプリセットを選択
-function selectAllPresets() {
-  qsa('.preset-checkbox').forEach(cb => cb.checked = true);
-}
-
-// すべてのプリセット選択を解除
-function deselectAllPresets() {
-  qsa('.preset-checkbox').forEach(cb => cb.checked = false);
-}
-
-// プリセット管理画面の表示/非表示
-function showPresetManager() {
-  qs('#multiPatternPresetSection')?.classList.remove('is-hidden');
-  qs('#multiPatternStep2')?.classList.add('is-hidden');
-  qs('#showPresetManagerBtn')?.classList.add('is-hidden');
-  qs('#hidePresetManagerBtn')?.classList.remove('is-hidden');
-  renderPresetList();
-}
-
-function hidePresetManager() {
-  qs('#multiPatternPresetSection')?.classList.add('is-hidden');
-  qs('#multiPatternStep2')?.classList.remove('is-hidden');
-  qs('#showPresetManagerBtn')?.classList.remove('is-hidden');
-  qs('#hidePresetManagerBtn')?.classList.add('is-hidden');
 }
 
 // 選択したプリセットをパターンテーブルに追加
@@ -2835,44 +2877,45 @@ function addSelectedPresetsToTable() {
   const tableBody = qs('#multiPatternTableBody');
   if (!tableBody) return;
 
-  // 選択されたプリセットをテーブルに追加
+  // 選択されたプリセットの全ペアをテーブルに追加
   checkedBoxes.forEach(checkbox => {
     const presetId = parseInt(checkbox.dataset.presetId);
     const preset = presets.find(p => p.id === presetId);
 
-    if (!preset) return;
+    if (!preset || !preset.patterns) return;
 
-    // addPatternBtnをクリックして新しい行を追加
-    const addBtn = qs('#addPatternBtn');
-    if (addBtn) {
-      addBtn.click();
+    // プリセットの各ペアを追加
+    preset.patterns.forEach(pattern => {
+      const addBtn = qs('#addPatternBtn');
+      if (addBtn) {
+        addBtn.click();
 
-      // 最後に追加された行を取得
-      const rows = tableBody.querySelectorAll('tr');
-      const lastRow = rows[rows.length - 1];
+        // 最後に追加された行を取得
+        const rows = tableBody.querySelectorAll('tr');
+        const lastRow = rows[rows.length - 1];
 
-      if (lastRow) {
-        // プリセットの値を設定
-        const unitCostInput = lastRow.querySelector('.pattern-unit-cost');
-        const unitPriceInput = lastRow.querySelector('.pattern-unit-price');
+        if (lastRow) {
+          const unitCostInput = lastRow.querySelector('.pattern-unit-cost');
+          const unitPriceInput = lastRow.querySelector('.pattern-unit-price');
 
-        if (unitCostInput) {
-          unitCostInput.value = preset.unitCost;
-          unitCostInput.dispatchEvent(new Event('input'));
-        }
-        if (unitPriceInput) {
-          unitPriceInput.value = preset.unitPrice;
-          unitPriceInput.dispatchEvent(new Event('input'));
+          if (unitCostInput) {
+            unitCostInput.value = pattern.unitCost;
+            unitCostInput.dispatchEvent(new Event('input'));
+          }
+          if (unitPriceInput) {
+            unitPriceInput.value = pattern.unitPrice;
+            unitPriceInput.dispatchEvent(new Event('input'));
+          }
         }
       }
-    }
+    });
   });
 
-  // プリセット管理画面を閉じてパターン入力画面に戻る
-  hidePresetManager();
+  // モーダルを閉じる
+  closePresetModal();
 
   // チェックを解除
-  deselectAllPresets();
+  qsa('.preset-checkbox').forEach(cb => cb.checked = false);
 }
 
 /**
@@ -4219,22 +4262,28 @@ function init() {
   });
 
   // プリセット管理機能のイベントリスナー
-  qs('#savePresetBtn')?.addEventListener('click', savePreset);
-  qs('#cancelPresetEditBtn')?.addEventListener('click', cancelPresetEdit);
-  qs('#selectAllPresetsBtn')?.addEventListener('click', selectAllPresets);
-  qs('#deselectAllPresetsBtn')?.addEventListener('click', deselectAllPresets);
+  qs('#showPresetManagerBtn')?.addEventListener('click', openPresetModal);
+  qs('#presetModalClose')?.addEventListener('click', closePresetModal);
+  qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
+  qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
+  qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
+  qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
-  qs('#showPresetManagerBtn')?.addEventListener('click', showPresetManager);
-  qs('#hidePresetManagerBtn')?.addEventListener('click', hidePresetManager);
+
+  // モーダルのオーバーレイクリックで閉じる
+  qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
 
   // プリセット一覧のクリックイベント（編集・削除）
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('preset-btn-edit')) {
       const presetId = parseInt(e.target.dataset.presetId);
-      editPreset(presetId);
+      editPresetFromModal(presetId);
     } else if (e.target.classList.contains('preset-btn-delete')) {
       const presetId = parseInt(e.target.dataset.presetId);
-      deletePreset(presetId);
+      deletePresetFromModal(presetId);
+    } else if (e.target.classList.contains('btn-remove-pair')) {
+      const index = parseInt(e.target.dataset.pairIndex);
+      removeTempPair(index);
     }
   });
 
