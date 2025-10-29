@@ -9,6 +9,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
+import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -123,6 +124,27 @@ function hasInputValues() {
         }
       }
     }
+  } else if (currentMode === MODE.MULTI_PATTERN) {
+    // 複数パターン分析モード：品名または入力値があるかチェック
+    const productNameEl = qs(`#${UI_ELEMENTS.MULTI_PATTERN_PRODUCT_NAME}`);
+    if (productNameEl && productNameEl.value.trim() !== '') return true;
+
+    // 歩留まり率と加工前重量をチェック
+    const yieldRateEl = qs('#multiYieldRate');
+    const beforeWeightEl = qs('#multiBeforeWeight');
+    if ((yieldRateEl && yieldRateEl.value.trim() !== '') ||
+        (beforeWeightEl && beforeWeightEl.value.trim() !== '')) {
+      return true;
+    }
+
+    // パターンテーブルに入力があるかチェック
+    const tbody = qs('#multiPatternTableBody');
+    if (tbody) {
+      const inputs = tbody.querySelectorAll('input[type="number"]');
+      for (const input of inputs) {
+        if (input.value.trim() !== '') return true;
+      }
+    }
   }
 
   return false;
@@ -208,6 +230,13 @@ function switchMode(newMode) {
       tbody.innerHTML = '';
       addYieldStatsRow();
     }
+
+    // 注意：統計データ（statsDataByType）と状態（yieldStatsState）は
+    // 複数パターン分析で使用するため、ここではクリアしない
+    // 新しいモードが歩留まり統計モードの場合のみクリアする
+  } else if (currentMode === MODE.MULTI_PATTERN) {
+    // 複数パターン分析モードのクリア処理
+    resetMultiPatternUI();
   }
 
   // 履歴から読み込んだIDをクリア（入力値をクリアしたので新規保存に戻す）
@@ -220,9 +249,10 @@ function switchMode(newMode) {
   const isFixed = newMode === MODE.FIXED;
   const isWeight = newMode === MODE.WEIGHT;
   const isYieldStats = newMode === MODE.YIELD_STATS;
+  const isMultiPattern = newMode === MODE.MULTI_PATTERN;
 
   // ボタンのアクティブ状態を更新
-  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN].forEach(btnId => {
+  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN, UI_ELEMENTS.MULTI_PATTERN_BTN].forEach(btnId => {
     const btn = qs(`#${btnId}`);
     if (btn) {
       btn.classList.remove('is-active');
@@ -230,7 +260,13 @@ function switchMode(newMode) {
     }
   });
 
-  const activeBtn = qs(`#${isFixed ? UI_ELEMENTS.FIXED_BTN : isWeight ? UI_ELEMENTS.WEIGHT_BTN : UI_ELEMENTS.YIELD_STATS_BTN}`);
+  let activeBtnId;
+  if (isFixed) activeBtnId = UI_ELEMENTS.FIXED_BTN;
+  else if (isWeight) activeBtnId = UI_ELEMENTS.WEIGHT_BTN;
+  else if (isYieldStats) activeBtnId = UI_ELEMENTS.YIELD_STATS_BTN;
+  else if (isMultiPattern) activeBtnId = UI_ELEMENTS.MULTI_PATTERN_BTN;
+
+  const activeBtn = qs(`#${activeBtnId}`);
   if (activeBtn) {
     activeBtn.classList.add('is-active');
     activeBtn.setAttribute('aria-selected', 'true');
@@ -240,10 +276,12 @@ function switchMode(newMode) {
   const fixedInputs = qs(`#${UI_ELEMENTS.FIXED_INPUTS}`);
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+  const multiPatternInputs = qs(`#${UI_ELEMENTS.MULTI_PATTERN_INPUTS}`);
 
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
   if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
+  if (multiPatternInputs) multiPatternInputs.classList.toggle('is-hidden', !isMultiPattern);
 
   hide(UI_ELEMENTS.RESULTS);
   hide(UI_ELEMENTS.WARNING);
@@ -255,6 +293,31 @@ function switchMode(newMode) {
     resetWeightSteps();
   } else if (isYieldStats) {
     resetYieldStatsEntries();
+
+    // 歩留まり統計モードに入る時のみ、統計データと状態をリセット
+    window.yieldStatsState = {
+      currentDisplayType: 'yieldRate',
+      isFromHistory: false,
+      isCalculated: false,
+      hasYieldRateData: false,
+      hasBeforeWeightData: false,
+      hasAfterWeightData: false,
+      isOutlierExcluded: false,
+      manuallyExcludedOutlierIndices: new Set(),
+      currentOutlierValues: [],
+      shouldShowMultiPatternLink: false
+    };
+
+    // 統計データもクリア
+    window.statsDataByType = {
+      yieldRate: null,
+      beforeWeight: null,
+      afterWeight: null
+    };
+  } else if (isMultiPattern) {
+    // 複数パターン分析モードは特別なリセット処理は不要（既にresetMultiPatternUIで処理済み）
+    // 歩留まり統計から読み込むボタンの状態を更新
+    updateLoadStatsButtons();
   }
 
   // 保存ボタンの表示を更新（新規保存に戻す）
@@ -1654,6 +1717,10 @@ function restoreYieldStatsTable(tableData) {
     addYieldStatsRow();
   }
 
+  // 状態を更新：履歴から読み込まれた
+  window.yieldStatsState.isFromHistory = true;
+  window.yieldStatsState.isCalculated = true;
+
   // 統計情報を更新
   updateYieldStatsStatistics();
 }
@@ -1817,10 +1884,18 @@ function displayCurrentStatistics() {
   const selectedType = selectElement?.value || 'yieldRate';
   const data = appState.getYieldStatsData();
 
+  // 状態を更新：現在の表示タイプ
+  window.yieldStatsState.currentDisplayType = selectedType;
+
   // 統計タイプが変更されたら外れ値の除外状態をリセット
   if (currentStatsType !== selectedType) {
-    manuallyExcludedOutlierIndices.clear();
-    currentOutlierValues = [];
+    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+    window.yieldStatsState.currentOutlierValues = [];
+    window.yieldStatsState.isOutlierExcluded = false;
+
+    // 後方互換性のため既存変数も更新
+    manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
+    currentOutlierValues = window.yieldStatsState.currentOutlierValues;
     currentStatsType = selectedType;
   }
 
@@ -1884,7 +1959,43 @@ function displayCurrentStatistics() {
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
+
+  // 統計タイプごとの統計データをオブジェクトで管理
+  if (!window.statsDataByType) {
+    window.statsDataByType = {};
+  }
+
+  // 各統計タイプの統計を計算して保存
+  ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
+    if (data[type] && data[type].length >= 2) {
+      window.statsDataByType[type] = calculateStatistics(data[type]);
+    } else {
+      window.statsDataByType[type] = null;
+    }
+  });
+
+  // 状態を更新：データ存在フラグ
+  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
+  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
+  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
+
+  // 状態を更新：計算済みフラグ（新規計算された）
+  window.yieldStatsState.isCalculated = true;
+  window.yieldStatsState.isFromHistory = false;
+
+  // 後方互換性のため、従来の変数も維持
+  window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+
+  // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
+  const toleranceErrorInput = qs('#toleranceError');
+  const hasTolerance = toleranceErrorInput && parseFloat(toleranceErrorInput.value) > 0;
+
   displaySampleSizeValidation();
+
+  // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
+  if (!hasTolerance) {
+    displayRecommendedValue(finalStats, true);
+  }
 }
 
 /**
@@ -2106,8 +2217,12 @@ function displaySampleSizeValidation() {
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   // 手動除外後のデータで計算
   if (finalValues.length >= 2) {
+    // グローバルに保存（複数パターン分析への遷移用）
+    window.lastCalculatedStats = finalStats;
     displayRecommendedValue(finalStats, isValid);
   } else {
+    // グローバルに保存（複数パターン分析への遷移用）
+    window.lastCalculatedStats = stats;
     displayRecommendedValue(stats, isValid);
   }
 
@@ -2115,10 +2230,36 @@ function displaySampleSizeValidation() {
   resultDiv.classList.remove('is-hidden');
 }
 
-// 外れ値の除外状態を管理（値のインデックスで管理）
-let manuallyExcludedOutlierIndices = new Set();
-let currentOutlierValues = []; // 現在の外れ値リスト
-let currentStatsType = ''; // 現在の統計タイプを追跡
+/**
+ * 歩留まり統計の状態管理
+ * データと状態を明確に分離して管理
+ */
+window.yieldStatsState = {
+  // 表示関連の状態
+  currentDisplayType: 'yieldRate',        // 現在表示中の統計タイプ
+
+  // データソース関連の状態
+  isFromHistory: false,                   // 履歴から読み込まれたか
+  isCalculated: false,                    // 計算済みか（新規計算されたか）
+
+  // データ存在フラグ
+  hasYieldRateData: false,                // 歩留まり率データが存在するか
+  hasBeforeWeightData: false,             // 加工前重量データが存在するか
+  hasAfterWeightData: false,              // 加工後重量データが存在するか
+
+  // UI状態
+  isOutlierExcluded: false,               // 外れ値除外が適用されているか
+  manuallyExcludedOutlierIndices: new Set(), // 手動除外された外れ値のインデックス
+  currentOutlierValues: [],               // 現在の外れ値リスト
+
+  // 次のアクション指示
+  shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか
+};
+
+// 後方互換性のため、グローバル変数も残す（徐々に置き換え）
+let manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
+let currentOutlierValues = window.yieldStatsState.currentOutlierValues;
+let currentStatsType = window.yieldStatsState.currentDisplayType;
 
 /**
  * 外れ値情報を表示
@@ -2553,6 +2694,351 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
   recommendedReason.textContent = reason;
 
   recommendedValueDiv.classList.remove('is-hidden');
+
+  // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
+  const multiPatternLink = qs('#multiPatternLink');
+  if (multiPatternLink && statsType === 'yieldRate') {
+    const meanValueDisplay = qs('#meanValueDisplay');
+    const medianValueDisplay = qs('#medianValueDisplay');
+    const recommendedHint = qs('#recommendedHint');
+    const multiPatternButtons = qs('#multiPatternButtons');
+    const dataInsufficient = qs('#multiPatternDataInsufficient');
+
+    // 状態フラグを確認：歩留まり率データが存在するか
+    const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+
+    // 状態を更新：複数パターン分析リンクを表示すべきか
+    window.yieldStatsState.shouldShowMultiPatternLink =
+      isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
+
+    // データが十分にあるかチェック
+    if (window.yieldStatsState.shouldShowMultiPatternLink) {
+      // 推奨値を取得
+      const recommended = getRecommendedValue(yieldRateStats);
+      const recommendedValueDisplay = qs('#recommendedValueDisplay');
+
+      // 値を設定（歩留まり率の統計を使用）
+      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
+      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
+      if (recommendedValueDisplay && recommended) {
+        recommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}%`;
+      }
+      if (recommendedHint) recommendedHint.textContent = recommendedType;
+
+      // ボタンを表示、データ不足メッセージは非表示
+      if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
+      if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
+    } else {
+      // データ不足の場合
+      // ボタンを非表示、データ不足メッセージを表示
+      if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
+      if (dataInsufficient) dataInsufficient.classList.remove('is-hidden');
+    }
+
+    multiPatternLink.classList.remove('is-hidden');
+  }
+}
+
+/**
+ * 歩留まり統計から読み込むボタンの状態を更新
+ */
+function updateLoadStatsButtons() {
+  const loadStatsButtons = qs('#loadStatsButtons');
+  const loadStatsNoData = qs('#loadStatsNoData');
+  const loadMeanValueDisplay = qs('#loadMeanValueDisplay');
+  const loadMedianValueDisplay = qs('#loadMedianValueDisplay');
+  const loadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
+  const generateSigmaPatternsSection = qs('#generateSigmaPatternsSection');
+
+  if (!loadStatsButtons || !loadStatsNoData) {
+    return;
+  }
+
+  // 保存された歩留まり率統計データをチェック
+  const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+  const stats = window.statsDataByType?.[currentDisplayType];
+
+  if (stats && stats.count >= 2) {
+    // 推奨値を取得
+    const recommended = getRecommendedValue(stats);
+
+    // 単位を取得
+    const unit = currentDisplayType === 'yieldRate' ? '%' : 'g';
+
+    // データがある場合、ボタンに値を表示
+    if (loadMeanValueDisplay) {
+      loadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}${unit}`;
+    }
+    if (loadMedianValueDisplay) {
+      loadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}${unit}`;
+    }
+    if (loadRecommendedValueDisplay && recommended) {
+      loadRecommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}${unit}`;
+    }
+
+    // ボタンを表示、メッセージを非表示
+    loadStatsButtons.classList.remove('is-hidden');
+    loadStatsNoData.classList.add('is-hidden');
+
+    // σパターン生成セクションを表示（歩留まり率の場合のみ）
+    if (generateSigmaPatternsSection && currentDisplayType === 'yieldRate') {
+      generateSigmaPatternsSection.classList.remove('is-hidden');
+    }
+  } else {
+    // データがない場合、メッセージを表示
+    loadStatsButtons.classList.add('is-hidden');
+    loadStatsNoData.classList.remove('is-hidden');
+
+    // σパターン生成セクションを非表示
+    if (generateSigmaPatternsSection) {
+      generateSigmaPatternsSection.classList.add('is-hidden');
+    }
+  }
+}
+
+/**
+ * プリセット管理機能（モーダル版）
+ */
+const PRESET_STORAGE_KEY = 'multiPatternPresets';
+let currentEditingPreset = null; // 編集中のプリセット
+let tempPairs = []; // 一時的な原価・売価ペア配列
+
+// プリセットをlocalStorageから読み込む
+function loadPresets() {
+  const presets = localStorage.getItem(PRESET_STORAGE_KEY);
+  return presets ? JSON.parse(presets) : [];
+}
+
+// プリセットをlocalStorageに保存
+function savePresetsData(presets) {
+  localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+}
+
+// モーダルを開く（新規作成）
+function openPresetModal() {
+  currentEditingPreset = null;
+  tempPairs = [];
+  qs('#presetEditorTitle').textContent = '新規プリセット作成';
+  qs('#presetName').value = '';
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+  renderPresetList();
+  qs('#presetModal').classList.add('is-open');
+}
+
+// モーダルを閉じる
+function closePresetModal() {
+  qs('#presetModal').classList.remove('is-open');
+  currentEditingPreset = null;
+  tempPairs = [];
+}
+
+// 一時ペアをテーブルに表示
+function renderTempPairs() {
+  const tbody = qs('#presetPairsTableBody');
+  if (!tbody) return;
+
+  if (tempPairs.length === 0) {
+    tbody.innerHTML = '<tr class="empty-message"><td colspan="3" style="text-align: center; color: #999; padding: 2em;">原価・売価を追加してください</td></tr>';
+    return;
+  }
+
+  // 売価基準で降順ソート
+  const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+
+  tbody.innerHTML = sorted.map((pair, index) => `
+    <tr>
+      <td>${pair.unitCost}</td>
+      <td>${pair.unitPrice}</td>
+      <td><button type="button" class="btn-remove-pair" data-pair-index="${index}">削除</button></td>
+    </tr>
+  `).join('');
+}
+
+// 原価・売価ペアを追加
+function addPairToTemp() {
+  const unitCost = parseFloat(qs('#tempUnitCost')?.value);
+  const unitPrice = parseFloat(qs('#tempUnitPrice')?.value);
+
+  if (!Number.isFinite(unitCost) || !Number.isFinite(unitPrice) || unitCost <= 0 || unitPrice <= 0) {
+    alert('原価と売価を正しく入力してください。');
+    return;
+  }
+
+  tempPairs.push({ unitCost, unitPrice });
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+}
+
+// 一時ペアを削除
+function removeTempPair(index) {
+  // ソート済みの配列から実際のインデックスを見つける
+  const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+  const pairToRemove = sorted[index];
+  const realIndex = tempPairs.findIndex(p => p.unitCost === pairToRemove.unitCost && p.unitPrice === pairToRemove.unitPrice);
+
+  if (realIndex !== -1) {
+    tempPairs.splice(realIndex, 1);
+  }
+  renderTempPairs();
+}
+
+// プリセットを保存
+function savePresetFromModal() {
+  const name = qs('#presetName')?.value.trim();
+
+  if (!name) {
+    alert('プリセット名を入力してください。');
+    return;
+  }
+
+  if (tempPairs.length === 0) {
+    alert('少なくとも1つの原価・売価ペアを追加してください。');
+    return;
+  }
+
+  const presets = loadPresets();
+  const patterns = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+
+  if (currentEditingPreset) {
+    // 編集モード
+    const index = presets.findIndex(p => p.id === currentEditingPreset.id);
+    if (index !== -1) {
+      presets[index] = { id: currentEditingPreset.id, name, patterns };
+    }
+  } else {
+    // 新規追加
+    const newPreset = {
+      id: Date.now(),
+      name,
+      patterns
+    };
+    presets.push(newPreset);
+  }
+
+  savePresetsData(presets);
+  renderPresetList();
+  closePresetModal();
+}
+
+// プリセット一覧を表示
+function renderPresetList() {
+  const presetList = qs('#presetList');
+  if (!presetList) return;
+
+  const presets = loadPresets();
+
+  if (presets.length === 0) {
+    presetList.innerHTML = '<p style="color: #999; text-align: center; padding: 2em;">保存されたプリセットはありません</p>';
+    return;
+  }
+
+  presetList.innerHTML = presets.map(preset => {
+    const patternsDisplay = preset.patterns
+      .slice(0, 3)
+      .map(p => `<span class="preset-pattern-badge">${p.unitCost}円→${p.unitPrice}円</span>`)
+      .join('');
+    const moreText = preset.patterns.length > 3 ? ` <span style="color: #999;">他${preset.patterns.length - 3}件</span>` : '';
+
+    return `
+      <div class="preset-item" data-preset-id="${preset.id}">
+        <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
+        <div class="preset-info">
+          <div class="preset-name">${preset.name}</div>
+          <div class="preset-item-patterns">${patternsDisplay}${moreText}</div>
+        </div>
+        <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>
+        <button class="preset-btn preset-btn-delete" data-preset-id="${preset.id}">削除</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// プリセットを編集
+function editPresetFromModal(id) {
+  const presets = loadPresets();
+  const preset = presets.find(p => p.id === id);
+
+  if (!preset) return;
+
+  currentEditingPreset = preset;
+  tempPairs = [...preset.patterns];
+  qs('#presetEditorTitle').textContent = 'プリセット編集';
+  qs('#presetName').value = preset.name;
+  qs('#tempUnitCost').value = '';
+  qs('#tempUnitPrice').value = '';
+  renderTempPairs();
+  renderPresetList();
+
+  // モーダルを開く
+  qs('#presetModal').classList.add('is-open');
+}
+
+// プリセットを削除
+function deletePresetFromModal(id) {
+  if (!confirm('このプリセットを削除してもよろしいですか？')) return;
+
+  const presets = loadPresets();
+  const filtered = presets.filter(p => p.id !== id);
+  savePresetsData(filtered);
+  renderPresetList();
+}
+
+// 選択したプリセットをパターンテーブルに追加
+function addSelectedPresetsToTable() {
+  const checkedBoxes = qsa('.preset-checkbox:checked');
+
+  if (checkedBoxes.length === 0) {
+    alert('追加するプリセットを選択してください。');
+    return;
+  }
+
+  const presets = loadPresets();
+  const tableBody = qs('#multiPatternTableBody');
+  if (!tableBody) return;
+
+  // 選択されたプリセットの全ペアをテーブルに追加
+  checkedBoxes.forEach(checkbox => {
+    const presetId = parseInt(checkbox.dataset.presetId);
+    const preset = presets.find(p => p.id === presetId);
+
+    if (!preset || !preset.patterns) return;
+
+    // プリセットの各ペアを追加
+    preset.patterns.forEach(pattern => {
+      const addBtn = qs('#addPatternBtn');
+      if (addBtn) {
+        addBtn.click();
+
+        // 最後に追加された行を取得
+        const rows = tableBody.querySelectorAll('tr');
+        const lastRow = rows[rows.length - 1];
+
+        if (lastRow) {
+          const unitCostInput = lastRow.querySelector('.pattern-unit-cost');
+          const unitPriceInput = lastRow.querySelector('.pattern-unit-price');
+
+          if (unitCostInput) {
+            unitCostInput.value = pattern.unitCost;
+            unitCostInput.dispatchEvent(new Event('input'));
+          }
+          if (unitPriceInput) {
+            unitPriceInput.value = pattern.unitPrice;
+            unitPriceInput.dispatchEvent(new Event('input'));
+          }
+        }
+      }
+    });
+  });
+
+  // モーダルを閉じる
+  closePresetModal();
+
+  // チェックを解除
+  qsa('.preset-checkbox').forEach(cb => cb.checked = false);
 }
 
 /**
@@ -3482,6 +3968,7 @@ function init() {
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
   qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
+  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.MULTI_PATTERN));
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
@@ -3678,6 +4165,9 @@ function init() {
   // 履歴機能の初期化
   initHistoryUI();
 
+  // 複数パターン分析モードの初期化
+  initMultiPatternUI();
+
   // 保存ボタンの表示を初期化
   updateSaveButtonsVisibility();
 
@@ -3794,6 +4284,253 @@ function init() {
     }, { once: true });
   }
 
+  /**
+   * 推奨代表値を取得
+   * @param {Object} stats - 統計データ
+   * @returns {Object} {type: 'mean'|'median', value: number, label: string}
+   */
+  function getRecommendedValue(stats) {
+    if (!stats) return null;
+
+    const skewness = stats.skewness;
+    const absSkewness = Math.abs(skewness);
+
+    if (absSkewness <= 0.5) {
+      return { type: 'mean', value: stats.mean, label: '平均値' };
+    } else {
+      return { type: 'median', value: stats.median, label: '中央値' };
+    }
+  }
+
+  /**
+   * 推奨代表値を複数パターン分析に読み込む
+   * @param {boolean} shouldSwitchMode - モード切替を行うか
+   */
+  function loadRecommendedValueToMultiPattern(shouldSwitchMode = false) {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+
+    if (!statsData) {
+      console.warn('[MultiPattern] 統計データが見つかりません');
+      return;
+    }
+
+    const recommended = getRecommendedValue(statsData);
+    if (!recommended) {
+      console.warn('[MultiPattern] 推奨値を取得できません');
+      return;
+    }
+
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    loadStatsValueToMultiPattern(recommended.value, currentDisplayType, shouldSwitchMode, productName);
+
+    // 推奨値を読み込んだことを通知
+    console.log(`[MultiPattern] 推奨代表値（${recommended.label}: ${toFixed(recommended.value, 2)}）を読み込みました`);
+  }
+
+  /**
+   * 標準偏差を使った範囲パターンを生成
+   * @param {Object} stats - 統計データ
+   * @param {number} sigmaRange - 標準偏差の範囲（デフォルト: 2）
+   * @returns {Array<Object>} {label: string, value: number}[]
+   */
+  function generateSigmaPatterns(stats, sigmaRange = 2) {
+    if (!stats || !Number.isFinite(stats.mean) || !Number.isFinite(stats.stdDev)) {
+      return [];
+    }
+
+    const patterns = [];
+    const mean = stats.mean;
+    const stdDev = stats.stdDev;
+
+    // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
+    for (let i = -sigmaRange; i <= sigmaRange; i++) {
+      const value = mean + (i * stdDev);
+
+      // 負の値は除外（歩留まり率や重量は負にならない）
+      if (value < 0) continue;
+
+      let label;
+      if (i === 0) {
+        label = '平均値';
+      } else if (i > 0) {
+        label = `平均+${i}σ`;
+      } else {
+        label = `平均${i}σ`;
+      }
+
+      patterns.push({
+        label,
+        value,
+        sigma: i
+      });
+    }
+
+    return patterns;
+  }
+
+  /**
+   * 統計値を複数パターン分析に読み込む共通関数
+   * @param {number} value - 読み込む統計値
+   * @param {string} displayType - 統計タイプ ('yieldRate', 'beforeWeight', 'afterWeight')
+   * @param {boolean} shouldSwitchMode - モード切替を行うか
+   * @param {string} productName - 商品名（オプション）
+   */
+  function loadStatsValueToMultiPattern(value, displayType, shouldSwitchMode = false, productName = '') {
+    // モード切替が必要な場合
+    if (shouldSwitchMode) {
+      switchMode(MODE.MULTI_PATTERN);
+
+      // 商品名を設定
+      const multiProductNameEl = qs('#multiPatternProductName');
+      if (multiProductNameEl && productName) {
+        multiProductNameEl.value = productName;
+      }
+    }
+
+    // 統計タイプに応じて適切なフィールドに値を設定
+    if (displayType === 'yieldRate') {
+      // 歩留まり率 → 直接入力モードの歩留まり率
+      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+      if (directRadio) {
+        directRadio.checked = true;
+        directRadio.dispatchEvent(new Event('change'));
+      }
+      const yieldRateInput = qs('#multiYieldRateDirect');
+      if (yieldRateInput) {
+        yieldRateInput.value = toFixed(value, 2);
+        yieldRateInput.dispatchEvent(new Event('input'));
+      }
+    } else if (displayType === 'beforeWeight') {
+      // 加工前重量 → 両方のモードの加工前重量に設定（デフォルトは重量から計算モード）
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
+      if (beforeWeightCalcInput) {
+        beforeWeightCalcInput.value = toFixed(value, 2);
+        beforeWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    } else if (displayType === 'afterWeight') {
+      // 加工後重量 → 重量から計算モードの加工後重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
+      if (afterWeightCalcInput) {
+        afterWeightCalcInput.value = toFixed(value, 2);
+        afterWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+    appState.markAsNewCalculation();
+    updateSaveButtonsVisibility();
+  }
+
+  // 複数パターン分析への遷移ボタン（平均値）
+  qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
+  });
+
+  // 複数パターン分析への遷移ボタン（中央値）
+  qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（平均値）
+  qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, false);
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（中央値）
+  qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, false);
+  });
+
+  // 複数パターン分析への遷移ボタン（推奨値）
+  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
+    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    loadRecommendedValueToMultiPattern(true);
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（推奨値）
+  qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
+    loadRecommendedValueToMultiPattern(false);
+  });
+
+  // σパターン一括生成ボタン
+  qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+
+    if (!statsData) {
+      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      return;
+    }
+
+    if (!confirm('現在のパターンをクリアして、標準偏差パターン（平均±1σ、±2σ）を自動生成しますか？')) {
+      return;
+    }
+
+    // σパターンを生成
+    const sigmaPatterns = generateSigmaPatterns(statsData, 2);
+
+    if (sigmaPatterns.length === 0) {
+      alert('パターンを生成できませんでした。');
+      return;
+    }
+
+    // 複数パターン分析のパターンテーブルをクリアして、σパターンを追加
+    // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
+    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
+      window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
+      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
+    } else {
+      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
+      alert('パターン生成機能の初期化に失敗しました。');
+    }
+  });
+
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
   document.addEventListener('input', (e) => {
     // 入力フィールド（number, text）または select要素が変更された場合
@@ -3812,6 +4549,65 @@ function init() {
       appState.markAsChanged();
       updateSaveButtonsVisibility();
     }
+  });
+
+  // プリセット管理機能のイベントリスナー
+  // モーダル内のボタン（これらはモーダルが開いた後に存在する）
+  qs('#presetModalClose')?.addEventListener('click', closePresetModal);
+  qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
+  qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
+  qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
+  qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
+  qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
+
+  // モーダルのオーバーレイクリックで閉じる
+  qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
+
+  // イベント委譲でプリセット関連のボタンを処理
+  document.addEventListener('click', (e) => {
+    // プリセットから選択ボタン
+    if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
+      e.preventDefault();
+      openPresetModal();
+    }
+    // 編集ボタン
+    else if (e.target.classList.contains('preset-btn-edit')) {
+      const presetId = parseInt(e.target.dataset.presetId);
+      editPresetFromModal(presetId);
+    }
+    // 削除ボタン
+    else if (e.target.classList.contains('preset-btn-delete')) {
+      const presetId = parseInt(e.target.dataset.presetId);
+      deletePresetFromModal(presetId);
+    }
+    // ペア削除ボタン
+    else if (e.target.classList.contains('btn-remove-pair')) {
+      const index = parseInt(e.target.dataset.pairIndex);
+      removeTempPair(index);
+    }
+  });
+
+  // アコーディオン（折りたたみ）機能
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const contentId = header.getAttribute('data-accordion');
+      const content = document.getElementById(contentId);
+
+      if (!content) return;
+
+      // トグル処理
+      const isCollapsed = header.classList.contains('is-collapsed');
+
+      if (isCollapsed) {
+        // 展開
+        header.classList.remove('is-collapsed');
+        content.classList.remove('is-hidden');
+      } else {
+        // 折りたたみ
+        header.classList.add('is-collapsed');
+        content.classList.add('is-hidden');
+      }
+    });
   });
 }
 

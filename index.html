@@ -26,6 +26,7 @@
         <button type="button" id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true">定額→計量加工</button>
         <button type="button" id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false">計量→計量加工</button>
         <button type="button" id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false">歩留まり統計</button>
+        <button type="button" id="multiPatternBtn" class="btn btn-mode" role="tab" aria-selected="false">複数パターン分析</button>
       </div>
     </section>
 
@@ -385,8 +386,13 @@
         <div id="statsChart" class="stats-chart"></div>
 
         <!-- 基本統計 -->
-        <h4 class="stats-section-title">基本統計量</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header" data-accordion="basic-stats">
+            <span>基本統計量</span>
+            <span class="accordion-icon">▼</span>
+          </h4>
+          <div class="accordion-content" id="basic-stats">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">データ数</div>
             <div id="statsCount" class="stat-value">-</div>
@@ -440,11 +446,18 @@
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- 四分位数 -->
-        <h4 class="stats-section-title">四分位数</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="quartiles">
+            <span>四分位数</span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="quartiles">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
@@ -466,11 +479,18 @@
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- 分布の形状 -->
-        <h4 class="stats-section-title">分布の形状</h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="distribution">
+            <span>分布の形状</span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="distribution">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
@@ -485,14 +505,21 @@
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- σ範囲 -->
-        <h4 class="stats-section-title">
-          正規分布における信頼区間
-          <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
-        </h4>
-        <div class="stats-grid">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range">
+            <span>
+              正規分布における信頼区間
+              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
+            </span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="sigma-range">
+            <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">
               σ1範囲（68.3%）
@@ -514,14 +541,21 @@
             </div>
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- サンプルサイズの妥当性判断 -->
-        <h4 class="stats-section-title">
-          サンプルサイズの妥当性判断
-          <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
-        </h4>
-        <div class="sample-size-validation">
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">
+            <span>
+              サンプルサイズの妥当性判断
+              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
+            </span>
+            <span class="accordion-icon">▶</span>
+          </h4>
+          <div class="accordion-content is-hidden" id="sample-size">
+            <div class="sample-size-validation">
           <div class="validation-inputs">
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
@@ -616,6 +650,48 @@
                   <span id="recommendedBadge" class="recommended-badge">-</span>
                 </div>
                 <p id="recommendedReason" class="recommended-reason"></p>
+              </div>
+            </div>
+
+          </div>
+          </div>
+        </div>
+
+        <!-- 複数パターン分析への遷移 -->
+        <div id="multiPatternLink" class="multi-pattern-link is-hidden">
+              <div class="info-box">
+                <p><strong>📊 複数パターン分析を使う</strong></p>
+                <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
+
+                <!-- データ不足メッセージ -->
+                <div id="multiPatternDataInsufficient" class="data-insufficient-message is-hidden">
+                  <p style="color: #ef5350; margin: 0.5em 0;">
+                    ⚠️ データが不足しています。歩留まり率を計算するには、2件以上のデータを入力してください。
+                  </p>
+                </div>
+
+                <!-- 代表値選択ボタン -->
+                <div id="multiPatternButtons" class="multi-pattern-buttons is-hidden">
+                  <button type="button" id="goToMultiPatternMeanBtn" class="btn btn-primary multi-pattern-btn">
+                    <span class="btn-label">平均値</span>
+                    <span id="meanValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
+                  <button type="button" id="goToMultiPatternMedianBtn" class="btn btn-secondary multi-pattern-btn">
+                    <span class="btn-label">中央値</span>
+                    <span id="medianValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
+                  <button type="button" id="goToMultiPatternRecommendedBtn" class="btn btn-recommended multi-pattern-btn">
+                    <span class="btn-label">📌 推奨値</span>
+                    <span id="recommendedValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
+                </div>
+
+                <p style="font-size: 0.9em; color: #666; margin-top: 0.5em;">
+                  💡 推奨: <span id="recommendedHint" style="font-weight: bold; color: #667eea;">-</span>
+                </p>
               </div>
             </div>
           </div>
@@ -748,6 +824,202 @@
         <button type="button" class="clear-btn btn btn-secondary">クリア</button>
       </div>
     </section>
+
+    <!-- 複数パターン分析モード -->
+    <section id="multiPatternInputs" class="card section is-hidden" aria-labelledby="multiPatternHeading">
+      <div class="section-header">
+        <h2 id="multiPatternHeading" class="section-title">📊 複数パターン分析</h2>
+      </div>
+      <p class="section-description">歩留まり率と加工前重量を固定し、複数の原価・売価パターンで値入率等を比較分析します。</p>
+
+      <!-- 商品名入力欄 -->
+      <div class="product-name-section">
+        <label class="field">
+          <span>商品名</span>
+          <input type="text" id="multiPatternProductName" class="product-name-input" placeholder="例: キャベツ1/4" />
+        </label>
+      </div>
+
+      <!-- 歩留まり率の入力方法選択 -->
+      <fieldset class="fieldset">
+        <legend class="legend">歩留まり率の入力方法</legend>
+        <label class="radio"><input type="radio" name="yieldMethodMultiPattern" value="calculate" checked /> 重量から計算</label>
+        <label class="radio"><input type="radio" name="yieldMethodMultiPattern" value="direct" /> 歩留まり率を直接入力</label>
+      </fieldset>
+
+      <!-- 重量から計算モード -->
+      <div id="multiPatternCalculateMode">
+        <!-- ステップ1: 重量入力 -->
+        <div id="multiPatternStep1Calculate">
+          <h3 class="step-title">ステップ 1️⃣ 加工前後の重量を入力</h3>
+          <div class="grid">
+            <label class="field">
+              <span>加工前重量（g）</span>
+              <input type="number" id="multiBeforeWeightCalc" step="0.01" inputmode="decimal" placeholder="300" min="0" />
+            </label>
+            <label class="field">
+              <span>加工後重量（g）</span>
+              <input type="number" id="multiAfterWeightCalc" step="0.01" inputmode="decimal" placeholder="150" min="0" />
+            </label>
+          </div>
+        </div>
+
+        <!-- ステップ1結果: 歩留まり率 -->
+        <div id="multiPatternStep1ResultCalc" class="is-hidden step-result">
+          <div class="result-block">
+            <div class="result-label">歩留まり率</div>
+            <div id="multiYieldRateDisplayCalc" class="result-value">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 歩留まり率直接入力モード -->
+      <div id="multiPatternDirectMode" class="is-hidden">
+        <!-- ステップ1: 歩留まり率と加工前重量入力 -->
+        <div id="multiPatternStep1Direct">
+          <h3 class="step-title">ステップ 1️⃣ 歩留まり率と加工前重量を入力</h3>
+          <div class="grid">
+            <label class="field">
+              <span>加工前重量（g）</span>
+              <input type="number" id="multiBeforeWeightDirect" step="0.01" inputmode="decimal" placeholder="300" min="0" />
+            </label>
+            <label class="field">
+              <span>歩留まり率（%）</span>
+              <input type="number" id="multiYieldRateDirect" step="0.01" inputmode="decimal" placeholder="50" min="0" max="100" />
+            </label>
+          </div>
+
+          <!-- 歩留まり統計から読み込み -->
+          <div id="loadFromYieldStats" class="load-from-stats-section">
+            <div class="info-box" style="background: #f8f9fa;">
+              <p style="font-size: 0.9em; margin-bottom: 0.75em; color: #666;">
+                <strong>📊 歩留まり統計から読み込む</strong>
+              </p>
+
+              <!-- データがある場合のボタン -->
+              <div id="loadStatsButtons" class="multi-pattern-buttons is-hidden">
+                <button type="button" id="loadStatsMeanBtn" class="btn btn-primary multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">平均値</span>
+                  <span id="loadMeanValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+                <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">中央値</span>
+                  <span id="loadMedianValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+                <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">📌 推奨値</span>
+                  <span id="loadRecommendedValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+              </div>
+
+              <!-- σパターン一括生成 -->
+              <div id="generateSigmaPatternsSection" class="is-hidden" style="margin-top: 1em; padding-top: 1em; border-top: 1px solid #e0e0e0;">
+                <p style="font-size: 0.9em; margin-bottom: 0.75em; color: #666;">
+                  <strong>📈 標準偏差パターンを生成</strong>
+                </p>
+                <button type="button" id="generateSigmaPatternsBtn" class="btn btn-accent" style="font-size: 0.9em; width: 100%;">
+                  <span>平均±1σ、±2σのパターンを自動生成</span>
+                </button>
+                <p style="font-size: 0.8em; color: #999; margin-top: 0.5em; margin-bottom: 0;">
+                  標準偏差を使った複数シナリオを一括で生成します
+                </p>
+              </div>
+
+              <!-- データがない場合のメッセージ -->
+              <div id="loadStatsNoData" class="data-insufficient-message">
+                <p style="color: #999; margin: 0; font-size: 0.85em;">
+                  歩留まり統計で計算を実行すると、ここから値を読み込めます。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ステップ1結果: 歩留まり率確認 -->
+        <div id="multiPatternStep1ResultDirect" class="is-hidden step-result">
+          <div class="result-block">
+            <div class="result-label">歩留まり率</div>
+            <div id="multiYieldRateDisplayDirect" class="result-value">-</div>
+          </div>
+          <div class="result-block">
+            <div class="result-label">加工後重量</div>
+            <div id="multiAfterWeightDisplayDirect" class="result-value">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ステップ2: パターン入力 -->
+      <div id="multiPatternStep2" class="is-hidden">
+        <h3 class="step-title">ステップ 2️⃣ 各パターンを入力</h3>
+        <p class="section-description" style="margin-bottom: 1em;">時期や仕入先によって変わる原価・売価パターンを入力してください。</p>
+
+        <!-- プリセット管理へのリンク -->
+        <div class="btn-row" style="margin-bottom: 1em;">
+          <button type="button" id="showPresetManagerBtn" class="btn btn-secondary">📋 プリセットから選択</button>
+        </div>
+
+        <!-- パターン入力テーブル -->
+        <div class="multi-pattern-table-container">
+          <table id="multiPatternTable" class="multi-pattern-table">
+            <thead>
+              <tr>
+                <th style="width: 60px;">No.</th>
+                <th>1個原価（円）</th>
+                <th>1個売価（円）</th>
+                <th>加工後設定売価<br>（100g/円）</th>
+                <th style="width: 60px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="multiPatternTableBody">
+              <!-- 動的に行が追加される -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="btn-row" style="margin-top: 1em;">
+          <button type="button" id="addPatternBtn" class="btn btn-secondary">+ パターンを追加</button>
+        </div>
+      </div>
+
+      <!-- ステップ2結果: 比較結果テーブル -->
+      <div id="multiPatternStep2Result" class="is-hidden step-result">
+        <h3 class="section-subtitle">📈 比較結果</h3>
+
+        <div class="multi-pattern-results-container">
+          <table id="multiPatternResultsTable" class="multi-pattern-results-table">
+            <thead>
+              <tr>
+                <th rowspan="2">No.</th>
+                <th colspan="3">加工前</th>
+                <th colspan="3">加工後</th>
+                <th colspan="2">仕上がり</th>
+              </tr>
+              <tr>
+                <th>100g原価<br>（円）</th>
+                <th>100g売価<br>（円）</th>
+                <th>値入率<br>（%）</th>
+                <th>100g原価<br>（円）</th>
+                <th>100g売価<br>（円）</th>
+                <th>値入率<br>（%）</th>
+                <th>仕上がり売価<br>（円）</th>
+                <th>差額<br>（円）</th>
+              </tr>
+            </thead>
+            <tbody id="multiPatternResultsTableBody">
+              <!-- 動的に結果が追加される -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- クリアボタン -->
+      <div class="btn-row" style="margin-top: 1.5em;">
+        <button type="button" id="multiPatternClearBtn" class="btn btn-secondary">クリア</button>
+      </div>
+    </section>
   </main>
 
   <!-- 保存ダイアログ -->
@@ -878,6 +1150,95 @@
       </div>
       <div id="formulaModalBody" class="modal-body">
         <!-- 動的に生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- プリセット管理モーダル -->
+  <div id="presetModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 プリセット管理</h3>
+        <button type="button" id="presetModalClose" class="modal-close" aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- 新規プリセット作成 / 編集 -->
+        <div class="preset-editor">
+          <h4 class="preset-editor-title" id="presetEditorTitle">新規プリセット作成</h4>
+
+          <div class="field">
+            <label for="presetName">プリセット名</label>
+            <input type="text" id="presetName" placeholder="例: 夏季仕入" />
+          </div>
+
+          <!-- 原価・売価追加フォーム -->
+          <div class="preset-pair-form">
+            <h5 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #666;">原価・売価を追加</h5>
+            <div class="grid" style="gap: 0.75em;">
+              <div class="field">
+                <label for="tempUnitCost">1個原価（円）</label>
+                <input type="number" id="tempUnitCost" step="0.01" placeholder="150" min="0" />
+              </div>
+              <div class="field">
+                <label for="tempUnitPrice">1個売価（円）</label>
+                <input type="number" id="tempUnitPrice" step="0.01" placeholder="198" min="0" />
+              </div>
+              <div style="align-self: flex-end;">
+                <button type="button" id="addPairBtn" class="btn btn-secondary" style="width: 100%;">追加</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 原価・売価一覧テーブル -->
+          <div class="preset-pairs-section">
+            <h5 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #666;">登録済みパターン <span style="font-size: 0.85em; color: #999;">（売価が高い順）</span></h5>
+            <div class="preset-pairs-table-container">
+              <table class="preset-pairs-table">
+                <thead>
+                  <tr>
+                    <th>原価（円）</th>
+                    <th>売価（円）</th>
+                    <th style="width: 60px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="presetPairsTableBody">
+                  <tr class="empty-message">
+                    <td colspan="3" style="text-align: center; color: #999; padding: 2em;">原価・売価を追加してください</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 保存・キャンセルボタン -->
+          <div class="btn-row" style="margin-top: 1.5em;">
+            <button type="button" id="savePresetBtn" class="btn btn-primary">💾 プリセットを保存</button>
+            <button type="button" id="cancelPresetBtn" class="btn btn-secondary">キャンセル</button>
+          </div>
+        </div>
+
+        <hr style="margin: 2em 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <!-- 保存済みプリセット一覧 -->
+        <div class="preset-list-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
+            <h4 style="margin: 0; font-size: 1.1em;">保存済みプリセット</h4>
+            <div>
+              <button type="button" id="createNewPresetBtn" class="btn btn-primary btn-sm">+ 新規作成</button>
+            </div>
+          </div>
+
+          <!-- プリセット一覧 -->
+          <div id="presetList" class="preset-list">
+            <!-- 動的に生成 -->
+          </div>
+        </div>
+
+        <!-- 選択したプリセットを追加ボタン -->
+        <div class="modal-footer">
+          <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
+        </div>
       </div>
     </div>
   </div>
