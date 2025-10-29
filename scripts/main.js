@@ -5070,6 +5070,30 @@ function init() {
       const index = parseInt(e.target.dataset.pairIndex);
       removeTempPair(index);
     }
+    // 統計読み込みボタン（平均値）
+    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（中央値）
+    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（推奨値）
+    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    }
   });
 
   // イベント委譲でプリセット関連のボタンを処理（タッチイベント - モバイル対応）
@@ -5091,6 +5115,33 @@ function init() {
       e.preventDefault();
       const index = parseInt(e.target.dataset.pairIndex);
       removeTempPair(index);
+    }
+    // 統計読み込みボタン（平均値）
+    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（中央値）
+    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（推奨値）
+    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      loadRecommendedValueToMultiPattern(false, selectedStatsType);
     }
   }, { passive: false });
 
