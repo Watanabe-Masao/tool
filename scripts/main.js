@@ -4257,7 +4257,9 @@ function init() {
 
   // 複数パターン分析への遷移ボタン（平均値）
   qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
-    const statsData = window.statsDataByType?.yieldRate;
+    // 現在表示中の統計タイプを取得
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
     if (!statsData) return;
 
     // 確認ダイアログを表示
@@ -4265,25 +4267,68 @@ function init() {
       return;
     }
 
-    const yieldRate = statsData.mean;
+    const value = statsData.mean;
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
     // 複数パターン分析モードに切り替え（確認なし）
     switchMode(MODE.MULTI_PATTERN);
 
-    // 歩留まり率と商品名を設定
-    if (yieldRate !== null) {
-      setFromYieldStats(yieldRate, productName);
-      // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
-      appState.markAsNewCalculation();
-      updateSaveButtonsVisibility();
+    // 商品名を設定
+    const multiProductNameEl = qs('#multiPatternProductName');
+    if (multiProductNameEl && productName) {
+      multiProductNameEl.value = productName;
     }
+
+    // 統計タイプに応じて適切なフィールドに値を設定
+    if (currentDisplayType === 'yieldRate') {
+      // 歩留まり率 → 直接入力モードの歩留まり率
+      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+      if (directRadio) {
+        directRadio.checked = true;
+        directRadio.dispatchEvent(new Event('change'));
+      }
+      const yieldRateInput = qs('#multiYieldRateDirect');
+      if (yieldRateInput) {
+        yieldRateInput.value = value.toFixed(2);
+        yieldRateInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'beforeWeight') {
+      // 加工前重量 → 両方のモードの加工前重量に設定（デフォルトは重量から計算モード）
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
+      if (beforeWeightCalcInput) {
+        beforeWeightCalcInput.value = value.toFixed(2);
+        beforeWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'afterWeight') {
+      // 加工後重量 → 重量から計算モードの加工後重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
+      if (afterWeightCalcInput) {
+        afterWeightCalcInput.value = value.toFixed(2);
+        afterWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+    appState.markAsNewCalculation();
+    updateSaveButtonsVisibility();
   });
 
   // 複数パターン分析への遷移ボタン（中央値）
   qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
-    const statsData = window.statsDataByType?.yieldRate;
+    // 現在表示中の統計タイプを取得
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
     if (!statsData) return;
 
     // 確認ダイアログを表示
@@ -4291,41 +4336,109 @@ function init() {
       return;
     }
 
-    const yieldRate = statsData.median;
+    const value = statsData.median;
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
     // 複数パターン分析モードに切り替え（確認なし）
     switchMode(MODE.MULTI_PATTERN);
 
-    // 歩留まり率と商品名を設定
-    if (yieldRate !== null) {
-      setFromYieldStats(yieldRate, productName);
-      // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
-      appState.markAsNewCalculation();
-      updateSaveButtonsVisibility();
+    // 商品名を設定
+    const multiProductNameEl = qs('#multiPatternProductName');
+    if (multiProductNameEl && productName) {
+      multiProductNameEl.value = productName;
     }
+
+    // 統計タイプに応じて適切なフィールドに値を設定
+    if (currentDisplayType === 'yieldRate') {
+      // 歩留まり率 → 直接入力モードの歩留まり率
+      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+      if (directRadio) {
+        directRadio.checked = true;
+        directRadio.dispatchEvent(new Event('change'));
+      }
+      const yieldRateInput = qs('#multiYieldRateDirect');
+      if (yieldRateInput) {
+        yieldRateInput.value = value.toFixed(2);
+        yieldRateInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'beforeWeight') {
+      // 加工前重量 → 両方のモードの加工前重量に設定（デフォルトは重量から計算モード）
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
+      if (beforeWeightCalcInput) {
+        beforeWeightCalcInput.value = value.toFixed(2);
+        beforeWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'afterWeight') {
+      // 加工後重量 → 重量から計算モードの加工後重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
+      if (afterWeightCalcInput) {
+        afterWeightCalcInput.value = value.toFixed(2);
+        afterWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+    appState.markAsNewCalculation();
+    updateSaveButtonsVisibility();
   });
 
   // 複数パターン分析画面内の読み込みボタン（平均値）
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
-    const statsData = window.statsDataByType?.yieldRate;
+    // 現在表示中の統計タイプを取得
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
     if (!statsData) return;
 
-    const yieldRate = statsData.mean;
+    const value = statsData.mean;
 
-    // 直接入力モードに切り替えて値を設定
-    const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
-    if (directRadio) {
-      directRadio.checked = true;
-      directRadio.dispatchEvent(new Event('change'));
-    }
-
-    // 歩留まり率を設定
-    const yieldRateInput = qs('#multiYieldRateDirect');
-    if (yieldRateInput) {
-      yieldRateInput.value = toFixed(yieldRate, 2);
-      yieldRateInput.dispatchEvent(new Event('input'));
+    // 統計タイプに応じて適切なフィールドに値を設定
+    if (currentDisplayType === 'yieldRate') {
+      // 歩留まり率 → 直接入力モードの歩留まり率
+      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+      if (directRadio) {
+        directRadio.checked = true;
+        directRadio.dispatchEvent(new Event('change'));
+      }
+      const yieldRateInput = qs('#multiYieldRateDirect');
+      if (yieldRateInput) {
+        yieldRateInput.value = toFixed(value, 2);
+        yieldRateInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'beforeWeight') {
+      // 加工前重量 → 重量から計算モードの加工前重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
+      if (beforeWeightCalcInput) {
+        beforeWeightCalcInput.value = toFixed(value, 2);
+        beforeWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'afterWeight') {
+      // 加工後重量 → 重量から計算モードの加工後重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
+      if (afterWeightCalcInput) {
+        afterWeightCalcInput.value = toFixed(value, 2);
+        afterWeightCalcInput.dispatchEvent(new Event('input'));
+      }
     }
 
     // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
@@ -4335,23 +4448,50 @@ function init() {
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
-    const statsData = window.statsDataByType?.yieldRate;
+    // 現在表示中の統計タイプを取得
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
     if (!statsData) return;
 
-    const yieldRate = statsData.median;
+    const value = statsData.median;
 
-    // 直接入力モードに切り替えて値を設定
-    const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
-    if (directRadio) {
-      directRadio.checked = true;
-      directRadio.dispatchEvent(new Event('change'));
-    }
-
-    // 歩留まり率を設定
-    const yieldRateInput = qs('#multiYieldRateDirect');
-    if (yieldRateInput) {
-      yieldRateInput.value = toFixed(yieldRate, 2);
-      yieldRateInput.dispatchEvent(new Event('input'));
+    // 統計タイプに応じて適切なフィールドに値を設定
+    if (currentDisplayType === 'yieldRate') {
+      // 歩留まり率 → 直接入力モードの歩留まり率
+      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+      if (directRadio) {
+        directRadio.checked = true;
+        directRadio.dispatchEvent(new Event('change'));
+      }
+      const yieldRateInput = qs('#multiYieldRateDirect');
+      if (yieldRateInput) {
+        yieldRateInput.value = toFixed(value, 2);
+        yieldRateInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'beforeWeight') {
+      // 加工前重量 → 重量から計算モードの加工前重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
+      if (beforeWeightCalcInput) {
+        beforeWeightCalcInput.value = toFixed(value, 2);
+        beforeWeightCalcInput.dispatchEvent(new Event('input'));
+      }
+    } else if (currentDisplayType === 'afterWeight') {
+      // 加工後重量 → 重量から計算モードの加工後重量
+      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+      if (calcRadio) {
+        calcRadio.checked = true;
+        calcRadio.dispatchEvent(new Event('change'));
+      }
+      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
+      if (afterWeightCalcInput) {
+        afterWeightCalcInput.value = toFixed(value, 2);
+        afterWeightCalcInput.dispatchEvent(new Event('input'));
+      }
     }
 
     // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
