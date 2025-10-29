@@ -3086,8 +3086,6 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   const absSkewness = Math.abs(skewness);
 
   // 統計タイプに応じた単位を取得
-  const statsTypeSelect = qs('#statsTypeSelect');
-  const statsType = statsTypeSelect?.value || 'yieldRate';
   const unit = statsType === 'yieldRate' ? '%' : 'g';
 
   const formatValue = (value) => {
