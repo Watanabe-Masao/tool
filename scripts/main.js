@@ -4924,6 +4924,7 @@ function init() {
   const showPresetBtn = qs('#showPresetManagerBtn');
   console.log('showPresetBtn:', showPresetBtn);
   if (showPresetBtn) {
+    // クリックイベント（PC用）
     showPresetBtn.addEventListener('click', (e) => {
       console.log('プリセットボタンがクリックされました');
       alert('ボタンがクリックされました'); // デバッグ用
@@ -4931,14 +4932,31 @@ function init() {
       e.stopPropagation();
       openPresetModal();
     });
-    // モバイル対応：touchstartイベントも追加
+
+    // タッチイベント（モバイル用）- touchendを使用
+    let touchStarted = false;
     showPresetBtn.addEventListener('touchstart', (e) => {
-      console.log('プリセットボタンがタッチされました');
-      alert('ボタンがタッチされました'); // デバッグ用
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
+      console.log('touchstart検出');
+      touchStarted = true;
+    }, { passive: true });
+
+    showPresetBtn.addEventListener('touchend', (e) => {
+      console.log('touchend検出');
+      alert('タッチが検出されました'); // デバッグ用
+      if (touchStarted) {
+        e.preventDefault();
+        e.stopPropagation();
+        openPresetModal();
+        touchStarted = false;
+      }
     }, { passive: false });
+
+    // キャプチャフェーズでも設定（念のため）
+    showPresetBtn.addEventListener('click', (e) => {
+      console.log('キャプチャフェーズ: クリック検出');
+      alert('キャプチャフェーズでクリック検出'); // デバッグ用
+    }, true);
+
     console.log('プリセットボタンのイベントリスナー設定完了');
   } else {
     console.error('showPresetManagerBtn が見つかりません');
