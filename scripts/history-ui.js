@@ -1784,29 +1784,24 @@ function hideHistoryMenu() {
  * 履歴機能の初期化
  */
 export function initHistoryUI() {
-  // 履歴ボタン（定額モード） - テスト用
+  // 履歴ボタン
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
     historyBtn.addEventListener('click', () => {
-      alert('履歴ボタン（定額）がクリックされました');
       showHistoryModal();
     });
   }
 
-  // 履歴ボタン（計量モード） - テスト用
   const historyBtnWeight = qs('#historyBtnWeight');
   if (historyBtnWeight) {
     historyBtnWeight.addEventListener('click', () => {
-      alert('履歴ボタン（計量）がクリックされました');
       showHistoryModal();
     });
   }
 
-  // 履歴ボタン（歩留まり統計モード） - テスト用
   const historyBtnYieldStats = qs('#historyBtnYieldStats');
   if (historyBtnYieldStats) {
     historyBtnYieldStats.addEventListener('click', () => {
-      alert('履歴ボタン（歩留まり統計）がクリックされました');
       showHistoryModal();
     });
   }
@@ -1845,11 +1840,10 @@ export function initHistoryUI() {
     document.addEventListener('touchstart', closeMenuOnOutsideInteraction);
   }
 
-  // 保存ボタン（クラスベースで全てのボタンに設定） - テスト用
+  // 保存ボタン
   const saveBtns = qsa('.save-btn');
-  saveBtns.forEach((saveBtn, index) => {
+  saveBtns.forEach((saveBtn) => {
     saveBtn.addEventListener('click', () => {
-      alert(`保存ボタン${index}がクリックされました`);
       appState.setSaveDialogMode('normal');
       showSaveDialog();
     });

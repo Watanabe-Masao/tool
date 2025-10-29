@@ -3297,52 +3297,35 @@ function savePresetsData(presets) {
 
 // モーダルを開く（新規作成）
 function openPresetModal() {
-  console.log('openPresetModal が呼ばれました');
-  alert('openPresetModal関数が呼ばれました'); // デバッグ用
+  currentEditingPreset = null;
+  tempPairs = [];
 
-  try {
-    console.log('Step 1: 変数の初期化');
-    currentEditingPreset = null;
-    tempPairs = [];
-
-    console.log('Step 2: presetEditorTitle');
-    const editorTitle = qs('#presetEditorTitle');
-    if (!editorTitle) throw new Error('#presetEditorTitle が見つかりません');
+  const editorTitle = qs('#presetEditorTitle');
+  if (editorTitle) {
     editorTitle.textContent = '新規プリセット作成';
+  }
 
-    console.log('Step 3: presetName');
-    const presetName = qs('#presetName');
-    if (!presetName) throw new Error('#presetName が見つかりません');
+  const presetName = qs('#presetName');
+  if (presetName) {
     presetName.value = '';
+  }
 
-    console.log('Step 4: tempUnitCost');
-    const tempUnitCost = qs('#tempUnitCost');
-    if (!tempUnitCost) throw new Error('#tempUnitCost が見つかりません');
+  const tempUnitCost = qs('#tempUnitCost');
+  if (tempUnitCost) {
     tempUnitCost.value = '';
+  }
 
-    console.log('Step 5: tempUnitPrice');
-    const tempUnitPrice = qs('#tempUnitPrice');
-    if (!tempUnitPrice) throw new Error('#tempUnitPrice が見つかりません');
+  const tempUnitPrice = qs('#tempUnitPrice');
+  if (tempUnitPrice) {
     tempUnitPrice.value = '';
+  }
 
-    console.log('Step 6: renderTempPairs');
-    renderTempPairs();
+  renderTempPairs();
+  renderPresetList();
 
-    console.log('Step 7: renderPresetList');
-    renderPresetList();
-
-    console.log('Step 8: presetModal');
-    const modal = qs('#presetModal');
-    if (!modal) throw new Error('#presetModal が見つかりません');
+  const modal = qs('#presetModal');
+  if (modal) {
     modal.classList.add('is-open');
-
-    console.log('モーダルを開きました');
-    alert('成功：モーダルを開きました');
-  } catch (error) {
-    console.error('openPresetModalでエラー:', error);
-    const errorMsg = 'エラー内容:\n' + error.message + '\n\nスタック:\n' + (error.stack || '不明');
-    console.error(errorMsg);
-    alert(errorMsg);
   }
 }
 
@@ -4525,7 +4508,7 @@ function init() {
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
 
-  // モード切替ボタン - テスト用に直接イベント登録
+  // モード切替ボタン
   const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
   const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
   const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
@@ -4533,38 +4516,26 @@ function init() {
 
   if (fixedBtn) {
     fixedBtn.addEventListener('click', () => {
-      alert('定額ボタンがクリックされました');
       handleModeSwitch(MODE.FIXED);
     });
-  } else {
-    alert('エラー: 定額ボタンが見つかりません');
   }
 
   if (weightBtn) {
     weightBtn.addEventListener('click', () => {
-      alert('計量ボタンがクリックされました');
       handleModeSwitch(MODE.WEIGHT);
     });
-  } else {
-    alert('エラー: 計量ボタンが見つかりません');
   }
 
   if (yieldStatsBtn) {
     yieldStatsBtn.addEventListener('click', () => {
-      alert('歩留まり統計ボタンがクリックされました');
       handleModeSwitch(MODE.YIELD_STATS);
     });
-  } else {
-    alert('エラー: 歩留まり統計ボタンが見つかりません');
   }
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
-      alert('複数パターン分析ボタンがクリックされました');
       handleModeSwitch(MODE.MULTI_PATTERN);
     });
-  } else {
-    alert('エラー: 複数パターン分析ボタンが見つかりません');
   }
 
   // クリアボタン（クラスベースで全てのボタンに設定）
@@ -5178,8 +5149,6 @@ function init() {
   });
 
   // プリセット管理機能のイベントリスナー
-  // モーダル内のボタン（これらはモーダルが開いた後に存在する）
-  // クリックイベント
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
   qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
@@ -5187,53 +5156,8 @@ function init() {
   qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
 
-  // タッチイベント（モバイル対応）
-  qs('#presetModalClose')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
-  qs('#createNewPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); openPresetModal(); }, { passive: false });
-  qs('#addPairBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addPairToTemp(); }, { passive: false });
-  qs('#savePresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); savePresetFromModal(); }, { passive: false });
-  qs('#cancelPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
-  qs('#addSelectedPresetsBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addSelectedPresetsToTable(); }, { passive: false });
-
-  // プリセットから選択ボタン（イベント委譲で確実に捕捉）
-  // ドキュメント全体でイベントを捕捉
-  document.addEventListener('click', (e) => {
-    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
-      console.log('イベント委譲でプリセットボタンクリック検出');
-      alert('イベント委譲でクリック検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    }
-  }, true); // キャプチャフェーズで捕捉
-
-  // タッチイベント用のイベント委譲
-  document.addEventListener('touchend', (e) => {
-    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
-      console.log('イベント委譲でプリセットボタンタッチ検出');
-      alert('イベント委譲でタッチ検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    }
-  }, { capture: true, passive: false });
-
-  // 追加で直接イベントリスナーも設定（念のため）
-  const showPresetBtn = qs('#showPresetManagerBtn');
-  console.log('showPresetBtn:', showPresetBtn);
-  if (showPresetBtn) {
-    showPresetBtn.addEventListener('click', (e) => {
-      console.log('直接リスナー: クリック検出');
-      alert('直接リスナーでクリック検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    });
-    console.log('プリセットボタンの直接イベントリスナー設定完了');
-  } else {
-    console.error('showPresetManagerBtn が見つかりません');
-    alert('警告: プリセットボタンが見つかりません（イベント委譲は動作します）');
-  }
+  // プリセットから選択ボタン
+  qs('#showPresetManagerBtn')?.addEventListener('click', openPresetModal);
 
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
