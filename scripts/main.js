@@ -155,19 +155,24 @@ function hasInputValues() {
  * @param {string} newMode - 切り替え先のモード
  */
 function handleModeSwitch(newMode) {
+  console.log('[handleModeSwitch] 呼び出し:', newMode, '現在:', appState.getMode());
+
   // 同じモードへの切り替えはスキップ
   if (appState.getMode() === newMode) {
+    console.log('[handleModeSwitch] 同じモードなのでスキップ');
     return;
   }
 
   // 現在のモードに入力値があるかチェック
   if (hasInputValues()) {
+    console.log('[handleModeSwitch] 入力値あり、確認ダイアログ表示');
     if (confirm('入力されている値が消えますが、よろしいですか？')) {
       switchMode(newMode);
     }
     // ユーザーがキャンセルした場合は何もしない
   } else {
     // 入力値がない場合は直接切り替え
+    console.log('[handleModeSwitch] 入力値なし、直接切り替え');
     switchMode(newMode);
   }
 }
@@ -4524,14 +4529,49 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
+  console.log('[INIT] 初期化開始');
+
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
 
+  // デバッグ：ボタン要素の存在確認
+  const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
+  const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
+  const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
+  const multiPatternBtn = qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`);
+
+  console.log('[INIT] ボタン要素:', {
+    fixedBtn: !!fixedBtn,
+    weightBtn: !!weightBtn,
+    yieldStatsBtn: !!yieldStatsBtn,
+    multiPatternBtn: !!multiPatternBtn
+  });
+
   // モード切替ボタン（タップ対応）
-  addTapListener(qs(`#${UI_ELEMENTS.FIXED_BTN}`), () => handleModeSwitch(MODE.FIXED));
-  addTapListener(qs(`#${UI_ELEMENTS.WEIGHT_BTN}`), () => handleModeSwitch(MODE.WEIGHT));
-  addTapListener(qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`), () => handleModeSwitch(MODE.YIELD_STATS));
-  addTapListener(qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`), () => handleModeSwitch(MODE.MULTI_PATTERN));
+  if (fixedBtn) {
+    addTapListener(fixedBtn, () => {
+      console.log('[CLICK] 定額ボタンクリック');
+      handleModeSwitch(MODE.FIXED);
+    });
+  }
+  if (weightBtn) {
+    addTapListener(weightBtn, () => {
+      console.log('[CLICK] 計量ボタンクリック');
+      handleModeSwitch(MODE.WEIGHT);
+    });
+  }
+  if (yieldStatsBtn) {
+    addTapListener(yieldStatsBtn, () => {
+      console.log('[CLICK] 歩留まり統計ボタンクリック');
+      handleModeSwitch(MODE.YIELD_STATS);
+    });
+  }
+  if (multiPatternBtn) {
+    addTapListener(multiPatternBtn, () => {
+      console.log('[CLICK] 複数パターン分析ボタンクリック');
+      handleModeSwitch(MODE.MULTI_PATTERN);
+    });
+  }
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
