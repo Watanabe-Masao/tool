@@ -9,7 +9,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
-import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats } from './multi-pattern-ui.js';
+import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats, setStatValue } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -1492,6 +1492,7 @@ function addYieldStatsRow() {
              data-row-id="${rowId}" />
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
+    <td class="relative-deviation" id="relativeDeviation${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -1721,8 +1722,10 @@ function restoreYieldStatsTable(tableData) {
   window.yieldStatsState.isFromHistory = true;
   window.yieldStatsState.isCalculated = true;
 
-  // 統計情報を更新
-  updateYieldStatsStatistics();
+  // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
+  setTimeout(() => {
+    updateYieldStatsStatistics();
+  }, 50);
 }
 
 // window オブジェクトに関数を公開（history-ui.js から呼び出すため）
@@ -1788,6 +1791,57 @@ function updateYieldStatsStatistics() {
     yieldStatsData.stdDevYieldRate = stats.stdDev;
     yieldStatsData.minYieldRate = stats.min;
     yieldStatsData.maxYieldRate = stats.max;
+
+    // 各行の相対偏差率を計算して表示
+    const avgYield = stats.mean;
+    allRows.forEach(row => {
+      const rowId = row.dataset.rowId;
+      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+
+      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && relativeDeviationDisplay) {
+        const rateText = yieldRateDisplay.textContent.replace('%', '');
+        const rate = parseFloat(rateText);
+
+        if (!isNaN(rate) && avgYield > 0) {
+          // 相対偏差率 = (平均 - 個別値) / 平均 × 100
+          const relativeDeviation = ((avgYield - rate) / avgYield) * 100;
+
+          // 表示用のテキストを生成
+          let displayText = `${toFixed(relativeDeviation, 1)}%`;
+
+          // 説明テキストを追加
+          if (relativeDeviation > 0) {
+            displayText += ` (平均より${toFixed(relativeDeviation, 1)}%低い)`;
+            relativeDeviationDisplay.style.color = '#d32f2f'; // 赤色
+          } else if (relativeDeviation < 0) {
+            displayText += ` (平均より${toFixed(Math.abs(relativeDeviation), 1)}%高い)`;
+            relativeDeviationDisplay.style.color = '#388e3c'; // 緑色
+          } else {
+            displayText = '0.0% (平均と同じ)';
+            relativeDeviationDisplay.style.color = '#666';
+          }
+
+          relativeDeviationDisplay.textContent = displayText;
+        } else {
+          relativeDeviationDisplay.textContent = '-';
+          relativeDeviationDisplay.style.color = '';
+        }
+      } else if (relativeDeviationDisplay) {
+        relativeDeviationDisplay.textContent = '-';
+        relativeDeviationDisplay.style.color = '';
+      }
+    });
+  } else {
+    // データが不足している場合は相対偏差率をクリア
+    allRows.forEach(row => {
+      const rowId = row.dataset.rowId;
+      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      if (relativeDeviationDisplay) {
+        relativeDeviationDisplay.textContent = '-';
+        relativeDeviationDisplay.style.color = '';
+      }
+    });
   }
 
   // AppStateに保存
@@ -1798,7 +1852,6 @@ function updateYieldStatsStatistics() {
 
   if (hasEnoughData) {
     displayCurrentStatistics();
-    show('yieldStatsResults');
   } else {
     hide('yieldStatsResults');
   }
@@ -1888,6 +1941,7 @@ function displayCurrentStatistics() {
   window.yieldStatsState.currentDisplayType = selectedType;
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
+  // 注：この時点ではまだ自動切り替え前なので selectedType を使用
   if (currentStatsType !== selectedType) {
     window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
     window.yieldStatsState.currentOutlierValues = [];
@@ -1896,16 +1950,80 @@ function displayCurrentStatistics() {
     // 後方互換性のため既存変数も更新
     manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
     currentOutlierValues = window.yieldStatsState.currentOutlierValues;
-    currentStatsType = selectedType;
   }
 
-  if (!data) return;
-
-  let values = data[selectedType];
-  if (!values || values.length < 2) {
-    // データが不足している場合は非表示
+  if (!data) {
     hide('yieldStatsResults');
     return;
+  }
+
+  // 統計タイプごとの統計データをオブジェクトで管理（表示処理の前に実行）
+  if (!window.statsDataByType) {
+    window.statsDataByType = {};
+  }
+
+  // 各統計タイプの統計を計算して保存
+  ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
+    if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
+      window.statsDataByType[type] = calculateStatistics(data[type]);
+    } else {
+      window.statsDataByType[type] = null;
+    }
+  });
+
+  // 状態を更新：データ存在フラグ
+  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
+  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
+  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
+
+  // 状態を更新：計算済みフラグ
+  // 注：isFromHistoryは履歴復元時に既にtrueが設定されている場合があるので、
+  // 既にtrueの場合は保持し、falseの場合のみ明示的にfalseを設定する
+  window.yieldStatsState.isCalculated = true;
+  if (!window.yieldStatsState.isFromHistory) {
+    window.yieldStatsState.isFromHistory = false;
+  }
+
+  // 複数パターン分析の読み込みボタンの状態を更新
+  updateLoadStatsButtons();
+
+  // 選択されたタイプにデータがない場合、データのあるタイプに自動切り替え
+  let values = data[selectedType];
+  let actualSelectedType = selectedType;
+
+  if (!values || !Array.isArray(values) || values.length < 2) {
+    // データのあるタイプを探す（優先順: yieldRate > beforeWeight > afterWeight）
+    const typePriority = ['yieldRate', 'beforeWeight', 'afterWeight'];
+    let foundType = null;
+
+    for (const type of typePriority) {
+      if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
+        foundType = type;
+        break;
+      }
+    }
+
+    if (foundType) {
+      // データのあるタイプに切り替え
+      actualSelectedType = foundType;
+      values = data[foundType];
+
+      // セレクトボックスも更新
+      if (selectElement) {
+        selectElement.value = foundType;
+        window.yieldStatsState.currentDisplayType = foundType;
+      }
+
+      // currentStatsTypeも更新
+      currentStatsType = foundType;
+    } else {
+      // 全てのタイプでデータが不足している場合は非表示
+      hide('yieldStatsResults');
+      return;
+    }
+  } else {
+    // データがある場合、currentStatsTypeを更新
+    currentStatsType = actualSelectedType;
   }
 
   // 手動除外が設定されている場合、データをフィルタリング
@@ -1942,13 +2060,13 @@ function displayCurrentStatistics() {
   // 統計タイプに応じた単位を設定
   let unit = '';
   let typeName = '';
-  if (selectedType === 'yieldRate') {
+  if (actualSelectedType === 'yieldRate') {
     unit = '%';
     typeName = '歩留まり率';
-  } else if (selectedType === 'beforeWeight') {
+  } else if (actualSelectedType === 'beforeWeight') {
     unit = 'g';
     typeName = '加工前重量';
-  } else if (selectedType === 'afterWeight') {
+  } else if (actualSelectedType === 'afterWeight') {
     unit = 'g';
     typeName = '加工後重量';
   }
@@ -1957,31 +2075,11 @@ function displayCurrentStatistics() {
   displayStatistics(finalStats, unit);
   renderStatsChart(finalValues, finalStats, typeName, unit);
 
+  // 統計結果を表示
+  show('yieldStatsResults');
+
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
-
-  // 統計タイプごとの統計データをオブジェクトで管理
-  if (!window.statsDataByType) {
-    window.statsDataByType = {};
-  }
-
-  // 各統計タイプの統計を計算して保存
-  ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
-    if (data[type] && data[type].length >= 2) {
-      window.statsDataByType[type] = calculateStatistics(data[type]);
-    } else {
-      window.statsDataByType[type] = null;
-    }
-  });
-
-  // 状態を更新：データ存在フラグ
-  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
-  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
-  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
-
-  // 状態を更新：計算済みフラグ（新規計算された）
-  window.yieldStatsState.isCalculated = true;
-  window.yieldStatsState.isFromHistory = false;
 
   // 後方互換性のため、従来の変数も維持
   window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
@@ -2638,6 +2736,65 @@ function setupFormulaModal() {
 }
 
 /**
+ * 推奨代表値を取得
+ * @param {Object} stats - 統計データ
+ * @returns {Object} {type: 'mean'|'median', value: number, label: string}
+ */
+function getRecommendedValue(stats) {
+  if (!stats) return null;
+
+  const skewness = stats.skewness;
+  const absSkewness = Math.abs(skewness);
+
+  if (absSkewness <= 0.5) {
+    return { type: 'mean', value: stats.mean, label: '平均値' };
+  } else {
+    return { type: 'median', value: stats.median, label: '中央値' };
+  }
+}
+
+/**
+ * 標準偏差を使った範囲パターンを生成
+ * @param {Object} stats - 統計データ
+ * @param {number} sigmaRange - 標準偏差の範囲（デフォルト: 2）
+ * @returns {Array<Object>} {label: string, value: number}[]
+ */
+function generateSigmaPatterns(stats, sigmaRange = 2) {
+  if (!stats || !Number.isFinite(stats.mean) || !Number.isFinite(stats.stdDev)) {
+    return [];
+  }
+
+  const patterns = [];
+  const mean = stats.mean;
+  const stdDev = stats.stdDev;
+
+  // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
+  for (let i = -sigmaRange; i <= sigmaRange; i++) {
+    const value = mean + (i * stdDev);
+
+    // 負の値は除外（歩留まり率や重量は負にならない）
+    if (value < 0) continue;
+
+    let label;
+    if (i === 0) {
+      label = '平均値';
+    } else if (i > 0) {
+      label = `平均+${i}σ`;
+    } else {
+      label = `平均${i}σ`;
+    }
+
+    patterns.push({
+      label,
+      value,
+      sigma: i
+    });
+  }
+
+  return patterns;
+}
+
+/**
  * 推奨代表値を表示
  * @param {Object} stats - 統計データ
  * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
@@ -2750,21 +2907,49 @@ function updateLoadStatsButtons() {
   const loadMedianValueDisplay = qs('#loadMedianValueDisplay');
   const loadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
   const generateSigmaPatternsSection = qs('#generateSigmaPatternsSection');
+  const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
 
-  if (!loadStatsButtons || !loadStatsNoData) {
+  if (!loadStatsButtons || !loadStatsNoData || !loadStatsTypeSelect) {
     return;
   }
 
-  // 保存された歩留まり率統計データをチェック
-  const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-  const stats = window.statsDataByType?.[currentDisplayType];
+  // 現在の複数パターン分析のモードを取得
+  const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
+
+  // 現在選択されている値を保存
+  const previousValue = loadStatsTypeSelect.value;
+
+  // モードに応じてプルダウンの選択肢を更新
+  loadStatsTypeSelect.innerHTML = '';
+  if (currentMode === 'direct') {
+    // 歩留まり率直接入力モード：歩留まり率と加工前重量のみ
+    loadStatsTypeSelect.innerHTML = `
+      <option value="yieldRate">歩留まり率（%）</option>
+      <option value="beforeWeight">加工前重量（g）</option>
+    `;
+  } else {
+    // 重量から計算モード：加工前重量と加工後重量のみ
+    loadStatsTypeSelect.innerHTML = `
+      <option value="beforeWeight">加工前重量（g）</option>
+      <option value="afterWeight">加工後重量（g）</option>
+    `;
+  }
+
+  // 以前の選択値が新しいオプションに存在すれば復元
+  if (previousValue && Array.from(loadStatsTypeSelect.options).some(opt => opt.value === previousValue)) {
+    loadStatsTypeSelect.value = previousValue;
+  }
+
+  // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
+  const selectedStatsType = loadStatsTypeSelect.value;
+  const stats = window.statsDataByType?.[selectedStatsType];
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
     // 単位を取得
-    const unit = currentDisplayType === 'yieldRate' ? '%' : 'g';
+    const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
 
     // データがある場合、ボタンに値を表示
     if (loadMeanValueDisplay) {
@@ -2782,8 +2967,10 @@ function updateLoadStatsButtons() {
     loadStatsNoData.classList.add('is-hidden');
 
     // σパターン生成セクションを表示（歩留まり率の場合のみ）
-    if (generateSigmaPatternsSection && currentDisplayType === 'yieldRate') {
+    if (generateSigmaPatternsSection && selectedStatsType === 'yieldRate') {
       generateSigmaPatternsSection.classList.remove('is-hidden');
+    } else if (generateSigmaPatternsSection) {
+      generateSigmaPatternsSection.classList.add('is-hidden');
     }
   } else {
     // データがない場合、メッセージを表示
@@ -4285,30 +4472,13 @@ function init() {
   }
 
   /**
-   * 推奨代表値を取得
-   * @param {Object} stats - 統計データ
-   * @returns {Object} {type: 'mean'|'median', value: number, label: string}
-   */
-  function getRecommendedValue(stats) {
-    if (!stats) return null;
-
-    const skewness = stats.skewness;
-    const absSkewness = Math.abs(skewness);
-
-    if (absSkewness <= 0.5) {
-      return { type: 'mean', value: stats.mean, label: '平均値' };
-    } else {
-      return { type: 'median', value: stats.median, label: '中央値' };
-    }
-  }
-
-  /**
    * 推奨代表値を複数パターン分析に読み込む
    * @param {boolean} shouldSwitchMode - モード切替を行うか
+   * @param {string} statsType - 統計タイプ（指定がない場合は現在の表示タイプを使用）
    */
-  function loadRecommendedValueToMultiPattern(shouldSwitchMode = false) {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+  function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, statsType = null) {
+    const selectedStatsType = statsType || window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
       console.warn('[MultiPattern] 統計データが見つかりません');
@@ -4324,51 +4494,10 @@ function init() {
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
-    loadStatsValueToMultiPattern(recommended.value, currentDisplayType, shouldSwitchMode, productName);
+    loadStatsValueToMultiPattern(recommended.value, selectedStatsType, shouldSwitchMode, productName);
 
     // 推奨値を読み込んだことを通知
     console.log(`[MultiPattern] 推奨代表値（${recommended.label}: ${toFixed(recommended.value, 2)}）を読み込みました`);
-  }
-
-  /**
-   * 標準偏差を使った範囲パターンを生成
-   * @param {Object} stats - 統計データ
-   * @param {number} sigmaRange - 標準偏差の範囲（デフォルト: 2）
-   * @returns {Array<Object>} {label: string, value: number}[]
-   */
-  function generateSigmaPatterns(stats, sigmaRange = 2) {
-    if (!stats || !Number.isFinite(stats.mean) || !Number.isFinite(stats.stdDev)) {
-      return [];
-    }
-
-    const patterns = [];
-    const mean = stats.mean;
-    const stdDev = stats.stdDev;
-
-    // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
-    for (let i = -sigmaRange; i <= sigmaRange; i++) {
-      const value = mean + (i * stdDev);
-
-      // 負の値は除外（歩留まり率や重量は負にならない）
-      if (value < 0) continue;
-
-      let label;
-      if (i === 0) {
-        label = '平均値';
-      } else if (i > 0) {
-        label = `平均+${i}σ`;
-      } else {
-        label = `平均${i}σ`;
-      }
-
-      patterns.push({
-        label,
-        value,
-        sigma: i
-      });
-    }
-
-    return patterns;
   }
 
   /**
@@ -4382,52 +4511,10 @@ function init() {
     // モード切替が必要な場合
     if (shouldSwitchMode) {
       switchMode(MODE.MULTI_PATTERN);
-
-      // 商品名を設定
-      const multiProductNameEl = qs('#multiPatternProductName');
-      if (multiProductNameEl && productName) {
-        multiProductNameEl.value = productName;
-      }
     }
 
-    // 統計タイプに応じて適切なフィールドに値を設定
-    if (displayType === 'yieldRate') {
-      // 歩留まり率 → 直接入力モードの歩留まり率
-      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
-      if (directRadio) {
-        directRadio.checked = true;
-        directRadio.dispatchEvent(new Event('change'));
-      }
-      const yieldRateInput = qs('#multiYieldRateDirect');
-      if (yieldRateInput) {
-        yieldRateInput.value = toFixed(value, 2);
-        yieldRateInput.dispatchEvent(new Event('input'));
-      }
-    } else if (displayType === 'beforeWeight') {
-      // 加工前重量 → 両方のモードの加工前重量に設定（デフォルトは重量から計算モード）
-      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
-      if (calcRadio) {
-        calcRadio.checked = true;
-        calcRadio.dispatchEvent(new Event('change'));
-      }
-      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
-      if (beforeWeightCalcInput) {
-        beforeWeightCalcInput.value = toFixed(value, 2);
-        beforeWeightCalcInput.dispatchEvent(new Event('input'));
-      }
-    } else if (displayType === 'afterWeight') {
-      // 加工後重量 → 重量から計算モードの加工後重量
-      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
-      if (calcRadio) {
-        calcRadio.checked = true;
-        calcRadio.dispatchEvent(new Event('change'));
-      }
-      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
-      if (afterWeightCalcInput) {
-        afterWeightCalcInput.value = toFixed(value, 2);
-        afterWeightCalcInput.dispatchEvent(new Event('input'));
-      }
-    }
+    // multi-pattern-ui.jsのsetStatValue関数を使用して値を設定
+    setStatValue(value, displayType, productName);
 
     // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
     appState.markAsNewCalculation();
@@ -4466,22 +4553,36 @@ function init() {
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
   });
 
+  // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
+  qsa('input[name="yieldMethodMultiPattern"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      updateLoadStatsButtons();
+    });
+  });
+
+  // 複数パターン分析画面: 統計タイプ選択プルダウンの変更イベント
+  qs('#loadStatsTypeSelect')?.addEventListener('change', () => {
+    updateLoadStatsButtons();
+  });
+
   // 複数パターン分析画面内の読み込みボタン（平均値）
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, false);
+    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
   });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, false);
+    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
   });
 
   // 複数パターン分析への遷移ボタン（推奨値）
@@ -4495,13 +4596,16 @@ function init() {
 
   // 複数パターン分析画面内の読み込みボタン（推奨値）
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
-    loadRecommendedValueToMultiPattern(false);
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    loadRecommendedValueToMultiPattern(false, selectedStatsType);
   });
 
   // σパターン一括生成ボタン
   qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
       alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
