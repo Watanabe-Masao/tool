@@ -3290,15 +3290,31 @@ function updateLoadStatsButtons() {
     bulkImportBtn.textContent = '📥 推奨値を一括転記';
 
     // イベントハンドラを設定
-    bulkImportBtn.onclick = () => {
-      console.log('[DEBUG] 一括転記ボタンがクリックされました');
-      loadAllStatsToMultiPattern();
-    };
-    bulkImportBtn.ontouchend = (e) => {
-      console.log('[DEBUG] 一括転記ボタンがタッチされました');
-      e.preventDefault();
-      loadAllStatsToMultiPattern();
-    };
+    // タッチデバイスとマウスデバイスの両方に対応
+    let touchStarted = false;
+
+    bulkImportBtn.addEventListener('touchstart', (e) => {
+      console.log('[DEBUG] touchstart');
+      touchStarted = true;
+    }, { passive: true });
+
+    bulkImportBtn.addEventListener('touchend', (e) => {
+      console.log('[DEBUG] touchend');
+      if (touchStarted) {
+        e.preventDefault();
+        touchStarted = false;
+        console.log('[DEBUG] 一括転記ボタンがタッチされました');
+        loadAllStatsToMultiPattern();
+      }
+    }, { passive: false });
+
+    bulkImportBtn.addEventListener('click', (e) => {
+      console.log('[DEBUG] click');
+      if (!touchStarted) {
+        console.log('[DEBUG] 一括転記ボタンがクリックされました');
+        loadAllStatsToMultiPattern();
+      }
+    });
 
     bulkImportBtnContainer.appendChild(bulkImportBtn);
     console.log('[DEBUG] 一括転記ボタンをDOMに追加しました', bulkImportBtn);
