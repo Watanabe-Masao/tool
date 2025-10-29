@@ -231,26 +231,9 @@ function switchMode(newMode) {
       addYieldStatsRow();
     }
 
-    // 歩留まり統計の状態をリセット
-    window.yieldStatsState = {
-      currentDisplayType: 'yieldRate',
-      isFromHistory: false,
-      isCalculated: false,
-      hasYieldRateData: false,
-      hasBeforeWeightData: false,
-      hasAfterWeightData: false,
-      isOutlierExcluded: false,
-      manuallyExcludedOutlierIndices: new Set(),
-      currentOutlierValues: [],
-      shouldShowMultiPatternLink: false
-    };
-
-    // 統計データもクリア
-    window.statsDataByType = {
-      yieldRate: null,
-      beforeWeight: null,
-      afterWeight: null
-    };
+    // 注意：統計データ（statsDataByType）と状態（yieldStatsState）は
+    // 複数パターン分析で使用するため、ここではクリアしない
+    // 新しいモードが歩留まり統計モードの場合のみクリアする
   } else if (currentMode === MODE.MULTI_PATTERN) {
     // 複数パターン分析モードのクリア処理
     resetMultiPatternUI();
@@ -310,6 +293,27 @@ function switchMode(newMode) {
     resetWeightSteps();
   } else if (isYieldStats) {
     resetYieldStatsEntries();
+
+    // 歩留まり統計モードに入る時のみ、統計データと状態をリセット
+    window.yieldStatsState = {
+      currentDisplayType: 'yieldRate',
+      isFromHistory: false,
+      isCalculated: false,
+      hasYieldRateData: false,
+      hasBeforeWeightData: false,
+      hasAfterWeightData: false,
+      isOutlierExcluded: false,
+      manuallyExcludedOutlierIndices: new Set(),
+      currentOutlierValues: [],
+      shouldShowMultiPatternLink: false
+    };
+
+    // 統計データもクリア
+    window.statsDataByType = {
+      yieldRate: null,
+      beforeWeight: null,
+      afterWeight: null
+    };
   } else if (isMultiPattern) {
     // 複数パターン分析モードは特別なリセット処理は不要（既にresetMultiPatternUIで処理済み）
     // 歩留まり統計から読み込むボタンの状態を更新
