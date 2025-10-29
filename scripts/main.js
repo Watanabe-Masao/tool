@@ -1798,7 +1798,6 @@ function updateYieldStatsStatistics() {
 
   if (hasEnoughData) {
     displayCurrentStatistics();
-    show('yieldStatsResults');
   } else {
     hide('yieldStatsResults');
   }
@@ -1956,6 +1955,9 @@ function displayCurrentStatistics() {
   // 除外後のデータで統計を表示
   displayStatistics(finalStats, unit);
   renderStatsChart(finalValues, finalStats, typeName, unit);
+
+  // 統計結果を表示
+  show('yieldStatsResults');
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
