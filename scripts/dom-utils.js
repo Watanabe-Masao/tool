@@ -24,3 +24,25 @@ export function toggleActive(btnActive, btnInactive) {
   btnActive.classList.add('is-active');
   btnInactive.classList.remove('is-active');
 }
+
+/**
+ * クリック/タップイベントを確実に処理するヘルパー関数
+ * CSSのtouch-action: manipulationと組み合わせて使用
+ * @param {HTMLElement} element - イベントを追加する要素
+ * @param {Function} handler - クリック/タップ時に実行する関数
+ */
+export function addTapListener(element, handler) {
+  if (!element) {
+    console.warn('[addTapListener] 要素がnullです');
+    return;
+  }
+
+  // シンプルにclickイベントのみ使用
+  // CSSでtouch-action: manipulationが設定されているため、
+  // モバイルでの300msディレイは発生しない
+  element.addEventListener('click', (e) => {
+    console.log('[addTapListener] clickイベント発火:', element.id || element.className);
+    handler(e);
+  });
+  console.log('[addTapListener] イベントリスナー登録完了:', element.id || element.className);
+}

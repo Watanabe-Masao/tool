@@ -77,11 +77,13 @@ export function initMultiPatternUI() {
   // パターン追加ボタン
   if (elements.addPatternBtn) {
     elements.addPatternBtn.addEventListener('click', addPattern);
+    elements.addPatternBtn.addEventListener('touchend', (e) => { e.preventDefault(); addPattern(); }, { passive: false });
   }
 
   // クリアボタン
   if (elements.clearBtn) {
     elements.clearBtn.addEventListener('click', clearAll);
+    elements.clearBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
   }
 
   // 初期パターンを追加
@@ -211,6 +213,7 @@ function addPattern() {
   // 削除ボタンのイベント
   const removeBtn = row.querySelector('.btn-remove');
   removeBtn.addEventListener('click', () => removePattern(patternId));
+  removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
 }
 
 /**
@@ -511,6 +514,7 @@ export function replaceAllPatterns(newPatterns) {
     // 削除ボタンのイベント
     const removeBtn = row.querySelector('.btn-remove');
     removeBtn.addEventListener('click', () => removePattern(patternId));
+    removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
   });
 
   console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);

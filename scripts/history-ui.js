@@ -3,7 +3,7 @@
  */
 
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, updateCalculation, loadCalculation, saveCalculation, exportData, importData, clearAllHistory, restoreInputFields, getUniqueProductNames } from './storage.js';
-import { qs, qsa, num, show, hide, setText, yen, pct } from './dom-utils.js';
+import { qs, qsa, num, show, hide, setText, yen, pct, addTapListener } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
 import { grossFromMarkup, toFixed } from './calculation.js';
@@ -406,6 +406,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      await handleLoadCalculation(id);
+    }, { passive: false });
   });
 
   // 編集ボタン
@@ -418,6 +424,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      handleEditCalculation(id);
+    }, { passive: false });
   });
 
   // 削除ボタン
@@ -430,6 +442,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      await handleDeleteCalculation(id);
+    }, { passive: false });
   });
 }
 
@@ -1767,9 +1785,10 @@ function hideHistoryMenu() {
  */
 export function initHistoryUI() {
   // 履歴ボタン（定額モード）
+  // 履歴ボタン（定額モード）
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
-    historyBtn.addEventListener('click', showHistoryModal);
+    addTapListener(historyBtn, showHistoryModal);
     console.log('履歴ボタン（定額モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（定額モード）が見つかりません');
@@ -1778,7 +1797,7 @@ export function initHistoryUI() {
   // 履歴ボタン（計量モード）
   const historyBtnWeight = qs('#historyBtnWeight');
   if (historyBtnWeight) {
-    historyBtnWeight.addEventListener('click', showHistoryModal);
+    addTapListener(historyBtnWeight, showHistoryModal);
     console.log('履歴ボタン（計量モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（計量モード）が見つかりません');
@@ -1787,7 +1806,7 @@ export function initHistoryUI() {
   // 履歴ボタン（歩留まり統計モード）
   const historyBtnYieldStats = qs('#historyBtnYieldStats');
   if (historyBtnYieldStats) {
-    historyBtnYieldStats.addEventListener('click', showHistoryModal);
+    addTapListener(historyBtnYieldStats, showHistoryModal);
     console.log('履歴ボタン（歩留まり統計モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（歩留まり統計モード）が見つかりません');
@@ -1796,7 +1815,7 @@ export function initHistoryUI() {
   // 履歴モーダルを閉じる
   const closeHistoryBtn = qs('#closeHistoryModal');
   if (closeHistoryBtn) {
-    closeHistoryBtn.addEventListener('click', closeHistoryModal);
+    addTapListener(closeHistoryBtn, closeHistoryModal);
   }
 
   // 履歴メニューボタン（⋮）
@@ -1807,6 +1826,11 @@ export function initHistoryUI() {
       e.stopPropagation();
       toggleHistoryMenu();
     });
+    historyMenuBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleHistoryMenu();
+    }, { passive: false });
 
     // メニュー外をクリック/タッチしたら閉じる
     const closeMenuOnOutsideInteraction = (e) => {
@@ -1825,14 +1849,11 @@ export function initHistoryUI() {
   // 保存ボタン（クラスベースで全てのボタンに設定）
   const saveBtns = qsa('.save-btn');
   console.log('[initHistoryUI] 保存ボタンの数:', saveBtns.length);
-  console.log('[initHistoryUI] 保存ボタン要素:', saveBtns);
   saveBtns.forEach((saveBtn, index) => {
     console.log(`[initHistoryUI] 保存ボタン${index}にイベントリスナーを設定:`, saveBtn);
-    saveBtn.addEventListener('click', (e) => {
-      console.log(`[保存ボタン${index}] クリックされました!`, e);
-      console.log('[保存ボタン] saveDialogModeを"normal"に設定');
+    addTapListener(saveBtn, () => {
+      console.log(`[保存ボタン${index}] タップされました`);
       appState.setSaveDialogMode('normal');
-      console.log('[保存ボタン] showSaveDialog()を呼び出します');
       showSaveDialog();
     });
   });
@@ -1840,13 +1861,13 @@ export function initHistoryUI() {
   // 上書き保存ボタン（クラスベースで全てのボタンに設定）
   const overwriteSaveBtns = qsa('.overwrite-save-btn');
   overwriteSaveBtns.forEach(overwriteSaveBtn => {
-    overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
+    addTapListener(overwriteSaveBtn, handleOverwriteSave);
   });
 
   // 新規保存ボタン（クラスベースで全てのボタンに設定）
   const newSaveBtns = qsa('.new-save-btn');
   newSaveBtns.forEach(newSaveBtn => {
-    newSaveBtn.addEventListener('click', () => {
+    addTapListener(newSaveBtn, () => {
       appState.setSaveDialogMode('new');
       showSaveDialog();
     });
@@ -1855,7 +1876,7 @@ export function initHistoryUI() {
   // 保存ダイアログ - 保存
   const confirmSaveBtn = qs('#confirmSaveBtn');
   if (confirmSaveBtn) {
-    confirmSaveBtn.addEventListener('click', () => {
+    addTapListener(confirmSaveBtn, () => {
       // 保存モードに応じて適切なハンドラを呼び出す
       // 上書き保存はダイアログを表示しないので、ここではnewとnormalのみ
       if (appState.getSaveDialogMode() === 'new') {
@@ -1869,7 +1890,7 @@ export function initHistoryUI() {
   // 保存ダイアログ - キャンセル
   const cancelSaveBtn = qs('#cancelSaveBtn');
   if (cancelSaveBtn) {
-    cancelSaveBtn.addEventListener('click', closeSaveDialog);
+    addTapListener(cancelSaveBtn, closeSaveDialog);
   }
 
   // 検索（selectタグなのでchangeイベントを使用）
@@ -1881,7 +1902,7 @@ export function initHistoryUI() {
   // 選択解除ボタン
   const clearSearchBtn = qs('#clearSearchBtn');
   if (clearSearchBtn) {
-    clearSearchBtn.addEventListener('click', async () => {
+    const clearSearchHandler = async () => {
       const searchInput = qs('#historySearch');
       if (searchInput) {
         searchInput.value = ''; // 商品名選択を解除
@@ -1899,34 +1920,42 @@ export function initHistoryUI() {
         // 計算モードと歩留まり入力方法のフィルタを維持して再表示
         await renderHistoryList(null, mode, yieldMethod);
       }
-    });
+    };
+    clearSearchBtn.addEventListener('click', clearSearchHandler);
+    clearSearchBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearSearchHandler(); }, { passive: false });
   }
 
   // エクスポート
   const exportBtn = qs('#exportBtn');
   if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
+    const exportHandler = () => {
       hideHistoryMenu();
       handleExport();
-    });
+    };
+    exportBtn.addEventListener('click', exportHandler);
+    exportBtn.addEventListener('touchend', (e) => { e.preventDefault(); exportHandler(); }, { passive: false });
   }
 
   // インポート
   const importBtn = qs('#importBtn');
   if (importBtn) {
-    importBtn.addEventListener('click', () => {
+    const importHandler = () => {
       hideHistoryMenu();
       handleImport();
-    });
+    };
+    importBtn.addEventListener('click', importHandler);
+    importBtn.addEventListener('touchend', (e) => { e.preventDefault(); importHandler(); }, { passive: false });
   }
 
   // すべてクリア
   const clearAllBtn = qs('#clearAllBtn');
   if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', () => {
+    const clearAllHandler = () => {
       hideHistoryMenu();
       handleClearAll();
-    });
+    };
+    clearAllBtn.addEventListener('click', clearAllHandler);
+    clearAllBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAllHandler(); }, { passive: false });
   }
 }
 
@@ -1994,7 +2023,7 @@ function setupHistoryFilterListeners() {
   filterButtons.forEach(({ id, mode }) => {
     const btn = qs(id);
     if (btn) {
-      btn.addEventListener('click', async () => {
+      const filterHandler = async () => {
         // すべてのボタンからis-activeを削除
         filterButtons.forEach(({ id }) => {
           const b = qs(id);
@@ -2022,7 +2051,9 @@ function setupHistoryFilterListeners() {
 
         // 履歴リストを再描画
         await renderHistoryList(null, mode, yieldMethod);
-      });
+      };
+      btn.addEventListener('click', filterHandler);
+      btn.addEventListener('touchend', (e) => { e.preventDefault(); filterHandler(); }, { passive: false });
     }
   });
 

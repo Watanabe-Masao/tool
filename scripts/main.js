@@ -3,7 +3,7 @@
  */
 
 import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed, afterCostPer100 } from './calculation.js';
-import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa } from './dom-utils.js';
+import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa, addTapListener } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
@@ -155,19 +155,24 @@ function hasInputValues() {
  * @param {string} newMode - 切り替え先のモード
  */
 function handleModeSwitch(newMode) {
+  console.log('[handleModeSwitch] 呼び出し:', newMode, '現在:', appState.getMode());
+
   // 同じモードへの切り替えはスキップ
   if (appState.getMode() === newMode) {
+    console.log('[handleModeSwitch] 同じモードなのでスキップ');
     return;
   }
 
   // 現在のモードに入力値があるかチェック
   if (hasInputValues()) {
+    console.log('[handleModeSwitch] 入力値あり、確認ダイアログ表示');
     if (confirm('入力されている値が消えますが、よろしいですか？')) {
       switchMode(newMode);
     }
     // ユーザーがキャンセルした場合は何もしない
   } else {
     // 入力値がない場合は直接切り替え
+    console.log('[handleModeSwitch] 入力値なし、直接切り替え');
     switchMode(newMode);
   }
 }
@@ -3281,7 +3286,15 @@ let tempPairs = []; // 一時的な原価・売価ペア配列
 // プリセットをlocalStorageから読み込む
 function loadPresets() {
   const presets = localStorage.getItem(PRESET_STORAGE_KEY);
-  return presets ? JSON.parse(presets) : [];
+  if (!presets) return [];
+
+  const parsedPresets = JSON.parse(presets);
+
+  // 古いデータとの互換性のため、patternsプロパティがない場合は空配列を設定
+  return parsedPresets.map(preset => ({
+    ...preset,
+    patterns: Array.isArray(preset.patterns) ? preset.patterns : []
+  }));
 }
 
 // プリセットをlocalStorageに保存
@@ -3480,7 +3493,8 @@ function editPresetFromModal(id) {
   if (!preset) return;
 
   currentEditingPreset = preset;
-  tempPairs = [...preset.patterns];
+  // preset.patternsが存在しない場合は空配列として扱う
+  tempPairs = Array.isArray(preset.patterns) ? [...preset.patterns] : [];
   qs('#presetEditorTitle').textContent = 'プリセット編集';
   qs('#presetName').value = preset.name;
   qs('#tempUnitCost').value = '';
@@ -3556,7 +3570,7 @@ function addSelectedPresetsToTable() {
     const presetId = parseInt(checkbox.dataset.presetId);
     const preset = presets.find(p => p.id === presetId);
 
-    if (!preset || !preset.patterns) return;
+    if (!preset || !Array.isArray(preset.patterns) || preset.patterns.length === 0) return;
 
     // プリセットの各ペアを追加
     preset.patterns.forEach(pattern => {
@@ -4515,27 +4529,53 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
+  console.log('[INIT] 初期化開始');
+
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
-  console.log('window.openPresetModal が設定されました:', typeof window.openPresetModal);
-  alert('デバッグ: window.openPresetModal = ' + typeof window.openPresetModal);
 
-  // モード切替ボタン
-  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
-  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
-  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
-  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.MULTI_PATTERN));
+  // デバッグ：ボタン要素の存在確認
+  const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
+  const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
+  const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
+  const multiPatternBtn = qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`);
 
-  // モード切替ボタン - タッチイベント対応
-  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.FIXED); }, { passive: false });
-  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.WEIGHT); }, { passive: false });
-  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.YIELD_STATS); }, { passive: false });
-  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.MULTI_PATTERN); }, { passive: false });
+  console.log('[INIT] ボタン要素:', {
+    fixedBtn: !!fixedBtn,
+    weightBtn: !!weightBtn,
+    yieldStatsBtn: !!yieldStatsBtn,
+    multiPatternBtn: !!multiPatternBtn
+  });
+
+  // モード切替ボタン（タップ対応）
+  if (fixedBtn) {
+    addTapListener(fixedBtn, () => {
+      console.log('[CLICK] 定額ボタンクリック');
+      handleModeSwitch(MODE.FIXED);
+    });
+  }
+  if (weightBtn) {
+    addTapListener(weightBtn, () => {
+      console.log('[CLICK] 計量ボタンクリック');
+      handleModeSwitch(MODE.WEIGHT);
+    });
+  }
+  if (yieldStatsBtn) {
+    addTapListener(yieldStatsBtn, () => {
+      console.log('[CLICK] 歩留まり統計ボタンクリック');
+      handleModeSwitch(MODE.YIELD_STATS);
+    });
+  }
+  if (multiPatternBtn) {
+    addTapListener(multiPatternBtn, () => {
+      console.log('[CLICK] 複数パターン分析ボタンクリック');
+      handleModeSwitch(MODE.MULTI_PATTERN);
+    });
+  }
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
-    btn.addEventListener('click', clearAll);
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
+    addTapListener(btn, clearAll);
   });
 
   // 歩留まり率入力方法の切り替え（定額モード）
