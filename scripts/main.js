@@ -4527,11 +4527,47 @@ function init() {
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
 
-  // モード切替ボタン
-  addTapListener(qs(`#${UI_ELEMENTS.FIXED_BTN}`), () => handleModeSwitch(MODE.FIXED));
-  addTapListener(qs(`#${UI_ELEMENTS.WEIGHT_BTN}`), () => handleModeSwitch(MODE.WEIGHT));
-  addTapListener(qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`), () => handleModeSwitch(MODE.YIELD_STATS));
-  addTapListener(qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`), () => handleModeSwitch(MODE.MULTI_PATTERN));
+  // モード切替ボタン - テスト用に直接イベント登録
+  const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
+  const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
+  const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
+  const multiPatternBtn = qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`);
+
+  if (fixedBtn) {
+    fixedBtn.addEventListener('click', () => {
+      alert('定額ボタンがクリックされました');
+      handleModeSwitch(MODE.FIXED);
+    });
+  } else {
+    alert('エラー: 定額ボタンが見つかりません');
+  }
+
+  if (weightBtn) {
+    weightBtn.addEventListener('click', () => {
+      alert('計量ボタンがクリックされました');
+      handleModeSwitch(MODE.WEIGHT);
+    });
+  } else {
+    alert('エラー: 計量ボタンが見つかりません');
+  }
+
+  if (yieldStatsBtn) {
+    yieldStatsBtn.addEventListener('click', () => {
+      alert('歩留まり統計ボタンがクリックされました');
+      handleModeSwitch(MODE.YIELD_STATS);
+    });
+  } else {
+    alert('エラー: 歩留まり統計ボタンが見つかりません');
+  }
+
+  if (multiPatternBtn) {
+    multiPatternBtn.addEventListener('click', () => {
+      alert('複数パターン分析ボタンがクリックされました');
+      handleModeSwitch(MODE.MULTI_PATTERN);
+    });
+  } else {
+    alert('エラー: 複数パターン分析ボタンが見つかりません');
+  }
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
