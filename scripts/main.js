@@ -5120,60 +5120,77 @@ function init() {
    */
   function loadAllStatsToMultiPattern() {
     console.log('[DEBUG] loadAllStatsToMultiPattern関数が呼び出されました');
-    const yieldRateStats = window.statsDataByType?.yieldRate;
-    const beforeWeightStats = window.statsDataByType?.beforeWeight;
-    console.log('[DEBUG] yieldRateStats:', yieldRateStats);
-    console.log('[DEBUG] beforeWeightStats:', beforeWeightStats);
 
-    if (!yieldRateStats || yieldRateStats.count < 2) {
-      console.log('[DEBUG] 歩留まり率の統計データがありません');
-      alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
-      return;
-    }
+    try {
+      const yieldRateStats = window.statsDataByType?.yieldRate;
+      const beforeWeightStats = window.statsDataByType?.beforeWeight;
+      console.log('[DEBUG] yieldRateStats:', yieldRateStats);
+      console.log('[DEBUG] beforeWeightStats:', beforeWeightStats);
 
-    // 推奨値を取得
-    const yieldRateRecommended = getRecommendedValue(yieldRateStats);
-    if (!yieldRateRecommended) {
-      alert('歩留まり率の推奨値を取得できませんでした。');
-      return;
-    }
-
-    // 加工前重量の推奨値を取得（存在する場合）
-    const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
-      ? getRecommendedValue(beforeWeightStats)
-      : null;
-
-    // 現在のモードを取得
-    const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
-
-    // 確認ダイアログ
-    if (!confirm('推奨値をステップ1に転記しますか？')) {
-      return;
-    }
-
-    // モードに応じて値を設定
-    if (currentMode === 'direct') {
-      // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
-      setStatValue(yieldRateRecommended.value, 'yieldRate');
-
-      if (beforeWeightRecommended) {
-        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
-        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%、加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
-      } else {
-        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%`);
-      }
-    } else {
-      // 重量から計算モード：加工前重量のみ設定
-      if (beforeWeightRecommended) {
-        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
-        showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
-      } else {
-        alert('加工前重量の統計データがありません。');
+      if (!yieldRateStats || yieldRateStats.count < 2) {
+        console.log('[DEBUG] 歩留まり率の統計データがありません');
+        alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
         return;
       }
-    }
 
-    focusFirstPatternInput();
+      // 推奨値を取得
+      const yieldRateRecommended = getRecommendedValue(yieldRateStats);
+      console.log('[DEBUG] yieldRateRecommended:', yieldRateRecommended);
+      if (!yieldRateRecommended) {
+        alert('歩留まり率の推奨値を取得できませんでした。');
+        return;
+      }
+
+      // 加工前重量の推奨値を取得（存在する場合）
+      const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+        ? getRecommendedValue(beforeWeightStats)
+        : null;
+      console.log('[DEBUG] beforeWeightRecommended:', beforeWeightRecommended);
+
+      // 現在のモードを取得
+      const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
+      console.log('[DEBUG] currentMode:', currentMode);
+
+      // 確認ダイアログ
+      if (!confirm('推奨値をステップ1に転記しますか？')) {
+        return;
+      }
+
+      // モードに応じて値を設定
+      if (currentMode === 'direct') {
+        // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
+        console.log('[DEBUG] 歩留まり率を設定:', yieldRateRecommended.value);
+        setStatValue(yieldRateRecommended.value, 'yieldRate');
+
+        if (beforeWeightRecommended) {
+          console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
+          setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+          showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%、加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+        } else {
+          showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%`);
+        }
+      } else {
+        // 重量から計算モード：加工前重量のみ設定
+        if (beforeWeightRecommended) {
+          console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
+          setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+          showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+        } else {
+          alert('加工前重量の統計データがありません。');
+          return;
+        }
+      }
+
+      // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+      appState.markAsNewCalculation();
+      updateSaveButtonsVisibility();
+
+      focusFirstPatternInput();
+      console.log('[DEBUG] 一括転記が完了しました');
+    } catch (error) {
+      console.error('[ERROR] 一括転記でエラーが発生しました:', error);
+      alert('一括転記でエラーが発生しました。コンソールを確認してください。');
+    }
   }
 
   /**
