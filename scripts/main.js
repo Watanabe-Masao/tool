@@ -3235,6 +3235,9 @@ function openPresetModal() {
   }
 }
 
+// グローバルスコープに公開（インラインイベントハンドラから呼べるように）
+window.openPresetModal = openPresetModal;
+
 // モーダルを閉じる
 function closePresetModal() {
   qs('#presetModal').classList.remove('is-open');

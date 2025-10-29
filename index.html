@@ -999,8 +999,8 @@
             type="button"
             id="showPresetManagerBtn"
             class="btn btn-secondary"
-            onclick="alert('インラインクリック検出！'); console.log('inline onclick fired'); return false;"
-            ontouchend="alert('インラインタッチ検出！'); console.log('inline ontouchend fired'); return false;"
+            onclick="alert('インラインクリック検出！'); if (window.openPresetModal) { window.openPresetModal(); } else { alert('関数が見つかりません'); } return false;"
+            ontouchend="alert('インラインタッチ検出！'); if (window.openPresetModal) { window.openPresetModal(); } else { alert('関数が見つかりません'); } return false;"
             style="position: relative; z-index: 100; pointer-events: auto;">
             📋 プリセットから選択
           </button>
