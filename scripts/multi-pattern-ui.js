@@ -6,6 +6,10 @@ import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
+// 定数
+const INITIAL_PATTERN_COUNT = 3;
+const CSS_HIDDEN = 'is-hidden';
+
 // 状態管理
 let patternIdCounter = 1;
 const patterns = [];
@@ -80,10 +84,10 @@ export function initMultiPatternUI() {
     elements.clearBtn.addEventListener('click', clearAll);
   }
 
-  // 初期パターンを3つ追加
-  addPattern();
-  addPattern();
-  addPattern();
+  // 初期パターンを追加
+  for (let i = 0; i < INITIAL_PATTERN_COUNT; i++) {
+    addPattern();
+  }
 }
 
 /**
@@ -103,14 +107,14 @@ function handleYieldMethodChange(e) {
   const isDirect = currentYieldMethod === 'direct';
 
   // モードの表示切り替え
-  if (elements.calculateMode) elements.calculateMode.classList.toggle('is-hidden', isDirect);
-  if (elements.directMode) elements.directMode.classList.toggle('is-hidden', !isDirect);
+  if (elements.calculateMode) elements.calculateMode.classList.toggle(CSS_HIDDEN, isDirect);
+  if (elements.directMode) elements.directMode.classList.toggle(CSS_HIDDEN, !isDirect);
 
   // 結果を非表示
-  if (elements.step2) elements.step2.classList.add('is-hidden');
-  if (elements.step2Result) elements.step2Result.classList.add('is-hidden');
-  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add('is-hidden');
-  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add('is-hidden');
+  if (elements.step2) elements.step2.classList.add(CSS_HIDDEN);
+  if (elements.step2Result) elements.step2Result.classList.add(CSS_HIDDEN);
+  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add(CSS_HIDDEN);
+  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add(CSS_HIDDEN);
 }
 
 /**
@@ -121,25 +125,25 @@ function handleCalculateModeInput() {
   const aw = getNumValue(elements.afterWeightCalc);
 
   if (!Number.isFinite(bw) || !Number.isFinite(aw) || bw <= 0 || aw <= 0) {
-    elements.step1ResultCalc.classList.add('is-hidden');
-    elements.step2.classList.add('is-hidden');
-    elements.step2Result.classList.add('is-hidden');
+    elements.step1ResultCalc.classList.add(CSS_HIDDEN);
+    elements.step2.classList.add(CSS_HIDDEN);
+    elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
 
   // 歩留まり率を計算
   const yr = calcYield(bw, aw);
   if (!Number.isFinite(yr)) {
-    elements.step1ResultCalc.classList.add('is-hidden');
-    elements.step2.classList.add('is-hidden');
-    elements.step2Result.classList.add('is-hidden');
+    elements.step1ResultCalc.classList.add(CSS_HIDDEN);
+    elements.step2.classList.add(CSS_HIDDEN);
+    elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
 
   // 歩留まり率を表示
   elements.yieldRateDisplayCalc.textContent = `${toFixed(yr, 2)}%`;
-  elements.step1ResultCalc.classList.remove('is-hidden');
-  elements.step2.classList.remove('is-hidden');
+  elements.step1ResultCalc.classList.remove(CSS_HIDDEN);
+  elements.step2.classList.remove(CSS_HIDDEN);
 
   // パターンが入力されていれば計算を更新
   recalculateAll();
@@ -153,9 +157,9 @@ function handleDirectModeInput() {
   const yr = getNumValue(elements.yieldRateDirect);
 
   if (!Number.isFinite(bw) || !Number.isFinite(yr) || bw <= 0 || yr <= 0) {
-    elements.step1ResultDirect.classList.add('is-hidden');
-    elements.step2.classList.add('is-hidden');
-    elements.step2Result.classList.add('is-hidden');
+    elements.step1ResultDirect.classList.add(CSS_HIDDEN);
+    elements.step2.classList.add(CSS_HIDDEN);
+    elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
 
@@ -165,8 +169,8 @@ function handleDirectModeInput() {
   // 結果を表示
   elements.yieldRateDisplayDirect.textContent = `${toFixed(yr, 2)}%`;
   elements.afterWeightDisplayDirect.textContent = `${toFixed(aw, 2)}g`;
-  elements.step1ResultDirect.classList.remove('is-hidden');
-  elements.step2.classList.remove('is-hidden');
+  elements.step1ResultDirect.classList.remove(CSS_HIDDEN);
+  elements.step2.classList.remove(CSS_HIDDEN);
 
   // パターンが入力されていれば計算を更新
   recalculateAll();
@@ -270,7 +274,7 @@ function recalculateAll() {
     const afterWeight = getNumValue(elements.afterWeightCalc);
 
     if (!Number.isFinite(beforeWeight) || !Number.isFinite(afterWeight) || beforeWeight <= 0 || afterWeight <= 0) {
-      elements.step2Result.classList.add('is-hidden');
+      elements.step2Result.classList.add(CSS_HIDDEN);
       return;
     }
 
@@ -282,7 +286,7 @@ function recalculateAll() {
   }
 
   if (!Number.isFinite(yr) || !Number.isFinite(bw) || yr <= 0 || bw <= 0) {
-    elements.step2Result.classList.add('is-hidden');
+    elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
 
@@ -294,7 +298,7 @@ function recalculateAll() {
   );
 
   if (validPatterns.length === 0) {
-    elements.step2Result.classList.add('is-hidden');
+    elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
 
@@ -339,7 +343,7 @@ function recalculateAll() {
   });
 
   // 結果を表示
-  elements.step2Result.classList.remove('is-hidden');
+  elements.step2Result.classList.remove(CSS_HIDDEN);
 }
 
 /**
@@ -364,15 +368,15 @@ function clearAll() {
   patternIdCounter = 1;
 
   // 結果を非表示
-  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add('is-hidden');
-  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add('is-hidden');
-  if (elements.step2) elements.step2.classList.add('is-hidden');
-  if (elements.step2Result) elements.step2Result.classList.add('is-hidden');
+  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add(CSS_HIDDEN);
+  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add(CSS_HIDDEN);
+  if (elements.step2) elements.step2.classList.add(CSS_HIDDEN);
+  if (elements.step2Result) elements.step2Result.classList.add(CSS_HIDDEN);
 
-  // 初期パターンを3つ追加
-  addPattern();
-  addPattern();
-  addPattern();
+  // 初期パターンを追加
+  for (let i = 0; i < INITIAL_PATTERN_COUNT; i++) {
+    addPattern();
+  }
 }
 
 /**
