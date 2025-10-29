@@ -1887,6 +1887,7 @@ function displayCurrentStatistics() {
   window.yieldStatsState.currentDisplayType = selectedType;
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
+  // 注：この時点ではまだ自動切り替え前なので selectedType を使用
   if (currentStatsType !== selectedType) {
     window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
     window.yieldStatsState.currentOutlierValues = [];
@@ -1895,7 +1896,6 @@ function displayCurrentStatistics() {
     // 後方互換性のため既存変数も更新
     manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
     currentOutlierValues = window.yieldStatsState.currentOutlierValues;
-    currentStatsType = selectedType;
   }
 
   if (!data) return;
@@ -1926,11 +1926,43 @@ function displayCurrentStatistics() {
   // 複数パターン分析の読み込みボタンの状態を更新
   updateLoadStatsButtons();
 
+  // 選択されたタイプにデータがない場合、データのあるタイプに自動切り替え
   let values = data[selectedType];
+  let actualSelectedType = selectedType;
+
   if (!values || values.length < 2) {
-    // データが不足している場合は非表示
-    hide('yieldStatsResults');
-    return;
+    // データのあるタイプを探す（優先順: yieldRate > beforeWeight > afterWeight）
+    const typePriority = ['yieldRate', 'beforeWeight', 'afterWeight'];
+    let foundType = null;
+
+    for (const type of typePriority) {
+      if (data[type] && data[type].length >= 2) {
+        foundType = type;
+        break;
+      }
+    }
+
+    if (foundType) {
+      // データのあるタイプに切り替え
+      actualSelectedType = foundType;
+      values = data[foundType];
+
+      // セレクトボックスも更新
+      if (selectElement) {
+        selectElement.value = foundType;
+        window.yieldStatsState.currentDisplayType = foundType;
+      }
+
+      // currentStatsTypeも更新
+      currentStatsType = foundType;
+    } else {
+      // 全てのタイプでデータが不足している場合は非表示
+      hide('yieldStatsResults');
+      return;
+    }
+  } else {
+    // データがある場合、currentStatsTypeを更新
+    currentStatsType = actualSelectedType;
   }
 
   // 手動除外が設定されている場合、データをフィルタリング
@@ -1967,13 +1999,13 @@ function displayCurrentStatistics() {
   // 統計タイプに応じた単位を設定
   let unit = '';
   let typeName = '';
-  if (selectedType === 'yieldRate') {
+  if (actualSelectedType === 'yieldRate') {
     unit = '%';
     typeName = '歩留まり率';
-  } else if (selectedType === 'beforeWeight') {
+  } else if (actualSelectedType === 'beforeWeight') {
     unit = 'g';
     typeName = '加工前重量';
-  } else if (selectedType === 'afterWeight') {
+  } else if (actualSelectedType === 'afterWeight') {
     unit = 'g';
     typeName = '加工後重量';
   }
