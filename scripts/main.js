@@ -3121,64 +3121,19 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
   const multiPatternLink = qs('#multiPatternLink');
   if (multiPatternLink && statsType === 'yieldRate') {
-    const meanValueDisplay = qs('#meanValueDisplay');
-    const medianValueDisplay = qs('#medianValueDisplay');
-    const recommendedHint = qs('#recommendedHint');
-    const multiPatternButtons = qs('#multiPatternButtons');
-    const dataInsufficient = qs('#multiPatternDataInsufficient');
-
-    // 状態フラグを確認：歩留まり率データが存在するか
     const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
     const yieldRateStats = window.statsDataByType?.yieldRate;
 
-    // デバッグ：値を確認
-    console.log('=== 複数パターン分析ボタン更新 ===');
-    console.log('statsType:', statsType);
-    console.log('isSampleSizeValid:', isSampleSizeValid);
-    console.log('hasYieldRateData:', hasYieldRateData);
-    console.log('yieldRateStats:', yieldRateStats);
-    console.log('yieldRateStats?.count:', yieldRateStats?.count);
-
-    // 状態を更新：複数パターン分析リンクを表示すべきか
-    window.yieldStatsState.shouldShowMultiPatternLink =
-      isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
-
-    console.log('shouldShowMultiPatternLink:', window.yieldStatsState.shouldShowMultiPatternLink);
-
     // データが十分にあるかチェック
-    if (window.yieldStatsState.shouldShowMultiPatternLink) {
-      // 推奨値を取得
-      const recommended = getRecommendedValue(yieldRateStats);
-      const recommendedValueDisplay = qs('#recommendedValueDisplay');
-
-      // 値を設定（歩留まり率の統計を使用）
-      console.log('ボタンの値を更新:', {
-        mean: yieldRateStats.mean,
-        median: yieldRateStats.median,
-        recommended: recommended?.value
-      });
-
-      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
-      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
-      if (recommendedValueDisplay && recommended) {
-        recommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}%`;
-      }
-      if (recommendedHint) recommendedHint.textContent = recommendedType;
-
-      // ボタンを表示、データ不足メッセージは非表示
-      if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
-      if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
+    if (isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2) {
+      multiPatternLink.classList.remove('is-hidden');
     } else {
-      console.log('条件を満たしていないため、ボタンを非表示にします');
-      // データ不足の場合
-      // ボタンを非表示、データ不足メッセージを表示
-      if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
-      if (dataInsufficient) dataInsufficient.classList.remove('is-hidden');
+      multiPatternLink.classList.add('is-hidden');
     }
-
-    multiPatternLink.classList.remove('is-hidden');
   } else {
-    console.log('multiPatternLink を表示しません（statsType:', statsType, '）');
+    if (multiPatternLink) {
+      multiPatternLink.classList.add('is-hidden');
+    }
   }
 }
 
@@ -4919,67 +4874,10 @@ function init() {
     updateSaveButtonsVisibility();
   }
 
-  // 複数パターン分析への遷移ボタン（平均値）
-  qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
+  // 複数パターン分析への遷移ボタン
+  qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    handleModeSwitch(MODE.MULTI_PATTERN);
   });
-  qs('#goToMultiPatternMeanBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
-  }, { passive: false });
-
-  // 複数パターン分析への遷移ボタン（中央値）
-  qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
-  });
-  qs('#goToMultiPatternMedianBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
-  }, { passive: false });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
   qsa('input[name="yieldMethodMultiPattern"]').forEach(radio => {
@@ -5031,22 +4929,6 @@ function init() {
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
   }, { passive: false });
 
-  // 複数パターン分析への遷移ボタン（推奨値）
-  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
-    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(true);
-  });
-  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(true);
-  }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（推奨値）
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {

@@ -690,41 +690,12 @@
 
         <!-- 複数パターン分析への遷移 -->
         <div id="multiPatternLink" class="multi-pattern-link is-hidden">
-              <div class="info-box">
-                <p><strong>📊 複数パターン分析を使う</strong></p>
-                <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
-
-                <!-- データ不足メッセージ -->
-                <div id="multiPatternDataInsufficient" class="data-insufficient-message is-hidden">
-                  <p style="color: #ef5350; margin: 0.5em 0;">
-                    ⚠️ データが不足しています。歩留まり率を計算するには、2件以上のデータを入力してください。
-                  </p>
-                </div>
-
-                <!-- 代表値選択ボタン -->
-                <div id="multiPatternButtons" class="multi-pattern-buttons is-hidden">
-                  <button type="button" id="goToMultiPatternMeanBtn" class="btn btn-primary multi-pattern-btn">
-                    <span class="btn-label">平均値</span>
-                    <span id="meanValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                  <button type="button" id="goToMultiPatternMedianBtn" class="btn btn-secondary multi-pattern-btn">
-                    <span class="btn-label">中央値</span>
-                    <span id="medianValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                  <button type="button" id="goToMultiPatternRecommendedBtn" class="btn btn-recommended multi-pattern-btn">
-                    <span class="btn-label">📌 推奨値</span>
-                    <span id="recommendedValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                </div>
-
-                <p style="font-size: 0.9em; color: #666; margin-top: 0.5em;">
-                  💡 推奨: <span id="recommendedHint" style="font-weight: bold; color: #667eea;">-</span>
-                </p>
-              </div>
-            </div>
+          <div class="info-box">
+            <button type="button" id="goToMultiPatternBtn" class="btn btn-primary" style="width: 100%;">
+              📊 複数パターン分析を使う
+            </button>
+          </div>
+        </div>
           </div>
         </div>
       </div>
