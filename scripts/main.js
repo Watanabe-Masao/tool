@@ -2855,21 +2855,22 @@ function updateLoadStatsButtons() {
   const loadMedianValueDisplay = qs('#loadMedianValueDisplay');
   const loadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
   const generateSigmaPatternsSection = qs('#generateSigmaPatternsSection');
+  const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
 
   if (!loadStatsButtons || !loadStatsNoData) {
     return;
   }
 
-  // 保存された歩留まり率統計データをチェック
-  const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-  const stats = window.statsDataByType?.[currentDisplayType];
+  // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
+  const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+  const stats = window.statsDataByType?.[selectedStatsType];
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
     // 単位を取得
-    const unit = currentDisplayType === 'yieldRate' ? '%' : 'g';
+    const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
 
     // データがある場合、ボタンに値を表示
     if (loadMeanValueDisplay) {
@@ -2887,8 +2888,10 @@ function updateLoadStatsButtons() {
     loadStatsNoData.classList.add('is-hidden');
 
     // σパターン生成セクションを表示（歩留まり率の場合のみ）
-    if (generateSigmaPatternsSection && currentDisplayType === 'yieldRate') {
+    if (generateSigmaPatternsSection && selectedStatsType === 'yieldRate') {
       generateSigmaPatternsSection.classList.remove('is-hidden');
+    } else if (generateSigmaPatternsSection) {
+      generateSigmaPatternsSection.classList.add('is-hidden');
     }
   } else {
     // データがない場合、メッセージを表示
@@ -4392,10 +4395,11 @@ function init() {
   /**
    * 推奨代表値を複数パターン分析に読み込む
    * @param {boolean} shouldSwitchMode - モード切替を行うか
+   * @param {string} statsType - 統計タイプ（指定がない場合は現在の表示タイプを使用）
    */
-  function loadRecommendedValueToMultiPattern(shouldSwitchMode = false) {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+  function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, statsType = null) {
+    const selectedStatsType = statsType || window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
       console.warn('[MultiPattern] 統計データが見つかりません');
@@ -4411,7 +4415,7 @@ function init() {
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
-    loadStatsValueToMultiPattern(recommended.value, currentDisplayType, shouldSwitchMode, productName);
+    loadStatsValueToMultiPattern(recommended.value, selectedStatsType, shouldSwitchMode, productName);
 
     // 推奨値を読み込んだことを通知
     console.log(`[MultiPattern] 推奨代表値（${recommended.label}: ${toFixed(recommended.value, 2)}）を読み込みました`);
@@ -4512,22 +4516,29 @@ function init() {
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
   });
 
+  // 複数パターン分析画面: 統計タイプ選択プルダウンの変更イベント
+  qs('#loadStatsTypeSelect')?.addEventListener('change', () => {
+    updateLoadStatsButtons();
+  });
+
   // 複数パターン分析画面内の読み込みボタン（平均値）
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, false);
+    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
   });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, false);
+    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
   });
 
   // 複数パターン分析への遷移ボタン（推奨値）
@@ -4541,13 +4552,16 @@ function init() {
 
   // 複数パターン分析画面内の読み込みボタン（推奨値）
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
-    loadRecommendedValueToMultiPattern(false);
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    loadRecommendedValueToMultiPattern(false, selectedStatsType);
   });
 
   // σパターン一括生成ボタン
   qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
       alert('統計データがありません。先に歩留まり統計で計算を実行してください。');

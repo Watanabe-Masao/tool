@@ -896,6 +896,18 @@
                 <strong>📊 歩留まり統計から読み込む</strong>
               </p>
 
+              <!-- 統計タイプ選択 -->
+              <div style="margin-bottom: 1em;">
+                <label for="loadStatsTypeSelect" style="font-size: 0.9em; color: #666; display: block; margin-bottom: 0.5em;">
+                  読み込む統計の種類
+                </label>
+                <select id="loadStatsTypeSelect" class="stats-type-select" style="width: 100%; padding: 0.5em; font-size: 0.9em; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="yieldRate">歩留まり率（%）</option>
+                  <option value="beforeWeight">加工前重量（g）</option>
+                  <option value="afterWeight">加工後重量（g）</option>
+                </select>
+              </div>
+
               <!-- データがある場合のボタン -->
               <div id="loadStatsButtons" class="multi-pattern-buttons is-hidden">
                 <button type="button" id="loadStatsMeanBtn" class="btn btn-primary multi-pattern-btn" style="font-size: 0.9em;">
