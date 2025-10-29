@@ -928,10 +928,67 @@
         </div>
       </div>
 
+      <!-- プリセット管理 -->
+      <div id="multiPatternPresetSection" class="is-hidden">
+        <h3 class="step-title">📋 プリセット管理</h3>
+        <p class="section-description" style="margin-bottom: 1em;">よく使う原価・売価のパターンを保存して、簡単に呼び出せます。</p>
+
+        <!-- プリセット追加フォーム -->
+        <div class="preset-add-form card-sub" style="margin-bottom: 1.5em;">
+          <h4 style="margin-top: 0; margin-bottom: 1em; font-size: 1em; color: #667eea;">新規プリセット作成</h4>
+          <div class="grid">
+            <label class="field">
+              <span>プリセット名</span>
+              <input type="text" id="presetName" placeholder="例: 夏季仕入" />
+            </label>
+            <label class="field">
+              <span>1個原価（円）</span>
+              <input type="number" id="presetUnitCost" step="0.01" placeholder="例: 100" min="0" />
+            </label>
+            <label class="field">
+              <span>1個売価（円）</span>
+              <input type="number" id="presetUnitPrice" step="0.01" placeholder="例: 150" min="0" />
+            </label>
+          </div>
+          <div class="btn-row" style="margin-top: 1em;">
+            <button type="button" id="savePresetBtn" class="btn btn-primary">💾 プリセットを保存</button>
+            <button type="button" id="cancelPresetEditBtn" class="btn btn-secondary is-hidden">キャンセル</button>
+          </div>
+        </div>
+
+        <!-- 保存済みプリセット一覧 -->
+        <div class="preset-list-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
+            <h4 style="margin: 0; font-size: 1em; color: #667eea;">保存済みプリセット</h4>
+            <div>
+              <button type="button" id="selectAllPresetsBtn" class="btn-sm btn-secondary" style="margin-right: 0.5em;">すべて選択</button>
+              <button type="button" id="deselectAllPresetsBtn" class="btn-sm btn-secondary">選択解除</button>
+            </div>
+          </div>
+
+          <!-- プリセット一覧 -->
+          <div id="presetList" class="preset-list">
+            <!-- 動的に生成 -->
+            <p style="color: #999; text-align: center; padding: 2em;">保存されたプリセットはありません</p>
+          </div>
+
+          <!-- 選択したプリセットを追加ボタン -->
+          <div class="btn-row" style="margin-top: 1em;">
+            <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ステップ2: パターン入力 -->
       <div id="multiPatternStep2" class="is-hidden">
         <h3 class="step-title">ステップ 2️⃣ 各パターンを入力</h3>
         <p class="section-description" style="margin-bottom: 1em;">時期や仕入先によって変わる原価・売価パターンを入力してください。</p>
+
+        <!-- プリセット管理へのリンク -->
+        <div class="btn-row" style="margin-bottom: 1em;">
+          <button type="button" id="showPresetManagerBtn" class="btn btn-secondary">📋 プリセットから選択</button>
+          <button type="button" id="hidePresetManagerBtn" class="btn btn-secondary is-hidden">← パターン入力に戻る</button>
+        </div>
 
         <!-- パターン入力テーブル -->
         <div class="multi-pattern-table-container">
