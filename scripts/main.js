@@ -9,7 +9,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
-import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats } from './multi-pattern-ui.js';
+import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats, setStatValue } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
   calculateProductSimulation,
@@ -4432,52 +4432,10 @@ function init() {
     // モード切替が必要な場合
     if (shouldSwitchMode) {
       switchMode(MODE.MULTI_PATTERN);
-
-      // 商品名を設定
-      const multiProductNameEl = qs('#multiPatternProductName');
-      if (multiProductNameEl && productName) {
-        multiProductNameEl.value = productName;
-      }
     }
 
-    // 統計タイプに応じて適切なフィールドに値を設定
-    if (displayType === 'yieldRate') {
-      // 歩留まり率 → 直接入力モードの歩留まり率
-      const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
-      if (directRadio) {
-        directRadio.checked = true;
-        directRadio.dispatchEvent(new Event('change'));
-      }
-      const yieldRateInput = qs('#multiYieldRateDirect');
-      if (yieldRateInput) {
-        yieldRateInput.value = toFixed(value, 2);
-        yieldRateInput.dispatchEvent(new Event('input'));
-      }
-    } else if (displayType === 'beforeWeight') {
-      // 加工前重量 → 両方のモードの加工前重量に設定（デフォルトは重量から計算モード）
-      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
-      if (calcRadio) {
-        calcRadio.checked = true;
-        calcRadio.dispatchEvent(new Event('change'));
-      }
-      const beforeWeightCalcInput = qs('#multiBeforeWeightCalc');
-      if (beforeWeightCalcInput) {
-        beforeWeightCalcInput.value = toFixed(value, 2);
-        beforeWeightCalcInput.dispatchEvent(new Event('input'));
-      }
-    } else if (displayType === 'afterWeight') {
-      // 加工後重量 → 重量から計算モードの加工後重量
-      const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
-      if (calcRadio) {
-        calcRadio.checked = true;
-        calcRadio.dispatchEvent(new Event('change'));
-      }
-      const afterWeightCalcInput = qs('#multiAfterWeightCalc');
-      if (afterWeightCalcInput) {
-        afterWeightCalcInput.value = toFixed(value, 2);
-        afterWeightCalcInput.dispatchEvent(new Event('input'));
-      }
-    }
+    // multi-pattern-ui.jsのsetStatValue関数を使用して値を設定
+    setStatValue(value, displayType, productName);
 
     // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
     appState.markAsNewCalculation();

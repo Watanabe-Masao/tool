@@ -415,6 +415,58 @@ export function setFromYieldStats(yieldRate, productName = '') {
 }
 
 /**
+ * 統計値を複数パターン分析に設定（汎用関数）
+ * @param {number} value - 設定する値
+ * @param {string} statType - 統計タイプ ('yieldRate', 'beforeWeight', 'afterWeight')
+ * @param {string} productName - 商品名（オプション）
+ */
+export function setStatValue(value, statType, productName = '') {
+  // 商品名を設定
+  const productNameEl = document.getElementById('multiPatternProductName');
+  if (productNameEl && productName) {
+    productNameEl.value = productName;
+  }
+
+  if (statType === 'yieldRate') {
+    // 歩留まり率 → 直接入力モードの歩留まり率フィールド
+    const directRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="direct"]');
+    if (directRadio) {
+      directRadio.checked = true;
+      directRadio.dispatchEvent(new Event('change'));
+    }
+
+    if (elements.yieldRateDirect && Number.isFinite(value)) {
+      elements.yieldRateDirect.value = value.toFixed(2);
+      handleDirectModeInput();
+    }
+  } else if (statType === 'beforeWeight') {
+    // 加工前重量 → 重量から計算モードの加工前重量フィールド
+    const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+    if (calcRadio) {
+      calcRadio.checked = true;
+      calcRadio.dispatchEvent(new Event('change'));
+    }
+
+    if (elements.beforeWeightCalc && Number.isFinite(value)) {
+      elements.beforeWeightCalc.value = value.toFixed(2);
+      elements.beforeWeightCalc.dispatchEvent(new Event('input'));
+    }
+  } else if (statType === 'afterWeight') {
+    // 加工後重量 → 重量から計算モードの加工後重量フィールド
+    const calcRadio = document.querySelector('input[name="yieldMethodMultiPattern"][value="calculate"]');
+    if (calcRadio) {
+      calcRadio.checked = true;
+      calcRadio.dispatchEvent(new Event('change'));
+    }
+
+    if (elements.afterWeightCalc && Number.isFinite(value)) {
+      elements.afterWeightCalc.value = value.toFixed(2);
+      elements.afterWeightCalc.dispatchEvent(new Event('input'));
+    }
+  }
+}
+
+/**
  * すべてのパターンを置き換え
  * @param {Array<Object>} newPatterns - 新しいパターンの配列 {label, value, sigma}
  */
