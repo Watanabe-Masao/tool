@@ -2093,7 +2093,7 @@ function displayCurrentStatistics() {
 
   // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
   if (!hasTolerance) {
-    displayRecommendedValue(finalStats, true);
+    displayRecommendedValue(finalStats, true, actualSelectedType);
   }
 }
 
@@ -2528,11 +2528,11 @@ function displaySampleSizeValidation() {
   if (finalValues.length >= 2) {
     // グローバルに保存（複数パターン分析への遷移用）
     window.lastCalculatedStats = finalStats;
-    displayRecommendedValue(finalStats, isValid);
+    displayRecommendedValue(finalStats, isValid, statsType);
   } else {
     // グローバルに保存（複数パターン分析への遷移用）
     window.lastCalculatedStats = stats;
-    displayRecommendedValue(stats, isValid);
+    displayRecommendedValue(stats, isValid, statsType);
   }
 
   // 結果を表示
@@ -3009,8 +3009,9 @@ function generateSigmaPatterns(stats, sigmaRange = 2) {
  * 推奨代表値を表示
  * @param {Object} stats - 統計データ
  * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
+ * @param {string} statsType - 統計タイプ（'yieldRate', 'beforeWeight', 'afterWeight'）
  */
-function displayRecommendedValue(stats, isSampleSizeValid) {
+function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRate') {
   const recommendedValueDiv = qs('#recommendedValue');
   const recommendedBadge = qs('#recommendedBadge');
   const recommendedReason = qs('#recommendedReason');
