@@ -439,7 +439,7 @@ export function replaceAllPatterns(newPatterns) {
     const labelComment = pattern.label ? ` data-label="${pattern.label}"` : '';
 
     row.innerHTML = `
-      <td class="${CSS_CLASSES.PATTERN_NUMBER}"${labelComment}>${patternId}</td>
+      <td class="pattern-number"${labelComment}>${patternId}</td>
       <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
       <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
       <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>
