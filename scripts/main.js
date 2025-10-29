@@ -3255,8 +3255,44 @@ function savePresetsData(presets) {
   localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
 }
 
-// モーダルを開く（新規作成）
+// モーダルを開く（一覧表示）
 function openPresetModal() {
+  renderPresetList();
+  showPresetList();
+
+  const modal = qs('#presetModal');
+  if (modal) {
+    modal.classList.add('is-open');
+  }
+}
+
+// モーダルを閉じる
+function closePresetModal() {
+  qs('#presetModal').classList.remove('is-open');
+  currentEditingPreset = null;
+  tempPairs = [];
+}
+
+// プリセット一覧を表示
+function showPresetList() {
+  const editor = qs('.preset-editor');
+  const listSection = qs('.preset-list-section');
+
+  if (editor) editor.style.display = 'none';
+  if (listSection) listSection.style.display = 'block';
+}
+
+// プリセット編集画面を表示
+function showPresetEditor() {
+  const editor = qs('.preset-editor');
+  const listSection = qs('.preset-list-section');
+
+  if (editor) editor.style.display = 'block';
+  if (listSection) listSection.style.display = 'none';
+}
+
+// 新規プリセット作成画面を開く
+function openNewPresetEditor() {
   currentEditingPreset = null;
   tempPairs = [];
 
@@ -3281,19 +3317,7 @@ function openPresetModal() {
   }
 
   renderTempPairs();
-  renderPresetList();
-
-  const modal = qs('#presetModal');
-  if (modal) {
-    modal.classList.add('is-open');
-  }
-}
-
-// モーダルを閉じる
-function closePresetModal() {
-  qs('#presetModal').classList.remove('is-open');
-  currentEditingPreset = null;
-  tempPairs = [];
+  showPresetEditor();
 }
 
 // 一時ペアをテーブルに表示
@@ -3382,7 +3406,7 @@ function savePresetFromModal() {
 
   savePresetsData(presets);
   renderPresetList();
-  closePresetModal();
+  showPresetList();
 }
 
 // プリセット一覧を表示
@@ -3436,10 +3460,9 @@ function editPresetFromModal(id) {
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
   renderTempPairs();
-  renderPresetList();
 
-  // モーダルを開く
-  qs('#presetModal').classList.add('is-open');
+  // 編集画面を表示
+  showPresetEditor();
 }
 
 // プリセットを削除
@@ -5176,10 +5199,13 @@ function init() {
 
   // プリセット管理機能のイベントリスナー
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
-  qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
+  qs('#createNewPresetBtn')?.addEventListener('click', openNewPresetEditor);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
   qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
-  qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
+  qs('#cancelPresetBtn')?.addEventListener('click', () => {
+    showPresetList();
+    renderPresetList();
+  });
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
 
   // プリセットから選択ボタン
