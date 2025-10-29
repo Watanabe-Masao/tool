@@ -2714,9 +2714,16 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
 
     // データが十分にあるかチェック
     if (window.yieldStatsState.shouldShowMultiPatternLink) {
+      // 推奨値を取得
+      const recommended = getRecommendedValue(yieldRateStats);
+      const recommendedValueDisplay = qs('#recommendedValueDisplay');
+
       // 値を設定（歩留まり率の統計を使用）
       if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
       if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
+      if (recommendedValueDisplay && recommended) {
+        recommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}%`;
+      }
       if (recommendedHint) recommendedHint.textContent = recommendedType;
 
       // ボタンを表示、データ不足メッセージは非表示
@@ -2741,30 +2748,52 @@ function updateLoadStatsButtons() {
   const loadStatsNoData = qs('#loadStatsNoData');
   const loadMeanValueDisplay = qs('#loadMeanValueDisplay');
   const loadMedianValueDisplay = qs('#loadMedianValueDisplay');
+  const loadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
+  const generateSigmaPatternsSection = qs('#generateSigmaPatternsSection');
 
   if (!loadStatsButtons || !loadStatsNoData) {
     return;
   }
 
   // 保存された歩留まり率統計データをチェック
-  const stats = window.statsDataByType?.yieldRate;
+  const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+  const stats = window.statsDataByType?.[currentDisplayType];
 
   if (stats && stats.count >= 2) {
+    // 推奨値を取得
+    const recommended = getRecommendedValue(stats);
+
+    // 単位を取得
+    const unit = currentDisplayType === 'yieldRate' ? '%' : 'g';
+
     // データがある場合、ボタンに値を表示
     if (loadMeanValueDisplay) {
-      loadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}%`;
+      loadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}${unit}`;
     }
     if (loadMedianValueDisplay) {
-      loadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}%`;
+      loadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}${unit}`;
+    }
+    if (loadRecommendedValueDisplay && recommended) {
+      loadRecommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}${unit}`;
     }
 
     // ボタンを表示、メッセージを非表示
     loadStatsButtons.classList.remove('is-hidden');
     loadStatsNoData.classList.add('is-hidden');
+
+    // σパターン生成セクションを表示（歩留まり率の場合のみ）
+    if (generateSigmaPatternsSection && currentDisplayType === 'yieldRate') {
+      generateSigmaPatternsSection.classList.remove('is-hidden');
+    }
   } else {
     // データがない場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
     loadStatsNoData.classList.remove('is-hidden');
+
+    // σパターン生成セクションを非表示
+    if (generateSigmaPatternsSection) {
+      generateSigmaPatternsSection.classList.add('is-hidden');
+    }
   }
 }
 
@@ -4453,6 +4482,53 @@ function init() {
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, false);
+  });
+
+  // 複数パターン分析への遷移ボタン（推奨値）
+  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
+    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    loadRecommendedValueToMultiPattern(true);
+  });
+
+  // 複数パターン分析画面内の読み込みボタン（推奨値）
+  qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
+    loadRecommendedValueToMultiPattern(false);
+  });
+
+  // σパターン一括生成ボタン
+  qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+
+    if (!statsData) {
+      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      return;
+    }
+
+    if (!confirm('現在のパターンをクリアして、標準偏差パターン（平均±1σ、±2σ）を自動生成しますか？')) {
+      return;
+    }
+
+    // σパターンを生成
+    const sigmaPatterns = generateSigmaPatterns(statsData, 2);
+
+    if (sigmaPatterns.length === 0) {
+      alert('パターンを生成できませんでした。');
+      return;
+    }
+
+    // 複数パターン分析のパターンテーブルをクリアして、σパターンを追加
+    // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
+    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
+      window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
+      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
+    } else {
+      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
+      alert('パターン生成機能の初期化に失敗しました。');
+    }
   });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新

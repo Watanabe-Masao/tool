@@ -682,6 +682,11 @@
                     <span id="medianValueDisplay" class="btn-value">-</span>
                     <span class="btn-arrow">で分析へ →</span>
                   </button>
+                  <button type="button" id="goToMultiPatternRecommendedBtn" class="btn btn-recommended multi-pattern-btn">
+                    <span class="btn-label">📌 推奨値</span>
+                    <span id="recommendedValueDisplay" class="btn-value">-</span>
+                    <span class="btn-arrow">で分析へ →</span>
+                  </button>
                 </div>
 
                 <p style="font-size: 0.9em; color: #666; margin-top: 0.5em;">
@@ -903,6 +908,24 @@
                   <span id="loadMedianValueDisplay" class="btn-value">-</span>
                   <span class="btn-arrow">を読み込む</span>
                 </button>
+                <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended multi-pattern-btn" style="font-size: 0.9em;">
+                  <span class="btn-label">📌 推奨値</span>
+                  <span id="loadRecommendedValueDisplay" class="btn-value">-</span>
+                  <span class="btn-arrow">を読み込む</span>
+                </button>
+              </div>
+
+              <!-- σパターン一括生成 -->
+              <div id="generateSigmaPatternsSection" class="is-hidden" style="margin-top: 1em; padding-top: 1em; border-top: 1px solid #e0e0e0;">
+                <p style="font-size: 0.9em; margin-bottom: 0.75em; color: #666;">
+                  <strong>📈 標準偏差パターンを生成</strong>
+                </p>
+                <button type="button" id="generateSigmaPatternsBtn" class="btn btn-accent" style="font-size: 0.9em; width: 100%;">
+                  <span>平均±1σ、±2σのパターンを自動生成</span>
+                </button>
+                <p style="font-size: 0.8em; color: #999; margin-top: 0.5em; margin-bottom: 0;">
+                  標準偏差を使った複数シナリオを一括で生成します
+                </p>
               </div>
 
               <!-- データがない場合のメッセージ -->
