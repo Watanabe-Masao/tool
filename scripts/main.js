@@ -4950,12 +4950,21 @@ function init() {
 
   // プリセット管理機能のイベントリスナー
   // モーダル内のボタン（これらはモーダルが開いた後に存在する）
+  // クリックイベント
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
   qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
   qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
   qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
+
+  // タッチイベント（モバイル対応）
+  qs('#presetModalClose')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
+  qs('#createNewPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); openPresetModal(); }, { passive: false });
+  qs('#addPairBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addPairToTemp(); }, { passive: false });
+  qs('#savePresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); savePresetFromModal(); }, { passive: false });
+  qs('#cancelPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
+  qs('#addSelectedPresetsBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addSelectedPresetsToTable(); }, { passive: false });
 
   // プリセットから選択ボタン（イベント委譲で確実に捕捉）
   // ドキュメント全体でイベントを捕捉
