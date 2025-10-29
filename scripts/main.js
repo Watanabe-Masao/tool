@@ -8,7 +8,7 @@ import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
-import { calculateYieldRate, calculateYieldRateByMethod } from './calculator-yield-stats.js';
+import { calculateYieldRate } from './calculator-yield-stats.js';
 import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats, setStatValue } from './multi-pattern-ui.js';
 import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
 import {
@@ -1737,8 +1737,8 @@ function updateYieldStatsStatistics() {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
   if (!tbody) return;
 
-  // データペアを収集（加工前重量と加工後重量のペア）
-  const dataPairs = [];
+  // 3種類のデータを収集
+  const yieldRates = [];
   const beforeWeights = [];
   const afterWeights = [];
   const allRows = tbody.querySelectorAll('.yield-stats-row');
@@ -1747,60 +1747,33 @@ function updateYieldStatsStatistics() {
     const rowId = row.dataset.rowId;
     const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
     const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
 
-    // 加工前重量と加工後重量の両方がある場合のみペアとして収集
-    if (beforeInput && afterInput &&
-        beforeInput.value.trim() !== '' && afterInput.value.trim() !== '') {
+    // 歩留まり率
+    if (yieldRateDisplay.classList.contains('calculated')) {
+      const rateText = yieldRateDisplay.textContent.replace('%', '');
+      const rate = parseFloat(rateText);
+      if (!isNaN(rate)) {
+        yieldRates.push(rate);
+      }
+    }
+
+    // 加工前重量
+    if (beforeInput && beforeInput.value.trim() !== '') {
       const beforeWeight = parseFloat(beforeInput.value);
-      const afterWeight = parseFloat(afterInput.value);
-
-      if (!isNaN(beforeWeight) && beforeWeight > 0 &&
-          !isNaN(afterWeight) && afterWeight > 0) {
-        dataPairs.push({ beforeWeight, afterWeight });
+      if (!isNaN(beforeWeight) && beforeWeight > 0) {
         beforeWeights.push(beforeWeight);
+      }
+    }
+
+    // 加工後重量
+    if (afterInput && afterInput.value.trim() !== '') {
+      const afterWeight = parseFloat(afterInput.value);
+      if (!isNaN(afterWeight) && afterWeight > 0) {
         afterWeights.push(afterWeight);
-      }
-    } else {
-      // 片方だけ入力されている場合も個別に収集
-      if (beforeInput && beforeInput.value.trim() !== '') {
-        const beforeWeight = parseFloat(beforeInput.value);
-        if (!isNaN(beforeWeight) && beforeWeight > 0) {
-          beforeWeights.push(beforeWeight);
-        }
-      }
-      if (afterInput && afterInput.value.trim() !== '') {
-        const afterWeight = parseFloat(afterInput.value);
-        if (!isNaN(afterWeight) && afterWeight > 0) {
-          afterWeights.push(afterWeight);
-        }
       }
     }
   });
-
-  // 選択された計算方法を取得
-  const calcMethod = document.querySelector('input[name="yieldCalculationMethod"]:checked')?.value || 'simple';
-
-  // 3つの方法で歩留まり率を計算
-  const yieldRateResults = calculateYieldRateByMethod(dataPairs);
-
-  // 選択された方法の結果を使用
-  let selectedYieldRate = null;
-  if (yieldRateResults.simple !== null) {
-    switch (calcMethod) {
-      case 'simple':
-        selectedYieldRate = yieldRateResults.simple;
-        break;
-      case 'total':
-        selectedYieldRate = yieldRateResults.total;
-        break;
-      case 'weighted':
-        selectedYieldRate = yieldRateResults.weighted;
-        break;
-    }
-  }
-
-  // 個別の歩留まり率配列を作成（統計計算用）
-  const yieldRates = dataPairs.map(d => calculateYieldRate(d.beforeWeight, d.afterWeight)).filter(r => r !== null);
 
   // データを保存（表示切り替えに使用）
   const yieldStatsData = {
@@ -1810,12 +1783,9 @@ function updateYieldStatsStatistics() {
   };
 
   // 歩留まり率の統計値を計算して保存（履歴表示用）
-  // 選択された計算方法の結果を使用
-  if (selectedYieldRate !== null && yieldRates.length >= 2) {
-    yieldStatsData.avgYieldRate = selectedYieldRate;
-    yieldStatsData.calcMethod = calcMethod; // 計算方法も保存
-    // その他の統計値は個別サンプルベースで計算
+  if (yieldRates.length >= 2) {
     const stats = calculateStatistics(yieldRates);
+    yieldStatsData.avgYieldRate = stats.mean;
     yieldStatsData.medianYieldRate = stats.median;
     yieldStatsData.stdDevYieldRate = stats.stdDev;
     yieldStatsData.minYieldRate = stats.min;
@@ -4529,13 +4499,6 @@ function init() {
     const productName = productNameEl?.value || '';
 
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
-  });
-
-  // 歩留まり統計: 計算方法変更時のイベント
-  qsa('input[name="yieldCalculationMethod"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateYieldStatsStatistics();
-    });
   });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント

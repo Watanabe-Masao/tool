@@ -339,26 +339,6 @@
         </label>
       </div>
 
-      <!-- 歩留まり率計算方法選択 -->
-      <fieldset class="fieldset">
-        <legend class="legend">歩留まり率の計算方法</legend>
-        <label class="radio" title="各サンプルを同じ重みで扱います。品質管理や傾向分析に適しています。">
-          <input type="radio" name="yieldCalculationMethod" value="simple" checked />
-          単純平均（歩留まり率の平均値）
-          <span style="font-size: 0.85em; color: #666;">- 各サンプル同じ重み</span>
-        </label>
-        <label class="radio" title="全体の総量ベースでの歩留まりです。実際の生産効率を評価できます。">
-          <input type="radio" name="yieldCalculationMethod" value="total" />
-          総合効率（平均値から求めた歩留まり率）
-          <span style="font-size: 0.85em; color: #666;">- 総量ベース</span>
-        </label>
-        <label class="radio" title="加工前重量で重み付けした平均です。製造現場の統合報告に適しています。">
-          <input type="radio" name="yieldCalculationMethod" value="weighted" />
-          加重平均歩留まり率
-          <span style="font-size: 0.85em; color: #666;">- 加工前重量で重み付け</span>
-        </label>
-      </fieldset>
-
       <!-- データテーブル -->
       <div class="table-container">
         <table id="yieldStatsTable" class="yield-stats-table">
