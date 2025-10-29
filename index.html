@@ -339,6 +339,17 @@
         </label>
       </div>
 
+      <!-- 許容誤差設定 -->
+      <div class="product-name-section">
+        <label class="field">
+          <span title="相対偏差率の許容範囲を設定します。この値を基準に信頼度を判定します。">
+            許容誤差（%）
+            <span style="font-size: 0.85em; color: #666;">- 相対偏差率の許容範囲</span>
+          </span>
+          <input type="number" id="yieldStatsToleranceError" class="table-input" step="0.1" inputmode="decimal" value="3.0" min="0" max="100" style="width: 150px;" />
+        </label>
+      </div>
+
       <!-- データテーブル -->
       <div class="table-container">
         <table id="yieldStatsTable" class="yield-stats-table">
@@ -349,6 +360,7 @@
               <th>加工後重量（g）</th>
               <th>歩留まり率</th>
               <th title="(平均 - 個別値) / 平均 × 100&#10;正の値: 平均より低い&#10;負の値: 平均より高い">相対偏差率</th>
+              <th title="許容誤差との比較による信頼度判定">判定</th>
             </tr>
           </thead>
           <tbody id="yieldStatsTableBody">
