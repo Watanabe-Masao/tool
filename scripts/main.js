@@ -4166,6 +4166,11 @@ function init() {
     const statsData = window.lastCalculatedStats;
     if (!statsData) return;
 
+    // 確認ダイアログを表示
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
     const yieldRate = statsData.mean;
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
@@ -4186,6 +4191,11 @@ function init() {
   qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
     const statsData = window.lastCalculatedStats;
     if (!statsData) return;
+
+    // 確認ダイアログを表示
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
 
     const yieldRate = statsData.median;
     const productNameEl = qs('#yieldStatsProductName');
