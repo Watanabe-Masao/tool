@@ -3138,6 +3138,32 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
 }
 
 /**
+ * ボタンにタッチとクリックのイベントハンドラーを設定
+ * タッチデバイスとマウスデバイスの両方に対応
+ */
+function attachButtonHandler(button, handler) {
+  let touchStarted = false;
+
+  button.addEventListener('touchstart', () => {
+    touchStarted = true;
+  }, { passive: true });
+
+  button.addEventListener('touchend', (e) => {
+    if (touchStarted) {
+      e.preventDefault();
+      touchStarted = false;
+      handler();
+    }
+  }, { passive: false });
+
+  button.addEventListener('click', () => {
+    if (!touchStarted) {
+      handler();
+    }
+  });
+}
+
+/**
  * 歩留まり統計から読み込むボタンの状態を更新
  * ボタンのイベントハンドラーは動的に生成時に直接設定されます。
  */
@@ -3290,30 +3316,9 @@ function updateLoadStatsButtons() {
     bulkImportBtn.textContent = '📥 推奨値を一括転記';
 
     // イベントハンドラを設定
-    // タッチデバイスとマウスデバイスの両方に対応
-    let touchStarted = false;
-
-    bulkImportBtn.addEventListener('touchstart', (e) => {
-      console.log('[DEBUG] touchstart');
-      touchStarted = true;
-    }, { passive: true });
-
-    bulkImportBtn.addEventListener('touchend', (e) => {
-      console.log('[DEBUG] touchend');
-      if (touchStarted) {
-        e.preventDefault();
-        touchStarted = false;
-        console.log('[DEBUG] 一括転記ボタンがタッチされました');
-        loadAllStatsToMultiPattern();
-      }
-    }, { passive: false });
-
-    bulkImportBtn.addEventListener('click', (e) => {
-      console.log('[DEBUG] click');
-      if (!touchStarted) {
-        console.log('[DEBUG] 一括転記ボタンがクリックされました');
-        loadAllStatsToMultiPattern();
-      }
+    attachButtonHandler(bulkImportBtn, () => {
+      console.log('[DEBUG] 一括転記ボタンが押されました');
+      loadAllStatsToMultiPattern();
     });
 
     bulkImportBtnContainer.appendChild(bulkImportBtn);
@@ -3365,11 +3370,11 @@ function updateLoadStatsButtons() {
       meanBtn.type = 'button';
       meanBtn.className = 'btn btn-primary btn-sm';
       meanBtn.textContent = '読み込む';
-      meanBtn.onclick = () => {
+      attachButtonHandler(meanBtn, () => {
         loadStatsValueToMultiPattern(stats.mean, selectedStatsType, false);
         showTransferNotification('平均値を転記しました');
         focusFirstPatternInput();
-      };
+      });
       meanRow.cells[2].appendChild(meanBtn);
 
       // 中央値の行を作成
@@ -3382,11 +3387,11 @@ function updateLoadStatsButtons() {
       medianBtn.type = 'button';
       medianBtn.className = 'btn btn-secondary btn-sm';
       medianBtn.textContent = '読み込む';
-      medianBtn.onclick = () => {
+      attachButtonHandler(medianBtn, () => {
         loadStatsValueToMultiPattern(stats.median, selectedStatsType, false);
         showTransferNotification('中央値を転記しました');
         focusFirstPatternInput();
-      };
+      });
       medianRow.cells[2].appendChild(medianBtn);
 
       // 推奨値の行を作成
@@ -3401,11 +3406,11 @@ function updateLoadStatsButtons() {
         recommendedBtn.type = 'button';
         recommendedBtn.className = 'btn btn-recommended btn-sm';
         recommendedBtn.textContent = '読み込む';
-        recommendedBtn.onclick = () => {
+        attachButtonHandler(recommendedBtn, () => {
           loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
           showTransferNotification('推奨値を転記しました');
           focusFirstPatternInput();
-        };
+        });
         recommendedRow.cells[2].appendChild(recommendedBtn);
       }
     }
