@@ -214,6 +214,9 @@ function addPattern() {
   const removeBtn = row.querySelector('.btn-remove');
   removeBtn.addEventListener('click', () => removePattern(patternId));
   removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
+
+  // パターン番号を更新
+  updatePatternNumbers();
 }
 
 /**
@@ -238,8 +241,24 @@ function removePattern(patternId) {
     patterns.splice(index, 1);
   }
 
+  // パターン番号を更新
+  updatePatternNumbers();
+
   // 結果を再計算
   recalculateAll();
+}
+
+/**
+ * パターン番号を1から連番で更新
+ */
+function updatePatternNumbers() {
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+  rows.forEach((row, index) => {
+    const patternNumberCell = row.querySelector('.pattern-number');
+    if (patternNumberCell) {
+      patternNumberCell.textContent = index + 1;
+    }
+  });
 }
 
 /**
@@ -517,12 +536,16 @@ export function replaceAllPatterns(newPatterns) {
     removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
   });
 
+  // パターン番号を更新
+  updatePatternNumbers();
+
   console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
 }
 
 // グローバルアクセス用のAPI
 if (typeof window !== 'undefined') {
   window.multiPatternUI = {
-    replaceAllPatterns
+    replaceAllPatterns,
+    updatePatternNumbers
   };
 }

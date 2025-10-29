@@ -3535,6 +3535,11 @@ function addSelectedPresetsToTable() {
     });
   });
 
+  // パターン番号を更新（念のため）
+  if (window.multiPatternUI && typeof window.multiPatternUI.updatePatternNumbers === 'function') {
+    window.multiPatternUI.updatePatternNumbers();
+  }
+
   // モーダルを閉じる
   closePresetModal();
 
