@@ -2857,12 +2857,39 @@ function updateLoadStatsButtons() {
   const generateSigmaPatternsSection = qs('#generateSigmaPatternsSection');
   const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
 
-  if (!loadStatsButtons || !loadStatsNoData) {
+  if (!loadStatsButtons || !loadStatsNoData || !loadStatsTypeSelect) {
     return;
   }
 
+  // 現在の複数パターン分析のモードを取得
+  const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
+
+  // 現在選択されている値を保存
+  const previousValue = loadStatsTypeSelect.value;
+
+  // モードに応じてプルダウンの選択肢を更新
+  loadStatsTypeSelect.innerHTML = '';
+  if (currentMode === 'direct') {
+    // 歩留まり率直接入力モード：歩留まり率と加工前重量のみ
+    loadStatsTypeSelect.innerHTML = `
+      <option value="yieldRate">歩留まり率（%）</option>
+      <option value="beforeWeight">加工前重量（g）</option>
+    `;
+  } else {
+    // 重量から計算モード：加工前重量と加工後重量のみ
+    loadStatsTypeSelect.innerHTML = `
+      <option value="beforeWeight">加工前重量（g）</option>
+      <option value="afterWeight">加工後重量（g）</option>
+    `;
+  }
+
+  // 以前の選択値が新しいオプションに存在すれば復元
+  if (previousValue && Array.from(loadStatsTypeSelect.options).some(opt => opt.value === previousValue)) {
+    loadStatsTypeSelect.value = previousValue;
+  }
+
   // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
-  const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+  const selectedStatsType = loadStatsTypeSelect.value;
   const stats = window.statsDataByType?.[selectedStatsType];
 
   if (stats && stats.count >= 2) {
@@ -4472,6 +4499,13 @@ function init() {
     const productName = productNameEl?.value || '';
 
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
+  });
+
+  // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
+  qsa('input[name="yieldMethodMultiPattern"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      updateLoadStatsButtons();
+    });
   });
 
   // 複数パターン分析画面: 統計タイプ選択プルダウンの変更イベント
