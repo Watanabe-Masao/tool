@@ -4176,6 +4176,9 @@ function init() {
     // 歩留まり率と商品名を設定
     if (yieldRate !== null) {
       setFromYieldStats(yieldRate, productName);
+      // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+      appState.markAsNewCalculation();
+      updateSaveButtonsVisibility();
     }
   });
 
@@ -4194,6 +4197,9 @@ function init() {
     // 歩留まり率と商品名を設定
     if (yieldRate !== null) {
       setFromYieldStats(yieldRate, productName);
+      // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+      appState.markAsNewCalculation();
+      updateSaveButtonsVisibility();
     }
   });
 
@@ -4217,6 +4223,10 @@ function init() {
       yieldRateInput.value = toFixed(yieldRate, 2);
       yieldRateInput.dispatchEvent(new Event('input'));
     }
+
+    // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+    appState.markAsNewCalculation();
+    updateSaveButtonsVisibility();
   });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
@@ -4239,6 +4249,10 @@ function init() {
       yieldRateInput.value = toFixed(yieldRate, 2);
       yieldRateInput.dispatchEvent(new Event('input'));
     }
+
+    // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
+    appState.markAsNewCalculation();
+    updateSaveButtonsVisibility();
   });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
