@@ -3219,19 +3219,48 @@ function openPresetModal() {
   alert('openPresetModal関数が呼ばれました'); // デバッグ用
 
   try {
+    console.log('Step 1: 変数の初期化');
     currentEditingPreset = null;
     tempPairs = [];
-    qs('#presetEditorTitle').textContent = '新規プリセット作成';
-    qs('#presetName').value = '';
-    qs('#tempUnitCost').value = '';
-    qs('#tempUnitPrice').value = '';
+
+    console.log('Step 2: presetEditorTitle');
+    const editorTitle = qs('#presetEditorTitle');
+    if (!editorTitle) throw new Error('#presetEditorTitle が見つかりません');
+    editorTitle.textContent = '新規プリセット作成';
+
+    console.log('Step 3: presetName');
+    const presetName = qs('#presetName');
+    if (!presetName) throw new Error('#presetName が見つかりません');
+    presetName.value = '';
+
+    console.log('Step 4: tempUnitCost');
+    const tempUnitCost = qs('#tempUnitCost');
+    if (!tempUnitCost) throw new Error('#tempUnitCost が見つかりません');
+    tempUnitCost.value = '';
+
+    console.log('Step 5: tempUnitPrice');
+    const tempUnitPrice = qs('#tempUnitPrice');
+    if (!tempUnitPrice) throw new Error('#tempUnitPrice が見つかりません');
+    tempUnitPrice.value = '';
+
+    console.log('Step 6: renderTempPairs');
     renderTempPairs();
+
+    console.log('Step 7: renderPresetList');
     renderPresetList();
-    qs('#presetModal').classList.add('is-open');
+
+    console.log('Step 8: presetModal');
+    const modal = qs('#presetModal');
+    if (!modal) throw new Error('#presetModal が見つかりません');
+    modal.classList.add('is-open');
+
     console.log('モーダルを開きました');
+    alert('成功：モーダルを開きました');
   } catch (error) {
     console.error('openPresetModalでエラー:', error);
-    alert('エラーが発生しました: ' + error.message); // デバッグ用
+    const errorMsg = 'エラー内容:\n' + error.message + '\n\nスタック:\n' + (error.stack || '不明');
+    console.error(errorMsg);
+    alert(errorMsg);
   }
 }
 
