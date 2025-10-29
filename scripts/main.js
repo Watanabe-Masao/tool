@@ -3215,15 +3215,24 @@ function savePresetsData(presets) {
 
 // モーダルを開く（新規作成）
 function openPresetModal() {
-  currentEditingPreset = null;
-  tempPairs = [];
-  qs('#presetEditorTitle').textContent = '新規プリセット作成';
-  qs('#presetName').value = '';
-  qs('#tempUnitCost').value = '';
-  qs('#tempUnitPrice').value = '';
-  renderTempPairs();
-  renderPresetList();
-  qs('#presetModal').classList.add('is-open');
+  console.log('openPresetModal が呼ばれました');
+  alert('openPresetModal関数が呼ばれました'); // デバッグ用
+
+  try {
+    currentEditingPreset = null;
+    tempPairs = [];
+    qs('#presetEditorTitle').textContent = '新規プリセット作成';
+    qs('#presetName').value = '';
+    qs('#tempUnitCost').value = '';
+    qs('#tempUnitPrice').value = '';
+    renderTempPairs();
+    renderPresetList();
+    qs('#presetModal').classList.add('is-open');
+    console.log('モーダルを開きました');
+  } catch (error) {
+    console.error('openPresetModalでエラー:', error);
+    alert('エラーが発生しました: ' + error.message); // デバッグ用
+  }
 }
 
 // モーダルを閉じる
