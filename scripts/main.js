@@ -4908,40 +4908,60 @@ function init() {
   }
 
   /**
-   * 平均値・中央値・推奨値を一括で複数パターン分析に転記
+   * 一括取り込み：推奨値をステップ1に転記
    */
   function loadAllStatsToMultiPattern() {
     const yieldRateStats = window.statsDataByType?.yieldRate;
+    const beforeWeightStats = window.statsDataByType?.beforeWeight;
+
     if (!yieldRateStats || yieldRateStats.count < 2) {
       alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
-    const recommended = getRecommendedValue(yieldRateStats);
-    if (!recommended) {
-      alert('推奨値を取得できませんでした。');
+    // 推奨値を取得
+    const yieldRateRecommended = getRecommendedValue(yieldRateStats);
+    if (!yieldRateRecommended) {
+      alert('歩留まり率の推奨値を取得できませんでした。');
       return;
     }
+
+    // 加工前重量の推奨値を取得（存在する場合）
+    const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      ? getRecommendedValue(beforeWeightStats)
+      : null;
+
+    // 現在のモードを取得
+    const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
 
     // 確認ダイアログ
-    if (!confirm('平均値・中央値・推奨値の3つを複数パターン分析に転記しますか？')) {
+    if (!confirm('推奨値をステップ1に転記しますか？')) {
       return;
     }
 
-    // multi-pattern-ui.jsのreplaceAllPatterns関数を使用
-    const patterns = [
-      { label: '平均値', value: yieldRateStats.mean },
-      { label: '中央値', value: yieldRateStats.median },
-      { label: `推奨値（${recommended.label}）`, value: recommended.value }
-    ];
+    // モードに応じて値を設定
+    if (currentMode === 'direct') {
+      // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
+      setStatValue(yieldRateRecommended.value, 'yieldRate');
 
-    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
-      window.multiPatternUI.replaceAllPatterns(patterns);
-      showTransferNotification('平均値・中央値・推奨値を転記しました（歩留まり率）');
-      focusFirstPatternInput();
+      if (beforeWeightRecommended) {
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%、加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+      } else {
+        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%`);
+      }
     } else {
-      alert('パターン生成機能の初期化に失敗しました。');
+      // 重量から計算モード：加工前重量のみ設定
+      if (beforeWeightRecommended) {
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+        showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+      } else {
+        alert('加工前重量の統計データがありません。');
+        return;
+      }
     }
+
+    focusFirstPatternInput();
   }
 
   /**
