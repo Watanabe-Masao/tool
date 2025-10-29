@@ -1419,6 +1419,86 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* 統計読み込みテーブル（Excel風） */
+.stats-load-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5em;
+  font-size: 0.85em;
+  background: white;
+  border: 1px solid #d0d0d0;
+}
+
+.stats-load-table thead {
+  background: #f0f0f0;
+  border-bottom: 2px solid #a0a0a0;
+}
+
+.stats-load-table th {
+  padding: 0.5em 0.6em;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-right: 1px solid #d0d0d0;
+}
+
+.stats-load-table th:last-child {
+  border-right: none;
+}
+
+.stats-load-table tbody tr {
+  border-bottom: 1px solid #d0d0d0;
+  transition: background-color 0.15s;
+}
+
+.stats-load-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.stats-load-table tbody tr.recommended-row {
+  background-color: #fff9e6;
+}
+
+.stats-load-table tbody tr.recommended-row:hover {
+  background-color: #fff3cc;
+}
+
+.stats-load-table td {
+  padding: 0.5em 0.6em;
+  border-right: 1px solid #e0e0e0;
+}
+
+.stats-load-table td:last-child {
+  border-right: none;
+}
+
+.stats-load-table .stats-label {
+  font-weight: 500;
+  color: #333;
+  width: 30%;
+}
+
+.stats-load-table .stats-value {
+  font-weight: 700;
+  color: #1976d2;
+  text-align: right;
+  width: 35%;
+  font-family: 'Courier New', monospace;
+}
+
+.stats-load-table .stats-action {
+  text-align: center;
+  width: 35%;
+}
+
+.stats-load-table .btn-sm {
+  padding: 0.35em 0.7em;
+  font-size: 0.85em;
+  min-height: auto;
+  width: 100%;
+  max-width: 100px;
+}
+
 /* データ不足メッセージ */
 .data-insufficient-message {
   background: #ffebee;

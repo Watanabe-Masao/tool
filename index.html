@@ -894,20 +894,40 @@
             </select>
           </div>
 
-          <!-- データがある場合のボタン -->
-          <div id="loadStatsButtons" class="multi-pattern-buttons is-hidden">
-            <button type="button" id="loadStatsMeanBtn" class="btn btn-primary multi-pattern-btn">
-              <span class="btn-label">平均値:</span>
-              <span id="loadMeanValueDisplay" class="btn-value">-</span>
-            </button>
-            <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary multi-pattern-btn">
-              <span class="btn-label">中央値:</span>
-              <span id="loadMedianValueDisplay" class="btn-value">-</span>
-            </button>
-            <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended multi-pattern-btn">
-              <span class="btn-label">📌 推奨値:</span>
-              <span id="loadRecommendedValueDisplay" class="btn-value">-</span>
-            </button>
+          <!-- データがある場合のテーブル -->
+          <div id="loadStatsButtons" class="is-hidden">
+            <table class="stats-load-table">
+              <thead>
+                <tr>
+                  <th>統計種別</th>
+                  <th>値</th>
+                  <th>読み込み</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="stats-label">平均値</td>
+                  <td class="stats-value" id="loadMeanValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="stats-label">中央値</td>
+                  <td class="stats-value" id="loadMedianValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
+                  </td>
+                </tr>
+                <tr class="recommended-row">
+                  <td class="stats-label">📌 推奨値</td>
+                  <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <!-- σパターン一括生成 -->

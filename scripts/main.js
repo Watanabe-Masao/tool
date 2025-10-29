@@ -4887,6 +4887,15 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
   });
+  qs('#loadStatsMeanBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+  }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
@@ -4897,6 +4906,15 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
   });
+  qs('#loadStatsMedianBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+  }, { passive: false });
 
   // 複数パターン分析への遷移ボタン（推奨値）
   qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
@@ -4913,6 +4931,12 @@ function init() {
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
   });
+  qs('#loadStatsRecommendedBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    loadRecommendedValueToMultiPattern(false, selectedStatsType);
+  }, { passive: false });
 
   // σパターン一括生成ボタン
   qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
