@@ -995,7 +995,15 @@
 
         <!-- プリセット管理へのリンク -->
         <div class="btn-row" style="margin-bottom: 1em;">
-          <button type="button" id="showPresetManagerBtn" class="btn btn-secondary">📋 プリセットから選択</button>
+          <button
+            type="button"
+            id="showPresetManagerBtn"
+            class="btn btn-secondary"
+            onclick="alert('インラインクリック検出！'); console.log('inline onclick fired'); return false;"
+            ontouchend="alert('インラインタッチ検出！'); console.log('inline ontouchend fired'); return false;"
+            style="position: relative; z-index: 100; pointer-events: auto;">
+            📋 プリセットから選択
+          </button>
         </div>
 
         <!-- パターン入力テーブル -->
