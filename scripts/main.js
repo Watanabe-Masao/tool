@@ -1493,6 +1493,7 @@ function addYieldStatsRow() {
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
     <td class="relative-deviation" id="relativeDeviation${rowId}">-</td>
+    <td class="confidence-judgment" id="confidenceJudgment${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -1792,12 +1793,17 @@ function updateYieldStatsStatistics() {
     yieldStatsData.minYieldRate = stats.min;
     yieldStatsData.maxYieldRate = stats.max;
 
+    // 許容誤差を取得
+    const toleranceErrorInput = qs('#yieldStatsToleranceError');
+    const toleranceError = toleranceErrorInput ? parseFloat(toleranceErrorInput.value) : 3.0;
+
     // 各行の相対偏差率を計算して表示
     const avgYield = stats.mean;
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
       const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
       const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
 
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && relativeDeviationDisplay) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
@@ -1806,6 +1812,7 @@ function updateYieldStatsStatistics() {
         if (!isNaN(rate) && avgYield > 0) {
           // 相対偏差率 = (平均 - 個別値) / 平均 × 100
           const relativeDeviation = ((avgYield - rate) / avgYield) * 100;
+          const absDeviation = Math.abs(relativeDeviation);
 
           // 表示用のテキストを生成
           let displayText = `${toFixed(relativeDeviation, 1)}%`;
@@ -1823,23 +1830,72 @@ function updateYieldStatsStatistics() {
           }
 
           relativeDeviationDisplay.textContent = displayText;
+
+          // 判定を計算（許容誤差との比較）
+          if (confidenceJudgmentDisplay) {
+            let judgment = '';
+            let judgmentColor = '';
+
+            if (absDeviation <= toleranceError * 2 / 3) {
+              // 許容誤差の66%以内: 非常に良好 (1～2%の場合、許容誤差3.0なら2.0以内)
+              judgment = '✓ 非常に良好';
+              judgmentColor = '#1b5e20'; // 濃い緑
+            } else if (absDeviation <= toleranceError) {
+              // 許容誤差以内: 良好 (3～4%相当)
+              judgment = '○ 良好';
+              judgmentColor = '#388e3c'; // 緑
+            } else if (absDeviation <= toleranceError * 2) {
+              // 許容誤差の2倍以内: 許容範囲 (5～6%相当)
+              judgment = '△ 許容範囲';
+              judgmentColor = '#f57c00'; // オレンジ
+            } else if (absDeviation <= toleranceError * 2.67) {
+              // 許容誤差の2.67倍以内: 要注意 (7～8%相当)
+              judgment = '! 要注意';
+              judgmentColor = '#e64a19'; // 赤オレンジ
+            } else {
+              // それ以上: 要改善
+              judgment = '× 要改善';
+              judgmentColor = '#c62828'; // 赤
+            }
+
+            confidenceJudgmentDisplay.textContent = judgment;
+            confidenceJudgmentDisplay.style.color = judgmentColor;
+            confidenceJudgmentDisplay.style.fontWeight = 'bold';
+          }
         } else {
           relativeDeviationDisplay.textContent = '-';
           relativeDeviationDisplay.style.color = '';
+          if (confidenceJudgmentDisplay) {
+            confidenceJudgmentDisplay.textContent = '-';
+            confidenceJudgmentDisplay.style.color = '';
+            confidenceJudgmentDisplay.style.fontWeight = '';
+          }
         }
       } else if (relativeDeviationDisplay) {
         relativeDeviationDisplay.textContent = '-';
         relativeDeviationDisplay.style.color = '';
+        if (confidenceJudgmentDisplay) {
+          confidenceJudgmentDisplay.textContent = '-';
+          confidenceJudgmentDisplay.style.color = '';
+          confidenceJudgmentDisplay.style.fontWeight = '';
+        }
       }
     });
   } else {
-    // データが不足している場合は相対偏差率をクリア
+    // データが不足している場合は相対偏差率と判定をクリア
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
       const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+
       if (relativeDeviationDisplay) {
         relativeDeviationDisplay.textContent = '-';
         relativeDeviationDisplay.style.color = '';
+      }
+      if (confidenceJudgmentDisplay) {
+        confidenceJudgmentDisplay.textContent = '-';
+        confidenceJudgmentDisplay.style.color = '';
+        confidenceJudgmentDisplay.style.fontWeight = '';
       }
     });
   }
@@ -2073,6 +2129,7 @@ function displayCurrentStatistics() {
 
   // 除外後のデータで統計を表示
   displayStatistics(finalStats, unit);
+  displayMatrixEvaluation(finalStats);
   renderStatsChart(finalValues, finalStats, typeName, unit);
 
   // 統計結果を表示
@@ -2092,8 +2149,36 @@ function displayCurrentStatistics() {
 
   // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
   if (!hasTolerance) {
-    displayRecommendedValue(finalStats, true);
+    displayRecommendedValue(finalStats, true, actualSelectedType);
   }
+}
+
+/**
+ * マトリックス評価を表示
+ * @param {Object} stats - 統計情報
+ */
+function displayMatrixEvaluation(stats) {
+  const sampleSizeSpan = qs('#matrixEvalSampleSize');
+  const cvSpan = qs('#matrixEvalCV');
+  const messageDiv = qs('#matrixEvalMessage');
+
+  if (!sampleSizeSpan || !cvSpan || !messageDiv) {
+    return;
+  }
+
+  const n = stats.count;
+  const cv = stats.cv;
+
+  // サンプル数とCVを表示
+  sampleSizeSpan.textContent = `${n}個`;
+  cvSpan.textContent = `${toFixed(cv)}%`;
+
+  // マトリックス評価を取得
+  const evaluation = getMatrixEvaluation(n, cv);
+
+  // メッセージを表示
+  messageDiv.textContent = evaluation.message;
+  messageDiv.className = `matrix-eval-message ${evaluation.className}`;
 }
 
 /**
@@ -2161,6 +2246,180 @@ function detectOutliers(values, stats) {
     lowerBound,
     upperBound
   };
+}
+
+/**
+ * 許容誤差に基づいて信頼度メッセージを判定
+ * @param {number} toleranceError - 許容誤差（E）
+ * @returns {Object} メッセージと色の情報
+ */
+function getConfidenceMessage(toleranceError) {
+  if (toleranceError >= 1 && toleranceError <= 2) {
+    return {
+      message: '高精度：誤差範囲が狭く、非常に信頼性の高い推定が可能です',
+      className: 'confidence-high'
+    };
+  } else if (toleranceError >= 3 && toleranceError <= 4) {
+    return {
+      message: '標準精度：一般的な分析に適した精度です',
+      className: 'confidence-standard'
+    };
+  } else if (toleranceError >= 5 && toleranceError <= 6) {
+    return {
+      message: '低精度：誤差範囲が広く、精度が低くなります',
+      className: 'confidence-low'
+    };
+  } else if (toleranceError >= 7 && toleranceError <= 8) {
+    return {
+      message: '非常に低い精度：誤差範囲が非常に広く、推定の信頼性が限定的です',
+      className: 'confidence-very-low'
+    };
+  } else if (toleranceError > 8) {
+    return {
+      message: '精度不足：誤差範囲が大きすぎるため、推定の信頼性が著しく低下します',
+      className: 'confidence-insufficient'
+    };
+  } else {
+    return {
+      message: '高精度：誤差範囲が狭く、非常に信頼性の高い推定が可能です',
+      className: 'confidence-high'
+    };
+  }
+}
+
+/**
+ * サンプル数とCVのマトリックスから評価メッセージを判定
+ * @param {number} n - サンプル数
+ * @param {number} cv - 変動係数（%）
+ * @returns {Object} 評価メッセージとクラス名
+ */
+function getMatrixEvaluation(n, cv) {
+  // サンプル数の範囲を判定
+  let sampleRange;
+  if (n <= 5) {
+    sampleRange = 'n5';
+  } else if (n >= 10 && n <= 20) {
+    sampleRange = 'n10-20';
+  } else if (n >= 30 && n <= 50) {
+    sampleRange = 'n30-50';
+  } else if (n >= 100) {
+    sampleRange = 'n100+';
+  } else {
+    // 6-9, 21-29, 51-99の場合は近い範囲にマッピング
+    if (n < 10) {
+      sampleRange = 'n5';
+    } else if (n < 30) {
+      sampleRange = 'n10-20';
+    } else if (n < 100) {
+      sampleRange = 'n30-50';
+    }
+  }
+
+  // CVの範囲を判定
+  let cvRange;
+  if (cv < 10) {
+    cvRange = 'cv0-10';
+  } else if (cv >= 10 && cv < 20) {
+    cvRange = 'cv10-20';
+  } else if (cv >= 20 && cv < 30) {
+    cvRange = 'cv20-30';
+  } else {
+    cvRange = 'cv30+';
+  }
+
+  // マトリックスに基づく評価
+  const evaluations = {
+    'n5': {
+      'cv0-10': {
+        message: '目安レベル。参考値のみ（データ不足）',
+        className: 'matrix-eval-caution',
+        level: 'caution'
+      },
+      'cv10-20': {
+        message: '目安レベル。参考値のみ',
+        className: 'matrix-eval-caution',
+        level: 'caution'
+      },
+      'cv20-30': {
+        message: '不安定。外れ値の影響大',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      },
+      'cv30+': {
+        message: '信頼性極めて低い。再測定推奨',
+        className: 'matrix-eval-danger',
+        level: 'danger'
+      }
+    },
+    'n10-20': {
+      'cv0-10': {
+        message: 'やや安定。概ね良好',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv10-20': {
+        message: '概ね安定。傾向把握可',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv20-30': {
+        message: 'ばらつきあり。原因分析要',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      },
+      'cv30+': {
+        message: 'データ再収集を推奨',
+        className: 'matrix-eval-danger',
+        level: 'danger'
+      }
+    },
+    'n30-50': {
+      'cv0-10': {
+        message: '安定。統計的に信頼できる',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv10-20': {
+        message: '安定。品質問題は小',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv20-30': {
+        message: 'ややばらつきあり。改善検討',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv30+': {
+        message: '不安定。工程見直し必要',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      }
+    },
+    'n100+': {
+      'cv0-10': {
+        message: '非常に安定。精度高い推定可能',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv10-20': {
+        message: '高信頼性。管理値設定可',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv20-30': {
+        message: '安定。制御強化で改善可',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv30+': {
+        message: '要改善。重大なばらつきの可能性',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      }
+    }
+  };
+
+  return evaluations[sampleRange][cvRange];
 }
 
 /**
@@ -2309,6 +2568,14 @@ function displaySampleSizeValidation() {
     }
   }
 
+  // 信頼度メッセージを表示
+  const confidenceMessageDiv = qs('#confidenceMessage');
+  if (confidenceMessageDiv) {
+    const confidenceInfo = getConfidenceMessage(toleranceError);
+    confidenceMessageDiv.textContent = confidenceInfo.message;
+    confidenceMessageDiv.className = `confidence-message ${confidenceInfo.className}`;
+  }
+
   // 外れ値を検出して表示
   displayOutlierInfo(outlierResult, statsType, isValid);
 
@@ -2317,11 +2584,11 @@ function displaySampleSizeValidation() {
   if (finalValues.length >= 2) {
     // グローバルに保存（複数パターン分析への遷移用）
     window.lastCalculatedStats = finalStats;
-    displayRecommendedValue(finalStats, isValid);
+    displayRecommendedValue(finalStats, isValid, statsType);
   } else {
     // グローバルに保存（複数パターン分析への遷移用）
     window.lastCalculatedStats = stats;
-    displayRecommendedValue(stats, isValid);
+    displayRecommendedValue(stats, isValid, statsType);
   }
 
   // 結果を表示
@@ -2798,8 +3065,9 @@ function generateSigmaPatterns(stats, sigmaRange = 2) {
  * 推奨代表値を表示
  * @param {Object} stats - 統計データ
  * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
+ * @param {string} statsType - 統計タイプ（'yieldRate', 'beforeWeight', 'afterWeight'）
  */
-function displayRecommendedValue(stats, isSampleSizeValid) {
+function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRate') {
   const recommendedValueDiv = qs('#recommendedValue');
   const recommendedBadge = qs('#recommendedBadge');
   const recommendedReason = qs('#recommendedReason');
@@ -2865,9 +3133,19 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
     const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
     const yieldRateStats = window.statsDataByType?.yieldRate;
 
+    // デバッグ：値を確認
+    console.log('=== 複数パターン分析ボタン更新 ===');
+    console.log('statsType:', statsType);
+    console.log('isSampleSizeValid:', isSampleSizeValid);
+    console.log('hasYieldRateData:', hasYieldRateData);
+    console.log('yieldRateStats:', yieldRateStats);
+    console.log('yieldRateStats?.count:', yieldRateStats?.count);
+
     // 状態を更新：複数パターン分析リンクを表示すべきか
     window.yieldStatsState.shouldShowMultiPatternLink =
       isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
+
+    console.log('shouldShowMultiPatternLink:', window.yieldStatsState.shouldShowMultiPatternLink);
 
     // データが十分にあるかチェック
     if (window.yieldStatsState.shouldShowMultiPatternLink) {
@@ -2876,6 +3154,12 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
       const recommendedValueDisplay = qs('#recommendedValueDisplay');
 
       // 値を設定（歩留まり率の統計を使用）
+      console.log('ボタンの値を更新:', {
+        mean: yieldRateStats.mean,
+        median: yieldRateStats.median,
+        recommended: recommended?.value
+      });
+
       if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
       if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
       if (recommendedValueDisplay && recommended) {
@@ -2887,6 +3171,7 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
       if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
       if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
     } else {
+      console.log('条件を満たしていないため、ボタンを非表示にします');
       // データ不足の場合
       // ボタンを非表示、データ不足メッセージを表示
       if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
@@ -2894,6 +3179,8 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
     }
 
     multiPatternLink.classList.remove('is-hidden');
+  } else {
+    console.log('multiPatternLink を表示しません（statsType:', statsType, '）');
   }
 }
 
@@ -3004,15 +3291,53 @@ function savePresetsData(presets) {
 
 // モーダルを開く（新規作成）
 function openPresetModal() {
-  currentEditingPreset = null;
-  tempPairs = [];
-  qs('#presetEditorTitle').textContent = '新規プリセット作成';
-  qs('#presetName').value = '';
-  qs('#tempUnitCost').value = '';
-  qs('#tempUnitPrice').value = '';
-  renderTempPairs();
-  renderPresetList();
-  qs('#presetModal').classList.add('is-open');
+  console.log('openPresetModal が呼ばれました');
+  alert('openPresetModal関数が呼ばれました'); // デバッグ用
+
+  try {
+    console.log('Step 1: 変数の初期化');
+    currentEditingPreset = null;
+    tempPairs = [];
+
+    console.log('Step 2: presetEditorTitle');
+    const editorTitle = qs('#presetEditorTitle');
+    if (!editorTitle) throw new Error('#presetEditorTitle が見つかりません');
+    editorTitle.textContent = '新規プリセット作成';
+
+    console.log('Step 3: presetName');
+    const presetName = qs('#presetName');
+    if (!presetName) throw new Error('#presetName が見つかりません');
+    presetName.value = '';
+
+    console.log('Step 4: tempUnitCost');
+    const tempUnitCost = qs('#tempUnitCost');
+    if (!tempUnitCost) throw new Error('#tempUnitCost が見つかりません');
+    tempUnitCost.value = '';
+
+    console.log('Step 5: tempUnitPrice');
+    const tempUnitPrice = qs('#tempUnitPrice');
+    if (!tempUnitPrice) throw new Error('#tempUnitPrice が見つかりません');
+    tempUnitPrice.value = '';
+
+    console.log('Step 6: renderTempPairs');
+    renderTempPairs();
+
+    console.log('Step 7: renderPresetList');
+    renderPresetList();
+
+    console.log('Step 8: presetModal');
+    const modal = qs('#presetModal');
+    if (!modal) throw new Error('#presetModal が見つかりません');
+    modal.classList.add('is-open');
+
+    console.log('モーダルを開きました');
+    alert('成功：モーダルを開きました');
+  } catch (error) {
+    console.error('openPresetModalでエラー:', error);
+    const errorMsg = 'エラー内容:\n' + error.message + '\n\nスタック:\n' + (error.stack || '不明');
+    console.error(errorMsg);
+    alert(errorMsg);
+  }
 }
 
 // モーダルを閉じる
@@ -3124,17 +3449,20 @@ function renderPresetList() {
   }
 
   presetList.innerHTML = presets.map(preset => {
-    const patternsDisplay = preset.patterns
+    // patternsが存在しない場合は空配列として扱う（データの互換性対策）
+    const patterns = Array.isArray(preset.patterns) ? preset.patterns : [];
+
+    const patternsDisplay = patterns
       .slice(0, 3)
-      .map(p => `<span class="preset-pattern-badge">${p.unitCost}円→${p.unitPrice}円</span>`)
+      .map(p => `<span class="preset-pattern-badge">${p.unitCost || 0}円→${p.unitPrice || 0}円</span>`)
       .join('');
-    const moreText = preset.patterns.length > 3 ? ` <span style="color: #999;">他${preset.patterns.length - 3}件</span>` : '';
+    const moreText = patterns.length > 3 ? ` <span style="color: #999;">他${patterns.length - 3}件</span>` : '';
 
     return `
       <div class="preset-item" data-preset-id="${preset.id}">
         <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
         <div class="preset-info">
-          <div class="preset-name">${preset.name}</div>
+          <div class="preset-name">${preset.name || '名称未設定'}</div>
           <div class="preset-item-patterns">${patternsDisplay}${moreText}</div>
         </div>
         <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>
@@ -3174,6 +3502,39 @@ function deletePresetFromModal(id) {
   renderPresetList();
 }
 
+/**
+ * テーブル内の空欄行を削除する
+ */
+function removeEmptyRows() {
+  const tableBody = qs('#multiPatternTableBody');
+  if (!tableBody) return;
+
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+  rows.forEach(row => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
+
+    // 両方の入力が空欄の場合、行を削除
+    if (unitCostInput && unitPriceInput) {
+      const costValue = unitCostInput.value.trim();
+      const priceValue = unitPriceInput.value.trim();
+
+      if (costValue === '' && priceValue === '') {
+        row.remove();
+      }
+    }
+  });
+
+  // 行がすべて削除された場合、最低1行は残す
+  if (tableBody.querySelectorAll('tr').length === 0) {
+    const addBtn = qs('#addPatternBtn');
+    if (addBtn) {
+      addBtn.click();
+    }
+  }
+}
+
 // 選択したプリセットをパターンテーブルに追加
 function addSelectedPresetsToTable() {
   const checkedBoxes = qsa('.preset-checkbox:checked');
@@ -3186,6 +3547,9 @@ function addSelectedPresetsToTable() {
   const presets = loadPresets();
   const tableBody = qs('#multiPatternTableBody');
   if (!tableBody) return;
+
+  // プリセット追加前に空欄行を削除
+  removeEmptyRows();
 
   // 選択されたプリセットの全ペアをテーブルに追加
   checkedBoxes.forEach(checkbox => {
@@ -4151,6 +4515,11 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
+  // グローバルスコープに関数を公開（最優先で実行）
+  window.openPresetModal = openPresetModal;
+  console.log('window.openPresetModal が設定されました:', typeof window.openPresetModal);
+  alert('デバッグ: window.openPresetModal = ' + typeof window.openPresetModal);
+
   // モード切替ボタン
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
@@ -4574,6 +4943,15 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
   });
+  qs('#loadStatsMeanBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+  }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
@@ -4584,6 +4962,15 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
   });
+  qs('#loadStatsMedianBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
+    if (!statsData) return;
+
+    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+  }, { passive: false });
 
   // 複数パターン分析への遷移ボタン（推奨値）
   qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
@@ -4600,6 +4987,12 @@ function init() {
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
   });
+  qs('#loadStatsRecommendedBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    loadRecommendedValueToMultiPattern(false, selectedStatsType);
+  }, { passive: false });
 
   // σパターン一括生成ボタン
   qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
@@ -4657,6 +5050,7 @@ function init() {
 
   // プリセット管理機能のイベントリスナー
   // モーダル内のボタン（これらはモーダルが開いた後に存在する）
+  // クリックイベント
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
   qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
@@ -4664,18 +5058,61 @@ function init() {
   qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
 
+  // タッチイベント（モバイル対応）
+  qs('#presetModalClose')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
+  qs('#createNewPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); openPresetModal(); }, { passive: false });
+  qs('#addPairBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addPairToTemp(); }, { passive: false });
+  qs('#savePresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); savePresetFromModal(); }, { passive: false });
+  qs('#cancelPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
+  qs('#addSelectedPresetsBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addSelectedPresetsToTable(); }, { passive: false });
+
+  // プリセットから選択ボタン（イベント委譲で確実に捕捉）
+  // ドキュメント全体でイベントを捕捉
+  document.addEventListener('click', (e) => {
+    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
+      console.log('イベント委譲でプリセットボタンクリック検出');
+      alert('イベント委譲でクリック検出！');
+      e.preventDefault();
+      e.stopPropagation();
+      openPresetModal();
+    }
+  }, true); // キャプチャフェーズで捕捉
+
+  // タッチイベント用のイベント委譲
+  document.addEventListener('touchend', (e) => {
+    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
+      console.log('イベント委譲でプリセットボタンタッチ検出');
+      alert('イベント委譲でタッチ検出！');
+      e.preventDefault();
+      e.stopPropagation();
+      openPresetModal();
+    }
+  }, { capture: true, passive: false });
+
+  // 追加で直接イベントリスナーも設定（念のため）
+  const showPresetBtn = qs('#showPresetManagerBtn');
+  console.log('showPresetBtn:', showPresetBtn);
+  if (showPresetBtn) {
+    showPresetBtn.addEventListener('click', (e) => {
+      console.log('直接リスナー: クリック検出');
+      alert('直接リスナーでクリック検出！');
+      e.preventDefault();
+      e.stopPropagation();
+      openPresetModal();
+    });
+    console.log('プリセットボタンの直接イベントリスナー設定完了');
+  } else {
+    console.error('showPresetManagerBtn が見つかりません');
+    alert('警告: プリセットボタンが見つかりません（イベント委譲は動作します）');
+  }
+
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
 
-  // イベント委譲でプリセット関連のボタンを処理
+  // イベント委譲でプリセット関連のボタンを処理（クリックイベント）
   document.addEventListener('click', (e) => {
-    // プリセットから選択ボタン
-    if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
-      e.preventDefault();
-      openPresetModal();
-    }
     // 編集ボタン
-    else if (e.target.classList.contains('preset-btn-edit')) {
+    if (e.target.classList.contains('preset-btn-edit')) {
       const presetId = parseInt(e.target.dataset.presetId);
       editPresetFromModal(presetId);
     }
@@ -4689,7 +5126,80 @@ function init() {
       const index = parseInt(e.target.dataset.pairIndex);
       removeTempPair(index);
     }
+    // 統計読み込みボタン（平均値）
+    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（中央値）
+    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（推奨値）
+    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    }
   });
+
+  // イベント委譲でプリセット関連のボタンを処理（タッチイベント - モバイル対応）
+  document.addEventListener('touchend', (e) => {
+    // 編集ボタン
+    if (e.target.classList.contains('preset-btn-edit')) {
+      e.preventDefault();
+      const presetId = parseInt(e.target.dataset.presetId);
+      editPresetFromModal(presetId);
+    }
+    // 削除ボタン
+    else if (e.target.classList.contains('preset-btn-delete')) {
+      e.preventDefault();
+      const presetId = parseInt(e.target.dataset.presetId);
+      deletePresetFromModal(presetId);
+    }
+    // ペア削除ボタン
+    else if (e.target.classList.contains('btn-remove-pair')) {
+      e.preventDefault();
+      const index = parseInt(e.target.dataset.pairIndex);
+      removeTempPair(index);
+    }
+    // 統計読み込みボタン（平均値）
+    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（中央値）
+    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      const statsData = window.statsDataByType?.[selectedStatsType];
+      if (statsData) {
+        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      }
+    }
+    // 統計読み込みボタン（推奨値）
+    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
+      e.preventDefault();
+      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+      loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    }
+  }, { passive: false });
 
   // アコーディオン（折りたたみ）機能
   document.querySelectorAll('.accordion-header').forEach(header => {
@@ -4716,4 +5226,10 @@ function init() {
 }
 
 // アプリケーション起動
-init();
+// DOMの準備が完了してから初期化を実行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOMが既に読み込まれている場合は即座に実行
+  init();
+}

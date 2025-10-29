@@ -84,7 +84,7 @@ input[type="number"]:focus { outline: none; border-color: var(--brand); box-shad
 .radio-label input[type="radio"] { cursor: pointer; }
 
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
-.btn { padding: 12px 14px; border: none; border-radius: 10px; font-weight: 700; min-height: 44px; cursor: pointer; }
+.btn { padding: 12px 14px; border: none; border-radius: 10px; font-weight: 700; min-height: 44px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1); }
 .btn-mode { border: 2px solid var(--brand); background: #fff; color: var(--brand); }
 .btn-mode.is-active, .btn-primary { background: linear-gradient(135deg, var(--bg1), var(--bg2)); color: #fff; }
 .btn-secondary { background: #f0f0f0; color: #666; }
@@ -498,10 +498,10 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
 /* 統計セクションタイトル */
 .stats-section-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--brand);
-  margin: 20px 0 12px 0;
+  margin: 14px 0 8px 0;
   padding-left: 8px;
   border-left: 4px solid var(--brand);
 }
@@ -673,6 +673,121 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text);
+}
+
+/* 信頼度メッセージ */
+.confidence-message {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.confidence-message.confidence-high {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.confidence-message.confidence-standard {
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.confidence-message.confidence-low {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.confidence-message.confidence-very-low {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.confidence-message.confidence-insufficient {
+  background: linear-gradient(135deg, #f8d7da, #e4b0b5);
+  color: #721c24;
+  border-left: 4px solid #c82333;
+  font-weight: 600;
+}
+
+/* マトリックス評価 */
+.matrix-evaluation {
+  padding: 12px;
+}
+
+.matrix-eval-description {
+  margin: 0 0 12px 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.matrix-eval-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matrix-eval-info {
+  display: flex;
+  align-items: center;
+  font-size: 0.95em;
+}
+
+.matrix-eval-label {
+  font-weight: 500;
+  color: #555;
+  min-width: 150px;
+}
+
+.matrix-eval-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.matrix-eval-message {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.matrix-eval-message.matrix-eval-excellent {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.matrix-eval-message.matrix-eval-good {
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.matrix-eval-message.matrix-eval-caution {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.matrix-eval-message.matrix-eval-warning {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.matrix-eval-message.matrix-eval-danger {
+  background: linear-gradient(135deg, #f8d7da, #e4b0b5);
+  color: #721c24;
+  border-left: 4px solid #c82333;
+  font-weight: 600;
 }
 
 /* 推奨代表値 */
@@ -970,34 +1085,34 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .stat-item {
   background: #fff;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   text-align: center;
 }
 
 .stat-item .stat-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 600;
 }
 
 .stat-item .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--brand);
 }
 
 .stat-item .stat-value--small {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 /* ===========================
@@ -1156,25 +1271,25 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
 /* 複数パターン分析へのリンク */
 .multi-pattern-link {
-  margin-top: 1.5em;
+  margin-top: 1em;
 }
 
 .multi-pattern-link .info-box {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-left: 4px solid #667eea;
-  padding: 1.5em;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #f8f9fa;
+  border-left: 3px solid #667eea;
+  padding: 0.8em 1em;
+  border-radius: 4px;
 }
 
 .multi-pattern-link .info-box p {
-  margin: 0.5em 0;
+  margin: 0.3em 0;
   color: #333;
+  font-size: 0.9em;
 }
 
 .multi-pattern-link .info-box strong {
   color: #667eea;
-  font-size: 1.1em;
+  font-size: 1em;
 }
 
 /* 歩留まり統計から読み込みセクション */
@@ -1266,42 +1381,125 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 /* 代表値選択ボタン */
 .multi-pattern-buttons {
   display: flex;
-  gap: 1em;
-  margin-top: 1em;
+  gap: 0.5em;
+  margin-top: 0.5em;
   flex-wrap: wrap;
 }
 
 .multi-pattern-btn {
   flex: 1;
-  min-width: 200px;
+  min-width: 140px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 1em;
-  font-size: 0.95rem;
+  justify-content: center;
+  gap: 0.3em;
+  padding: 0.5em 0.7em;
+  font-size: 0.8rem;
   transition: all 0.2s;
 }
 
 .multi-pattern-btn .btn-label {
   font-weight: 600;
-  font-size: 1em;
-  margin-bottom: 0.3em;
+  font-size: 0.9em;
 }
 
 .multi-pattern-btn .btn-value {
-  font-size: 1.3em;
+  font-size: 1em;
   font-weight: 700;
-  margin-bottom: 0.3em;
 }
 
 .multi-pattern-btn .btn-arrow {
-  font-size: 0.85em;
+  font-size: 0.8em;
   opacity: 0.8;
 }
 
 .multi-pattern-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 統計読み込みテーブル（Excel風） */
+.stats-load-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5em;
+  font-size: 0.85em;
+  background: white;
+  border: 1px solid #d0d0d0;
+}
+
+.stats-load-table thead {
+  background: #f0f0f0;
+  border-bottom: 2px solid #a0a0a0;
+}
+
+.stats-load-table th {
+  padding: 0.5em 0.6em;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-right: 1px solid #d0d0d0;
+}
+
+.stats-load-table th:last-child {
+  border-right: none;
+}
+
+.stats-load-table tbody tr {
+  border-bottom: 1px solid #d0d0d0;
+  transition: background-color 0.15s;
+}
+
+.stats-load-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.stats-load-table tbody tr.recommended-row {
+  background-color: #fff9e6;
+}
+
+.stats-load-table tbody tr.recommended-row:hover {
+  background-color: #fff3cc;
+}
+
+.stats-load-table td {
+  padding: 0.5em 0.6em;
+  border-right: 1px solid #e0e0e0;
+}
+
+.stats-load-table td:last-child {
+  border-right: none;
+}
+
+.stats-load-table .stats-label {
+  font-weight: 500;
+  color: #333;
+  width: 30%;
+}
+
+.stats-load-table .stats-value {
+  font-weight: 700;
+  color: #1976d2;
+  text-align: right;
+  width: 35%;
+  font-family: 'Courier New', monospace;
+}
+
+.stats-load-table .stats-action {
+  text-align: center;
+  width: 35%;
+}
+
+.stats-load-table .btn-sm {
+  padding: 0.35em 0.7em;
+  font-size: 0.85em;
+  min-height: auto;
+  width: 100%;
+  max-width: 100px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
 }
 
 /* データ不足メッセージ */
@@ -1354,16 +1552,16 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   }
 
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
   }
 
   .stat-item {
-    padding: 12px;
+    padding: 8px 10px;
   }
 
   .stat-item .stat-value {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 }
 
@@ -1556,7 +1754,7 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
 /* アコーディオン（折りたたみ）スタイル */
 .accordion-item {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.3em;
 }
 
 .accordion-header {
@@ -1599,7 +1797,7 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
   max-height: 5000px;
   opacity: 1;
-  padding-top: 0.5em;
+  padding-top: 0.3em;
 }
 
 .accordion-content.is-hidden {
