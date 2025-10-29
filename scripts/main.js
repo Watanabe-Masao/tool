@@ -3385,6 +3385,39 @@ function deletePresetFromModal(id) {
   renderPresetList();
 }
 
+/**
+ * テーブル内の空欄行を削除する
+ */
+function removeEmptyRows() {
+  const tableBody = qs('#multiPatternTableBody');
+  if (!tableBody) return;
+
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+  rows.forEach(row => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
+
+    // 両方の入力が空欄の場合、行を削除
+    if (unitCostInput && unitPriceInput) {
+      const costValue = unitCostInput.value.trim();
+      const priceValue = unitPriceInput.value.trim();
+
+      if (costValue === '' && priceValue === '') {
+        row.remove();
+      }
+    }
+  });
+
+  // 行がすべて削除された場合、最低1行は残す
+  if (tableBody.querySelectorAll('tr').length === 0) {
+    const addBtn = qs('#addPatternBtn');
+    if (addBtn) {
+      addBtn.click();
+    }
+  }
+}
+
 // 選択したプリセットをパターンテーブルに追加
 function addSelectedPresetsToTable() {
   const checkedBoxes = qsa('.preset-checkbox:checked');
@@ -3397,6 +3430,9 @@ function addSelectedPresetsToTable() {
   const presets = loadPresets();
   const tableBody = qs('#multiPatternTableBody');
   if (!tableBody) return;
+
+  // プリセット追加前に空欄行を削除
+  removeEmptyRows();
 
   // 選択されたプリセットの全ペアをテーブルに追加
   checkedBoxes.forEach(checkbox => {
