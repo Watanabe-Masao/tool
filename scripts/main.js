@@ -3139,66 +3139,8 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
 
 /**
  * 歩留まり統計から読み込むボタンの状態を更新
+ * ボタンのイベントハンドラーは動的に生成時に直接設定されます。
  */
-/**
- * 通常モードのボタンにイベントハンドラを設定
- */
-function setupNormalModeButtonHandlers(selectedStatsType) {
-  const statsData = window.statsDataByType?.[selectedStatsType];
-  if (!statsData) return;
-
-  // 平均値ボタン
-  const meanBtn = qs('#loadStatsMeanBtn');
-  if (meanBtn) {
-    meanBtn.onclick = () => {
-      loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-      showTransferNotification('平均値を転記しました');
-      focusFirstPatternInput();
-    };
-    meanBtn.ontouchend = (e) => {
-      e.preventDefault();
-      loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-      showTransferNotification('平均値を転記しました');
-      focusFirstPatternInput();
-    };
-  }
-
-  // 中央値ボタン
-  const medianBtn = qs('#loadStatsMedianBtn');
-  if (medianBtn) {
-    medianBtn.onclick = () => {
-      loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-      showTransferNotification('中央値を転記しました');
-      focusFirstPatternInput();
-    };
-    medianBtn.ontouchend = (e) => {
-      e.preventDefault();
-      loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-      showTransferNotification('中央値を転記しました');
-      focusFirstPatternInput();
-    };
-  }
-
-  // 推奨値ボタン
-  const recommendedBtn = qs('#loadStatsRecommendedBtn');
-  if (recommendedBtn) {
-    const recommended = getRecommendedValue(statsData);
-    if (recommended) {
-      recommendedBtn.onclick = () => {
-        loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
-        showTransferNotification('推奨値を転記しました');
-        focusFirstPatternInput();
-      };
-      recommendedBtn.ontouchend = (e) => {
-        e.preventDefault();
-        loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
-        showTransferNotification('推奨値を転記しました');
-        focusFirstPatternInput();
-      };
-    }
-  }
-}
-
 function updateLoadStatsButtons() {
   const loadStatsButtons = qs('#loadStatsButtons');
   const loadStatsNoData = qs('#loadStatsNoData');
@@ -3338,24 +3280,25 @@ function updateLoadStatsButtons() {
       loadStatsButtons.appendChild(bulkImportBtnContainer);
     }
 
-    bulkImportBtnContainer.innerHTML = `
-      <button type="button" id="bulkImportBtn" class="btn btn-recommended btn-sm" style="font-size: 0.9em; padding: 0.5em 1.2em;">
-        📥 推奨値を一括転記
-      </button>`;
+    // ボタンを直接イベントハンドラーと共に作成
+    bulkImportBtnContainer.innerHTML = '';
+    const bulkImportBtn = document.createElement('button');
+    bulkImportBtn.type = 'button';
+    bulkImportBtn.id = 'bulkImportBtn';
+    bulkImportBtn.className = 'btn btn-recommended btn-sm';
+    bulkImportBtn.style.cssText = 'font-size: 0.9em; padding: 0.5em 1.2em;';
+    bulkImportBtn.textContent = '📥 推奨値を一括転記';
 
-    // イベントハンドラを設定（DOMに追加された後に設定）
-    setTimeout(() => {
-      const bulkImportBtn = qs('#bulkImportBtn');
-      if (bulkImportBtn) {
-        bulkImportBtn.onclick = () => {
-          loadAllStatsToMultiPattern();
-        };
-        bulkImportBtn.ontouchend = (e) => {
-          e.preventDefault();
-          loadAllStatsToMultiPattern();
-        };
-      }
-    }, 0);
+    // イベントハンドラを設定
+    bulkImportBtn.onclick = () => {
+      loadAllStatsToMultiPattern();
+    };
+    bulkImportBtn.ontouchend = (e) => {
+      e.preventDefault();
+      loadAllStatsToMultiPattern();
+    };
+
+    bulkImportBtnContainer.appendChild(bulkImportBtn);
 
     return;
   }
@@ -3379,6 +3322,7 @@ function updateLoadStatsButtons() {
     // テーブル全体を通常表示（3列）に戻す
     const table = loadStatsButtons.querySelector('table');
     if (table) {
+      // テーブルのthead/tbodyを作成
       table.innerHTML = `
         <thead>
           <tr>
@@ -3387,45 +3331,63 @@ function updateLoadStatsButtons() {
             <th>読み込み</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="stats-label">平均値</td>
-            <td class="stats-value" id="loadMeanValueDisplay">-</td>
-            <td class="stats-action">
-              <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
-            </td>
-          </tr>
-          <tr>
-            <td class="stats-label">中央値</td>
-            <td class="stats-value" id="loadMedianValueDisplay">-</td>
-            <td class="stats-action">
-              <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
-            </td>
-          </tr>
-          <tr class="recommended-row">
-            <td class="stats-label">📌 推奨値</td>
-            <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
-            <td class="stats-action">
-              <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
-            </td>
-          </tr>
-        </tbody>`;
-    }
+        <tbody></tbody>`;
 
-    // 再度要素を取得（tbodyが書き換わったため）
-    const newLoadMeanValueDisplay = qs('#loadMeanValueDisplay');
-    const newLoadMedianValueDisplay = qs('#loadMedianValueDisplay');
-    const newLoadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
+      const tbody = table.querySelector('tbody');
 
-    // データがある場合、ボタンに値を表示
-    if (newLoadMeanValueDisplay) {
-      newLoadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}${unit}`;
-    }
-    if (newLoadMedianValueDisplay) {
-      newLoadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}${unit}`;
-    }
-    if (newLoadRecommendedValueDisplay && recommended) {
-      newLoadRecommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}${unit}`;
+      // 平均値の行を作成
+      const meanRow = tbody.insertRow();
+      meanRow.innerHTML = `
+        <td class="stats-label">平均値</td>
+        <td class="stats-value">${toFixed(stats.mean, 2)}${unit}</td>
+        <td class="stats-action"></td>`;
+      const meanBtn = document.createElement('button');
+      meanBtn.type = 'button';
+      meanBtn.className = 'btn btn-primary btn-sm';
+      meanBtn.textContent = '読み込む';
+      meanBtn.onclick = () => {
+        loadStatsValueToMultiPattern(stats.mean, selectedStatsType, false);
+        showTransferNotification('平均値を転記しました');
+        focusFirstPatternInput();
+      };
+      meanRow.cells[2].appendChild(meanBtn);
+
+      // 中央値の行を作成
+      const medianRow = tbody.insertRow();
+      medianRow.innerHTML = `
+        <td class="stats-label">中央値</td>
+        <td class="stats-value">${toFixed(stats.median, 2)}${unit}</td>
+        <td class="stats-action"></td>`;
+      const medianBtn = document.createElement('button');
+      medianBtn.type = 'button';
+      medianBtn.className = 'btn btn-secondary btn-sm';
+      medianBtn.textContent = '読み込む';
+      medianBtn.onclick = () => {
+        loadStatsValueToMultiPattern(stats.median, selectedStatsType, false);
+        showTransferNotification('中央値を転記しました');
+        focusFirstPatternInput();
+      };
+      medianRow.cells[2].appendChild(medianBtn);
+
+      // 推奨値の行を作成
+      if (recommended) {
+        const recommendedRow = tbody.insertRow();
+        recommendedRow.className = 'recommended-row';
+        recommendedRow.innerHTML = `
+          <td class="stats-label">📌 推奨値</td>
+          <td class="stats-value">${toFixed(recommended.value, 2)}${unit}</td>
+          <td class="stats-action"></td>`;
+        const recommendedBtn = document.createElement('button');
+        recommendedBtn.type = 'button';
+        recommendedBtn.className = 'btn btn-recommended btn-sm';
+        recommendedBtn.textContent = '読み込む';
+        recommendedBtn.onclick = () => {
+          loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
+          showTransferNotification('推奨値を転記しました');
+          focusFirstPatternInput();
+        };
+        recommendedRow.cells[2].appendChild(recommendedBtn);
+      }
     }
 
     // ボタンを表示、メッセージを非表示
@@ -3438,11 +3400,6 @@ function updateLoadStatsButtons() {
     } else if (generateSigmaPatternsSection) {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
-
-    // 通常モードのボタンにイベントハンドラを設定（DOMが更新された後に設定）
-    setTimeout(() => {
-      setupNormalModeButtonHandlers(selectedStatsType);
-    }, 0);
   } else {
     // データがない場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
@@ -5255,106 +5212,9 @@ function init() {
     updateLoadStatsButtons();
   });
 
-  // 複数パターン分析画面内の読み込みボタン（平均値）
-  qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      // 一括取り込み
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    const statsData = window.statsDataByType?.[selectedStatsType];
-    if (!statsData) return;
-
-    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-    showTransferNotification('平均値を転記しました');
-    focusFirstPatternInput();
-  });
-  qs('#loadStatsMeanBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    const statsData = window.statsDataByType?.[selectedStatsType];
-    if (!statsData) return;
-
-    loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-    showTransferNotification('平均値を転記しました');
-    focusFirstPatternInput();
-  }, { passive: false });
-
-  // 複数パターン分析画面内の読み込みボタン（中央値）
-  qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    const statsData = window.statsDataByType?.[selectedStatsType];
-    if (!statsData) return;
-
-    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-    showTransferNotification('中央値を転記しました');
-    focusFirstPatternInput();
-  });
-  qs('#loadStatsMedianBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    const statsData = window.statsDataByType?.[selectedStatsType];
-    if (!statsData) return;
-
-    loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-    showTransferNotification('中央値を転記しました');
-    focusFirstPatternInput();
-  }, { passive: false });
-
-
-  // 複数パターン分析画面内の読み込みボタン（推奨値）
-  qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(false, selectedStatsType);
-    showTransferNotification('推奨値を転記しました');
-    focusFirstPatternInput();
-  });
-  qs('#loadStatsRecommendedBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-
-    if (selectedStatsType === 'bulk') {
-      loadAllStatsToMultiPattern();
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(false, selectedStatsType);
-    showTransferNotification('推奨値を転記しました');
-    focusFirstPatternInput();
-  }, { passive: false });
+  // 注意：読み込みボタンのイベントハンドラーは動的に生成されるため、
+  // updateLoadStatsButtons関数内で設定されます。
+  // ここには静的なイベントハンドラーは設置しません（競合を防ぐため）。
 
   // σパターン一括生成ボタン
   qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
