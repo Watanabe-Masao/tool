@@ -1721,8 +1721,10 @@ function restoreYieldStatsTable(tableData) {
   window.yieldStatsState.isFromHistory = true;
   window.yieldStatsState.isCalculated = true;
 
-  // 統計情報を更新
-  updateYieldStatsStatistics();
+  // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
+  setTimeout(() => {
+    updateYieldStatsStatistics();
+  }, 50);
 }
 
 // window オブジェクトに関数を公開（history-ui.js から呼び出すため）
@@ -1922,9 +1924,13 @@ function displayCurrentStatistics() {
   window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
   window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
 
-  // 状態を更新：計算済みフラグ（新規計算された）
+  // 状態を更新：計算済みフラグ
+  // 注：isFromHistoryは履歴復元時に既にtrueが設定されている場合があるので、
+  // 既にtrueの場合は保持し、falseの場合のみ明示的にfalseを設定する
   window.yieldStatsState.isCalculated = true;
-  window.yieldStatsState.isFromHistory = false;
+  if (!window.yieldStatsState.isFromHistory) {
+    window.yieldStatsState.isFromHistory = false;
+  }
 
   // 複数パターン分析の読み込みボタンの状態を更新
   updateLoadStatsButtons();
