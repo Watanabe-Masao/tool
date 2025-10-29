@@ -88,6 +88,8 @@ input[type="number"]:focus { outline: none; border-color: var(--brand); box-shad
 .btn-mode { border: 2px solid var(--brand); background: #fff; color: var(--brand); }
 .btn-mode.is-active, .btn-primary { background: linear-gradient(135deg, var(--bg1), var(--bg2)); color: #fff; }
 .btn-secondary { background: #f0f0f0; color: #666; }
+.btn-recommended { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.btn-accent { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
 
 /* Disabled button styles */
 button:disabled, .btn:disabled {

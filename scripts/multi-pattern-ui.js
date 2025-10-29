@@ -413,3 +413,60 @@ export function setFromYieldStats(yieldRate, productName = '') {
     handleDirectModeInput();
   }
 }
+
+/**
+ * すべてのパターンを置き換え
+ * @param {Array<Object>} newPatterns - 新しいパターンの配列 {label, value, sigma}
+ */
+export function replaceAllPatterns(newPatterns) {
+  if (!Array.isArray(newPatterns) || newPatterns.length === 0) {
+    console.warn('[MultiPattern] 有効なパターンが指定されていません');
+    return;
+  }
+
+  // 既存のパターンをすべてクリア
+  elements.tableBody.innerHTML = '';
+  patterns.length = 0;
+  patternIdCounter = 1;
+
+  // 新しいパターンを追加
+  newPatterns.forEach(pattern => {
+    const patternId = patternIdCounter++;
+    const row = document.createElement('tr');
+    row.dataset.patternId = patternId;
+
+    // パターンラベルをコメントとして表示（オプション）
+    const labelComment = pattern.label ? ` data-label="${pattern.label}"` : '';
+
+    row.innerHTML = `
+      <td class="${CSS_CLASSES.PATTERN_NUMBER}"${labelComment}>${patternId}</td>
+      <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
+      <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
+      <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>
+      <td><button type="button" class="btn-remove" data-pattern-id="${patternId}">削除</button></td>
+    `;
+
+    elements.tableBody.appendChild(row);
+
+    // パターンデータを追加
+    patterns.push({
+      id: patternId,
+      label: pattern.label || '',
+      unitCost: null,
+      unitPrice: null,
+      afterPrice100: null
+    });
+
+    // イベントリスナーを設定
+    attachPatternEventListeners(row, patternId);
+  });
+
+  console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
+}
+
+// グローバルアクセス用のAPI
+if (typeof window !== 'undefined') {
+  window.multiPatternUI = {
+    replaceAllPatterns
+  };
+}
