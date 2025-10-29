@@ -3,7 +3,7 @@
  */
 
 import { per100FromPerUnit, per100FromBox, markup, calcYield, toFixed, afterCostPer100 } from './calculation.js';
-import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa } from './dom-utils.js';
+import { qs, num, hide, show, toggleActive, setText, yen, pct, qsa, addTapListener } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
 import { calculateFixed } from './calculator-fixed.js';
@@ -4526,25 +4526,16 @@ function restoreSession() {
 function init() {
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
-  console.log('window.openPresetModal が設定されました:', typeof window.openPresetModal);
-  alert('デバッグ: window.openPresetModal = ' + typeof window.openPresetModal);
 
-  // モード切替ボタン
-  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
-  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
-  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
-  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.MULTI_PATTERN));
-
-  // モード切替ボタン - タッチイベント対応
-  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.FIXED); }, { passive: false });
-  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.WEIGHT); }, { passive: false });
-  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.YIELD_STATS); }, { passive: false });
-  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.MULTI_PATTERN); }, { passive: false });
+  // モード切替ボタン（タップ対応）
+  addTapListener(qs(`#${UI_ELEMENTS.FIXED_BTN}`), () => handleModeSwitch(MODE.FIXED));
+  addTapListener(qs(`#${UI_ELEMENTS.WEIGHT_BTN}`), () => handleModeSwitch(MODE.WEIGHT));
+  addTapListener(qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`), () => handleModeSwitch(MODE.YIELD_STATS));
+  addTapListener(qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`), () => handleModeSwitch(MODE.MULTI_PATTERN));
 
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
-    btn.addEventListener('click', clearAll);
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
+    addTapListener(btn, clearAll);
   });
 
   // 歩留まり率入力方法の切り替え（定額モード）
