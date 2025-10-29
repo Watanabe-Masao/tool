@@ -3086,8 +3086,6 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   const absSkewness = Math.abs(skewness);
 
   // 統計タイプに応じた単位を取得
-  const statsTypeSelect = qs('#statsTypeSelect');
-  const statsType = statsTypeSelect?.value || 'yieldRate';
   const unit = statsType === 'yieldRate' ? '%' : 'g';
 
   const formatValue = (value) => {
@@ -3123,64 +3121,19 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
   const multiPatternLink = qs('#multiPatternLink');
   if (multiPatternLink && statsType === 'yieldRate') {
-    const meanValueDisplay = qs('#meanValueDisplay');
-    const medianValueDisplay = qs('#medianValueDisplay');
-    const recommendedHint = qs('#recommendedHint');
-    const multiPatternButtons = qs('#multiPatternButtons');
-    const dataInsufficient = qs('#multiPatternDataInsufficient');
-
-    // 状態フラグを確認：歩留まり率データが存在するか
     const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
     const yieldRateStats = window.statsDataByType?.yieldRate;
 
-    // デバッグ：値を確認
-    console.log('=== 複数パターン分析ボタン更新 ===');
-    console.log('statsType:', statsType);
-    console.log('isSampleSizeValid:', isSampleSizeValid);
-    console.log('hasYieldRateData:', hasYieldRateData);
-    console.log('yieldRateStats:', yieldRateStats);
-    console.log('yieldRateStats?.count:', yieldRateStats?.count);
-
-    // 状態を更新：複数パターン分析リンクを表示すべきか
-    window.yieldStatsState.shouldShowMultiPatternLink =
-      isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
-
-    console.log('shouldShowMultiPatternLink:', window.yieldStatsState.shouldShowMultiPatternLink);
-
     // データが十分にあるかチェック
-    if (window.yieldStatsState.shouldShowMultiPatternLink) {
-      // 推奨値を取得
-      const recommended = getRecommendedValue(yieldRateStats);
-      const recommendedValueDisplay = qs('#recommendedValueDisplay');
-
-      // 値を設定（歩留まり率の統計を使用）
-      console.log('ボタンの値を更新:', {
-        mean: yieldRateStats.mean,
-        median: yieldRateStats.median,
-        recommended: recommended?.value
-      });
-
-      if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
-      if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
-      if (recommendedValueDisplay && recommended) {
-        recommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}%`;
-      }
-      if (recommendedHint) recommendedHint.textContent = recommendedType;
-
-      // ボタンを表示、データ不足メッセージは非表示
-      if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
-      if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
+    if (isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2) {
+      multiPatternLink.classList.remove('is-hidden');
     } else {
-      console.log('条件を満たしていないため、ボタンを非表示にします');
-      // データ不足の場合
-      // ボタンを非表示、データ不足メッセージを表示
-      if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
-      if (dataInsufficient) dataInsufficient.classList.remove('is-hidden');
+      multiPatternLink.classList.add('is-hidden');
     }
-
-    multiPatternLink.classList.remove('is-hidden');
   } else {
-    console.log('multiPatternLink を表示しません（statsType:', statsType, '）');
+    if (multiPatternLink) {
+      multiPatternLink.classList.add('is-hidden');
+    }
   }
 }
 
@@ -3211,12 +3164,14 @@ function updateLoadStatsButtons() {
   if (currentMode === 'direct') {
     // 歩留まり率直接入力モード：歩留まり率と加工前重量のみ
     loadStatsTypeSelect.innerHTML = `
+      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
       <option value="yieldRate">歩留まり率（%）</option>
       <option value="beforeWeight">加工前重量（g）</option>
     `;
   } else {
     // 重量から計算モード：加工前重量と加工後重量のみ
     loadStatsTypeSelect.innerHTML = `
+      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
       <option value="beforeWeight">加工前重量（g）</option>
       <option value="afterWeight">加工後重量（g）</option>
     `;
@@ -3229,14 +3184,17 @@ function updateLoadStatsButtons() {
 
   // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
   const selectedStatsType = loadStatsTypeSelect.value;
-  const stats = window.statsDataByType?.[selectedStatsType];
+
+  // 一括取り込みの場合は歩留まり率の統計を表示
+  const displayStatsType = selectedStatsType === 'bulk' ? 'yieldRate' : selectedStatsType;
+  const stats = window.statsDataByType?.[displayStatsType];
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
     // 単位を取得
-    const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
+    const unit = displayStatsType === 'yieldRate' ? '%' : 'g';
 
     // データがある場合、ボタンに値を表示
     if (loadMeanValueDisplay) {
@@ -3254,7 +3212,7 @@ function updateLoadStatsButtons() {
     loadStatsNoData.classList.add('is-hidden');
 
     // σパターン生成セクションを表示（歩留まり率の場合のみ）
-    if (generateSigmaPatternsSection && selectedStatsType === 'yieldRate') {
+    if (generateSigmaPatternsSection && displayStatsType === 'yieldRate') {
       generateSigmaPatternsSection.classList.remove('is-hidden');
     } else if (generateSigmaPatternsSection) {
       generateSigmaPatternsSection.classList.add('is-hidden');
@@ -3297,54 +3255,14 @@ function savePresetsData(presets) {
   localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
 }
 
-// モーダルを開く（新規作成）
+// モーダルを開く（一覧表示）
 function openPresetModal() {
-  console.log('openPresetModal が呼ばれました');
-  alert('openPresetModal関数が呼ばれました'); // デバッグ用
+  renderPresetList();
+  showPresetList();
 
-  try {
-    console.log('Step 1: 変数の初期化');
-    currentEditingPreset = null;
-    tempPairs = [];
-
-    console.log('Step 2: presetEditorTitle');
-    const editorTitle = qs('#presetEditorTitle');
-    if (!editorTitle) throw new Error('#presetEditorTitle が見つかりません');
-    editorTitle.textContent = '新規プリセット作成';
-
-    console.log('Step 3: presetName');
-    const presetName = qs('#presetName');
-    if (!presetName) throw new Error('#presetName が見つかりません');
-    presetName.value = '';
-
-    console.log('Step 4: tempUnitCost');
-    const tempUnitCost = qs('#tempUnitCost');
-    if (!tempUnitCost) throw new Error('#tempUnitCost が見つかりません');
-    tempUnitCost.value = '';
-
-    console.log('Step 5: tempUnitPrice');
-    const tempUnitPrice = qs('#tempUnitPrice');
-    if (!tempUnitPrice) throw new Error('#tempUnitPrice が見つかりません');
-    tempUnitPrice.value = '';
-
-    console.log('Step 6: renderTempPairs');
-    renderTempPairs();
-
-    console.log('Step 7: renderPresetList');
-    renderPresetList();
-
-    console.log('Step 8: presetModal');
-    const modal = qs('#presetModal');
-    if (!modal) throw new Error('#presetModal が見つかりません');
+  const modal = qs('#presetModal');
+  if (modal) {
     modal.classList.add('is-open');
-
-    console.log('モーダルを開きました');
-    alert('成功：モーダルを開きました');
-  } catch (error) {
-    console.error('openPresetModalでエラー:', error);
-    const errorMsg = 'エラー内容:\n' + error.message + '\n\nスタック:\n' + (error.stack || '不明');
-    console.error(errorMsg);
-    alert(errorMsg);
   }
 }
 
@@ -3353,6 +3271,53 @@ function closePresetModal() {
   qs('#presetModal').classList.remove('is-open');
   currentEditingPreset = null;
   tempPairs = [];
+}
+
+// プリセット一覧を表示
+function showPresetList() {
+  const editor = qs('.preset-editor');
+  const listSection = qs('.preset-list-section');
+
+  if (editor) editor.style.display = 'none';
+  if (listSection) listSection.style.display = 'block';
+}
+
+// プリセット編集画面を表示
+function showPresetEditor() {
+  const editor = qs('.preset-editor');
+  const listSection = qs('.preset-list-section');
+
+  if (editor) editor.style.display = 'block';
+  if (listSection) listSection.style.display = 'none';
+}
+
+// 新規プリセット作成画面を開く
+function openNewPresetEditor() {
+  currentEditingPreset = null;
+  tempPairs = [];
+
+  const editorTitle = qs('#presetEditorTitle');
+  if (editorTitle) {
+    editorTitle.textContent = '新規プリセット作成';
+  }
+
+  const presetName = qs('#presetName');
+  if (presetName) {
+    presetName.value = '';
+  }
+
+  const tempUnitCost = qs('#tempUnitCost');
+  if (tempUnitCost) {
+    tempUnitCost.value = '';
+  }
+
+  const tempUnitPrice = qs('#tempUnitPrice');
+  if (tempUnitPrice) {
+    tempUnitPrice.value = '';
+  }
+
+  renderTempPairs();
+  showPresetEditor();
 }
 
 // 一時ペアをテーブルに表示
@@ -3441,7 +3406,7 @@ function savePresetFromModal() {
 
   savePresetsData(presets);
   renderPresetList();
-  closePresetModal();
+  showPresetList();
 }
 
 // プリセット一覧を表示
@@ -3495,10 +3460,9 @@ function editPresetFromModal(id) {
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
   renderTempPairs();
-  renderPresetList();
 
-  // モーダルを開く
-  qs('#presetModal').classList.add('is-open');
+  // 編集画面を表示
+  showPresetEditor();
 }
 
 // プリセットを削除
@@ -3593,6 +3557,11 @@ function addSelectedPresetsToTable() {
       }
     });
   });
+
+  // パターン番号を更新（念のため）
+  if (window.multiPatternUI && typeof window.multiPatternUI.updatePatternNumbers === 'function') {
+    window.multiPatternUI.updatePatternNumbers();
+  }
 
   // モーダルを閉じる
   closePresetModal();
@@ -4527,7 +4496,7 @@ function init() {
   // グローバルスコープに関数を公開（最優先で実行）
   window.openPresetModal = openPresetModal;
 
-  // モード切替ボタン - テスト用に直接イベント登録
+  // モード切替ボタン
   const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
   const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
   const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
@@ -4535,38 +4504,26 @@ function init() {
 
   if (fixedBtn) {
     fixedBtn.addEventListener('click', () => {
-      alert('定額ボタンがクリックされました');
       handleModeSwitch(MODE.FIXED);
     });
-  } else {
-    alert('エラー: 定額ボタンが見つかりません');
   }
 
   if (weightBtn) {
     weightBtn.addEventListener('click', () => {
-      alert('計量ボタンがクリックされました');
       handleModeSwitch(MODE.WEIGHT);
     });
-  } else {
-    alert('エラー: 計量ボタンが見つかりません');
   }
 
   if (yieldStatsBtn) {
     yieldStatsBtn.addEventListener('click', () => {
-      alert('歩留まり統計ボタンがクリックされました');
       handleModeSwitch(MODE.YIELD_STATS);
     });
-  } else {
-    alert('エラー: 歩留まり統計ボタンが見つかりません');
   }
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
-      alert('複数パターン分析ボタンがクリックされました');
       handleModeSwitch(MODE.MULTI_PATTERN);
     });
-  } else {
-    alert('エラー: 複数パターン分析ボタンが見つかりません');
   }
 
   // クリアボタン（クラスベースで全てのボタンに設定）
@@ -4950,67 +4907,115 @@ function init() {
     updateSaveButtonsVisibility();
   }
 
-  // 複数パターン分析への遷移ボタン（平均値）
-  qs('#goToMultiPatternMeanBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
+  /**
+   * 一括取り込み：推奨値をステップ1に転記
+   */
+  function loadAllStatsToMultiPattern() {
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const beforeWeightStats = window.statsDataByType?.beforeWeight;
 
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+    if (!yieldRateStats || yieldRateStats.count < 2) {
+      alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
+    // 推奨値を取得
+    const yieldRateRecommended = getRecommendedValue(yieldRateStats);
+    if (!yieldRateRecommended) {
+      alert('歩留まり率の推奨値を取得できませんでした。');
+      return;
+    }
 
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
+    // 加工前重量の推奨値を取得（存在する場合）
+    const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      ? getRecommendedValue(beforeWeightStats)
+      : null;
+
+    // 現在のモードを取得
+    const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
+
+    // 確認ダイアログ
+    if (!confirm('推奨値をステップ1に転記しますか？')) {
+      return;
+    }
+
+    // モードに応じて値を設定
+    if (currentMode === 'direct') {
+      // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
+      setStatValue(yieldRateRecommended.value, 'yieldRate');
+
+      if (beforeWeightRecommended) {
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%、加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+      } else {
+        showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%`);
+      }
+    } else {
+      // 重量から計算モード：加工前重量のみ設定
+      if (beforeWeightRecommended) {
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+        showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
+      } else {
+        alert('加工前重量の統計データがありません。');
+        return;
+      }
+    }
+
+    focusFirstPatternInput();
+  }
+
+  /**
+   * 転記完了通知を表示
+   * @param {string} message - 通知メッセージ
+   */
+  function showTransferNotification(message) {
+    // 通知用の要素を作成または取得
+    let notification = qs('#transferNotification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'transferNotification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notification);
+    }
+
+    notification.textContent = message;
+    notification.style.display = 'block';
+
+    // 3秒後に非表示
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 3000);
+  }
+
+  /**
+   * 最初のパターンの原価入力欄にフォーカス
+   */
+  function focusFirstPatternInput() {
+    setTimeout(() => {
+      const firstInput = qs('#multiPatternTableBody .pattern-unit-cost');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    }, 100);
+  }
+
+  // 複数パターン分析への遷移ボタン
+  qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    handleModeSwitch(MODE.MULTI_PATTERN);
   });
-  qs('#goToMultiPatternMeanBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
-  }, { passive: false });
-
-  // 複数パターン分析への遷移ボタン（中央値）
-  qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
-  });
-  qs('#goToMultiPatternMedianBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
-    const statsData = window.statsDataByType?.[currentDisplayType];
-    if (!statsData) return;
-
-    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    const productNameEl = qs('#yieldStatsProductName');
-    const productName = productNameEl?.value || '';
-
-    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
-  }, { passive: false });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
   qsa('input[name="yieldMethodMultiPattern"]').forEach(radio => {
@@ -5028,68 +5033,101 @@ function init() {
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      // 一括取り込み
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+    showTransferNotification('平均値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsMeanBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+    showTransferNotification('平均値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+    showTransferNotification('中央値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsMedianBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+    showTransferNotification('中央値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
-  // 複数パターン分析への遷移ボタン（推奨値）
-  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('click', () => {
-    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(true);
-  });
-  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
-      return;
-    }
-
-    loadRecommendedValueToMultiPattern(true);
-  }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（推奨値）
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    showTransferNotification('推奨値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsRecommendedBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    showTransferNotification('推奨値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
   // σパターン一括生成ボタン
@@ -5180,62 +5218,18 @@ function init() {
   });
 
   // プリセット管理機能のイベントリスナー
-  // モーダル内のボタン（これらはモーダルが開いた後に存在する）
-  // クリックイベント
   qs('#presetModalClose')?.addEventListener('click', closePresetModal);
-  qs('#createNewPresetBtn')?.addEventListener('click', openPresetModal);
+  qs('#createNewPresetBtn')?.addEventListener('click', openNewPresetEditor);
   qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
   qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
-  qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
+  qs('#cancelPresetBtn')?.addEventListener('click', () => {
+    showPresetList();
+    renderPresetList();
+  });
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
 
-  // タッチイベント（モバイル対応）
-  qs('#presetModalClose')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
-  qs('#createNewPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); openPresetModal(); }, { passive: false });
-  qs('#addPairBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addPairToTemp(); }, { passive: false });
-  qs('#savePresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); savePresetFromModal(); }, { passive: false });
-  qs('#cancelPresetBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
-  qs('#addSelectedPresetsBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); addSelectedPresetsToTable(); }, { passive: false });
-
-  // プリセットから選択ボタン（イベント委譲で確実に捕捉）
-  // ドキュメント全体でイベントを捕捉
-  document.addEventListener('click', (e) => {
-    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
-      console.log('イベント委譲でプリセットボタンクリック検出');
-      alert('イベント委譲でクリック検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    }
-  }, true); // キャプチャフェーズで捕捉
-
-  // タッチイベント用のイベント委譲
-  document.addEventListener('touchend', (e) => {
-    if (e.target && (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn'))) {
-      console.log('イベント委譲でプリセットボタンタッチ検出');
-      alert('イベント委譲でタッチ検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    }
-  }, { capture: true, passive: false });
-
-  // 追加で直接イベントリスナーも設定（念のため）
-  const showPresetBtn = qs('#showPresetManagerBtn');
-  console.log('showPresetBtn:', showPresetBtn);
-  if (showPresetBtn) {
-    showPresetBtn.addEventListener('click', (e) => {
-      console.log('直接リスナー: クリック検出');
-      alert('直接リスナーでクリック検出！');
-      e.preventDefault();
-      e.stopPropagation();
-      openPresetModal();
-    });
-    console.log('プリセットボタンの直接イベントリスナー設定完了');
-  } else {
-    console.error('showPresetManagerBtn が見つかりません');
-    alert('警告: プリセットボタンが見つかりません（イベント委譲は動作します）');
-  }
+  // プリセットから選択ボタン
+  qs('#showPresetManagerBtn')?.addEventListener('click', openPresetModal);
 
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);

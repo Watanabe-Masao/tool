@@ -339,17 +339,6 @@
         </label>
       </div>
 
-      <!-- 許容誤差設定 -->
-      <div class="product-name-section">
-        <label class="field">
-          <span title="相対偏差率の許容範囲を設定します。この値を基準に信頼度を判定します。">
-            許容誤差（%）
-            <span style="font-size: 0.85em; color: #666;">- 相対偏差率の許容範囲</span>
-          </span>
-          <input type="number" id="yieldStatsToleranceError" class="table-input" step="0.1" inputmode="decimal" value="3.0" min="0" max="100" style="width: 150px;" />
-        </label>
-      </div>
-
       <!-- データテーブル -->
       <div class="table-container">
         <table id="yieldStatsTable" class="yield-stats-table">
@@ -701,41 +690,12 @@
 
         <!-- 複数パターン分析への遷移 -->
         <div id="multiPatternLink" class="multi-pattern-link is-hidden">
-              <div class="info-box">
-                <p><strong>📊 複数パターン分析を使う</strong></p>
-                <p>この歩留まり率を使って、複数の原価・売価パターンを比較分析できます。</p>
-
-                <!-- データ不足メッセージ -->
-                <div id="multiPatternDataInsufficient" class="data-insufficient-message is-hidden">
-                  <p style="color: #ef5350; margin: 0.5em 0;">
-                    ⚠️ データが不足しています。歩留まり率を計算するには、2件以上のデータを入力してください。
-                  </p>
-                </div>
-
-                <!-- 代表値選択ボタン -->
-                <div id="multiPatternButtons" class="multi-pattern-buttons is-hidden">
-                  <button type="button" id="goToMultiPatternMeanBtn" class="btn btn-primary multi-pattern-btn">
-                    <span class="btn-label">平均値</span>
-                    <span id="meanValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                  <button type="button" id="goToMultiPatternMedianBtn" class="btn btn-secondary multi-pattern-btn">
-                    <span class="btn-label">中央値</span>
-                    <span id="medianValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                  <button type="button" id="goToMultiPatternRecommendedBtn" class="btn btn-recommended multi-pattern-btn">
-                    <span class="btn-label">📌 推奨値</span>
-                    <span id="recommendedValueDisplay" class="btn-value">-</span>
-                    <span class="btn-arrow">で分析へ →</span>
-                  </button>
-                </div>
-
-                <p style="font-size: 0.9em; color: #666; margin-top: 0.5em;">
-                  💡 推奨: <span id="recommendedHint" style="font-weight: bold; color: #667eea;">-</span>
-                </p>
-              </div>
-            </div>
+          <div class="info-box">
+            <button type="button" id="goToMultiPatternBtn" class="btn btn-primary" style="width: 100%;">
+              📊 複数パターン分析を使う
+            </button>
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -1241,7 +1201,7 @@
       </div>
       <div class="modal-body">
         <!-- 新規プリセット作成 / 編集 -->
-        <div class="preset-editor">
+        <div class="preset-editor" style="display: none;">
           <h4 class="preset-editor-title" id="presetEditorTitle">新規プリセット作成</h4>
 
           <div class="field">
@@ -1295,14 +1255,12 @@
           </div>
         </div>
 
-        <hr style="margin: 2em 0; border: none; border-top: 1px solid #e0e0e0;">
-
         <!-- 保存済みプリセット一覧 -->
         <div class="preset-list-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
-            <h4 style="margin: 0; font-size: 1.1em;">保存済みプリセット</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5em;">
+            <h4 style="margin: 0; font-size: 1.2em;">💾 保存済みプリセット</h4>
             <div>
-              <button type="button" id="createNewPresetBtn" class="btn btn-primary btn-sm">+ 新規作成</button>
+              <button type="button" id="createNewPresetBtn" class="btn btn-primary">+ 新規プリセット作成</button>
             </div>
           </div>
 
