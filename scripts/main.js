@@ -3140,6 +3140,74 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
 /**
  * 歩留まり統計から読み込むボタンの状態を更新
  */
+/**
+ * 通常モードのボタンにイベントハンドラを設定
+ */
+function setupNormalModeButtonHandlers(selectedStatsType) {
+  const statsData = window.statsDataByType?.[selectedStatsType];
+  if (!statsData) return;
+
+  // 平均値ボタン
+  const meanBtn = qs('#loadStatsMeanBtn');
+  if (meanBtn) {
+    const newMeanBtn = meanBtn.cloneNode(true);
+    meanBtn.parentNode.replaceChild(newMeanBtn, meanBtn);
+
+    newMeanBtn.addEventListener('click', () => {
+      loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      showTransferNotification('平均値を転記しました');
+      focusFirstPatternInput();
+    });
+    newMeanBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+      showTransferNotification('平均値を転記しました');
+      focusFirstPatternInput();
+    }, { passive: false });
+  }
+
+  // 中央値ボタン
+  const medianBtn = qs('#loadStatsMedianBtn');
+  if (medianBtn) {
+    const newMedianBtn = medianBtn.cloneNode(true);
+    medianBtn.parentNode.replaceChild(newMedianBtn, medianBtn);
+
+    newMedianBtn.addEventListener('click', () => {
+      loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      showTransferNotification('中央値を転記しました');
+      focusFirstPatternInput();
+    });
+    newMedianBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+      showTransferNotification('中央値を転記しました');
+      focusFirstPatternInput();
+    }, { passive: false });
+  }
+
+  // 推奨値ボタン
+  const recommendedBtn = qs('#loadStatsRecommendedBtn');
+  if (recommendedBtn) {
+    const newRecommendedBtn = recommendedBtn.cloneNode(true);
+    recommendedBtn.parentNode.replaceChild(newRecommendedBtn, recommendedBtn);
+
+    const recommended = getRecommendedValue(statsData);
+    if (recommended) {
+      newRecommendedBtn.addEventListener('click', () => {
+        loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
+        showTransferNotification('推奨値を転記しました');
+        focusFirstPatternInput();
+      });
+      newRecommendedBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
+        showTransferNotification('推奨値を転記しました');
+        focusFirstPatternInput();
+      }, { passive: false });
+    }
+  }
+}
+
 function updateLoadStatsButtons() {
   const loadStatsButtons = qs('#loadStatsButtons');
   const loadStatsNoData = qs('#loadStatsNoData');
@@ -3164,14 +3232,14 @@ function updateLoadStatsButtons() {
   if (currentMode === 'direct') {
     // 歩留まり率直接入力モード：歩留まり率と加工前重量のみ
     loadStatsTypeSelect.innerHTML = `
-      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
+      <option value="bulk">一括取り込み（推奨値をステップ1に転記）</option>
       <option value="yieldRate">歩留まり率（%）</option>
       <option value="beforeWeight">加工前重量（g）</option>
     `;
   } else {
     // 重量から計算モード：加工前重量と加工後重量のみ
     loadStatsTypeSelect.innerHTML = `
-      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
+      <option value="bulk">一括取り込み（推奨値をステップ1に転記）</option>
       <option value="beforeWeight">加工前重量（g）</option>
       <option value="afterWeight">加工後重量（g）</option>
     `;
@@ -3185,26 +3253,162 @@ function updateLoadStatsButtons() {
   // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
   const selectedStatsType = loadStatsTypeSelect.value;
 
-  // 一括取り込みの場合は歩留まり率の統計を表示
-  const displayStatsType = selectedStatsType === 'bulk' ? 'yieldRate' : selectedStatsType;
-  const stats = window.statsDataByType?.[displayStatsType];
+  // 一括取り込みモードの場合
+  if (selectedStatsType === 'bulk') {
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const beforeWeightStats = window.statsDataByType?.beforeWeight;
+    const afterWeightStats = window.statsDataByType?.afterWeight;
+
+    // 歩留まり率の統計データが必須
+    if (!yieldRateStats || yieldRateStats.count < 2) {
+      loadStatsButtons.classList.add('is-hidden');
+      loadStatsNoData.classList.remove('is-hidden');
+      if (generateSigmaPatternsSection) {
+        generateSigmaPatternsSection.classList.add('is-hidden');
+      }
+      return;
+    }
+
+    // 推奨値を取得
+    const yieldRateRecommended = getRecommendedValue(yieldRateStats);
+    const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      ? getRecommendedValue(beforeWeightStats)
+      : null;
+    const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
+      ? getRecommendedValue(afterWeightStats)
+      : null;
+
+    // テーブルのtbodyを取得して書き換え
+    const tbody = loadStatsButtons.querySelector('tbody');
+    if (tbody) {
+      let rows = '';
+
+      // モードに応じて表示する項目を変更
+      if (currentMode === 'direct') {
+        // 歩留まり率直接入力モード
+        rows += `
+          <tr>
+            <td class="stats-label">歩留まり率（%）</td>
+            <td class="stats-value">${yieldRateRecommended ? toFixed(yieldRateRecommended.value, 2) + '%' : '-'}</td>
+          </tr>`;
+        if (beforeWeightRecommended) {
+          rows += `
+          <tr>
+            <td class="stats-label">加工前重量（g）</td>
+            <td class="stats-value">${toFixed(beforeWeightRecommended.value, 2)}g</td>
+          </tr>`;
+        }
+      } else {
+        // 重量から計算モード
+        if (beforeWeightRecommended) {
+          rows += `
+          <tr>
+            <td class="stats-label">加工前重量（g）</td>
+            <td class="stats-value">${toFixed(beforeWeightRecommended.value, 2)}g</td>
+          </tr>`;
+        }
+        if (afterWeightRecommended) {
+          rows += `
+          <tr>
+            <td class="stats-label">加工後重量（g）</td>
+            <td class="stats-value">${toFixed(afterWeightRecommended.value, 2)}g</td>
+          </tr>`;
+        }
+      }
+
+      // 一括取り込みボタンの行を追加
+      rows += `
+          <tr>
+            <td colspan="2" style="text-align: center; padding: 0.8em;">
+              <button type="button" id="bulkImportBtn" class="btn btn-recommended btn-sm" style="font-size: 0.9em; padding: 0.5em 1.2em;">
+                📥 推奨値を一括転記
+              </button>
+            </td>
+          </tr>`;
+
+      tbody.innerHTML = rows;
+    }
+
+    // ボタンを表示、メッセージを非表示
+    loadStatsButtons.classList.remove('is-hidden');
+    loadStatsNoData.classList.add('is-hidden');
+
+    // σパターン生成セクションを非表示（一括取り込みモードでは不要）
+    if (generateSigmaPatternsSection) {
+      generateSigmaPatternsSection.classList.add('is-hidden');
+    }
+
+    // 一括取り込みボタンのイベントハンドラを設定
+    const bulkImportBtn = qs('#bulkImportBtn');
+    if (bulkImportBtn) {
+      // 既存のイベントリスナーを削除するため、新しいボタン要素で置き換える
+      const newBulkImportBtn = bulkImportBtn.cloneNode(true);
+      bulkImportBtn.parentNode.replaceChild(newBulkImportBtn, bulkImportBtn);
+
+      // イベントハンドラを設定
+      newBulkImportBtn.addEventListener('click', () => {
+        loadAllStatsToMultiPattern();
+      });
+      newBulkImportBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        loadAllStatsToMultiPattern();
+      }, { passive: false });
+    }
+
+    return;
+  }
+
+  // 通常モード（個別の統計タイプ）
+  const stats = window.statsDataByType?.[selectedStatsType];
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
     // 単位を取得
-    const unit = displayStatsType === 'yieldRate' ? '%' : 'g';
+    const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
+
+    // テーブルのtbodyを通常表示に戻す
+    const tbody = loadStatsButtons.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+                <tr>
+                  <td class="stats-label">平均値</td>
+                  <td class="stats-value" id="loadMeanValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="stats-label">中央値</td>
+                  <td class="stats-value" id="loadMedianValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
+                  </td>
+                </tr>
+                <tr class="recommended-row">
+                  <td class="stats-label">📌 推奨値</td>
+                  <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
+                  <td class="stats-action">
+                    <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
+                  </td>
+                </tr>`;
+    }
+
+    // 再度要素を取得（tbodyが書き換わったため）
+    const newLoadMeanValueDisplay = qs('#loadMeanValueDisplay');
+    const newLoadMedianValueDisplay = qs('#loadMedianValueDisplay');
+    const newLoadRecommendedValueDisplay = qs('#loadRecommendedValueDisplay');
 
     // データがある場合、ボタンに値を表示
-    if (loadMeanValueDisplay) {
-      loadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}${unit}`;
+    if (newLoadMeanValueDisplay) {
+      newLoadMeanValueDisplay.textContent = `${toFixed(stats.mean, 2)}${unit}`;
     }
-    if (loadMedianValueDisplay) {
-      loadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}${unit}`;
+    if (newLoadMedianValueDisplay) {
+      newLoadMedianValueDisplay.textContent = `${toFixed(stats.median, 2)}${unit}`;
     }
-    if (loadRecommendedValueDisplay && recommended) {
-      loadRecommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}${unit}`;
+    if (newLoadRecommendedValueDisplay && recommended) {
+      newLoadRecommendedValueDisplay.textContent = `${toFixed(recommended.value, 2)}${unit}`;
     }
 
     // ボタンを表示、メッセージを非表示
@@ -3212,11 +3416,14 @@ function updateLoadStatsButtons() {
     loadStatsNoData.classList.add('is-hidden');
 
     // σパターン生成セクションを表示（歩留まり率の場合のみ）
-    if (generateSigmaPatternsSection && displayStatsType === 'yieldRate') {
+    if (generateSigmaPatternsSection && selectedStatsType === 'yieldRate') {
       generateSigmaPatternsSection.classList.remove('is-hidden');
     } else if (generateSigmaPatternsSection) {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
+
+    // 通常モードのボタンにイベントハンドラを設定
+    setupNormalModeButtonHandlers(selectedStatsType);
   } else {
     // データがない場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
