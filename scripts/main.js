@@ -2694,26 +2694,15 @@ function savePresetsData(presets) {
 
 // モーダルを開く（新規作成）
 function openPresetModal() {
-  console.log('openPresetModal called');
   currentEditingPreset = null;
   tempPairs = [];
-
-  const modal = qs('#presetModal');
-  console.log('Modal element:', modal);
-
   qs('#presetEditorTitle').textContent = '新規プリセット作成';
   qs('#presetName').value = '';
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
   renderTempPairs();
   renderPresetList();
-
-  if (modal) {
-    modal.classList.add('is-open');
-    console.log('Modal opened, classes:', modal.className);
-  } else {
-    console.error('Modal element not found!');
-  }
+  qs('#presetModal').classList.add('is-open');
 }
 
 // モーダルを閉じる
@@ -3852,10 +3841,6 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
-  console.log('init() called');
-  console.log('showPresetManagerBtn exists:', !!qs('#showPresetManagerBtn'));
-  console.log('presetModal exists:', !!qs('#presetModal'));
-
   // モード切替ボタン
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
@@ -4185,8 +4170,8 @@ function init() {
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
-    // 複数パターン分析モードに切り替え
-    handleModeSwitch(MODE.MULTI_PATTERN);
+    // 複数パターン分析モードに切り替え（確認なし）
+    switchMode(MODE.MULTI_PATTERN);
 
     // 歩留まり率と商品名を設定
     if (yieldRate !== null) {
@@ -4203,8 +4188,8 @@ function init() {
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value || '';
 
-    // 複数パターン分析モードに切り替え
-    handleModeSwitch(MODE.MULTI_PATTERN);
+    // 複数パターン分析モードに切り替え（確認なし）
+    switchMode(MODE.MULTI_PATTERN);
 
     // 歩留まり率と商品名を設定
     if (yieldRate !== null) {
@@ -4292,7 +4277,6 @@ function init() {
   document.addEventListener('click', (e) => {
     // プリセットから選択ボタン
     if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
-      console.log('Preset button clicked!', e.target);
       e.preventDefault();
       openPresetModal();
     }
