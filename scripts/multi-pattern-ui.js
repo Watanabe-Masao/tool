@@ -457,8 +457,15 @@ export function replaceAllPatterns(newPatterns) {
       afterPrice100: null
     });
 
-    // イベントリスナーを設定
-    attachPatternEventListeners(row, patternId);
+    // 入力イベントを設定
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('input', () => handlePatternInput(patternId));
+    });
+
+    // 削除ボタンのイベント
+    const removeBtn = row.querySelector('.btn-remove');
+    removeBtn.addEventListener('click', () => removePattern(patternId));
   });
 
   console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
