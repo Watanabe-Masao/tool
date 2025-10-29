@@ -3281,7 +3281,15 @@ let tempPairs = []; // 一時的な原価・売価ペア配列
 // プリセットをlocalStorageから読み込む
 function loadPresets() {
   const presets = localStorage.getItem(PRESET_STORAGE_KEY);
-  return presets ? JSON.parse(presets) : [];
+  if (!presets) return [];
+
+  const parsedPresets = JSON.parse(presets);
+
+  // 古いデータとの互換性のため、patternsプロパティがない場合は空配列を設定
+  return parsedPresets.map(preset => ({
+    ...preset,
+    patterns: Array.isArray(preset.patterns) ? preset.patterns : []
+  }));
 }
 
 // プリセットをlocalStorageに保存
@@ -3480,7 +3488,8 @@ function editPresetFromModal(id) {
   if (!preset) return;
 
   currentEditingPreset = preset;
-  tempPairs = [...preset.patterns];
+  // preset.patternsが存在しない場合は空配列として扱う
+  tempPairs = Array.isArray(preset.patterns) ? [...preset.patterns] : [];
   qs('#presetEditorTitle').textContent = 'プリセット編集';
   qs('#presetName').value = preset.name;
   qs('#tempUnitCost').value = '';
@@ -3556,7 +3565,7 @@ function addSelectedPresetsToTable() {
     const presetId = parseInt(checkbox.dataset.presetId);
     const preset = presets.find(p => p.id === presetId);
 
-    if (!preset || !preset.patterns) return;
+    if (!preset || !Array.isArray(preset.patterns) || preset.patterns.length === 0) return;
 
     // プリセットの各ペアを追加
     preset.patterns.forEach(pattern => {
