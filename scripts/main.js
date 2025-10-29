@@ -4911,18 +4911,27 @@ function init() {
   qs('#cancelPresetBtn')?.addEventListener('click', closePresetModal);
   qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
 
+  // プリセットから選択ボタン（直接イベントリスナー）
+  const showPresetBtn = qs('#showPresetManagerBtn');
+  if (showPresetBtn) {
+    showPresetBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openPresetModal();
+    });
+    // モバイル対応：touchstartイベントも追加
+    showPresetBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      openPresetModal();
+    }, { passive: false });
+  }
+
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
 
   // イベント委譲でプリセット関連のボタンを処理
   document.addEventListener('click', (e) => {
-    // プリセットから選択ボタン
-    if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
-      e.preventDefault();
-      openPresetModal();
-    }
     // 編集ボタン
-    else if (e.target.classList.contains('preset-btn-edit')) {
+    if (e.target.classList.contains('preset-btn-edit')) {
       const presetId = parseInt(e.target.dataset.presetId);
       editPresetFromModal(presetId);
     }
