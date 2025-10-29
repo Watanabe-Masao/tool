@@ -3077,9 +3077,19 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
     const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
     const yieldRateStats = window.statsDataByType?.yieldRate;
 
+    // デバッグ：値を確認
+    console.log('=== 複数パターン分析ボタン更新 ===');
+    console.log('statsType:', statsType);
+    console.log('isSampleSizeValid:', isSampleSizeValid);
+    console.log('hasYieldRateData:', hasYieldRateData);
+    console.log('yieldRateStats:', yieldRateStats);
+    console.log('yieldRateStats?.count:', yieldRateStats?.count);
+
     // 状態を更新：複数パターン分析リンクを表示すべきか
     window.yieldStatsState.shouldShowMultiPatternLink =
       isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
+
+    console.log('shouldShowMultiPatternLink:', window.yieldStatsState.shouldShowMultiPatternLink);
 
     // データが十分にあるかチェック
     if (window.yieldStatsState.shouldShowMultiPatternLink) {
@@ -3088,6 +3098,12 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
       const recommendedValueDisplay = qs('#recommendedValueDisplay');
 
       // 値を設定（歩留まり率の統計を使用）
+      console.log('ボタンの値を更新:', {
+        mean: yieldRateStats.mean,
+        median: yieldRateStats.median,
+        recommended: recommended?.value
+      });
+
       if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
       if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
       if (recommendedValueDisplay && recommended) {
@@ -3099,6 +3115,7 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
       if (multiPatternButtons) multiPatternButtons.classList.remove('is-hidden');
       if (dataInsufficient) dataInsufficient.classList.add('is-hidden');
     } else {
+      console.log('条件を満たしていないため、ボタンを非表示にします');
       // データ不足の場合
       // ボタンを非表示、データ不足メッセージを表示
       if (multiPatternButtons) multiPatternButtons.classList.add('is-hidden');
@@ -3106,6 +3123,8 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
     }
 
     multiPatternLink.classList.remove('is-hidden');
+  } else {
+    console.log('multiPatternLink を表示しません（statsType:', statsType, '）');
   }
 }
 
