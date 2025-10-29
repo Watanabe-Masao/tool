@@ -3150,60 +3150,51 @@ function setupNormalModeButtonHandlers(selectedStatsType) {
   // 平均値ボタン
   const meanBtn = qs('#loadStatsMeanBtn');
   if (meanBtn) {
-    const newMeanBtn = meanBtn.cloneNode(true);
-    meanBtn.parentNode.replaceChild(newMeanBtn, meanBtn);
-
-    newMeanBtn.addEventListener('click', () => {
+    meanBtn.onclick = () => {
       loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
       showTransferNotification('平均値を転記しました');
       focusFirstPatternInput();
-    });
-    newMeanBtn.addEventListener('touchend', (e) => {
+    };
+    meanBtn.ontouchend = (e) => {
       e.preventDefault();
       loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
       showTransferNotification('平均値を転記しました');
       focusFirstPatternInput();
-    }, { passive: false });
+    };
   }
 
   // 中央値ボタン
   const medianBtn = qs('#loadStatsMedianBtn');
   if (medianBtn) {
-    const newMedianBtn = medianBtn.cloneNode(true);
-    medianBtn.parentNode.replaceChild(newMedianBtn, medianBtn);
-
-    newMedianBtn.addEventListener('click', () => {
+    medianBtn.onclick = () => {
       loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
       showTransferNotification('中央値を転記しました');
       focusFirstPatternInput();
-    });
-    newMedianBtn.addEventListener('touchend', (e) => {
+    };
+    medianBtn.ontouchend = (e) => {
       e.preventDefault();
       loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
       showTransferNotification('中央値を転記しました');
       focusFirstPatternInput();
-    }, { passive: false });
+    };
   }
 
   // 推奨値ボタン
   const recommendedBtn = qs('#loadStatsRecommendedBtn');
   if (recommendedBtn) {
-    const newRecommendedBtn = recommendedBtn.cloneNode(true);
-    recommendedBtn.parentNode.replaceChild(newRecommendedBtn, recommendedBtn);
-
     const recommended = getRecommendedValue(statsData);
     if (recommended) {
-      newRecommendedBtn.addEventListener('click', () => {
+      recommendedBtn.onclick = () => {
         loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
         showTransferNotification('推奨値を転記しました');
         focusFirstPatternInput();
-      });
-      newRecommendedBtn.addEventListener('touchend', (e) => {
+      };
+      recommendedBtn.ontouchend = (e) => {
         e.preventDefault();
         loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
         showTransferNotification('推奨値を転記しました');
         focusFirstPatternInput();
-      }, { passive: false });
+      };
     }
   }
 }
@@ -3278,9 +3269,9 @@ function updateLoadStatsButtons() {
       ? getRecommendedValue(afterWeightStats)
       : null;
 
-    // テーブルのtbodyを取得して書き換え
-    const tbody = loadStatsButtons.querySelector('tbody');
-    if (tbody) {
+    // テーブル全体を書き換え（2列レイアウト）
+    const table = loadStatsButtons.querySelector('table');
+    if (table) {
       let rows = '';
 
       // モードに応じて表示する項目を変更
@@ -3288,14 +3279,14 @@ function updateLoadStatsButtons() {
         // 歩留まり率直接入力モード
         rows += `
           <tr>
-            <td class="stats-label">歩留まり率（%）</td>
-            <td class="stats-value">${yieldRateRecommended ? toFixed(yieldRateRecommended.value, 2) + '%' : '-'}</td>
+            <td class="stats-label" style="width: 50%; text-align: left; padding: 0.6em;">歩留まり率</td>
+            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${yieldRateRecommended ? toFixed(yieldRateRecommended.value, 2) + '%' : '-'}</td>
           </tr>`;
         if (beforeWeightRecommended) {
           rows += `
           <tr>
-            <td class="stats-label">加工前重量（g）</td>
-            <td class="stats-value">${toFixed(beforeWeightRecommended.value, 2)}g</td>
+            <td class="stats-label" style="width: 50%; text-align: left; padding: 0.6em;">加工前重量</td>
+            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${toFixed(beforeWeightRecommended.value, 2)}g</td>
           </tr>`;
         }
       } else {
@@ -3303,30 +3294,29 @@ function updateLoadStatsButtons() {
         if (beforeWeightRecommended) {
           rows += `
           <tr>
-            <td class="stats-label">加工前重量（g）</td>
-            <td class="stats-value">${toFixed(beforeWeightRecommended.value, 2)}g</td>
+            <td class="stats-label" style="width: 50%; text-align: left; padding: 0.6em;">加工前重量</td>
+            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${toFixed(beforeWeightRecommended.value, 2)}g</td>
           </tr>`;
         }
         if (afterWeightRecommended) {
           rows += `
           <tr>
-            <td class="stats-label">加工後重量（g）</td>
-            <td class="stats-value">${toFixed(afterWeightRecommended.value, 2)}g</td>
+            <td class="stats-label" style="width: 50%; text-align: left; padding: 0.6em;">加工後重量</td>
+            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${toFixed(afterWeightRecommended.value, 2)}g</td>
           </tr>`;
         }
       }
 
-      // 一括取り込みボタンの行を追加
-      rows += `
+      table.innerHTML = `
+        <thead>
           <tr>
-            <td colspan="2" style="text-align: center; padding: 0.8em;">
-              <button type="button" id="bulkImportBtn" class="btn btn-recommended btn-sm" style="font-size: 0.9em; padding: 0.5em 1.2em;">
-                📥 推奨値を一括転記
-              </button>
-            </td>
-          </tr>`;
-
-      tbody.innerHTML = rows;
+            <th style="text-align: left; padding: 0.6em;">項目</th>
+            <th style="text-align: right; padding: 0.6em;">推奨値</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>`;
     }
 
     // ボタンを表示、メッセージを非表示
@@ -3338,28 +3328,46 @@ function updateLoadStatsButtons() {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
 
-    // 一括取り込みボタンのイベントハンドラを設定
-    const bulkImportBtn = qs('#bulkImportBtn');
-    if (bulkImportBtn) {
-      // 既存のイベントリスナーを削除するため、新しいボタン要素で置き換える
-      const newBulkImportBtn = bulkImportBtn.cloneNode(true);
-      bulkImportBtn.parentNode.replaceChild(newBulkImportBtn, bulkImportBtn);
-
-      // イベントハンドラを設定
-      newBulkImportBtn.addEventListener('click', () => {
-        loadAllStatsToMultiPattern();
-      });
-      newBulkImportBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        loadAllStatsToMultiPattern();
-      }, { passive: false });
+    // 一括取り込みボタンをテーブルの外に配置
+    // 既存のボタンコンテナを探すか、新規作成
+    let bulkImportBtnContainer = qs('#bulkImportBtnContainer');
+    if (!bulkImportBtnContainer) {
+      bulkImportBtnContainer = document.createElement('div');
+      bulkImportBtnContainer.id = 'bulkImportBtnContainer';
+      bulkImportBtnContainer.style.cssText = 'text-align: center; margin-top: 0.8em;';
+      loadStatsButtons.appendChild(bulkImportBtnContainer);
     }
+
+    bulkImportBtnContainer.innerHTML = `
+      <button type="button" id="bulkImportBtn" class="btn btn-recommended btn-sm" style="font-size: 0.9em; padding: 0.5em 1.2em;">
+        📥 推奨値を一括転記
+      </button>`;
+
+    // イベントハンドラを設定（DOMに追加された後に設定）
+    setTimeout(() => {
+      const bulkImportBtn = qs('#bulkImportBtn');
+      if (bulkImportBtn) {
+        bulkImportBtn.onclick = () => {
+          loadAllStatsToMultiPattern();
+        };
+        bulkImportBtn.ontouchend = (e) => {
+          e.preventDefault();
+          loadAllStatsToMultiPattern();
+        };
+      }
+    }, 0);
 
     return;
   }
 
   // 通常モード（個別の統計タイプ）
   const stats = window.statsDataByType?.[selectedStatsType];
+
+  // 一括取り込みボタンコンテナを削除（通常モードでは不要）
+  const bulkImportBtnContainer = qs('#bulkImportBtnContainer');
+  if (bulkImportBtnContainer) {
+    bulkImportBtnContainer.remove();
+  }
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
@@ -3368,31 +3376,40 @@ function updateLoadStatsButtons() {
     // 単位を取得
     const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
 
-    // テーブルのtbodyを通常表示に戻す
-    const tbody = loadStatsButtons.querySelector('tbody');
-    if (tbody) {
-      tbody.innerHTML = `
-                <tr>
-                  <td class="stats-label">平均値</td>
-                  <td class="stats-value" id="loadMeanValueDisplay">-</td>
-                  <td class="stats-action">
-                    <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="stats-label">中央値</td>
-                  <td class="stats-value" id="loadMedianValueDisplay">-</td>
-                  <td class="stats-action">
-                    <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
-                  </td>
-                </tr>
-                <tr class="recommended-row">
-                  <td class="stats-label">📌 推奨値</td>
-                  <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
-                  <td class="stats-action">
-                    <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
-                  </td>
-                </tr>`;
+    // テーブル全体を通常表示（3列）に戻す
+    const table = loadStatsButtons.querySelector('table');
+    if (table) {
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>統計種別</th>
+            <th>値</th>
+            <th>読み込み</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="stats-label">平均値</td>
+            <td class="stats-value" id="loadMeanValueDisplay">-</td>
+            <td class="stats-action">
+              <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="stats-label">中央値</td>
+            <td class="stats-value" id="loadMedianValueDisplay">-</td>
+            <td class="stats-action">
+              <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
+            </td>
+          </tr>
+          <tr class="recommended-row">
+            <td class="stats-label">📌 推奨値</td>
+            <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
+            <td class="stats-action">
+              <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
+            </td>
+          </tr>
+        </tbody>`;
     }
 
     // 再度要素を取得（tbodyが書き換わったため）
@@ -3422,8 +3439,10 @@ function updateLoadStatsButtons() {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
 
-    // 通常モードのボタンにイベントハンドラを設定
-    setupNormalModeButtonHandlers(selectedStatsType);
+    // 通常モードのボタンにイベントハンドラを設定（DOMが更新された後に設定）
+    setTimeout(() => {
+      setupNormalModeButtonHandlers(selectedStatsType);
+    }, 0);
   } else {
     // データがない場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
