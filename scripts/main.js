@@ -5000,7 +5000,7 @@ function init() {
   // モーダルのオーバーレイクリックで閉じる
   qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
 
-  // イベント委譲でプリセット関連のボタンを処理
+  // イベント委譲でプリセット関連のボタンを処理（クリックイベント）
   document.addEventListener('click', (e) => {
     // 編集ボタン
     if (e.target.classList.contains('preset-btn-edit')) {
@@ -5018,6 +5018,28 @@ function init() {
       removeTempPair(index);
     }
   });
+
+  // イベント委譲でプリセット関連のボタンを処理（タッチイベント - モバイル対応）
+  document.addEventListener('touchend', (e) => {
+    // 編集ボタン
+    if (e.target.classList.contains('preset-btn-edit')) {
+      e.preventDefault();
+      const presetId = parseInt(e.target.dataset.presetId);
+      editPresetFromModal(presetId);
+    }
+    // 削除ボタン
+    else if (e.target.classList.contains('preset-btn-delete')) {
+      e.preventDefault();
+      const presetId = parseInt(e.target.dataset.presetId);
+      deletePresetFromModal(presetId);
+    }
+    // ペア削除ボタン
+    else if (e.target.classList.contains('btn-remove-pair')) {
+      e.preventDefault();
+      const index = parseInt(e.target.dataset.pairIndex);
+      removeTempPair(index);
+    }
+  }, { passive: false });
 
   // アコーディオン（折りたたみ）機能
   document.querySelectorAll('.accordion-header').forEach(header => {
