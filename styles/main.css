@@ -716,6 +716,80 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
   font-weight: 600;
 }
 
+/* マトリックス評価 */
+.matrix-evaluation {
+  padding: 12px;
+}
+
+.matrix-eval-description {
+  margin: 0 0 12px 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.matrix-eval-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matrix-eval-info {
+  display: flex;
+  align-items: center;
+  font-size: 0.95em;
+}
+
+.matrix-eval-label {
+  font-weight: 500;
+  color: #555;
+  min-width: 150px;
+}
+
+.matrix-eval-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.matrix-eval-message {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.matrix-eval-message.matrix-eval-excellent {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.matrix-eval-message.matrix-eval-good {
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.matrix-eval-message.matrix-eval-caution {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.matrix-eval-message.matrix-eval-warning {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.matrix-eval-message.matrix-eval-danger {
+  background: linear-gradient(135deg, #f8d7da, #e4b0b5);
+  color: #721c24;
+  border-left: 4px solid #c82333;
+  font-weight: 600;
+}
+
 /* 推奨代表値 */
 .recommended-value {
   margin-top: 20px;

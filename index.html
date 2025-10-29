@@ -546,6 +546,32 @@
           </div>
         </div>
 
+        <!-- データ信頼性評価 -->
+        <div class="accordion-item">
+          <h4 class="stats-section-title accordion-header" data-accordion="matrix-eval">
+            <span>データ信頼性評価</span>
+            <span class="accordion-icon">▼</span>
+          </h4>
+          <div class="accordion-content" id="matrix-eval">
+            <div id="matrixEvaluation" class="matrix-evaluation">
+              <p class="matrix-eval-description">
+                サンプル数とCV（変動係数）から、データの信頼性を評価します
+              </p>
+              <div class="matrix-eval-result">
+                <div class="matrix-eval-info">
+                  <span class="matrix-eval-label">サンプル数：</span>
+                  <span id="matrixEvalSampleSize" class="matrix-eval-value">-</span>
+                </div>
+                <div class="matrix-eval-info">
+                  <span class="matrix-eval-label">変動係数（CV）：</span>
+                  <span id="matrixEvalCV" class="matrix-eval-value">-</span>
+                </div>
+                <div id="matrixEvalMessage" class="matrix-eval-message">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- サンプルサイズの妥当性判断 -->
         <div class="accordion-item">
           <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">

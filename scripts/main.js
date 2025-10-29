@@ -2073,6 +2073,7 @@ function displayCurrentStatistics() {
 
   // 除外後のデータで統計を表示
   displayStatistics(finalStats, unit);
+  displayMatrixEvaluation(finalStats);
   renderStatsChart(finalValues, finalStats, typeName, unit);
 
   // 統計結果を表示
@@ -2094,6 +2095,34 @@ function displayCurrentStatistics() {
   if (!hasTolerance) {
     displayRecommendedValue(finalStats, true);
   }
+}
+
+/**
+ * マトリックス評価を表示
+ * @param {Object} stats - 統計情報
+ */
+function displayMatrixEvaluation(stats) {
+  const sampleSizeSpan = qs('#matrixEvalSampleSize');
+  const cvSpan = qs('#matrixEvalCV');
+  const messageDiv = qs('#matrixEvalMessage');
+
+  if (!sampleSizeSpan || !cvSpan || !messageDiv) {
+    return;
+  }
+
+  const n = stats.count;
+  const cv = stats.cv;
+
+  // サンプル数とCVを表示
+  sampleSizeSpan.textContent = `${n}個`;
+  cvSpan.textContent = `${toFixed(cv)}%`;
+
+  // マトリックス評価を取得
+  const evaluation = getMatrixEvaluation(n, cv);
+
+  // メッセージを表示
+  messageDiv.textContent = evaluation.message;
+  messageDiv.className = `matrix-eval-message ${evaluation.className}`;
 }
 
 /**
@@ -2200,6 +2229,141 @@ function getConfidenceMessage(toleranceError) {
       className: 'confidence-high'
     };
   }
+}
+
+/**
+ * サンプル数とCVのマトリックスから評価メッセージを判定
+ * @param {number} n - サンプル数
+ * @param {number} cv - 変動係数（%）
+ * @returns {Object} 評価メッセージとクラス名
+ */
+function getMatrixEvaluation(n, cv) {
+  // サンプル数の範囲を判定
+  let sampleRange;
+  if (n <= 5) {
+    sampleRange = 'n5';
+  } else if (n >= 10 && n <= 20) {
+    sampleRange = 'n10-20';
+  } else if (n >= 30 && n <= 50) {
+    sampleRange = 'n30-50';
+  } else if (n >= 100) {
+    sampleRange = 'n100+';
+  } else {
+    // 6-9, 21-29, 51-99の場合は近い範囲にマッピング
+    if (n < 10) {
+      sampleRange = 'n5';
+    } else if (n < 30) {
+      sampleRange = 'n10-20';
+    } else if (n < 100) {
+      sampleRange = 'n30-50';
+    }
+  }
+
+  // CVの範囲を判定
+  let cvRange;
+  if (cv < 10) {
+    cvRange = 'cv0-10';
+  } else if (cv >= 10 && cv < 20) {
+    cvRange = 'cv10-20';
+  } else if (cv >= 20 && cv < 30) {
+    cvRange = 'cv20-30';
+  } else {
+    cvRange = 'cv30+';
+  }
+
+  // マトリックスに基づく評価
+  const evaluations = {
+    'n5': {
+      'cv0-10': {
+        message: '目安レベル。参考値のみ（データ不足）',
+        className: 'matrix-eval-caution',
+        level: 'caution'
+      },
+      'cv10-20': {
+        message: '目安レベル。参考値のみ',
+        className: 'matrix-eval-caution',
+        level: 'caution'
+      },
+      'cv20-30': {
+        message: '不安定。外れ値の影響大',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      },
+      'cv30+': {
+        message: '信頼性極めて低い。再測定推奨',
+        className: 'matrix-eval-danger',
+        level: 'danger'
+      }
+    },
+    'n10-20': {
+      'cv0-10': {
+        message: 'やや安定。概ね良好',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv10-20': {
+        message: '概ね安定。傾向把握可',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv20-30': {
+        message: 'ばらつきあり。原因分析要',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      },
+      'cv30+': {
+        message: 'データ再収集を推奨',
+        className: 'matrix-eval-danger',
+        level: 'danger'
+      }
+    },
+    'n30-50': {
+      'cv0-10': {
+        message: '安定。統計的に信頼できる',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv10-20': {
+        message: '安定。品質問題は小',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv20-30': {
+        message: 'ややばらつきあり。改善検討',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv30+': {
+        message: '不安定。工程見直し必要',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      }
+    },
+    'n100+': {
+      'cv0-10': {
+        message: '非常に安定。精度高い推定可能',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv10-20': {
+        message: '高信頼性。管理値設定可',
+        className: 'matrix-eval-excellent',
+        level: 'excellent'
+      },
+      'cv20-30': {
+        message: '安定。制御強化で改善可',
+        className: 'matrix-eval-good',
+        level: 'good'
+      },
+      'cv30+': {
+        message: '要改善。重大なばらつきの可能性',
+        className: 'matrix-eval-warning',
+        level: 'warning'
+      }
+    }
+  };
+
+  return evaluations[sampleRange][cvRange];
 }
 
 /**
