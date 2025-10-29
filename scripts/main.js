@@ -2694,15 +2694,26 @@ function savePresetsData(presets) {
 
 // モーダルを開く（新規作成）
 function openPresetModal() {
+  console.log('openPresetModal called');
   currentEditingPreset = null;
   tempPairs = [];
+
+  const modal = qs('#presetModal');
+  console.log('Modal element:', modal);
+
   qs('#presetEditorTitle').textContent = '新規プリセット作成';
   qs('#presetName').value = '';
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
   renderTempPairs();
   renderPresetList();
-  qs('#presetModal').classList.add('is-open');
+
+  if (modal) {
+    modal.classList.add('is-open');
+    console.log('Modal opened, classes:', modal.className);
+  } else {
+    console.error('Modal element not found!');
+  }
 }
 
 // モーダルを閉じる
@@ -3841,6 +3852,10 @@ function restoreSession() {
  * アプリケーション初期化
  */
 function init() {
+  console.log('init() called');
+  console.log('showPresetManagerBtn exists:', !!qs('#showPresetManagerBtn'));
+  console.log('presetModal exists:', !!qs('#presetModal'));
+
   // モード切替ボタン
   qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.FIXED));
   qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.WEIGHT));
@@ -4277,6 +4292,7 @@ function init() {
   document.addEventListener('click', (e) => {
     // プリセットから選択ボタン
     if (e.target.id === 'showPresetManagerBtn' || e.target.closest('#showPresetManagerBtn')) {
+      console.log('Preset button clicked!', e.target);
       e.preventDefault();
       openPresetModal();
     }
