@@ -230,6 +230,27 @@ function switchMode(newMode) {
       tbody.innerHTML = '';
       addYieldStatsRow();
     }
+
+    // 歩留まり統計の状態をリセット
+    window.yieldStatsState = {
+      currentDisplayType: 'yieldRate',
+      isFromHistory: false,
+      isCalculated: false,
+      hasYieldRateData: false,
+      hasBeforeWeightData: false,
+      hasAfterWeightData: false,
+      isOutlierExcluded: false,
+      manuallyExcludedOutlierIndices: new Set(),
+      currentOutlierValues: [],
+      shouldShowMultiPatternLink: false
+    };
+
+    // 統計データもクリア
+    window.statsDataByType = {
+      yieldRate: null,
+      beforeWeight: null,
+      afterWeight: null
+    };
   } else if (currentMode === MODE.MULTI_PATTERN) {
     // 複数パターン分析モードのクリア処理
     resetMultiPatternUI();
@@ -1692,6 +1713,10 @@ function restoreYieldStatsTable(tableData) {
     addYieldStatsRow();
   }
 
+  // 状態を更新：履歴から読み込まれた
+  window.yieldStatsState.isFromHistory = true;
+  window.yieldStatsState.isCalculated = true;
+
   // 統計情報を更新
   updateYieldStatsStatistics();
 }
@@ -1855,10 +1880,18 @@ function displayCurrentStatistics() {
   const selectedType = selectElement?.value || 'yieldRate';
   const data = appState.getYieldStatsData();
 
+  // 状態を更新：現在の表示タイプ
+  window.yieldStatsState.currentDisplayType = selectedType;
+
   // 統計タイプが変更されたら外れ値の除外状態をリセット
   if (currentStatsType !== selectedType) {
-    manuallyExcludedOutlierIndices.clear();
-    currentOutlierValues = [];
+    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+    window.yieldStatsState.currentOutlierValues = [];
+    window.yieldStatsState.isOutlierExcluded = false;
+
+    // 後方互換性のため既存変数も更新
+    manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
+    currentOutlierValues = window.yieldStatsState.currentOutlierValues;
     currentStatsType = selectedType;
   }
 
@@ -1936,6 +1969,15 @@ function displayCurrentStatistics() {
       window.statsDataByType[type] = null;
     }
   });
+
+  // 状態を更新：データ存在フラグ
+  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
+  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
+  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
+
+  // 状態を更新：計算済みフラグ（新規計算された）
+  window.yieldStatsState.isCalculated = true;
+  window.yieldStatsState.isFromHistory = false;
 
   // 後方互換性のため、従来の変数も維持
   window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
@@ -2184,10 +2226,36 @@ function displaySampleSizeValidation() {
   resultDiv.classList.remove('is-hidden');
 }
 
-// 外れ値の除外状態を管理（値のインデックスで管理）
-let manuallyExcludedOutlierIndices = new Set();
-let currentOutlierValues = []; // 現在の外れ値リスト
-let currentStatsType = ''; // 現在の統計タイプを追跡
+/**
+ * 歩留まり統計の状態管理
+ * データと状態を明確に分離して管理
+ */
+window.yieldStatsState = {
+  // 表示関連の状態
+  currentDisplayType: 'yieldRate',        // 現在表示中の統計タイプ
+
+  // データソース関連の状態
+  isFromHistory: false,                   // 履歴から読み込まれたか
+  isCalculated: false,                    // 計算済みか（新規計算されたか）
+
+  // データ存在フラグ
+  hasYieldRateData: false,                // 歩留まり率データが存在するか
+  hasBeforeWeightData: false,             // 加工前重量データが存在するか
+  hasAfterWeightData: false,              // 加工後重量データが存在するか
+
+  // UI状態
+  isOutlierExcluded: false,               // 外れ値除外が適用されているか
+  manuallyExcludedOutlierIndices: new Set(), // 手動除外された外れ値のインデックス
+  currentOutlierValues: [],               // 現在の外れ値リスト
+
+  // 次のアクション指示
+  shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか
+};
+
+// 後方互換性のため、グローバル変数も残す（徐々に置き換え）
+let manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
+let currentOutlierValues = window.yieldStatsState.currentOutlierValues;
+let currentStatsType = window.yieldStatsState.currentDisplayType;
 
 /**
  * 外れ値情報を表示
@@ -2632,11 +2700,16 @@ function displayRecommendedValue(stats, isSampleSizeValid) {
     const multiPatternButtons = qs('#multiPatternButtons');
     const dataInsufficient = qs('#multiPatternDataInsufficient');
 
-    // 歩留まり率の統計データを取得
+    // 状態フラグを確認：歩留まり率データが存在するか
+    const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
     const yieldRateStats = window.statsDataByType?.yieldRate;
 
+    // 状態を更新：複数パターン分析リンクを表示すべきか
+    window.yieldStatsState.shouldShowMultiPatternLink =
+      isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2;
+
     // データが十分にあるかチェック
-    if (isSampleSizeValid && yieldRateStats && yieldRateStats.count >= 2) {
+    if (window.yieldStatsState.shouldShowMultiPatternLink) {
       // 値を設定（歩留まり率の統計を使用）
       if (meanValueDisplay) meanValueDisplay.textContent = `${toFixed(yieldRateStats.mean, 2)}%`;
       if (medianValueDisplay) medianValueDisplay.textContent = `${toFixed(yieldRateStats.median, 2)}%`;
