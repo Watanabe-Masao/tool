@@ -564,7 +564,7 @@
                 <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です" data-formula-name="許容誤差（E）" data-formula="E = 許容される誤差の範囲" data-formula-desc="推定値と真の値の間で許容できる誤差の大きさです。例えば許容誤差を2.0%とした場合、真の値±2.0%の範囲内で推定したいということを意味します。小さいほど精度が高くなりますが、その分より多くのサンプル数が必要になります。" data-formula-example="歩留まり率を推定する際、許容誤差2.0%なら、真の歩留まり率が50%の場合、48%～52%の範囲で推定できれば良いということです。">?</span>
               </label>
               <div class="input-with-unit">
-                <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" placeholder="例: 2.0" />
+                <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" value="3.0" placeholder="例: 2.0" />
                 <span class="input-unit" id="toleranceUnit">%</span>
               </div>
               <small class="validation-help">例：2.0なら真の値±2.0の範囲で推定したい</small>
@@ -597,6 +597,9 @@
               <span id="validityJudgment" class="validity-badge">-</span>
             </div>
             <p id="validityExplanation" class="validity-explanation"></p>
+
+            <!-- 信頼度メッセージ -->
+            <div id="confidenceMessage" class="confidence-message"></div>
 
             <!-- 外れ値情報 -->
             <div id="outlierInfo" class="outlier-info is-hidden">

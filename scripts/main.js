@@ -2164,6 +2164,45 @@ function detectOutliers(values, stats) {
 }
 
 /**
+ * 許容誤差に基づいて信頼度メッセージを判定
+ * @param {number} toleranceError - 許容誤差（E）
+ * @returns {Object} メッセージと色の情報
+ */
+function getConfidenceMessage(toleranceError) {
+  if (toleranceError >= 1 && toleranceError <= 2) {
+    return {
+      message: '高精度：誤差範囲が狭く、非常に信頼性の高い推定が可能です',
+      className: 'confidence-high'
+    };
+  } else if (toleranceError >= 3 && toleranceError <= 4) {
+    return {
+      message: '標準精度：一般的な分析に適した精度です',
+      className: 'confidence-standard'
+    };
+  } else if (toleranceError >= 5 && toleranceError <= 6) {
+    return {
+      message: '低精度：誤差範囲が広く、精度が低くなります',
+      className: 'confidence-low'
+    };
+  } else if (toleranceError >= 7 && toleranceError <= 8) {
+    return {
+      message: '非常に低い精度：誤差範囲が非常に広く、推定の信頼性が限定的です',
+      className: 'confidence-very-low'
+    };
+  } else if (toleranceError > 8) {
+    return {
+      message: '精度不足：誤差範囲が大きすぎるため、推定の信頼性が著しく低下します',
+      className: 'confidence-insufficient'
+    };
+  } else {
+    return {
+      message: '高精度：誤差範囲が狭く、非常に信頼性の高い推定が可能です',
+      className: 'confidence-high'
+    };
+  }
+}
+
+/**
  * 必要サンプルサイズを計算
  * @param {number} stdDev - 標準偏差
  * @param {number} toleranceError - 許容誤差（E）
@@ -2307,6 +2346,14 @@ function displaySampleSizeValidation() {
       const shortage = requiredSampleSize - actualSampleSize;
       validityExplanation.textContent = `実際のサンプル数が必要数より${shortage}個不足しています。より多くのデータを収集することを推奨します。`;
     }
+  }
+
+  // 信頼度メッセージを表示
+  const confidenceMessageDiv = qs('#confidenceMessage');
+  if (confidenceMessageDiv) {
+    const confidenceInfo = getConfidenceMessage(toleranceError);
+    confidenceMessageDiv.textContent = confidenceInfo.message;
+    confidenceMessageDiv.className = `confidence-message ${confidenceInfo.className}`;
   }
 
   // 外れ値を検出して表示
