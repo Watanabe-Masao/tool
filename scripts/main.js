@@ -3373,17 +3373,20 @@ function renderPresetList() {
   }
 
   presetList.innerHTML = presets.map(preset => {
-    const patternsDisplay = preset.patterns
+    // patternsが存在しない場合は空配列として扱う（データの互換性対策）
+    const patterns = Array.isArray(preset.patterns) ? preset.patterns : [];
+
+    const patternsDisplay = patterns
       .slice(0, 3)
-      .map(p => `<span class="preset-pattern-badge">${p.unitCost}円→${p.unitPrice}円</span>`)
+      .map(p => `<span class="preset-pattern-badge">${p.unitCost || 0}円→${p.unitPrice || 0}円</span>`)
       .join('');
-    const moreText = preset.patterns.length > 3 ? ` <span style="color: #999;">他${preset.patterns.length - 3}件</span>` : '';
+    const moreText = patterns.length > 3 ? ` <span style="color: #999;">他${patterns.length - 3}件</span>` : '';
 
     return `
       <div class="preset-item" data-preset-id="${preset.id}">
         <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
         <div class="preset-info">
-          <div class="preset-name">${preset.name}</div>
+          <div class="preset-name">${preset.name || '名称未設定'}</div>
           <div class="preset-item-patterns">${patternsDisplay}${moreText}</div>
         </div>
         <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>
