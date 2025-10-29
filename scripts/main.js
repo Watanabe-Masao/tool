@@ -4526,9 +4526,16 @@ function init() {
   qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.YIELD_STATS));
   qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('click', () => handleModeSwitch(MODE.MULTI_PATTERN));
 
+  // モード切替ボタン - タッチイベント対応
+  qs(`#${UI_ELEMENTS.FIXED_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.FIXED); }, { passive: false });
+  qs(`#${UI_ELEMENTS.WEIGHT_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.WEIGHT); }, { passive: false });
+  qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.YIELD_STATS); }, { passive: false });
+  qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`)?.addEventListener('touchend', (e) => { e.preventDefault(); handleModeSwitch(MODE.MULTI_PATTERN); }, { passive: false });
+
   // クリアボタン（クラスベースで全てのボタンに設定）
   qsa('.clear-btn').forEach(btn => {
     btn.addEventListener('click', clearAll);
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
   });
 
   // 歩留まり率入力方法の切り替え（定額モード）
@@ -4618,6 +4625,14 @@ function init() {
     });
     handleOutlierCheckboxChange();
   });
+  qs('#selectAllOutliers')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    handleOutlierCheckboxChange();
+  }, { passive: false });
 
   qs('#deselectAllOutliers')?.addEventListener('click', () => {
     const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
@@ -4626,9 +4641,18 @@ function init() {
     });
     handleOutlierCheckboxChange();
   });
+  qs('#deselectAllOutliers')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    handleOutlierCheckboxChange();
+  }, { passive: false });
 
   // 外れ値を含む行を削除
   qs('#deleteOutlierRows')?.addEventListener('click', deleteOutlierRows);
+  qs('#deleteOutlierRows')?.addEventListener('touchend', (e) => { e.preventDefault(); deleteOutlierRows(); }, { passive: false });
 
   // 計算式詳細モーダル
   setupFormulaModal();
@@ -4905,6 +4929,21 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
   });
+  qs('#goToMultiPatternMeanBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    loadStatsValueToMultiPattern(statsData.mean, currentDisplayType, true, productName);
+  }, { passive: false });
 
   // 複数パターン分析への遷移ボタン（中央値）
   qs('#goToMultiPatternMedianBtn')?.addEventListener('click', () => {
@@ -4921,6 +4960,21 @@ function init() {
 
     loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
   });
+  qs('#goToMultiPatternMedianBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const currentDisplayType = window.yieldStatsState?.currentDisplayType || 'yieldRate';
+    const statsData = window.statsDataByType?.[currentDisplayType];
+    if (!statsData) return;
+
+    if (!confirm('統計データを複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    const productNameEl = qs('#yieldStatsProductName');
+    const productName = productNameEl?.value || '';
+
+    loadStatsValueToMultiPattern(statsData.median, currentDisplayType, true, productName);
+  }, { passive: false });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
   qsa('input[name="yieldMethodMultiPattern"]').forEach(radio => {
@@ -4980,6 +5034,14 @@ function init() {
 
     loadRecommendedValueToMultiPattern(true);
   });
+  qs('#goToMultiPatternRecommendedBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (!confirm('統計データ（推奨値）を複数パターン分析に取り込みますか？')) {
+      return;
+    }
+
+    loadRecommendedValueToMultiPattern(true);
+  }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（推奨値）
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
@@ -5027,6 +5089,39 @@ function init() {
       alert('パターン生成機能の初期化に失敗しました。');
     }
   });
+  qs('#generateSigmaPatternsBtn')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
+    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+    const statsData = window.statsDataByType?.[selectedStatsType];
+
+    if (!statsData) {
+      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      return;
+    }
+
+    if (!confirm('現在のパターンをクリアして、標準偏差パターン（平均±1σ、±2σ）を自動生成しますか？')) {
+      return;
+    }
+
+    // σパターンを生成
+    const sigmaPatterns = generateSigmaPatterns(statsData, 2);
+
+    if (sigmaPatterns.length === 0) {
+      alert('パターンを生成できませんでした。');
+      return;
+    }
+
+    // 複数パターン分析のパターンテーブルをクリアして、σパターンを追加
+    // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
+    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
+      window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
+      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
+    } else {
+      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
+      alert('パターン生成機能の初期化に失敗しました。');
+    }
+  }, { passive: false });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
   document.addEventListener('input', (e) => {
