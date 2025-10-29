@@ -406,6 +406,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      await handleLoadCalculation(id);
+    }, { passive: false });
   });
 
   // 編集ボタン
@@ -418,6 +424,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      handleEditCalculation(id);
+    }, { passive: false });
   });
 
   // 削除ボタン
@@ -430,6 +442,12 @@ function bindHistoryItemEvents() {
     btn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
+    btn.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = parseInt(e.target.dataset.id);
+      await handleDeleteCalculation(id);
+    }, { passive: false });
   });
 }
 
@@ -1770,6 +1788,7 @@ export function initHistoryUI() {
   const historyBtn = qs('#historyBtn');
   if (historyBtn) {
     historyBtn.addEventListener('click', showHistoryModal);
+    historyBtn.addEventListener('touchend', (e) => { e.preventDefault(); showHistoryModal(); }, { passive: false });
     console.log('履歴ボタン（定額モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（定額モード）が見つかりません');
@@ -1779,6 +1798,7 @@ export function initHistoryUI() {
   const historyBtnWeight = qs('#historyBtnWeight');
   if (historyBtnWeight) {
     historyBtnWeight.addEventListener('click', showHistoryModal);
+    historyBtnWeight.addEventListener('touchend', (e) => { e.preventDefault(); showHistoryModal(); }, { passive: false });
     console.log('履歴ボタン（計量モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（計量モード）が見つかりません');
@@ -1788,6 +1808,7 @@ export function initHistoryUI() {
   const historyBtnYieldStats = qs('#historyBtnYieldStats');
   if (historyBtnYieldStats) {
     historyBtnYieldStats.addEventListener('click', showHistoryModal);
+    historyBtnYieldStats.addEventListener('touchend', (e) => { e.preventDefault(); showHistoryModal(); }, { passive: false });
     console.log('履歴ボタン（歩留まり統計モード）のイベントリスナーを設定しました');
   } else {
     console.error('履歴ボタン（歩留まり統計モード）が見つかりません');
@@ -1797,6 +1818,7 @@ export function initHistoryUI() {
   const closeHistoryBtn = qs('#closeHistoryModal');
   if (closeHistoryBtn) {
     closeHistoryBtn.addEventListener('click', closeHistoryModal);
+    closeHistoryBtn.addEventListener('touchend', (e) => { e.preventDefault(); closeHistoryModal(); }, { passive: false });
   }
 
   // 履歴メニューボタン（⋮）
@@ -1807,6 +1829,11 @@ export function initHistoryUI() {
       e.stopPropagation();
       toggleHistoryMenu();
     });
+    historyMenuBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleHistoryMenu();
+    }, { passive: false });
 
     // メニュー外をクリック/タッチしたら閉じる
     const closeMenuOnOutsideInteraction = (e) => {
@@ -1835,12 +1862,19 @@ export function initHistoryUI() {
       console.log('[保存ボタン] showSaveDialog()を呼び出します');
       showSaveDialog();
     });
+    saveBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      console.log(`[保存ボタン${index}] タッチされました!`, e);
+      appState.setSaveDialogMode('normal');
+      showSaveDialog();
+    }, { passive: false });
   });
 
   // 上書き保存ボタン（クラスベースで全てのボタンに設定）
   const overwriteSaveBtns = qsa('.overwrite-save-btn');
   overwriteSaveBtns.forEach(overwriteSaveBtn => {
     overwriteSaveBtn.addEventListener('click', handleOverwriteSave);
+    overwriteSaveBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleOverwriteSave(); }, { passive: false });
   });
 
   // 新規保存ボタン（クラスベースで全てのボタンに設定）
@@ -1850,6 +1884,11 @@ export function initHistoryUI() {
       appState.setSaveDialogMode('new');
       showSaveDialog();
     });
+    newSaveBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      appState.setSaveDialogMode('new');
+      showSaveDialog();
+    }, { passive: false });
   });
 
   // 保存ダイアログ - 保存
@@ -1864,12 +1903,21 @@ export function initHistoryUI() {
         handleSaveCalculation();
       }
     });
+    confirmSaveBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (appState.getSaveDialogMode() === 'new') {
+        handleNewSave();
+      } else {
+        handleSaveCalculation();
+      }
+    }, { passive: false });
   }
 
   // 保存ダイアログ - キャンセル
   const cancelSaveBtn = qs('#cancelSaveBtn');
   if (cancelSaveBtn) {
     cancelSaveBtn.addEventListener('click', closeSaveDialog);
+    cancelSaveBtn.addEventListener('touchend', (e) => { e.preventDefault(); closeSaveDialog(); }, { passive: false });
   }
 
   // 検索（selectタグなのでchangeイベントを使用）
@@ -1881,7 +1929,7 @@ export function initHistoryUI() {
   // 選択解除ボタン
   const clearSearchBtn = qs('#clearSearchBtn');
   if (clearSearchBtn) {
-    clearSearchBtn.addEventListener('click', async () => {
+    const clearSearchHandler = async () => {
       const searchInput = qs('#historySearch');
       if (searchInput) {
         searchInput.value = ''; // 商品名選択を解除
@@ -1899,34 +1947,42 @@ export function initHistoryUI() {
         // 計算モードと歩留まり入力方法のフィルタを維持して再表示
         await renderHistoryList(null, mode, yieldMethod);
       }
-    });
+    };
+    clearSearchBtn.addEventListener('click', clearSearchHandler);
+    clearSearchBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearSearchHandler(); }, { passive: false });
   }
 
   // エクスポート
   const exportBtn = qs('#exportBtn');
   if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
+    const exportHandler = () => {
       hideHistoryMenu();
       handleExport();
-    });
+    };
+    exportBtn.addEventListener('click', exportHandler);
+    exportBtn.addEventListener('touchend', (e) => { e.preventDefault(); exportHandler(); }, { passive: false });
   }
 
   // インポート
   const importBtn = qs('#importBtn');
   if (importBtn) {
-    importBtn.addEventListener('click', () => {
+    const importHandler = () => {
       hideHistoryMenu();
       handleImport();
-    });
+    };
+    importBtn.addEventListener('click', importHandler);
+    importBtn.addEventListener('touchend', (e) => { e.preventDefault(); importHandler(); }, { passive: false });
   }
 
   // すべてクリア
   const clearAllBtn = qs('#clearAllBtn');
   if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', () => {
+    const clearAllHandler = () => {
       hideHistoryMenu();
       handleClearAll();
-    });
+    };
+    clearAllBtn.addEventListener('click', clearAllHandler);
+    clearAllBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAllHandler(); }, { passive: false });
   }
 }
 
@@ -1994,7 +2050,7 @@ function setupHistoryFilterListeners() {
   filterButtons.forEach(({ id, mode }) => {
     const btn = qs(id);
     if (btn) {
-      btn.addEventListener('click', async () => {
+      const filterHandler = async () => {
         // すべてのボタンからis-activeを削除
         filterButtons.forEach(({ id }) => {
           const b = qs(id);
@@ -2022,7 +2078,9 @@ function setupHistoryFilterListeners() {
 
         // 履歴リストを再描画
         await renderHistoryList(null, mode, yieldMethod);
-      });
+      };
+      btn.addEventListener('click', filterHandler);
+      btn.addEventListener('touchend', (e) => { e.preventDefault(); filterHandler(); }, { passive: false });
     }
   });
 
