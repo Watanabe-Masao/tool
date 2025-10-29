@@ -3164,12 +3164,14 @@ function updateLoadStatsButtons() {
   if (currentMode === 'direct') {
     // 歩留まり率直接入力モード：歩留まり率と加工前重量のみ
     loadStatsTypeSelect.innerHTML = `
+      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
       <option value="yieldRate">歩留まり率（%）</option>
       <option value="beforeWeight">加工前重量（g）</option>
     `;
   } else {
     // 重量から計算モード：加工前重量と加工後重量のみ
     loadStatsTypeSelect.innerHTML = `
+      <option value="bulk">一括取り込み（平均値・中央値・推奨値）</option>
       <option value="beforeWeight">加工前重量（g）</option>
       <option value="afterWeight">加工後重量（g）</option>
     `;
@@ -3182,14 +3184,17 @@ function updateLoadStatsButtons() {
 
   // 複数パターン分析画面のプルダウンで選択された統計タイプを取得
   const selectedStatsType = loadStatsTypeSelect.value;
-  const stats = window.statsDataByType?.[selectedStatsType];
+
+  // 一括取り込みの場合は歩留まり率の統計を表示
+  const displayStatsType = selectedStatsType === 'bulk' ? 'yieldRate' : selectedStatsType;
+  const stats = window.statsDataByType?.[displayStatsType];
 
   if (stats && stats.count >= 2) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
     // 単位を取得
-    const unit = selectedStatsType === 'yieldRate' ? '%' : 'g';
+    const unit = displayStatsType === 'yieldRate' ? '%' : 'g';
 
     // データがある場合、ボタンに値を表示
     if (loadMeanValueDisplay) {
@@ -3207,7 +3212,7 @@ function updateLoadStatsButtons() {
     loadStatsNoData.classList.add('is-hidden');
 
     // σパターン生成セクションを表示（歩留まり率の場合のみ）
-    if (generateSigmaPatternsSection && selectedStatsType === 'yieldRate') {
+    if (generateSigmaPatternsSection && displayStatsType === 'yieldRate') {
       generateSigmaPatternsSection.classList.remove('is-hidden');
     } else if (generateSigmaPatternsSection) {
       generateSigmaPatternsSection.classList.add('is-hidden');
@@ -4874,6 +4879,91 @@ function init() {
     updateSaveButtonsVisibility();
   }
 
+  /**
+   * 平均値・中央値・推奨値を一括で複数パターン分析に転記
+   */
+  function loadAllStatsToMultiPattern() {
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    if (!yieldRateStats || yieldRateStats.count < 2) {
+      alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
+      return;
+    }
+
+    const recommended = getRecommendedValue(yieldRateStats);
+    if (!recommended) {
+      alert('推奨値を取得できませんでした。');
+      return;
+    }
+
+    // 確認ダイアログ
+    if (!confirm('平均値・中央値・推奨値の3つを複数パターン分析に転記しますか？')) {
+      return;
+    }
+
+    // multi-pattern-ui.jsのreplaceAllPatterns関数を使用
+    const patterns = [
+      { label: '平均値', value: yieldRateStats.mean },
+      { label: '中央値', value: yieldRateStats.median },
+      { label: `推奨値（${recommended.label}）`, value: recommended.value }
+    ];
+
+    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
+      window.multiPatternUI.replaceAllPatterns(patterns);
+      showTransferNotification('平均値・中央値・推奨値を転記しました（歩留まり率）');
+      focusFirstPatternInput();
+    } else {
+      alert('パターン生成機能の初期化に失敗しました。');
+    }
+  }
+
+  /**
+   * 転記完了通知を表示
+   * @param {string} message - 通知メッセージ
+   */
+  function showTransferNotification(message) {
+    // 通知用の要素を作成または取得
+    let notification = qs('#transferNotification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'transferNotification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notification);
+    }
+
+    notification.textContent = message;
+    notification.style.display = 'block';
+
+    // 3秒後に非表示
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 3000);
+  }
+
+  /**
+   * 最初のパターンの原価入力欄にフォーカス
+   */
+  function focusFirstPatternInput() {
+    setTimeout(() => {
+      const firstInput = qs('#multiPatternTableBody .pattern-unit-cost');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    }, 100);
+  }
+
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
     handleModeSwitch(MODE.MULTI_PATTERN);
@@ -4895,38 +4985,71 @@ function init() {
   qs('#loadStatsMeanBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      // 一括取り込み
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+    showTransferNotification('平均値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsMeanBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
+    showTransferNotification('平均値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
   // 複数パターン分析画面内の読み込みボタン（中央値）
   qs('#loadStatsMedianBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+    showTransferNotification('中央値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsMedianBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     const statsData = window.statsDataByType?.[selectedStatsType];
     if (!statsData) return;
 
     loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
+    showTransferNotification('中央値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
 
@@ -4934,13 +5057,29 @@ function init() {
   qs('#loadStatsRecommendedBtn')?.addEventListener('click', () => {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    showTransferNotification('推奨値を転記しました');
+    focusFirstPatternInput();
   });
   qs('#loadStatsRecommendedBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
+
+    if (selectedStatsType === 'bulk') {
+      loadAllStatsToMultiPattern();
+      return;
+    }
+
     loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    showTransferNotification('推奨値を転記しました');
+    focusFirstPatternInput();
   }, { passive: false });
 
   // σパターン一括生成ボタン
