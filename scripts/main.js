@@ -5128,8 +5128,10 @@ function init() {
     try {
       const yieldRateStats = window.statsDataByType?.yieldRate;
       const beforeWeightStats = window.statsDataByType?.beforeWeight;
+      const afterWeightStats = window.statsDataByType?.afterWeight;
       console.log('[DEBUG] yieldRateStats:', yieldRateStats);
       console.log('[DEBUG] beforeWeightStats:', beforeWeightStats);
+      console.log('[DEBUG] afterWeightStats:', afterWeightStats);
 
       if (!yieldRateStats || yieldRateStats.count < 2) {
         console.log('[DEBUG] 歩留まり率の統計データがありません');
@@ -5150,6 +5152,12 @@ function init() {
         ? getRecommendedValue(beforeWeightStats)
         : null;
       console.log('[DEBUG] beforeWeightRecommended:', beforeWeightRecommended);
+
+      // 加工後重量の推奨値を取得（存在する場合）
+      const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
+        ? getRecommendedValue(afterWeightStats)
+        : null;
+      console.log('[DEBUG] afterWeightRecommended:', afterWeightRecommended);
 
       // 現在のモードを取得
       const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
@@ -5174,15 +5182,23 @@ function init() {
           showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%`);
         }
       } else {
-        // 重量から計算モード：加工前重量のみ設定
-        if (beforeWeightRecommended) {
-          console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
-          setStatValue(beforeWeightRecommended.value, 'beforeWeight');
-          showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
-        } else {
+        // 重量から計算モード：加工前重量と加工後重量を設定
+        if (!beforeWeightRecommended) {
           alert('加工前重量の統計データがありません。');
           return;
         }
+        if (!afterWeightRecommended) {
+          alert('加工後重量の統計データがありません。');
+          return;
+        }
+
+        console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+
+        console.log('[DEBUG] 加工後重量を設定:', afterWeightRecommended.value);
+        setStatValue(afterWeightRecommended.value, 'afterWeight');
+
+        showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g、加工後重量 ${toFixed(afterWeightRecommended.value, 2)}g`);
       }
 
       // 統計値の取り込みは「新規計算」として扱う（状態フラグをリセット）
