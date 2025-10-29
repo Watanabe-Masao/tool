@@ -1900,6 +1900,32 @@ function displayCurrentStatistics() {
 
   if (!data) return;
 
+  // 統計タイプごとの統計データをオブジェクトで管理（表示処理の前に実行）
+  if (!window.statsDataByType) {
+    window.statsDataByType = {};
+  }
+
+  // 各統計タイプの統計を計算して保存
+  ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
+    if (data[type] && data[type].length >= 2) {
+      window.statsDataByType[type] = calculateStatistics(data[type]);
+    } else {
+      window.statsDataByType[type] = null;
+    }
+  });
+
+  // 状態を更新：データ存在フラグ
+  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
+  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
+  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
+
+  // 状態を更新：計算済みフラグ（新規計算された）
+  window.yieldStatsState.isCalculated = true;
+  window.yieldStatsState.isFromHistory = false;
+
+  // 複数パターン分析の読み込みボタンの状態を更新
+  updateLoadStatsButtons();
+
   let values = data[selectedType];
   if (!values || values.length < 2) {
     // データが不足している場合は非表示
@@ -1961,29 +1987,6 @@ function displayCurrentStatistics() {
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
-
-  // 統計タイプごとの統計データをオブジェクトで管理
-  if (!window.statsDataByType) {
-    window.statsDataByType = {};
-  }
-
-  // 各統計タイプの統計を計算して保存
-  ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
-    if (data[type] && data[type].length >= 2) {
-      window.statsDataByType[type] = calculateStatistics(data[type]);
-    } else {
-      window.statsDataByType[type] = null;
-    }
-  });
-
-  // 状態を更新：データ存在フラグ
-  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
-  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
-  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
-
-  // 状態を更新：計算済みフラグ（新規計算された）
-  window.yieldStatsState.isCalculated = true;
-  window.yieldStatsState.isFromHistory = false;
 
   // 後方互換性のため、従来の変数も維持
   window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
