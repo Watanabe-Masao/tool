@@ -2684,6 +2684,65 @@ function setupFormulaModal() {
 }
 
 /**
+ * 推奨代表値を取得
+ * @param {Object} stats - 統計データ
+ * @returns {Object} {type: 'mean'|'median', value: number, label: string}
+ */
+function getRecommendedValue(stats) {
+  if (!stats) return null;
+
+  const skewness = stats.skewness;
+  const absSkewness = Math.abs(skewness);
+
+  if (absSkewness <= 0.5) {
+    return { type: 'mean', value: stats.mean, label: '平均値' };
+  } else {
+    return { type: 'median', value: stats.median, label: '中央値' };
+  }
+}
+
+/**
+ * 標準偏差を使った範囲パターンを生成
+ * @param {Object} stats - 統計データ
+ * @param {number} sigmaRange - 標準偏差の範囲（デフォルト: 2）
+ * @returns {Array<Object>} {label: string, value: number}[]
+ */
+function generateSigmaPatterns(stats, sigmaRange = 2) {
+  if (!stats || !Number.isFinite(stats.mean) || !Number.isFinite(stats.stdDev)) {
+    return [];
+  }
+
+  const patterns = [];
+  const mean = stats.mean;
+  const stdDev = stats.stdDev;
+
+  // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
+  for (let i = -sigmaRange; i <= sigmaRange; i++) {
+    const value = mean + (i * stdDev);
+
+    // 負の値は除外（歩留まり率や重量は負にならない）
+    if (value < 0) continue;
+
+    let label;
+    if (i === 0) {
+      label = '平均値';
+    } else if (i > 0) {
+      label = `平均+${i}σ`;
+    } else {
+      label = `平均${i}σ`;
+    }
+
+    patterns.push({
+      label,
+      value,
+      sigma: i
+    });
+  }
+
+  return patterns;
+}
+
+/**
  * 推奨代表値を表示
  * @param {Object} stats - 統計データ
  * @param {boolean} isSampleSizeValid - サンプルサイズが妥当かどうか
@@ -4260,65 +4319,6 @@ function init() {
 
   // セッション状態の復元は無効化（モード切替時に確認ダイアログを表示する方式に変更）
   // restoreSession();
-
-  /**
-   * 推奨代表値を取得
-   * @param {Object} stats - 統計データ
-   * @returns {Object} {type: 'mean'|'median', value: number, label: string}
-   */
-  function getRecommendedValue(stats) {
-    if (!stats) return null;
-
-    const skewness = stats.skewness;
-    const absSkewness = Math.abs(skewness);
-
-    if (absSkewness <= 0.5) {
-      return { type: 'mean', value: stats.mean, label: '平均値' };
-    } else {
-      return { type: 'median', value: stats.median, label: '中央値' };
-    }
-  }
-
-  /**
-   * 標準偏差を使った範囲パターンを生成
-   * @param {Object} stats - 統計データ
-   * @param {number} sigmaRange - 標準偏差の範囲（デフォルト: 2）
-   * @returns {Array<Object>} {label: string, value: number}[]
-   */
-  function generateSigmaPatterns(stats, sigmaRange = 2) {
-    if (!stats || !Number.isFinite(stats.mean) || !Number.isFinite(stats.stdDev)) {
-      return [];
-    }
-
-    const patterns = [];
-    const mean = stats.mean;
-    const stdDev = stats.stdDev;
-
-    // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
-    for (let i = -sigmaRange; i <= sigmaRange; i++) {
-      const value = mean + (i * stdDev);
-
-      // 負の値は除外（歩留まり率や重量は負にならない）
-      if (value < 0) continue;
-
-      let label;
-      if (i === 0) {
-        label = '平均値';
-      } else if (i > 0) {
-        label = `平均+${i}σ`;
-      } else {
-        label = `平均${i}σ`;
-      }
-
-      patterns.push({
-        label,
-        value,
-        sigma: i
-      });
-    }
-
-    return patterns;
-  }
 
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
