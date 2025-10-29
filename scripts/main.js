@@ -4913,16 +4913,27 @@ function init() {
 
   // プリセットから選択ボタン（直接イベントリスナー）
   const showPresetBtn = qs('#showPresetManagerBtn');
+  console.log('showPresetBtn:', showPresetBtn);
   if (showPresetBtn) {
     showPresetBtn.addEventListener('click', (e) => {
+      console.log('プリセットボタンがクリックされました');
+      alert('ボタンがクリックされました'); // デバッグ用
       e.preventDefault();
+      e.stopPropagation();
       openPresetModal();
     });
     // モバイル対応：touchstartイベントも追加
     showPresetBtn.addEventListener('touchstart', (e) => {
+      console.log('プリセットボタンがタッチされました');
+      alert('ボタンがタッチされました'); // デバッグ用
       e.preventDefault();
+      e.stopPropagation();
       openPresetModal();
     }, { passive: false });
+    console.log('プリセットボタンのイベントリスナー設定完了');
+  } else {
+    console.error('showPresetManagerBtn が見つかりません');
+    alert('エラー: プリセットボタンが見つかりません'); // デバッグ用
   }
 
   // モーダルのオーバーレイクリックで閉じる
@@ -4972,4 +4983,10 @@ function init() {
 }
 
 // アプリケーション起動
-init();
+// DOMの準備が完了してから初期化を実行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOMが既に読み込まれている場合は即座に実行
+  init();
+}
