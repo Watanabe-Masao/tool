@@ -3318,7 +3318,11 @@ function updateLoadStatsButtons() {
     // イベントハンドラを設定
     attachButtonHandler(bulkImportBtn, () => {
       console.log('[DEBUG] 一括転記ボタンが押されました');
-      loadAllStatsToMultiPattern();
+      if (window.loadAllStatsToMultiPattern) {
+        window.loadAllStatsToMultiPattern();
+      } else {
+        console.error('[ERROR] loadAllStatsToMultiPattern関数が見つかりません');
+      }
     });
 
     bulkImportBtnContainer.appendChild(bulkImportBtn);
@@ -5192,6 +5196,9 @@ function init() {
       alert('一括転記でエラーが発生しました。コンソールを確認してください。');
     }
   }
+
+  // グローバルスコープに公開（イベントハンドラーから参照できるように）
+  window.loadAllStatsToMultiPattern = loadAllStatsToMultiPattern;
 
   /**
    * 転記完了通知を表示
