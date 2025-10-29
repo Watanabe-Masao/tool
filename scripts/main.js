@@ -1898,7 +1898,10 @@ function displayCurrentStatistics() {
     currentOutlierValues = window.yieldStatsState.currentOutlierValues;
   }
 
-  if (!data) return;
+  if (!data) {
+    hide('yieldStatsResults');
+    return;
+  }
 
   // 統計タイプごとの統計データをオブジェクトで管理（表示処理の前に実行）
   if (!window.statsDataByType) {
@@ -1907,7 +1910,7 @@ function displayCurrentStatistics() {
 
   // 各統計タイプの統計を計算して保存
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
-    if (data[type] && data[type].length >= 2) {
+    if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
       window.statsDataByType[type] = calculateStatistics(data[type]);
     } else {
       window.statsDataByType[type] = null;
@@ -1915,9 +1918,9 @@ function displayCurrentStatistics() {
   });
 
   // 状態を更新：データ存在フラグ
-  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && data.yieldRate.length >= 2);
-  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && data.beforeWeight.length >= 2);
-  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && data.afterWeight.length >= 2);
+  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
+  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
+  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
 
   // 状態を更新：計算済みフラグ（新規計算された）
   window.yieldStatsState.isCalculated = true;
@@ -1930,13 +1933,13 @@ function displayCurrentStatistics() {
   let values = data[selectedType];
   let actualSelectedType = selectedType;
 
-  if (!values || values.length < 2) {
+  if (!values || !Array.isArray(values) || values.length < 2) {
     // データのあるタイプを探す（優先順: yieldRate > beforeWeight > afterWeight）
     const typePriority = ['yieldRate', 'beforeWeight', 'afterWeight'];
     let foundType = null;
 
     for (const type of typePriority) {
-      if (data[type] && data[type].length >= 2) {
+      if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
         foundType = type;
         break;
       }
