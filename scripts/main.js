@@ -3291,14 +3291,18 @@ function updateLoadStatsButtons() {
 
     // イベントハンドラを設定
     bulkImportBtn.onclick = () => {
+      console.log('[DEBUG] 一括転記ボタンがクリックされました');
       loadAllStatsToMultiPattern();
     };
     bulkImportBtn.ontouchend = (e) => {
+      console.log('[DEBUG] 一括転記ボタンがタッチされました');
       e.preventDefault();
       loadAllStatsToMultiPattern();
     };
 
     bulkImportBtnContainer.appendChild(bulkImportBtn);
+    console.log('[DEBUG] 一括転記ボタンをDOMに追加しました', bulkImportBtn);
+    console.log('[DEBUG] ボタンのonclickハンドラー:', bulkImportBtn.onclick);
 
     return;
   }
@@ -5094,10 +5098,14 @@ function init() {
    * 一括取り込み：推奨値をステップ1に転記
    */
   function loadAllStatsToMultiPattern() {
+    console.log('[DEBUG] loadAllStatsToMultiPattern関数が呼び出されました');
     const yieldRateStats = window.statsDataByType?.yieldRate;
     const beforeWeightStats = window.statsDataByType?.beforeWeight;
+    console.log('[DEBUG] yieldRateStats:', yieldRateStats);
+    console.log('[DEBUG] beforeWeightStats:', beforeWeightStats);
 
     if (!yieldRateStats || yieldRateStats.count < 2) {
+      console.log('[DEBUG] 歩留まり率の統計データがありません');
       alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
