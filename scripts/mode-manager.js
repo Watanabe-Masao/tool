@@ -349,6 +349,17 @@ export function switchMode(newMode, callbacks = {}) {
     callbacks.resetWeightSteps();
   } else if (isYieldStats && callbacks.resetYieldStatsEntries) {
     callbacks.resetYieldStatsEntries();
+
+    // 複数パターン分析から歩留まり統計に戻る場合、統計データがあれば表示
+    if (currentMode === MODE.MULTI_PATTERN && callbacks.displayCurrentStatistics) {
+      const data = appState.getYieldStatsData();
+      if (data && (data.yieldRate?.length >= 2 || data.beforeWeight?.length >= 2 || data.afterWeight?.length >= 2)) {
+        // 少し待ってからdisplayCurrentStatisticsを呼び出す（UIの切り替えが完了するまで）
+        setTimeout(() => {
+          callbacks.displayCurrentStatistics();
+        }, 50);
+      }
+    }
   } else if (isMultiPattern && callbacks.updateLoadStatsButtons) {
     callbacks.updateLoadStatsButtons();
   }
