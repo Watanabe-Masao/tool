@@ -5159,6 +5159,10 @@ function init() {
         return;
       }
 
+      // 商品名を取得
+      const productNameEl = qs('#yieldStatsProductName');
+      const productName = productNameEl?.value?.trim() || '';
+
       // 推奨値を取得
       const yieldRateRecommended = getRecommendedValue(yieldRateStats);
       if (!yieldRateRecommended) {
@@ -5187,7 +5191,7 @@ function init() {
       // モードに応じて値を設定
       if (currentMode === 'direct') {
         // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
-        setStatValue(yieldRateRecommended.value, 'yieldRate');
+        setStatValue(yieldRateRecommended.value, 'yieldRate', productName);
 
         if (beforeWeightRecommended) {
           setStatValue(beforeWeightRecommended.value, 'beforeWeight');
@@ -5206,7 +5210,7 @@ function init() {
           return;
         }
 
-        setStatValue(beforeWeightRecommended.value, 'beforeWeight');
+        setStatValue(beforeWeightRecommended.value, 'beforeWeight', productName);
         setStatValue(afterWeightRecommended.value, 'afterWeight');
 
         showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g、加工後重量 ${toFixed(afterWeightRecommended.value, 2)}g`);
