@@ -241,7 +241,8 @@ function init() {
         resetSteps,
         resetWeightSteps,
         resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
-        updateLoadStatsButtons
+        updateLoadStatsButtons,
+        displayCurrentStatistics
       });
     });
   }
@@ -252,7 +253,8 @@ function init() {
         resetSteps,
         resetWeightSteps,
         resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
-        updateLoadStatsButtons
+        updateLoadStatsButtons,
+        displayCurrentStatistics
       });
     });
   }
@@ -263,7 +265,8 @@ function init() {
         resetSteps,
         resetWeightSteps,
         resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
-        updateLoadStatsButtons
+        updateLoadStatsButtons,
+        displayCurrentStatistics
       });
     });
   }
@@ -274,7 +277,8 @@ function init() {
         resetSteps,
         resetWeightSteps,
         resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
-        updateLoadStatsButtons
+        updateLoadStatsButtons,
+        displayCurrentStatistics
       });
     });
   }
