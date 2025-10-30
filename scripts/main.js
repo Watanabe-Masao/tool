@@ -4736,10 +4736,16 @@ function restoreSession() {
 
   // モードを復元
   if (mode && mode !== appState.getMode()) {
+    // 複数パターン分析モードがセッションから復元された場合、歩留まり統計は表示しない
+    if (mode === MODE.MULTI_PATTERN) {
+      appState.showYieldStatsWithMultiPattern = false;
+    }
+
     // モードボタンをクリックして切り替え
     const btnId = mode === MODE.FIXED ? UI_ELEMENTS.FIXED_BTN :
                   mode === MODE.WEIGHT ? UI_ELEMENTS.WEIGHT_BTN :
-                  UI_ELEMENTS.YIELD_STATS_BTN;
+                  mode === MODE.YIELD_STATS ? UI_ELEMENTS.YIELD_STATS_BTN :
+                  UI_ELEMENTS.MULTI_PATTERN_BTN;
     const modeBtn = qs(`#${btnId}`);
     if (modeBtn) {
       modeBtn.click(); // switchMode が呼ばれる
