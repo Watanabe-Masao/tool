@@ -341,6 +341,14 @@ async function handleLoadCalculation(id) {
       // 保存ボタンの表示を更新
       updateSaveButtonsVisibility();
 
+      // 歩留まり統計データを読み込んだ場合、統計が計算されるまで待ってから
+      // 複数パターン分析の読み込みボタンを更新
+      if (data.mode === MODE.YIELD_STATS && window.updateLoadStatsButtons) {
+        setTimeout(() => {
+          window.updateLoadStatsButtons();
+        }, 200);
+      }
+
       showToast('✅ データを読み込みました');
     }, 100);
 

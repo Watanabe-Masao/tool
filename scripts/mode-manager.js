@@ -10,6 +10,22 @@ import { resetMultiPatternUI } from './multi-pattern-ui.js';
 import { updateSaveButtonsVisibility } from './history-ui.js';
 
 /**
+ * 歩留まり統計データが有効かチェック
+ * @returns {boolean}
+ */
+function hasValidYieldStatsData() {
+  const data = appState.getYieldStatsData();
+  if (!data) return false;
+
+  // 少なくとも1つのデータタイプに2つ以上のデータポイントがあるかチェック
+  const hasYieldRate = data.yieldRate && data.yieldRate.length >= 2;
+  const hasBeforeWeight = data.beforeWeight && data.beforeWeight.length >= 2;
+  const hasAfterWeight = data.afterWeight && data.afterWeight.length >= 2;
+
+  return hasYieldRate || hasBeforeWeight || hasAfterWeight;
+}
+
+/**
  * 現在のモードに入力値があるかチェック
  * @returns {boolean} 入力値があればtrue
  */
@@ -286,8 +302,8 @@ export function switchMode(newMode, callbacks = {}) {
 
   // 歩留まり統計表示フラグの管理
   if (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) {
-    // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計を表示
-    appState.showYieldStatsWithMultiPattern = true;
+    // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
+    appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData();
   } else if (newMode === MODE.MULTI_PATTERN && currentMode !== MODE.YIELD_STATS) {
     // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示
     appState.showYieldStatsWithMultiPattern = false;

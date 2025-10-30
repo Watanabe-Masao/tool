@@ -679,6 +679,9 @@ window.restoreYieldStatsTable = function(tableData) {
   });
 };
 
+// 複数パターン分析の読み込みボタン更新関数を公開（history-ui.js から呼び出すため）
+window.updateLoadStatsButtons = updateLoadStatsButtons;
+
 // yield-stats-table.js の関数呼び出しに使うコールバックオブジェクト
 const yieldStatsCallbacks = {
   updateYieldStatsStatistics: () => updateYieldStatsStatistics(displayCurrentStatistics),

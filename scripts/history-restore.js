@@ -8,19 +8,49 @@ import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './c
 import { grossFromMarkup, toFixed } from './calculation.js';
 
 /**
+ * 歩留まり統計データが有効かチェック
+ * @returns {boolean}
+ */
+function hasValidYieldStatsData() {
+  const data = appState.getYieldStatsData();
+  if (!data) return false;
+
+  // 少なくとも1つのデータタイプに2つ以上のデータポイントがあるかチェック
+  const hasYieldRate = data.yieldRate && data.yieldRate.length >= 2;
+  const hasBeforeWeight = data.beforeWeight && data.beforeWeight.length >= 2;
+  const hasAfterWeight = data.afterWeight && data.afterWeight.length >= 2;
+
+  return hasYieldRate || hasBeforeWeight || hasAfterWeight;
+}
+
+/**
  * モード切り替え（履歴読み込み専用）
  * @param {string} mode
  */
 export function switchToMode(mode) {
+  const currentMode = appState.getMode();
   const isFixed = mode === MODE.FIXED;
   const isWeight = mode === MODE.WEIGHT;
   const isYieldStats = mode === MODE.YIELD_STATS;
+  const isMultiPattern = mode === MODE.MULTI_PATTERN;
+
+  // 歩留まり統計表示フラグの管理
+  if (currentMode === MODE.YIELD_STATS && isMultiPattern) {
+    // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
+    appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData();
+  } else if (isMultiPattern && currentMode !== MODE.YIELD_STATS) {
+    // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示
+    appState.showYieldStatsWithMultiPattern = false;
+  } else if (currentMode === MODE.MULTI_PATTERN && !isMultiPattern) {
+    // 複数パターン分析から別のモードに切り替えた場合はリセット
+    appState.showYieldStatsWithMultiPattern = false;
+  }
 
   // appStateのモードを更新
   appState.setMode(mode);
 
   // ボタンのアクティブ状態を更新
-  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN].forEach(btnId => {
+  [UI_ELEMENTS.FIXED_BTN, UI_ELEMENTS.WEIGHT_BTN, UI_ELEMENTS.YIELD_STATS_BTN, UI_ELEMENTS.MULTI_PATTERN_BTN].forEach(btnId => {
     const btn = qs(`#${btnId}`);
     if (btn) {
       btn.classList.remove('is-active');
@@ -30,7 +60,8 @@ export function switchToMode(mode) {
 
   const activeBtnId = isFixed ? UI_ELEMENTS.FIXED_BTN :
                       isWeight ? UI_ELEMENTS.WEIGHT_BTN :
-                      UI_ELEMENTS.YIELD_STATS_BTN;
+                      isYieldStats ? UI_ELEMENTS.YIELD_STATS_BTN :
+                      UI_ELEMENTS.MULTI_PATTERN_BTN;
   const activeBtn = qs(`#${activeBtnId}`);
   if (activeBtn) {
     activeBtn.classList.add('is-active');
@@ -41,10 +72,16 @@ export function switchToMode(mode) {
   const fixedInputs = qs(`#${UI_ELEMENTS.FIXED_INPUTS}`);
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+  const multiPatternInputs = qs(`#${UI_ELEMENTS.MULTI_PATTERN_INPUTS}`);
 
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
-  if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
+  // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計も表示
+  if (yieldStatsInputs) {
+    const shouldShowYieldStats = isYieldStats || (isMultiPattern && appState.showYieldStatsWithMultiPattern);
+    yieldStatsInputs.classList.toggle('is-hidden', !shouldShowYieldStats);
+  }
+  if (multiPatternInputs) multiPatternInputs.classList.toggle('is-hidden', !isMultiPattern);
 
   // 結果と警告を非表示
   hide(UI_ELEMENTS.RESULTS);
