@@ -21,6 +21,7 @@
  * @returns {number} return.q3 - 第3四分位数
  * @returns {number} return.iqr - 四分位範囲
  * @returns {number} return.cv - 変動係数（％）
+ * @returns {number} return.rsd - 相対標準偏差（％）※cvと同値
  * @returns {number} return.skewness - 歪度
  * @returns {number} return.kurtosis - 尖度（超過尖度）
  * @returns {Object} return.sigma1 - 1σ範囲 {lower, upper}
@@ -61,8 +62,10 @@ export function calculateStatistics(values) {
   const q3 = sorted[q3Index];
   const iqr = q3 - q1; // 四分位範囲
 
-  // 変動係数（CV）
+  // 変動係数（CV）/ 相対標準偏差（RSD）
+  // RSDとCVは同じ計算式: (標準偏差 / 平均値) × 100
   const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
+  const rsd = cv; // RSDはCVのエイリアス
 
   // 歪度（Skewness）
   // 歪度の計算にはn >= 3が必要
@@ -94,6 +97,7 @@ export function calculateStatistics(values) {
     q3,
     iqr,
     cv,
+    rsd,  // 相対標準偏差（CVと同値）
     skewness,
     kurtosis,
     sigma1,
