@@ -93,7 +93,7 @@ export function addYieldStatsRow(callbacks = {}) {
              data-row-id="${rowId}" />
     </td>
     <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
-    <td class="relative-deviation" id="relativeDeviation${rowId}">-</td>
+    <td class="z-score" id="zScore${rowId}">-</td>
     <td class="confidence-judgment" id="confidenceJudgment${rowId}">-</td>
   `;
 
@@ -409,63 +409,61 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
     yieldStatsData.minYieldRate = stats.min;
     yieldStatsData.maxYieldRate = stats.max;
 
-    // 許容誤差を取得
-    const toleranceErrorInput = qs('#yieldStatsToleranceError');
-    const toleranceError = toleranceErrorInput ? parseFloat(toleranceErrorInput.value) : 3.0;
-
-    // 各行の相対偏差率を計算して表示
+    // 各行のz-scoreを計算して表示
     const avgYield = stats.mean;
+    const stdDevYield = stats.stdDev;
+
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
       const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
-      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const zScoreDisplay = qs(`#zScore${rowId}`);
       const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
 
-      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && relativeDeviationDisplay) {
+      if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && zScoreDisplay) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
         const rate = parseFloat(rateText);
 
-        if (!isNaN(rate) && avgYield > 0) {
-          // 相対偏差率 = (平均 - 個別値) / 平均 × 100
-          const relativeDeviation = ((avgYield - rate) / avgYield) * 100;
-          const absDeviation = Math.abs(relativeDeviation);
+        if (!isNaN(rate) && avgYield > 0 && stdDevYield > 0) {
+          // z-score = (個別値 - 平均) / 標準偏差
+          const zScore = (rate - avgYield) / stdDevYield;
+          const absZScore = Math.abs(zScore);
 
-          // 表示用のテキストを生成
-          let displayText = `${toFixed(relativeDeviation, 1)}%`;
+          // z-scoreの表示（±記号付き、小数第2位まで）
+          let displayText = `${toFixed(zScore, 2)}σ`;
 
-          // 説明テキストを追加
-          if (relativeDeviation > 0) {
-            displayText += ` (平均より${toFixed(relativeDeviation, 1)}%低い)`;
-            relativeDeviationDisplay.style.color = '#d32f2f'; // 赤色
-          } else if (relativeDeviation < 0) {
-            displayText += ` (平均より${toFixed(Math.abs(relativeDeviation), 1)}%高い)`;
-            relativeDeviationDisplay.style.color = '#388e3c'; // 緑色
+          // 確率的な説明を追加
+          if (absZScore <= 1) {
+            displayText += ` (68%範囲内)`;
+            zScoreDisplay.style.color = '#1b5e20'; // 濃い緑
+          } else if (absZScore <= 2) {
+            displayText += ` (95%範囲内)`;
+            zScoreDisplay.style.color = '#388e3c'; // 緑
+          } else if (absZScore <= 3) {
+            displayText += ` (99.7%範囲内)`;
+            zScoreDisplay.style.color = '#f57c00'; // オレンジ
           } else {
-            displayText = '0.0% (平均と同じ)';
-            relativeDeviationDisplay.style.color = '#666';
+            displayText += ` (外れ値の可能性)`;
+            zScoreDisplay.style.color = '#c62828'; // 赤
           }
 
-          relativeDeviationDisplay.textContent = displayText;
+          zScoreDisplay.textContent = displayText;
 
-          // 判定を計算（許容誤差との比較）
+          // 判定（z-scoreベース）
           if (confidenceJudgmentDisplay) {
             let judgment = '';
             let judgmentColor = '';
 
-            if (absDeviation <= toleranceError * 2 / 3) {
+            if (absZScore <= 1) {
               judgment = '✓ 非常に良好';
               judgmentColor = '#1b5e20'; // 濃い緑
-            } else if (absDeviation <= toleranceError) {
+            } else if (absZScore <= 2) {
               judgment = '○ 良好';
               judgmentColor = '#388e3c'; // 緑
-            } else if (absDeviation <= toleranceError * 2) {
-              judgment = '△ 許容範囲';
+            } else if (absZScore <= 3) {
+              judgment = '△ 注意';
               judgmentColor = '#f57c00'; // オレンジ
-            } else if (absDeviation <= toleranceError * 2.67) {
-              judgment = '! 要注意';
-              judgmentColor = '#e64a19'; // 赤オレンジ
             } else {
-              judgment = '× 要改善';
+              judgment = '× 外れ値の可能性';
               judgmentColor = '#c62828'; // 赤
             }
 
@@ -474,17 +472,17 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
             confidenceJudgmentDisplay.style.fontWeight = 'bold';
           }
         } else {
-          relativeDeviationDisplay.textContent = '-';
-          relativeDeviationDisplay.style.color = '';
+          zScoreDisplay.textContent = '-';
+          zScoreDisplay.style.color = '';
           if (confidenceJudgmentDisplay) {
             confidenceJudgmentDisplay.textContent = '-';
             confidenceJudgmentDisplay.style.color = '';
             confidenceJudgmentDisplay.style.fontWeight = '';
           }
         }
-      } else if (relativeDeviationDisplay) {
-        relativeDeviationDisplay.textContent = '-';
-        relativeDeviationDisplay.style.color = '';
+      } else if (zScoreDisplay) {
+        zScoreDisplay.textContent = '-';
+        zScoreDisplay.style.color = '';
         if (confidenceJudgmentDisplay) {
           confidenceJudgmentDisplay.textContent = '-';
           confidenceJudgmentDisplay.style.color = '';
@@ -493,15 +491,15 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
       }
     });
   } else {
-    // データが不足している場合は相対偏差率と判定をクリア
+    // データが不足している場合はz-scoreと判定をクリア
     allRows.forEach(row => {
       const rowId = row.dataset.rowId;
-      const relativeDeviationDisplay = qs(`#relativeDeviation${rowId}`);
+      const zScoreDisplay = qs(`#zScore${rowId}`);
       const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
 
-      if (relativeDeviationDisplay) {
-        relativeDeviationDisplay.textContent = '-';
-        relativeDeviationDisplay.style.color = '';
+      if (zScoreDisplay) {
+        zScoreDisplay.textContent = '-';
+        zScoreDisplay.style.color = '';
       }
       if (confidenceJudgmentDisplay) {
         confidenceJudgmentDisplay.textContent = '-';
