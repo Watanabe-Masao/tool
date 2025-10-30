@@ -836,6 +836,9 @@ export function setupEventHandlers() {
   // 複数パターン分析の読み込みボタン更新関数を公開（history-ui.js から呼び出すため）
   window.updateLoadStatsButtons = updateLoadStatsButtons;
 
+  // 歩留まり統計の表示関数を公開（history-ui.js から呼び出すため）
+  window.displayCurrentStatistics = displayCurrentStatistics;
+
   // init関数を実行
   init();
 }

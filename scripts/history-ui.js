@@ -294,15 +294,7 @@ async function handleLoadCalculation(id) {
     closeHistoryModal();
 
     // モードを切り替え
-    if (data.mode === MODE.YIELD_STATS) {
-      // 歩留まり統計データの場合、まず歩留まり統計モードに切り替えてから複数パターン分析モードに切り替える
-      // これにより、showYieldStatsWithMultiPatternフラグが正しく設定され、
-      // 複数パターン分析モード内で歩留まり統計セクションが表示される
-      switchToMode(MODE.YIELD_STATS);
-      switchToMode(MODE.MULTI_PATTERN);
-    } else {
-      switchToMode(data.mode);
-    }
+    switchToMode(data.mode);
 
     // 入力方法を切り替え
     switchYieldMethod(data.mode, data.input.yieldMethod);
@@ -341,12 +333,28 @@ async function handleLoadCalculation(id) {
       // 保存ボタンの表示を更新
       updateSaveButtonsVisibility();
 
-      // 歩留まり統計データを読み込んだ場合、統計が計算されるまで待ってから
-      // 複数パターン分析の読み込みボタンを更新
-      if (data.mode === MODE.YIELD_STATS && window.updateLoadStatsButtons) {
-        setTimeout(() => {
-          window.updateLoadStatsButtons();
-        }, 200);
+      // 歩留まり統計データを読み込んだ場合、統計を表示
+      if (data.mode === MODE.YIELD_STATS) {
+        // restoreYieldStatsTableが既に統計を計算しているが、
+        // タイミングの問題で表示されない場合があるため、明示的に呼び出す
+        if (window.displayCurrentStatistics) {
+          setTimeout(() => {
+            const yieldStatsData = appState.getYieldStatsData();
+            if (yieldStatsData && (
+              (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+              (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+              (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+            )) {
+              window.displayCurrentStatistics();
+            }
+          }, 250);
+        }
+        // 複数パターン分析の読み込みボタンを更新
+        if (window.updateLoadStatsButtons) {
+          setTimeout(() => {
+            window.updateLoadStatsButtons();
+          }, 350);
+        }
       }
 
       showToast('✅ データを読み込みました');
