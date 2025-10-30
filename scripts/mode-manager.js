@@ -347,17 +347,23 @@ export function switchMode(newMode, callbacks = {}) {
     callbacks.resetSteps();
   } else if (isWeight && callbacks.resetWeightSteps) {
     callbacks.resetWeightSteps();
-  } else if (isYieldStats && callbacks.resetYieldStatsEntries) {
-    callbacks.resetYieldStatsEntries();
-
-    // 複数パターン分析から歩留まり統計に戻る場合、統計データがあれば表示
-    if (currentMode === MODE.MULTI_PATTERN && callbacks.displayCurrentStatistics) {
-      const data = appState.getYieldStatsData();
-      if (data && (data.yieldRate?.length >= 2 || data.beforeWeight?.length >= 2 || data.afterWeight?.length >= 2)) {
-        // 少し待ってからdisplayCurrentStatisticsを呼び出す（UIの切り替えが完了するまで）
-        setTimeout(() => {
-          callbacks.displayCurrentStatistics();
-        }, 50);
+  } else if (isYieldStats) {
+    // 複数パターン分析から歩留まり統計に戻る場合は、統計表示を保持
+    if (currentMode === MODE.MULTI_PATTERN) {
+      // 統計データがあれば表示
+      if (callbacks.displayCurrentStatistics) {
+        const data = appState.getYieldStatsData();
+        if (data && (data.yieldRate?.length >= 2 || data.beforeWeight?.length >= 2 || data.afterWeight?.length >= 2)) {
+          // 少し待ってからdisplayCurrentStatisticsを呼び出す（UIの切り替えが完了するまで）
+          setTimeout(() => {
+            callbacks.displayCurrentStatistics();
+          }, 100);
+        }
+      }
+    } else {
+      // 複数パターン分析以外から来た場合は、通常通りリセット
+      if (callbacks.resetYieldStatsEntries) {
+        callbacks.resetYieldStatsEntries();
       }
     }
   } else if (isMultiPattern && callbacks.updateLoadStatsButtons) {
