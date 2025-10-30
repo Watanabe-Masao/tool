@@ -1257,5 +1257,9 @@ function updateLoadStatsButtons() {
 export {
   displayCurrentStatistics,
   setupFormulaModal,
-  updateLoadStatsButtons
+  updateLoadStatsButtons,
+  displaySampleSizeValidation,
+  handleOutlierCheckboxChange,
+  deleteOutlierRows,
+  generateSigmaPatterns
 };
