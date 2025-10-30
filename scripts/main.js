@@ -3375,9 +3375,11 @@ function updateLoadStatsButtons() {
       meanBtn.className = 'btn btn-primary btn-sm';
       meanBtn.textContent = '読み込む';
       attachButtonHandler(meanBtn, () => {
-        loadStatsValueToMultiPattern(stats.mean, selectedStatsType, false);
-        showTransferNotification('平均値を転記しました');
-        focusFirstPatternInput();
+        if (window.loadStatsValueToMultiPattern) {
+          window.loadStatsValueToMultiPattern(stats.mean, selectedStatsType, false);
+          window.showTransferNotification('平均値を転記しました');
+          window.focusFirstPatternInput();
+        }
       });
       meanRow.cells[2].appendChild(meanBtn);
 
@@ -3392,9 +3394,11 @@ function updateLoadStatsButtons() {
       medianBtn.className = 'btn btn-secondary btn-sm';
       medianBtn.textContent = '読み込む';
       attachButtonHandler(medianBtn, () => {
-        loadStatsValueToMultiPattern(stats.median, selectedStatsType, false);
-        showTransferNotification('中央値を転記しました');
-        focusFirstPatternInput();
+        if (window.loadStatsValueToMultiPattern) {
+          window.loadStatsValueToMultiPattern(stats.median, selectedStatsType, false);
+          window.showTransferNotification('中央値を転記しました');
+          window.focusFirstPatternInput();
+        }
       });
       medianRow.cells[2].appendChild(medianBtn);
 
@@ -3411,9 +3415,11 @@ function updateLoadStatsButtons() {
         recommendedBtn.className = 'btn btn-recommended btn-sm';
         recommendedBtn.textContent = '読み込む';
         attachButtonHandler(recommendedBtn, () => {
-          loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
-          showTransferNotification('推奨値を転記しました');
-          focusFirstPatternInput();
+          if (window.loadStatsValueToMultiPattern) {
+            window.loadStatsValueToMultiPattern(recommended.value, selectedStatsType, false);
+            window.showTransferNotification('推奨値を転記しました');
+            window.focusFirstPatternInput();
+          }
         });
         recommendedRow.cells[2].appendChild(recommendedBtn);
       }
@@ -5215,6 +5221,9 @@ function init() {
 
   // グローバルスコープに公開（イベントハンドラーから参照できるように）
   window.loadAllStatsToMultiPattern = loadAllStatsToMultiPattern;
+  window.loadStatsValueToMultiPattern = loadStatsValueToMultiPattern;
+  window.showTransferNotification = showTransferNotification;
+  window.focusFirstPatternInput = focusFirstPatternInput;
 
   /**
    * 転記完了通知を表示
