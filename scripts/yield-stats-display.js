@@ -430,9 +430,9 @@ window.yieldStatsState = {
 };
 
 // 後方互換性のため、グローバル変数も残す（徐々に置き換え）
-let manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
-let currentOutlierValues = window.yieldStatsState.currentOutlierValues;
-let currentStatsType = window.yieldStatsState.currentDisplayType;
+manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
+currentOutlierValues = window.yieldStatsState.currentOutlierValues;
+currentStatsType = window.yieldStatsState.currentDisplayType;
 
 /**
  * 外れ値情報を表示
