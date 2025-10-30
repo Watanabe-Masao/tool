@@ -269,6 +269,14 @@ function switchMode(newMode) {
 
   appState.setMode(newMode);
 
+  // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計を表示する
+  if (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) {
+    appState.showYieldStatsWithMultiPattern = true;
+  } else if (newMode !== MODE.MULTI_PATTERN) {
+    // 複数パターン分析以外のモードに切り替えた場合はリセット
+    appState.showYieldStatsWithMultiPattern = false;
+  }
+
   const isFixed = newMode === MODE.FIXED;
   const isWeight = newMode === MODE.WEIGHT;
   const isYieldStats = newMode === MODE.YIELD_STATS;
@@ -303,8 +311,11 @@ function switchMode(newMode) {
 
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
-  // 複数パターン分析モードの時は、歩留まり統計も表示
-  if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats && !isMultiPattern);
+  // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計も表示
+  if (yieldStatsInputs) {
+    const shouldShowYieldStats = isYieldStats || (isMultiPattern && appState.showYieldStatsWithMultiPattern);
+    yieldStatsInputs.classList.toggle('is-hidden', !shouldShowYieldStats);
+  }
   if (multiPatternInputs) multiPatternInputs.classList.toggle('is-hidden', !isMultiPattern);
 
   hide(UI_ELEMENTS.RESULTS);

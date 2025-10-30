@@ -77,6 +77,7 @@ export class AppState {
     // UI状態フラグ（データベースには保存されない、ランタイムのみ）
     this.isFromHistory = false;     // 履歴から呼び出されたものか
     this.hasUnsavedChanges = false; // 未保存の変更があるか
+    this.showYieldStatsWithMultiPattern = false; // 複数パターン分析モード時に歩留まり統計を表示するか
 
     // 一元化された状態管理
     this.yieldStatsData = null;     // 歩留まり統計データ（旧 window.yieldStatsData）
