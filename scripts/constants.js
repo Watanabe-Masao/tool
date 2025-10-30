@@ -228,7 +228,13 @@ export const UI_ELEMENTS = {
   REVERSE_RESULT_VALUE: 'reverseResultValue',
   REVERSE_ERROR: 'reverseError',
   REVERSE_ERROR_MESSAGE: 'reverseErrorMessage',
-  YIELD_CALC_LABEL: 'reverseYieldLabel'
+  YIELD_CALC_LABEL: 'reverseYieldLabel',
+
+  // 歩留まり率100%超過警告
+  YIELD_WARNING_FIXED: 'yieldWarningFixed',
+  YIELD_WARNING_FIXED_DIRECT: 'yieldWarningFixedDirect',
+  YIELD_WARNING_WEIGHT: 'yieldWarningWeight',
+  YIELD_WARNING_WEIGHT_DIRECT: 'yieldWarningWeightDirect'
 };
 
 // ラジオボタン名

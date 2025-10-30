@@ -172,3 +172,29 @@ export function hideReverseSimulation() {
   hide(UI_ELEMENTS.REVERSE_RESULTS);
   hide(UI_ELEMENTS.REVERSE_ERROR);
 }
+
+/**
+ * 歩留まり率100%超過警告を表示
+ * @param {string} warningElementId - 警告要素のID
+ * @param {number} yieldRate - 歩留まり率（%）
+ */
+export function checkAndShowYieldWarning(warningElementId, yieldRate) {
+  if (!Number.isFinite(yieldRate)) {
+    hide(warningElementId);
+    return;
+  }
+
+  if (yieldRate > 100) {
+    show(warningElementId);
+  } else {
+    hide(warningElementId);
+  }
+}
+
+/**
+ * 歩留まり率警告を非表示
+ * @param {string} warningElementId - 警告要素のID
+ */
+export function hideYieldWarning(warningElementId) {
+  hide(warningElementId);
+}

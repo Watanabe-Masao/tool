@@ -1933,3 +1933,53 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     font-size: 0.9em;
   }
 }
+
+/* 歩留まり率100%超過警告 */
+.yield-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  border-left: 4px solid #ff9800;
+  padding: 12px 16px;
+  margin-top: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+.yield-warning .warning-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.yield-warning .warning-text {
+  color: #856404;
+  font-size: 0.9em;
+  line-height: 1.5;
+  flex: 1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .yield-warning {
+    padding: 10px 12px;
+    font-size: 0.9em;
+  }
+
+  .yield-warning .warning-text {
+    font-size: 0.85em;
+  }
+}

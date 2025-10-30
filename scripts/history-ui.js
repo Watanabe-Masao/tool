@@ -648,7 +648,15 @@ async function handleLoadCalculation(id) {
     closeHistoryModal();
 
     // モードを切り替え
-    switchToMode(data.mode);
+    if (data.mode === MODE.YIELD_STATS) {
+      // 歩留まり統計データの場合、まず歩留まり統計モードに切り替えてから複数パターン分析モードに切り替える
+      // これにより、showYieldStatsWithMultiPatternフラグが正しく設定され、
+      // 複数パターン分析モード内で歩留まり統計セクションが表示される
+      switchToMode(MODE.YIELD_STATS);
+      switchToMode(MODE.MULTI_PATTERN);
+    } else {
+      switchToMode(data.mode);
+    }
 
     // 入力方法を切り替え
     switchYieldMethod(data.mode, data.input.yieldMethod);

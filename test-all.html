@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>歩留まり計算機 - テストスイート</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .summary-item {
+      text-align: center;
+    }
+
+    .summary-item .label {
+      font-size: 0.9em;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .summary-item .value {
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+
+    .test-section {
+      margin-bottom: 40px;
+    }
+
+    .test-section h2 {
+      font-size: 1.8em;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .test-item {
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border-left: 5px solid;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .test-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .test-item.pass {
+      background: #f0fdf4;
+      border-left-color: #22c55e;
+    }
+
+    .test-item.fail {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+    }
+
+    .test-icon {
+      font-size: 1.5em;
+      flex-shrink: 0;
+    }
+
+    .test-item.pass .test-icon {
+      color: #22c55e;
+    }
+
+    .test-item.fail .test-icon {
+      color: #ef4444;
+    }
+
+    .test-content {
+      flex: 1;
+    }
+
+    .test-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .test-error {
+      color: #dc2626;
+      font-size: 0.9em;
+      margin-top: 5px;
+      font-family: 'Courier New', monospace;
+      background: #fee2e2;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .test-number {
+      font-size: 0.9em;
+      color: #999;
+      font-weight: 500;
+    }
+
+    .run-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.2em;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto 30px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .run-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .run-button:active {
+      transform: translateY(0);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e 0%, #10b981 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .test-item {
+      animation: slideIn 0.3s ease;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.2em;
+      color: #666;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 歩留まり計算機 - テストスイート</h1>
+    <p class="subtitle">バグ修正の検証と計算ロジックの正確性テスト</p>
+
+    <button id="runTests" class="run-button">テストを実行</button>
+
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      テストを実行中...
+    </div>
+
+    <div id="results" style="display: none;">
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-item">
+          <div class="label">総テスト数</div>
+          <div class="value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">✅ 成功</div>
+          <div class="value" id="passCount">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">❌ 失敗</div>
+          <div class="value" id="failCount">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">成功率</div>
+          <div class="value" id="successRate">0%</div>
+        </div>
+      </div>
+
+      <div id="testSections"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ========================================
+    // テストヘルパー関数
+    // ========================================
+
+    class TestRunner {
+      constructor() {
+        this.tests = [];
+        this.sections = new Map();
+        this.currentSection = null;
+        this.totalCount = 0;
+        this.passCount = 0;
+        this.failCount = 0;
+      }
+
+      section(name) {
+        this.currentSection = name;
+        if (!this.sections.has(name)) {
+          this.sections.set(name, []);
+        }
+      }
+
+      test(description, fn) {
+        this.totalCount++;
+        const testNumber = this.totalCount;
+
+        try {
+          fn();
+          this.passCount++;
+          this.sections.get(this.currentSection).push({
+            number: testNumber,
+            description,
+            passed: true,
+            error: null
+          });
+        } catch (error) {
+          this.failCount++;
+          this.sections.get(this.currentSection).push({
+            number: testNumber,
+            description,
+            passed: false,
+            error: error.message
+          });
+        }
+      }
+
+      assert(condition, message) {
+        if (!condition) {
+          throw new Error(message || 'Assertion failed');
+        }
+      }
+
+      assertEquals(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message || `Expected ${expected}, but got ${actual}`);
+        }
+      }
+
+      assertAlmostEquals(actual, expected, tolerance = 0.01, message) {
+        if (Math.abs(actual - expected) > tolerance) {
+          throw new Error(message || `Expected ${expected} (±${tolerance}), but got ${actual}`);
+        }
+      }
+
+      render() {
+        document.getElementById('totalTests').textContent = this.totalCount;
+        document.getElementById('passCount').textContent = this.passCount;
+        document.getElementById('failCount').textContent = this.failCount;
+
+        const successRate = ((this.passCount / this.totalCount) * 100).toFixed(1);
+        document.getElementById('successRate').textContent = `${successRate}%`;
+        document.getElementById('progressFill').style.width = `${successRate}%`;
+
+        const sectionsContainer = document.getElementById('testSections');
+        sectionsContainer.innerHTML = '';
+
+        for (const [sectionName, tests] of this.sections) {
+          const sectionDiv = document.createElement('div');
+          sectionDiv.className = 'test-section';
+
+          const sectionTitle = document.createElement('h2');
+          sectionTitle.textContent = sectionName;
+          sectionDiv.appendChild(sectionTitle);
+
+          tests.forEach(test => {
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${test.passed ? 'pass' : 'fail'}`;
+
+            const icon = document.createElement('div');
+            icon.className = 'test-icon';
+            icon.textContent = test.passed ? '✓' : '✗';
+
+            const content = document.createElement('div');
+            content.className = 'test-content';
+
+            const number = document.createElement('div');
+            number.className = 'test-number';
+            number.textContent = `Test ${test.number}`;
+
+            const name = document.createElement('div');
+            name.className = 'test-name';
+            name.textContent = test.description;
+
+            content.appendChild(number);
+            content.appendChild(name);
+
+            if (!test.passed && test.error) {
+              const error = document.createElement('div');
+              error.className = 'test-error';
+              error.textContent = test.error;
+              content.appendChild(error);
+            }
+
+            testDiv.appendChild(icon);
+            testDiv.appendChild(content);
+            sectionDiv.appendChild(testDiv);
+          });
+
+          sectionsContainer.appendChild(sectionDiv);
+        }
+      }
+    }
+
+    // ========================================
+    // 計算関数（calculation.js から）
+    // ========================================
+
+    const isPositive = (n) => Number.isFinite(n) && n > 0;
+    const isNonNegative = (n) => Number.isFinite(n) && n >= 0;
+
+    const calcYield = (beforeWeightG, afterWeightG) => {
+      if (!isPositive(beforeWeightG) || !isPositive(afterWeightG)) return null;
+      return (afterWeightG / beforeWeightG) * 100;
+    };
+
+    const per100FromPerUnit = (valuePerUnit, unitWeightG) => {
+      if (!isPositive(unitWeightG)) return null;
+      return (valuePerUnit / unitWeightG) * 100;
+    };
+
+    const per100FromBox = (totalValue, boxWeightKg) => {
+      if (!isPositive(boxWeightKg)) return null;
+      const grams = boxWeightKg * 1000;
+      return (totalValue / grams) * 100;
+    };
+
+    const afterCostPer100 = (beforeCostPer100, yieldRatePct) => {
+      if (!isPositive(beforeCostPer100) || !isPositive(yieldRatePct)) return null;
+      return beforeCostPer100 / (yieldRatePct / 100);
+    };
+
+    const markup = (costPer100, pricePer100) => {
+      if (!isPositive(pricePer100) || !isNonNegative(costPer100)) return null;
+      return ((pricePer100 - costPer100) / pricePer100) * 100;
+    };
+
+    const grossFromMarkup = (markupPct, discountPct = 0) => {
+      const m = markupPct / 100;
+      const d = discountPct / 100;
+      if (!isNonNegative(m) || !isNonNegative(d) || d >= 1) return 0;
+      return ((m - d) / (1 - d)) * 100;
+    };
+
+    const finishedPriceFromAp = (apPer100, finishedWeightG) => {
+      if (!isPositive(apPer100) || !isPositive(finishedWeightG)) return null;
+      return apPer100 * (finishedWeightG / 100);
+    };
+
+    // ========================================
+    // 統計計算関数
+    // ========================================
+
+    const calculateStatistics = (values) => {
+      const n = values.length;
+
+      if (n === 0) return null;
+
+      if (n === 1) {
+        const value = values[0];
+        return {
+          n: 1, mean: value, stdDev: 0, median: value,
+          max: value, min: value, range: 0,
+          q1: value, q3: value, iqr: 0,
+          cv: 0, skewness: 0, kurtosis: 0
+        };
+      }
+
+      const sorted = [...values].sort((a, b) => a - b);
+      const mean = values.reduce((sum, val) => sum + val, 0) / n;
+      const variance = n > 1
+        ? values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (n - 1)
+        : 0;
+      const stdDev = Math.sqrt(variance);
+      const median = n % 2 === 0
+        ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+        : sorted[Math.floor(n / 2)];
+      const max = sorted[n - 1];
+      const min = sorted[0];
+      const range = max - min;
+      const q1 = sorted[Math.floor(n * 0.25)];
+      const q3 = sorted[Math.floor(n * 0.75)];
+      const iqr = q3 - q1;
+      const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
+      const skewness = (n >= 3 && stdDev > 0)
+        ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 3), 0) / n
+        : 0;
+      const kurtosis = (n >= 4 && stdDev > 0)
+        ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 4), 0) / n - 3
+        : 0;
+
+      return { n, mean, stdDev, median, max, min, range, q1, q3, iqr, cv, skewness, kurtosis };
+    };
+
+    // ========================================
+    // テスト実行
+    // ========================================
+
+    async function runAllTests() {
+      const runner = new TestRunner();
+
+      // Bug 1: Null参照エラーテスト
+      runner.section('🐛 Bug 1: Null参照エラーの修正');
+
+      const qs = (sel) => sel === '#discInput' ? { value: '10' } : null;
+
+      runner.test('要素が存在する場合、正常に値を取得できる', () => {
+        const element = qs('#discInput');
+        const value = parseFloat(element?.value) || 0;
+        runner.assertEquals(value, 10);
+      });
+
+      runner.test('要素が存在しない場合、デフォルト値0を返す', () => {
+        const element = qs('#nonExistent');
+        const value = parseFloat(element?.value) || 0;
+        runner.assertEquals(value, 0);
+      });
+
+      // Bug 2: JSON.parseエラーハンドリングテスト
+      runner.section('🐛 Bug 2: JSON.parseエラーハンドリング');
+
+      const loadPresets = (data) => {
+        if (!data) return [];
+        try {
+          return JSON.parse(data);
+        } catch {
+          return [];
+        }
+      };
+
+      runner.test('正常なJSONを正しくパースできる', () => {
+        const result = loadPresets(JSON.stringify([{ id: 1, name: 'Test' }]));
+        runner.assertEquals(result.length, 1);
+      });
+
+      runner.test('破損したJSONでもエラーが発生せず空配列を返す', () => {
+        const result = loadPresets('{ invalid json }');
+        runner.assertEquals(result.length, 0);
+      });
+
+      // Bug 3: 配列境界チェックテスト
+      runner.section('🐛 Bug 3: 配列境界チェック');
+
+      const removeTempPair = (index, pairs) => {
+        const sorted = [...pairs].sort((a, b) => b.unitPrice - a.unitPrice);
+        if (index < 0 || index >= sorted.length) return { success: false, pairs };
+        const pairToRemove = sorted[index];
+        const realIndex = pairs.findIndex(p => p.unitCost === pairToRemove.unitCost && p.unitPrice === pairToRemove.unitPrice);
+        if (realIndex !== -1) pairs.splice(realIndex, 1);
+        return { success: true, pairs };
+      };
+
+      runner.test('有効なインデックスで削除できる', () => {
+        const result = removeTempPair(0, [{ unitCost: 100, unitPrice: 150 }, { unitCost: 120, unitPrice: 180 }]);
+        runner.assert(result.success);
+      });
+
+      runner.test('負のインデックスでは失敗する', () => {
+        const result = removeTempPair(-1, [{ unitCost: 100, unitPrice: 150 }]);
+        runner.assert(!result.success);
+      });
+
+      runner.test('範囲外のインデックスでは失敗する', () => {
+        const result = removeTempPair(10, [{ unitCost: 100, unitPrice: 150 }]);
+        runner.assert(!result.success);
+      });
+
+      // 計算ロジックテスト
+      runner.section('🧮 歩留まり率計算');
+
+      runner.test('基本的な歩留まり率: 100g → 80g = 80%', () => {
+        runner.assertAlmostEquals(calcYield(100, 80), 80);
+      });
+
+      runner.test('歩留まり率100%超過: 100g → 120g = 120%', () => {
+        runner.assertAlmostEquals(calcYield(100, 120), 120);
+      });
+
+      runner.section('💰 100gあたり原価・売価計算');
+
+      runner.test('定額モード: 150円/200g → 75円/100g', () => {
+        runner.assertAlmostEquals(per100FromPerUnit(150, 200), 75);
+      });
+
+      runner.test('計量モード: 5000円/10kg → 50円/100g', () => {
+        runner.assertAlmostEquals(per100FromBox(5000, 10), 50);
+      });
+
+      runner.section('📊 値入率・粗利率計算');
+
+      runner.test('原価50円、売価100円 → 値入率50%', () => {
+        runner.assertAlmostEquals(markup(50, 100), 50);
+      });
+
+      runner.test('値入率50%、値引き10% → 粗利率44.44%', () => {
+        runner.assertAlmostEquals(grossFromMarkup(50, 10), 44.44, 0.1);
+      });
+
+      runner.section('📈 統計計算');
+
+      runner.test('基本統計: [80, 85, 90, 95, 100]', () => {
+        const stats = calculateStatistics([80, 85, 90, 95, 100]);
+        runner.assertAlmostEquals(stats.mean, 90);
+        runner.assertAlmostEquals(stats.median, 90);
+        runner.assertEquals(stats.min, 80);
+        runner.assertEquals(stats.max, 100);
+      });
+
+      runner.test('n=1のデータで標準偏差0', () => {
+        const stats = calculateStatistics([85]);
+        runner.assertEquals(stats.stdDev, 0);
+      });
+
+      runner.test('n=2で不偏標準偏差が計算される', () => {
+        const stats = calculateStatistics([80, 90]);
+        runner.assertAlmostEquals(stats.stdDev, 7.07, 0.1);
+      });
+
+      runner.section('🎯 統合シナリオテスト');
+
+      runner.test('定額モード完全シナリオ', () => {
+        const yr = calcYield(200, 160);
+        const beforeCost = per100FromPerUnit(150, 200);
+        const afterCost = afterCostPer100(beforeCost, yr);
+        const markupRate = markup(afterCost, 198);
+        const finishedPrice = finishedPriceFromAp(198, 160);
+
+        runner.assertAlmostEquals(yr, 80);
+        runner.assertAlmostEquals(beforeCost, 75);
+        runner.assertAlmostEquals(afterCost, 93.75);
+        runner.assertAlmostEquals(markupRate, 52.65, 0.1);
+        runner.assertAlmostEquals(finishedPrice, 316.8);
+      });
+
+      return runner;
+    }
+
+    // ========================================
+    // UI制御
+    // ========================================
+
+    document.getElementById('runTests').addEventListener('click', async () => {
+      document.getElementById('runTests').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const runner = await runAllTests();
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+
+      runner.render();
+    });
+  </script>
+</body>
+</html>
