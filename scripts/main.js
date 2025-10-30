@@ -22,7 +22,7 @@ import {
   calculateYieldRateFromMarkup,
   calculateDiscountRateFromGross
 } from './product-simulator.js';
-import { initHistoryUI, updateSaveButtonsVisibility } from './history-ui.js';
+import { initHistoryUI, updateSaveButtonsVisibility, showHistoryModal } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
 
 /**
@@ -5495,6 +5495,11 @@ function init() {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
       loadRecommendedValueToMultiPattern(false, selectedStatsType);
+    }
+    // 歩留まり統計データを読み込むボタン
+    else if (e.target.id === 'loadYieldStatsDataBtn' || e.target.closest('#loadYieldStatsDataBtn')) {
+      e.preventDefault();
+      showHistoryModal();
     }
   }, { passive: false });
 
