@@ -230,3 +230,28 @@ export function hasValidYieldStatsData(data) {
 
   return hasYieldRate || hasBeforeWeight || hasAfterWeight;
 }
+
+/**
+ * 推奨代表値を取得
+ * 歪度に基づいて平均値または中央値を推奨
+ *
+ * @param {Object} stats - 統計データ
+ * @param {number} stats.mean - 平均値
+ * @param {number} stats.median - 中央値
+ * @param {number} stats.skewness - 歪度
+ * @returns {Object|null} {type: 'mean'|'median', value: number, label: string} または null
+ */
+export function getRecommendedValue(stats) {
+  if (!stats) return null;
+
+  const skewness = stats.skewness;
+  const absSkewness = Math.abs(skewness);
+
+  if (absSkewness <= 0.5) {
+    // 分布が正規分布に近い → 平均値を推奨
+    return { type: 'mean', value: stats.mean, label: '平均値' };
+  } else {
+    // 分布が歪んでいる → 中央値を推奨
+    return { type: 'median', value: stats.median, label: '中央値' };
+  }
+}
