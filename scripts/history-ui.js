@@ -335,17 +335,25 @@ async function handleLoadCalculation(id) {
 
       // 歩留まり統計データを読み込んだ場合、統計を表示
       if (data.mode === MODE.YIELD_STATS) {
-        // 統計結果を表示
+        // restoreYieldStatsTableが既に統計を計算しているが、
+        // タイミングの問題で表示されない場合があるため、明示的に呼び出す
         if (window.displayCurrentStatistics) {
           setTimeout(() => {
-            window.displayCurrentStatistics();
-          }, 200);
+            const yieldStatsData = appState.getYieldStatsData();
+            if (yieldStatsData && (
+              (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+              (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+              (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+            )) {
+              window.displayCurrentStatistics();
+            }
+          }, 250);
         }
         // 複数パターン分析の読み込みボタンを更新
         if (window.updateLoadStatsButtons) {
           setTimeout(() => {
             window.updateLoadStatsButtons();
-          }, 300);
+          }, 350);
         }
       }
 
