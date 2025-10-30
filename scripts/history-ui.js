@@ -22,6 +22,9 @@ import { initializeCarousels, initHistoryFilterUI, setupHistoryFilterListeners }
 
 // 保存ダイアログモードはappStateで管理（'new', 'overwrite', 'normal'）
 
+// 再エクスポート（main.jsで使用）
+export { updateSaveButtonsVisibility, closeSaveDialog };
+
 /**
  * 履歴モーダルを表示
  */
