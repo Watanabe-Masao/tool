@@ -10,7 +10,7 @@ import { calculateFixed } from './calculator-fixed.js';
 import { calculateWeight } from './calculator-weight.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
 import { initMultiPatternUI, resetMultiPatternUI, setFromYieldStats, setStatValue } from './multi-pattern-ui.js';
-import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation } from './display.js';
+import { displayResults, displayReverseSimulation, displayReverseError, hideReverseSimulation, checkAndShowYieldWarning } from './display.js';
 import {
   calculateProductSimulation,
   updateDiscountSimulation,
@@ -519,6 +519,9 @@ function handleStep2() {
   const yr = calcYield(bw, aw);
   setText(UI_ELEMENTS.YIELD_RATE_STEP2, pct(toFixed(yr)));
 
+  // 歩留まり率100%超過の警告チェック
+  checkAndShowYieldWarning(UI_ELEMENTS.YIELD_WARNING_FIXED, yr);
+
   show(UI_ELEMENTS.FIXED_STEP2_RESULT);
   show(UI_ELEMENTS.FIXED_STEP3);
 
@@ -594,6 +597,9 @@ function handleDirectStep2() {
 
   // 歩留まり率を表示
   setText(UI_ELEMENTS.YIELD_RATE_DIRECT_STEP2, pct(toFixed(yr)));
+
+  // 歩留まり率100%超過の警告チェック
+  checkAndShowYieldWarning(UI_ELEMENTS.YIELD_WARNING_FIXED_DIRECT, yr);
 
   // 加工前の100gあたり計算
   const beforeCost100 = per100FromPerUnit(uc, bw);
@@ -727,6 +733,9 @@ function handleWeightStep2() {
   const yr = calcYield(bs, aw);
   setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_STEP2, pct(toFixed(yr)));
 
+  // 歩留まり率100%超過の警告チェック
+  checkAndShowYieldWarning(UI_ELEMENTS.YIELD_WARNING_WEIGHT, yr);
+
   show(UI_ELEMENTS.WEIGHT_STEP2_RESULT);
   show(UI_ELEMENTS.WEIGHT_STEP3);
 
@@ -818,6 +827,9 @@ function handleWeightDirectStep2() {
 
   // 歩留まり率を表示
   setText(UI_ELEMENTS.YIELD_RATE_WEIGHT_DIRECT_STEP2, pct(toFixed(yr)));
+
+  // 歩留まり率100%超過の警告チェック
+  checkAndShowYieldWarning(UI_ELEMENTS.YIELD_WARNING_WEIGHT_DIRECT, yr);
 
   show(UI_ELEMENTS.WEIGHT_DIRECT_STEP2_RESULT);
   show(UI_ELEMENTS.WEIGHT_DIRECT_STEP3);
