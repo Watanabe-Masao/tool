@@ -209,3 +209,24 @@ export function calculateRequiredSampleSize(stdDev, toleranceError, confidenceLe
 
   return Math.ceil(n); // 切り上げ
 }
+
+/**
+ * 歩留まり統計データが有効かチェック
+ * 少なくとも1つのデータタイプに2つ以上のデータポイントがあるか確認
+ *
+ * @param {Object} data - 歩留まり統計データ
+ * @param {number[]} data.yieldRate - 歩留まり率の配列
+ * @param {number[]} data.beforeWeight - 加工前重量の配列
+ * @param {number[]} data.afterWeight - 加工後重量の配列
+ * @returns {boolean} データが有効な場合true
+ */
+export function hasValidYieldStatsData(data) {
+  if (!data) return false;
+
+  // 少なくとも1つのデータタイプに2つ以上のデータポイントがあるかチェック
+  const hasYieldRate = data.yieldRate && data.yieldRate.length >= 2;
+  const hasBeforeWeight = data.beforeWeight && data.beforeWeight.length >= 2;
+  const hasAfterWeight = data.afterWeight && data.afterWeight.length >= 2;
+
+  return hasYieldRate || hasBeforeWeight || hasAfterWeight;
+}
