@@ -420,8 +420,8 @@ function addSelectedPresetsToTable() {
  * プリセット管理のイベントリスナーを初期化
  */
 export function setupPresetEventListeners() {
-  // モーダルを開くボタン
-  const openModalBtn = qs('#openPresetModalBtn');
+  // モーダルを開くボタン（複数のIDに対応）
+  const openModalBtn = qs('#openPresetModalBtn') || qs('#showPresetManagerBtn');
   if (openModalBtn) {
     openModalBtn.addEventListener('click', openPresetModal);
   }
