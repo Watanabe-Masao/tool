@@ -268,9 +268,13 @@ function handlePatternInput(patternId) {
   const row = elements.tableBody.querySelector(`tr[data-pattern-id="${patternId}"]`);
   if (!row) return;
 
-  const unitCost = getNumValue(row.querySelector('.pattern-unit-cost'));
-  const unitPrice = getNumValue(row.querySelector('.pattern-unit-price'));
-  const afterPrice100 = getNumValue(row.querySelector('.pattern-after-price'));
+  const unitCostInput = row.querySelector('.pattern-unit-cost');
+  const unitPriceInput = row.querySelector('.pattern-unit-price');
+  const afterPrice100Input = row.querySelector('.pattern-after-price');
+
+  const unitCost = getNumValue(unitCostInput);
+  const unitPrice = getNumValue(unitPriceInput);
+  const afterPrice100 = getNumValue(afterPrice100Input);
 
   // パターンデータを更新
   const pattern = patterns.find(p => p.id === patternId);
@@ -280,8 +284,70 @@ function handlePatternInput(patternId) {
     pattern.afterPrice100 = afterPrice100;
   }
 
+  // 重複検出
+  checkDuplicates();
+
   // 結果を再計算
   recalculateAll();
+}
+
+/**
+ * 重複パターンを検出してエラー表示
+ */
+function checkDuplicates() {
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  // 重複検出用のマップ
+  const patternMap = new Map();
+  const duplicateIds = new Set();
+
+  rows.forEach(row => {
+    const patternId = parseInt(row.dataset.patternId);
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
+
+    const unitCost = getNumValue(unitCostInput);
+    const unitPrice = getNumValue(unitPriceInput);
+
+    // 両方の値が入力されている場合のみチェック
+    if (Number.isFinite(unitCost) && Number.isFinite(unitPrice)) {
+      const key = `${unitCost.toFixed(2)}_${unitPrice.toFixed(2)}`;
+
+      if (patternMap.has(key)) {
+        // 重複を検出
+        duplicateIds.add(patternId);
+        duplicateIds.add(patternMap.get(key));
+      } else {
+        patternMap.set(key, patternId);
+      }
+    }
+  });
+
+  // すべてのパターンのエラー表示をクリア
+  rows.forEach(row => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
+    unitCostInput.style.borderColor = '';
+    unitPriceInput.style.borderColor = '';
+    unitCostInput.title = '';
+    unitPriceInput.title = '';
+  });
+
+  // 重複しているパターンをエラー表示
+  duplicateIds.forEach(patternId => {
+    const row = elements.tableBody.querySelector(`tr[data-pattern-id="${patternId}"]`);
+    if (row) {
+      const unitCostInput = row.querySelector('.pattern-unit-cost');
+      const unitPriceInput = row.querySelector('.pattern-unit-price');
+      unitCostInput.style.borderColor = '#e74c3c';
+      unitPriceInput.style.borderColor = '#e74c3c';
+      unitCostInput.style.borderWidth = '2px';
+      unitPriceInput.style.borderWidth = '2px';
+      unitCostInput.title = '⚠️ 重複しています';
+      unitPriceInput.title = '⚠️ 重複しています';
+    }
+  });
 }
 
 /**
@@ -323,6 +389,9 @@ function recalculateAll() {
     elements.step2Result.classList.add(CSS_HIDDEN);
     return;
   }
+
+  // 売価基準で降順にソート（金額の高い順）
+  validPatterns.sort((a, b) => b.unitPrice - a.unitPrice);
 
   // 結果テーブルをクリア
   elements.resultsTableBody.innerHTML = '';
