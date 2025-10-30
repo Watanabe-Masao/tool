@@ -269,11 +269,15 @@ function switchMode(newMode) {
 
   appState.setMode(newMode);
 
-  // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計を表示する
+  // 歩留まり統計表示フラグの管理
   if (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) {
+    // 歩留まり統計から複数パターン分析に切り替えた場合のみ、歩留まり統計を表示
     appState.showYieldStatsWithMultiPattern = true;
-  } else if (newMode !== MODE.MULTI_PATTERN) {
-    // 複数パターン分析以外のモードに切り替えた場合はリセット
+  } else if (newMode === MODE.MULTI_PATTERN && currentMode !== MODE.YIELD_STATS) {
+    // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示
+    appState.showYieldStatsWithMultiPattern = false;
+  } else if (currentMode === MODE.MULTI_PATTERN && newMode !== MODE.MULTI_PATTERN) {
+    // 複数パターン分析から別のモードに切り替えた場合はリセット
     appState.showYieldStatsWithMultiPattern = false;
   }
 

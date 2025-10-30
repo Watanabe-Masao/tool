@@ -197,6 +197,7 @@ export class AppState {
     this.hasUnsavedChanges = false;
     this.yieldStatsData = null;     // 歩留まり統計データもリセット
     this.saveDialogMode = 'normal'; // ダイアログモードもリセット
+    this.showYieldStatsWithMultiPattern = false; // 歩留まり統計表示フラグもリセット
   }
 }
 
