@@ -10,6 +10,9 @@ export function num(id) {
 }
 
 export const setText = (id, text) => { const el = qs(`#${id}`); if (el) el.textContent = text; };
+
+// 数値フォーマット関数
+export const toFixed = (n, d = 2) => Number.isFinite(n) ? Number(n.toFixed(d)) : null;
 export const yen = (n) => (Number.isFinite(n) ? `¥${n.toFixed(2)}` : '-');
 export const pct = (n) => (Number.isFinite(n) ? `${n.toFixed(2)}%` : '-');
 

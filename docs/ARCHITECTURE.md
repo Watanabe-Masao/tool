@@ -1,5 +1,16 @@
 # アーキテクチャドキュメント
 
+**バージョン**: v4.0 (Phase 9完了)
+**最終更新**: 2025-01-30
+
+## Phase 9リファクタリング完了
+
+- **main.js**: 5,621行 → 15行（99.7%削減）
+- **モジュール数**: 14 → 35モジュール
+- **単一責任の原則を徹底**: 各モジュールが明確な役割を持つ
+- **疎結合な設計**: 依存関係を最小化
+- **Phase 9 UX改善**: アニメーション、カラーコーディング、プログレスバー
+
 ## 目次
 - [システムアーキテクチャ](#システムアーキテクチャ)
 - [モジュール構成](#モジュール構成)
@@ -34,6 +45,7 @@ graph TB
         CalcFixed[calculator-fixed.js<br/>定額モード計算]
         CalcWeight[calculator-weight.js<br/>計量モード計算]
         CalcYieldStats[calculator-yield-stats.js<br/>歩留まり統計計算]
+        CalcMulti[calculator-multi-pattern.js<br/>複数パターン分析 🆕]
         Calc[calculation.js<br/>計算ユーティリティ]
         Simulator[product-simulator.js<br/>シミュレーション]
     end
@@ -167,24 +179,74 @@ graph LR
     style Calc fill:#fff9c4
 ```
 
-### モジュール責務マトリクス
+### モジュール責務マトリクス（Phase 9: 35モジュール）
 
-| モジュール | 主要責務 | 依存先 | 公開API |
-|-----------|---------|--------|---------|
-| **main.js** | アプリ初期化、イベント統合 | すべて | - |
-| **state.js** | 状態管理、スナップショット | なし | AppState |
-| **session.js** | セッション状態の永続化 | dom-utils.js, constants.js | saveSessionState(), restoreSessionState() |
-| **constants.js** | 定数、ID定義 | なし | すべての定数 |
-| **calculation.js** | 基本計算関数 | なし | 各種計算関数 |
-| **calculator-fixed.js** | 定額モード計算 | calculation.js, state.js | calculateFixed() |
-| **calculator-weight.js** | 計量モード計算 | calculation.js, state.js | calculateWeight() |
-| **calculator-yield-stats.js** | 歩留まり統計計算 | calculation.js | calculateYieldRate(), validateEntry() |
-| **display.js** | 表示更新 | dom-utils.js | displayResults() |
-| **input-handler.js** | 入力管理 | calculator-*.js | setupInputListeners() |
-| **product-simulator.js** | シミュレーション | state.js | simulate*() |
-| **db.js** | IndexedDB CRUD | なし | Database |
-| **storage.js** | 保存ロジック | db.js | saveCalculation() |
-| **history-ui.js** | 履歴UI | db.js, dom-utils.js | setupHistoryUI() |
+#### コアモジュール
+| モジュール | 主要責務 | 行数 | 依存先 |
+|-----------|---------|------|--------|
+| **main.js** | アプリ初期化（99.7%削減達成） | 15 | すべて |
+| **state.js** | 状態管理、スナップショット | - | なし |
+| **constants.js** | 定数、ID定義 | - | なし |
+| **session.js** | セッション状態の永続化 | - | dom-utils.js |
+
+#### 計算モジュール（5ファイル）
+| モジュール | 主要責務 | 行数 | 依存先 |
+|-----------|---------|------|--------|
+| **calculation.js** | 基本計算関数 | - | なし |
+| **calculator-fixed.js** | 定額モード計算 | - | calculation.js, state.js |
+| **calculator-weight.js** | 計量モード計算 | - | calculation.js, state.js |
+| **calculator-yield-stats.js** | 歩留まり統計計算 | - | calculation.js |
+| **calculator-multi-pattern.js** 🆕 | 複数パターン分析 | - | calculation.js |
+
+#### UI/表示モジュール（8ファイル）
+| モジュール | 主要責務 | 行数 | Phase |
+|-----------|---------|------|-------|
+| **display.js** | 表示更新 | - | - |
+| **dom-utils.js** | DOMヘルパー | - | - |
+| **form-manager.js** | フォーム管理 | - | - |
+| **mode-manager.js** | モード切替管理 | - | - |
+| **multi-pattern-ui.js** 🆕 | 複数パターンUI | - | Phase 9 |
+| **outlier-management.js** 🆕 | 外れ値UI | 403 | Phase 9 |
+| **sample-size-validator.js** 🆕 | サンプルサイズ検証UI | 335 | Phase 9 |
+| **stats-ui-helpers.js** 🆕 | 統計UI補助 | 456 | Phase 9 |
+
+#### 歩留まり統計モジュール（7ファイル）
+| モジュール | 主要責務 | 行数 | Phase |
+|-----------|---------|------|-------|
+| **yield-stats-calc.js** | 統計計算 | - | - |
+| **yield-stats-charts.js** | グラフ描画 | - | - |
+| **yield-stats-display.js** | 統計表示（UX改善） | 1,391 | Phase 9 |
+| **yield-stats-helpers.js** | 統計ヘルパー | - | - |
+| **yield-stats-table.js** | データテーブル | - | - |
+| **multi-pattern-stats-loader.js** 🆕 | 統計値読み込み | 210 | Phase 9 |
+| **multi-pattern-presets.js** 🆕 | プリセット管理 | 463 | Phase 9 |
+
+#### 履歴管理モジュール（5ファイル）
+| モジュール | 主要責務 |
+|-----------|---------|
+| **history-ui.js** | 履歴UI管理 |
+| **history-item-renderer.js** | 履歴項目描画 |
+| **history-restore.js** | 履歴復元 |
+| **history-save-dialog.js** | 保存ダイアログ |
+| **history-ui-controls.js** | 履歴操作 |
+
+#### データ管理モジュール（3ファイル）
+| モジュール | 主要責務 |
+|-----------|---------|
+| **db.js** | IndexedDB CRUD |
+| **storage.js** | 保存ロジック |
+| **session.js** | セッション状態管理 |
+
+#### イベント管理モジュール（2ファイル）
+| モジュール | 主要責務 |
+|-----------|---------|
+| **event-handlers-setup.js** | イベントリスナー設定 |
+| **input-handler.js** | 入力ハンドラー |
+
+#### シミュレーションモジュール（1ファイル）
+| モジュール | 主要責務 |
+|-----------|---------|
+| **product-simulator.js** | 商品化/値引き/逆算 |
 | **dom-utils.js** | DOM操作 | なし | qs(), setText(), etc. |
 
 ---

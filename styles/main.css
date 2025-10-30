@@ -1983,3 +1983,68 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     font-size: 0.85em;
   }
 }
+
+/* ========================================
+   Phase 9: UX改善アニメーション
+   ======================================== */
+
+/* フェードインとスライドアップ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* フェードイン */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* スケールイン */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* パルスアニメーション */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* マトリックス評価アイコンのスタイル */
+.matrix-icon {
+  display: inline-block;
+  margin-right: 0.3em;
+  font-size: 1.1em;
+}
+
+/* プログレスバーのカウントアップアニメーション */
+@keyframes countUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,5 +1,70 @@
 # 変更履歴
 
+## [v4.0] - 2025-01-30 - Phase 9完了 🎉
+
+### 追加
+- **複数パターン分析モード**
+  - 複数シナリオの一括比較機能を追加
+  - プリセット管理機能（保存/編集/削除/エクスポート/インポート）
+  - 統計値の自動読み込み機能（平均値/中央値）
+  - `scripts/calculator-multi-pattern.js`: 複数パターン計算エンジン
+  - `scripts/multi-pattern-ui.js`: UI管理
+  - `scripts/multi-pattern-presets.js`: プリセット管理（463行）
+  - `scripts/multi-pattern-stats-loader.js`: 統計値読み込み（210行）
+
+- **Phase 9: UX改善完了**
+  - 🎬 アニメーション効果（fadeIn, fadeInUp, scaleIn）をCSS実装
+  - 🎨 カラーコーディング（緑/黄/赤）で状態を視覚化
+  - 📈 プログレスバー表示でサンプルサイズ充足度を可視化
+  - ⏱️ カウントアップアニメーションで数値変化を滑らかに表示
+  - 📊 アイコン付き表示（🌟✓⚡⚠️📊📈）で情報伝達を強化
+  - `scripts/outlier-management.js`: 外れ値管理UI（403行）
+  - `scripts/sample-size-validator.js`: サンプルサイズ検証UI（335行）
+  - `scripts/stats-ui-helpers.js`: 統計UI補助（456行）
+
+- **テストドキュメント**
+  - `TEST_PLAN_PHASE9.md`: Phase 9テスト計画（8テストケース）
+  - `QUICK_TEST_GUIDE.md`: 1分クイックテストガイド
+  - `CACHE_CLEAR_GUIDE.md`: ブラウザキャッシュクリアガイド
+  - `test-ux-animations.html`: UXアニメーション自動テストツール（739行）
+
+### 変更
+- **リファクタリング完了**
+  - main.js: 5,621行 → 15行（99.7%削減）
+  - 35モジュールの高度にモジュール化されたアーキテクチャ
+  - 単一責任の原則を徹底
+  - 疎結合な設計で保守性向上
+
+- **yield-stats-display.js のUX改善**（Phase 9）
+  - 1,289行 → 1,391行（UX改善により102行追加、7.9%増）
+  - `displayMatrixEvaluation()`: アイコン付き、フェードイン/スライドアップ
+  - `displayStatistics()`: 17項目の段階的フェードイン
+  - `displaySampleSizeValidation()`: プログレスバー、カウントアップ
+  - `displayRecommendedValue()`: スケールイン、バッジ表示
+
+### 修正
+- **モジュールエクスポートエラー修正**
+  - `dom-utils.js`: `toFixed` エクスポート追加
+  - `yield-stats-helpers.js`: `getRecommendedValue` エクスポート追加
+  - `event-handlers-setup.js`: `updateToleranceUnit` エクスポート追加
+  - `multi-pattern-presets.js`: `closePresetModal` インポート追加
+
+- **イベントリスナー重複削除**
+  - `event-handlers-setup.js`: プリセット関連の重複リスナーを削除
+  - `setupPresetEventListeners()` で統一管理
+
+- **プリセット選択ボタン修正**
+  - デバッグ用のインラインイベントハンドラーを削除
+  - ボタンID不一致を解消（`showPresetManagerBtn` に対応）
+
+### ドキュメント
+- **README.md更新**
+  - v4.0にバージョンアップ
+  - 複数パターン分析モードの説明を追加
+  - Phase 9 UX改善の詳細を追加
+  - プロジェクト構成を35モジュールに更新
+  - テストドキュメントへのリンク追加
+
 ## [v3.5] - 2025-01-28
 
 ### 追加

@@ -463,8 +463,8 @@
           </div>
           <div class="stat-item">
             <div class="stat-label">
-              変動係数（CV）
-              <span class="help-icon" title="標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます" data-formula-name="変動係数（CV）" data-formula="CV = (σ / x̄) × 100 (%)" data-formula-desc="標準偏差を平均値で割ったもので、異なる単位や規模のデータのばらつきを比較できます。" data-formula-example="標準偏差が1.85、平均が49.6の場合、CV = (1.85 / 49.6) × 100 ≈ 3.73%">?</span>
+              RSD / CV（相対標準偏差）
+              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます" data-formula-name="RSD / CV" data-formula="RSD = CV = (σ / x̄) × 100 (%)" data-formula-desc="標準偏差を平均値で割ったもので、異なる単位や規模のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます。" data-formula-example="標準偏差が1.85、平均が49.6の場合、RSD = (1.85 / 49.6) × 100 ≈ 3.73%">?</span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -576,7 +576,7 @@
           <div class="accordion-content" id="matrix-eval">
             <div id="matrixEvaluation" class="matrix-evaluation">
               <p class="matrix-eval-description">
-                サンプル数とCV（変動係数）から、データの信頼性を評価します
+                サンプル数とRSD / CV（相対標準偏差）から、データの信頼性を評価します
               </p>
               <div class="matrix-eval-result">
                 <div class="matrix-eval-info">
@@ -584,7 +584,7 @@
                   <span id="matrixEvalSampleSize" class="matrix-eval-value">-</span>
                 </div>
                 <div class="matrix-eval-info">
-                  <span class="matrix-eval-label">変動係数（CV）：</span>
+                  <span class="matrix-eval-label">RSD / CV：</span>
                   <span id="matrixEvalCV" class="matrix-eval-value">-</span>
                 </div>
                 <div id="matrixEvalMessage" class="matrix-eval-message">-</div>
@@ -1013,10 +1013,7 @@
           <button
             type="button"
             id="showPresetManagerBtn"
-            class="btn btn-secondary"
-            onclick="alert('インラインクリック検出！'); if (window.openPresetModal) { window.openPresetModal(); } else { alert('関数が見つかりません'); } return false;"
-            ontouchend="alert('インラインタッチ検出！'); if (window.openPresetModal) { window.openPresetModal(); } else { alert('関数が見つかりません'); } return false;"
-            style="position: relative; z-index: 100; pointer-events: auto;">
+            class="btn btn-secondary">
             📋 プリセットから選択
           </button>
         </div>

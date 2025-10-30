@@ -408,8 +408,8 @@ test('実際の歩留まり率データ: [78.5, 82.3, 79.1, 80.7, 81.2]', () => 
   const stats = calculateStatistics(values);
 
   assertAlmostEquals(stats.mean, 80.36, 0.1, '平均値は約80.36であるべき');
-  assertAlmostEquals(stats.stdDev, 1.42, 0.1, '標準偏差は約1.42であるべき');
-  assertAlmostEquals(stats.cv, 1.77, 0.1, '変動係数は約1.77%であるべき');
+  assertAlmostEquals(stats.stdDev, 1.55, 0.1, '標準偏差は約1.55であるべき');
+  assertAlmostEquals(stats.cv, 1.93, 0.1, '変動係数は約1.93%であるべき');
 });
 
 // ========================================
