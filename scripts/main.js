@@ -51,7 +51,7 @@ import {
   handleWeightDirectStep3,
   handleProductCalculation
 } from './form-manager.js';
-import { calculateStatistics } from './yield-stats-calc.js';
+import { calculateStatistics, detectOutliers } from './yield-stats-calc.js';
 import {
   resetYieldStatsEntries,
   addYieldStatsRow,
@@ -925,35 +925,6 @@ function displayStatistics(stats, unit = '%') {
  * @param {Object} stats - 統計データ
  * @returns {Object} { outliers: 外れ値の配列, cleanedValues: 外れ値を除外したデータ, lowerBound: 下限, upperBound: 上限 }
  */
-function detectOutliers(values, stats) {
-  // IQR法: Q1 - 1.5*IQR より小さい、またはQ3 + 1.5*IQR より大きい値を外れ値とする
-  const lowerBound = stats.q1 - 1.5 * stats.iqr;
-  const upperBound = stats.q3 + 1.5 * stats.iqr;
-
-  const outliers = [];
-  const cleanedValues = [];
-
-  values.forEach(value => {
-    if (value < lowerBound || value > upperBound) {
-      outliers.push(value);
-    } else {
-      cleanedValues.push(value);
-    }
-  });
-
-  return {
-    outliers,
-    cleanedValues,
-    lowerBound,
-    upperBound
-  };
-}
-
-/**
- * 許容誤差に基づいて信頼度メッセージを判定
- * @param {number} toleranceError - 許容誤差（E）
- * @returns {Object} メッセージと色の情報
-}
 
 /**
  * サンプルサイズ妥当性を表示

@@ -102,3 +102,38 @@ export function calculateStatistics(values) {
     sorted // ソート済みデータも返す（グラフ描画用）
   };
 }
+
+/**
+ * 外れ値を検出（IQR法）
+ *
+ * @param {number[]} values - 検査対象の数値配列
+ * @param {Object} stats - calculateStatistics()の戻り値
+ * @returns {Object} 外れ値と正常値の情報
+ * @returns {number[]} return.outliers - 外れ値の配列
+ * @returns {number[]} return.cleanedValues - 正常値の配列
+ * @returns {number} return.lowerBound - 下限値
+ * @returns {number} return.upperBound - 上限値
+ */
+export function detectOutliers(values, stats) {
+  // IQR法: Q1 - 1.5*IQR より小さい、またはQ3 + 1.5*IQR より大きい値を外れ値とする
+  const lowerBound = stats.q1 - 1.5 * stats.iqr;
+  const upperBound = stats.q3 + 1.5 * stats.iqr;
+
+  const outliers = [];
+  const cleanedValues = [];
+
+  values.forEach(value => {
+    if (value < lowerBound || value > upperBound) {
+      outliers.push(value);
+    } else {
+      cleanedValues.push(value);
+    }
+  });
+
+  return {
+    outliers,
+    cleanedValues,
+    lowerBound,
+    upperBound
+  };
+}
