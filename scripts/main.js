@@ -160,6 +160,19 @@ function handleModeSwitch(newMode) {
     return;
   }
 
+  // 歩留まり統計→複数パターン分析の切り替えは確認なしで実行（データを保持するため）
+  const currentMode = appState.getMode();
+  if (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) {
+    switchMode(newMode);
+    return;
+  }
+
+  // 複数パターン分析→歩留まり統計の切り替えも確認なしで実行
+  if (currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS) {
+    switchMode(newMode);
+    return;
+  }
+
   // 現在のモードに入力値があるかチェック
   if (hasInputValues()) {
     if (confirm('入力されている値が消えますが、よろしいですか？')) {
@@ -179,70 +192,80 @@ function switchMode(newMode) {
   const currentMode = appState.getMode();
 
   // 現在のモードの入力値をクリア
-  if (currentMode === MODE.FIXED) {
-    // 品名フィールドをクリア
-    const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
-    if (fixedProductNameEl) fixedProductNameEl.value = '';
+  // 歩留まり統計⇔複数パターン分析の切り替えではデータをクリアしない
+  const isYieldStatsMultiPatternSwitch =
+    (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) ||
+    (currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS);
 
-    // 定額モードの入力フィールドをクリア
-    [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
-     FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
-     FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-    [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
-     FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
-     FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-  } else if (currentMode === MODE.WEIGHT) {
-    // 品名フィールドをクリア
-    const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
-    if (weightProductNameEl) weightProductNameEl.value = '';
+  if (!isYieldStatsMultiPatternSwitch) {
+    if (currentMode === MODE.FIXED) {
+      // 品名フィールドをクリア
+      const fixedProductNameEl = qs(`#${UI_ELEMENTS.FIXED_PRODUCT_NAME}`);
+      if (fixedProductNameEl) fixedProductNameEl.value = '';
 
-    // 計量モードの入力フィールドをクリア
-    [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
-     WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
-     WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-    [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
-     WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
-     WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
-      const el = qs(`#${id}`);
-      if (el) el.value = '';
-    });
-    // 100gあたりの売価表示をクリア
-    setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
-    setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
-  } else if (currentMode === MODE.YIELD_STATS) {
-    // 品名フィールドをクリア
-    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
-    if (productNameEl) productNameEl.value = '';
+      // 定額モードの入力フィールドをクリア
+      [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
+       FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT, FIXED_FIELDS.CALCULATE.AFTER_WEIGHT,
+       FIXED_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+        const el = qs(`#${id}`);
+        if (el) el.value = '';
+      });
+      [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
+       FIXED_FIELDS.DIRECT.BEFORE_WEIGHT, FIXED_FIELDS.DIRECT.YIELD_RATE,
+       FIXED_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+        const el = qs(`#${id}`);
+        if (el) el.value = '';
+      });
+    } else if (currentMode === MODE.WEIGHT) {
+      // 品名フィールドをクリア
+      const weightProductNameEl = qs(`#${UI_ELEMENTS.WEIGHT_PRODUCT_NAME}`);
+      if (weightProductNameEl) weightProductNameEl.value = '';
 
-    // テーブルをクリア
-    yieldStatsEntryCounter = 0;
-    const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
-    if (tbody) {
-      tbody.innerHTML = '';
-      addYieldStatsRow();
+      // 計量モードの入力フィールドをクリア
+      [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
+       WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT, WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE,
+       WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT, WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100].forEach(id => {
+        const el = qs(`#${id}`);
+        if (el) el.value = '';
+      });
+      [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
+       WEIGHT_FIELDS.DIRECT.BOX_WEIGHT, WEIGHT_FIELDS.DIRECT.YIELD_RATE,
+       WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100].forEach(id => {
+        const el = qs(`#${id}`);
+        if (el) el.value = '';
+      });
+      // 100gあたりの売価表示をクリア
+      setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
+      setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
+    } else if (currentMode === MODE.YIELD_STATS) {
+      // 品名フィールドをクリア
+      const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
+      if (productNameEl) productNameEl.value = '';
+
+      // テーブルをクリア
+      yieldStatsEntryCounter = 0;
+      const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+      if (tbody) {
+        tbody.innerHTML = '';
+        addYieldStatsRow();
+      }
+
+      // 注意：統計データ（statsDataByType）と状態（yieldStatsState）は
+      // 複数パターン分析で使用するため、ここではクリアしない
+      // 新しいモードが歩留まり統計モードの場合のみクリアする
+    } else if (currentMode === MODE.MULTI_PATTERN) {
+      // 複数パターン分析モードのクリア処理
+      resetMultiPatternUI();
     }
-
-    // 注意：統計データ（statsDataByType）と状態（yieldStatsState）は
-    // 複数パターン分析で使用するため、ここではクリアしない
-    // 新しいモードが歩留まり統計モードの場合のみクリアする
-  } else if (currentMode === MODE.MULTI_PATTERN) {
-    // 複数パターン分析モードのクリア処理
-    resetMultiPatternUI();
   }
 
   // 履歴から読み込んだIDをクリア（入力値をクリアしたので新規保存に戻す）
-  appState.clearLoadedHistoryId();
-  // UI状態フラグを更新：新規計算
-  appState.markAsNewCalculation();
+  // 歩留まり統計⇔複数パターン分析の切り替えでは履歴IDを保持
+  if (!isYieldStatsMultiPatternSwitch) {
+    appState.clearLoadedHistoryId();
+    // UI状態フラグを更新：新規計算
+    appState.markAsNewCalculation();
+  }
 
   appState.setMode(newMode);
 
@@ -280,7 +303,8 @@ function switchMode(newMode) {
 
   if (fixedInputs) fixedInputs.classList.toggle('is-hidden', !isFixed);
   if (weightInputs) weightInputs.classList.toggle('is-hidden', !isWeight);
-  if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats);
+  // 複数パターン分析モードの時は、歩留まり統計も表示
+  if (yieldStatsInputs) yieldStatsInputs.classList.toggle('is-hidden', !isYieldStats && !isMultiPattern);
   if (multiPatternInputs) multiPatternInputs.classList.toggle('is-hidden', !isMultiPattern);
 
   hide(UI_ELEMENTS.RESULTS);
