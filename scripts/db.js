@@ -10,6 +10,7 @@ const STORE_NAME = 'calculations';
 export class YieldCalculatorDB {
   constructor() {
     this.db = null;
+    this.openPromise = null; // Race Condition対策用
   }
 
   /**
@@ -17,12 +18,27 @@ export class YieldCalculatorDB {
    * @returns {Promise<IDBDatabase>}
    */
   async open() {
-    return new Promise((resolve, reject) => {
+    // 既に開いている場合は既存のDBインスタンスを返す
+    if (this.db) {
+      return Promise.resolve(this.db);
+    }
+
+    // 開く処理が進行中の場合は、同じPromiseを返す
+    if (this.openPromise) {
+      return this.openPromise;
+    }
+
+    // 新しい開く処理を開始
+    this.openPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        this.openPromise = null; // エラー時にリセット
+        reject(request.error);
+      };
       request.onsuccess = () => {
         this.db = request.result;
+        this.openPromise = null; // 成功時にリセット
         resolve(this.db);
       };
 
@@ -44,6 +60,8 @@ export class YieldCalculatorDB {
         }
       };
     });
+
+    return this.openPromise;
   }
 
   /**
@@ -285,6 +303,7 @@ export class YieldCalculatorDB {
       this.db.close();
       this.db = null;
     }
+    this.openPromise = null; // Promise状態もリセット
   }
 }
 

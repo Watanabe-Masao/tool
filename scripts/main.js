@@ -1962,8 +1962,11 @@ function calculateStatistics(values) {
   // 平均値
   const mean = values.reduce((sum, val) => sum + val, 0) / n;
 
-  // 標準偏差
-  const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+  // 標準偏差（不偏標準偏差を使用）
+  // n=1の場合は標準偏差を0とする
+  const variance = n > 1
+    ? values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (n - 1)
+    : 0;
   const stdDev = Math.sqrt(variance);
 
   // 中央値
@@ -1989,12 +1992,14 @@ function calculateStatistics(values) {
   const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
 
   // 歪度（Skewness）
-  const skewness = (n > 2 && stdDev > 0)
+  // 歪度の計算にはn >= 3が必要
+  const skewness = (n >= 3 && stdDev > 0)
     ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 3), 0) / n
     : 0;
 
   // 尖度（Kurtosis）- 超過尖度
-  const kurtosis = (n > 3 && stdDev > 0)
+  // 尖度の計算にはn >= 4が必要
+  const kurtosis = (n >= 4 && stdDev > 0)
     ? values.reduce((sum, val) => sum + Math.pow((val - mean) / stdDev, 4), 0) / n - 3
     : 0;
 
@@ -4252,6 +4257,10 @@ function createLineOption(values, stats, typeName, unit) {
 function createNormalDistOption(values, stats, typeName, unit) {
   // 正規分布の確率密度関数
   const normalPDF = (x, mean, stdDev) => {
+    // stdDevが0またはほぼ0の場合は計算不可能
+    if (!stdDev || stdDev <= 0 || !Number.isFinite(stdDev)) {
+      return 0;
+    }
     return (1 / (stdDev * Math.sqrt(2 * Math.PI))) *
            Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
   };
@@ -4357,6 +4366,10 @@ function createNormalDistOption(values, stats, typeName, unit) {
 function createViolinOption(values, stats, typeName, unit) {
   // カーネル密度推定（簡易版）
   const kde = (x, bandwidth) => {
+    // bandwidthまたはvalues.lengthが0の場合は0を返す
+    if (!bandwidth || bandwidth <= 0 || values.length === 0 || !Number.isFinite(bandwidth)) {
+      return 0;
+    }
     return values.reduce((sum, val) => {
       const u = (x - val) / bandwidth;
       return sum + Math.exp(-0.5 * u * u);
