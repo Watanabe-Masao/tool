@@ -38,29 +38,11 @@ import {
   getMatrixEvaluation,
   calculateRequiredSampleSize
 } from './yield-stats-helpers.js';
-// 新しいモジュール
+// 新しいモジュール（将来の拡張用にモジュールは保持、実際の使用は一部のみ）
 import {
-  initializeOutlierState,
-  getCurrentOutlierValues,
-  getManuallyExcludedIndices,
-  setManuallyExcludedIndices,
-  displayOutlierInfo,
-  handleOutlierCheckboxChange as handleOutlierChange,
   highlightOutlierRows,
-  isOutlierValue,
-  deleteOutlierRows as deleteOutliers
+  isOutlierValue
 } from './outlier-management.js';
-import {
-  displaySampleSizeValidation,
-  resetSampleSizeValidation
-} from './sample-size-validator.js';
-import {
-  displayMatrixEvaluation,
-  getRecommendedValue,
-  generateSigmaPatterns,
-  displayRecommendedValue,
-  displayStatistics
-} from './stats-ui-helpers.js';
 
 // 外れ値の状態管理（互換性のため残す）
 let currentStatsType = '';
