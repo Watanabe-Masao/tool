@@ -43,7 +43,7 @@ export function updateDiscountSimulation(productData) {
     return;
   }
 
-  const discountRate = parseFloat(qs(`#${UI_ELEMENTS.DISC_INPUT}`).value) || 0;
+  const discountRate = parseFloat(qs(`#${UI_ELEMENTS.DISC_INPUT}`)?.value) || 0;
   displayDiscountGross(discountRate, productData.markup);
 }
 

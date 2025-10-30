@@ -3512,13 +3512,20 @@ function loadPresets() {
   const presets = localStorage.getItem(PRESET_STORAGE_KEY);
   if (!presets) return [];
 
-  const parsedPresets = JSON.parse(presets);
+  try {
+    const parsedPresets = JSON.parse(presets);
 
-  // 古いデータとの互換性のため、patternsプロパティがない場合は空配列を設定
-  return parsedPresets.map(preset => ({
-    ...preset,
-    patterns: Array.isArray(preset.patterns) ? preset.patterns : []
-  }));
+    // 古いデータとの互換性のため、patternsプロパティがない場合は空配列を設定
+    return parsedPresets.map(preset => ({
+      ...preset,
+      patterns: Array.isArray(preset.patterns) ? preset.patterns : []
+    }));
+  } catch (error) {
+    console.error('Failed to parse presets from localStorage:', error);
+    // 破損したデータをクリア
+    localStorage.removeItem(PRESET_STORAGE_KEY);
+    return [];
+  }
 }
 
 // プリセットをlocalStorageに保存
@@ -3639,6 +3646,13 @@ function addPairToTemp() {
 function removeTempPair(index) {
   // ソート済みの配列から実際のインデックスを見つける
   const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+
+  // 境界チェックを追加
+  if (index < 0 || index >= sorted.length) {
+    console.error('Invalid index:', index);
+    return;
+  }
+
   const pairToRemove = sorted[index];
   const realIndex = tempPairs.findIndex(p => p.unitCost === pairToRemove.unitCost && p.unitPrice === pairToRemove.unitPrice);
 
