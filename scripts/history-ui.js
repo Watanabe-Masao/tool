@@ -28,8 +28,13 @@ export async function showHistoryModal() {
     modal.showModal();
 
     // 現在のモードと計算方法を取得
-    const currentMode = appState.getMode();
+    let currentMode = appState.getMode();
     let currentYieldMethod = null;
+
+    // 複数パターン分析モードから呼び出された場合は、歩留まり統計モードのデータを表示
+    if (currentMode === MODE.MULTI_PATTERN) {
+      currentMode = MODE.YIELD_STATS;
+    }
 
     // 定額モードまたは計量モードの場合、現在選択されている計算方法を取得
     if (currentMode === MODE.FIXED) {
