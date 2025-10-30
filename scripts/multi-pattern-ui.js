@@ -444,6 +444,8 @@ export function setFromYieldStats(yieldRate, productName = '') {
  * @param {string} productName - 商品名（オプション）
  */
 export function setStatValue(value, statType, productName = '') {
+  console.log('[DEBUG] setStatValue呼び出し:', { value, statType, productName });
+
   // 商品名を設定
   const productNameEl = document.getElementById('multiPatternProductName');
   if (productNameEl && productName) {
@@ -452,11 +454,13 @@ export function setStatValue(value, statType, productName = '') {
 
   // 現在のモードを取得（モードは変更しない）
   const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
+  console.log('[DEBUG] setStatValue - currentMode:', currentMode);
 
   if (statType === 'yieldRate') {
     // 歩留まり率 → 直接入力モードの歩留まり率フィールド
     // （directモードでのみ有効）
     if (currentMode === 'direct' && elements.yieldRateDirect && Number.isFinite(value)) {
+      console.log('[DEBUG] 歩留まり率を設定:', value);
       elements.yieldRateDirect.value = value.toFixed(2);
       handleDirectModeInput();
     }
@@ -464,19 +468,27 @@ export function setStatValue(value, statType, productName = '') {
     // 加工前重量 → 現在のモードに応じたフィールド
     if (currentMode === 'calculate' && elements.beforeWeightCalc && Number.isFinite(value)) {
       // 重量から計算モードの加工前重量
+      console.log('[DEBUG] 加工前重量を設定(calculate):', value, elements.beforeWeightCalc);
       elements.beforeWeightCalc.value = value.toFixed(2);
       elements.beforeWeightCalc.dispatchEvent(new Event('input'));
     } else if (currentMode === 'direct' && elements.beforeWeightDirect && Number.isFinite(value)) {
       // 直接入力モードの加工前重量
+      console.log('[DEBUG] 加工前重量を設定(direct):', value, elements.beforeWeightDirect);
       elements.beforeWeightDirect.value = value.toFixed(2);
       elements.beforeWeightDirect.dispatchEvent(new Event('input'));
     }
   } else if (statType === 'afterWeight') {
     // 加工後重量 → 重量から計算モードの加工後重量フィールド
     // （calculateモードでのみ有効）
+    console.log('[DEBUG] afterWeight分岐に入りました - currentMode:', currentMode, 'elements.afterWeightCalc:', elements.afterWeightCalc, 'value:', value, 'Number.isFinite(value):', Number.isFinite(value));
     if (currentMode === 'calculate' && elements.afterWeightCalc && Number.isFinite(value)) {
+      console.log('[DEBUG] 加工後重量を設定:', value, elements.afterWeightCalc);
       elements.afterWeightCalc.value = value.toFixed(2);
+      console.log('[DEBUG] 加工後重量フィールドの値:', elements.afterWeightCalc.value);
       elements.afterWeightCalc.dispatchEvent(new Event('input'));
+      console.log('[DEBUG] inputイベントを発火しました');
+    } else {
+      console.log('[DEBUG] 加工後重量の設定条件を満たしていません');
     }
   }
 }
