@@ -68,7 +68,7 @@ import {
 } from './multi-pattern-stats-loader.js';
 import { initHistoryUI } from './history-ui.js';
 import { initMultiPatternUI } from './multi-pattern-ui.js';
-import { setupPresetEventListeners, openPresetModal } from './multi-pattern-presets.js';
+import { setupPresetEventListeners, openPresetModal, closePresetModal } from './multi-pattern-presets.js';
 import { updateDiscountSimulation } from './product-simulator.js';
 
 // yield-stats-table.js の関数呼び出しに使うコールバックオブジェクト
@@ -90,7 +90,7 @@ function handleDiscountUpdate() {
 /**
  * 許容誤差の単位を更新
  */
-function updateToleranceUnit() {
+export function updateToleranceUnit() {
   const statsTypeSelect = qs('#statsTypeSelect');
   const toleranceUnit = qs('#toleranceUnit');
 
@@ -727,42 +727,13 @@ function init() {
     }
   });
 
-  // プリセット管理機能のイベントリスナー
-  qs('#presetModalClose')?.addEventListener('click', closePresetModal);
-  qs('#createNewPresetBtn')?.addEventListener('click', openNewPresetEditor);
-  qs('#addPairBtn')?.addEventListener('click', addPairToTemp);
-  qs('#savePresetBtn')?.addEventListener('click', savePresetFromModal);
-  qs('#cancelPresetBtn')?.addEventListener('click', () => {
-    showPresetList();
-    renderPresetList();
-  });
-  qs('#addSelectedPresetsBtn')?.addEventListener('click', addSelectedPresetsToTable);
+  // プリセット管理機能のイベントリスナーは setupPresetEventListeners() で設定済み
+  // （重複を避けるため、ここでの設定は削除）
 
-  // プリセットから選択ボタン
-  qs('#showPresetManagerBtn')?.addEventListener('click', openPresetModal);
-
-  // モーダルのオーバーレイクリックで閉じる
-  qs('#presetModal .modal-overlay')?.addEventListener('click', closePresetModal);
-
-  // イベント委譲でプリセット関連のボタンを処理（クリックイベント）
+  // 統計読み込みボタンのイベントリスナー
   document.addEventListener('click', (e) => {
-    // 編集ボタン
-    if (e.target.classList.contains('preset-btn-edit')) {
-      const presetId = parseInt(e.target.dataset.presetId);
-      editPresetFromModal(presetId);
-    }
-    // 削除ボタン
-    else if (e.target.classList.contains('preset-btn-delete')) {
-      const presetId = parseInt(e.target.dataset.presetId);
-      deletePresetFromModal(presetId);
-    }
-    // ペア削除ボタン
-    else if (e.target.classList.contains('btn-remove-pair')) {
-      const index = parseInt(e.target.dataset.pairIndex);
-      removeTempPair(index);
-    }
     // 統計読み込みボタン（平均値）
-    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+    if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
       const statsData = window.statsDataByType?.[selectedStatsType];
@@ -787,28 +758,10 @@ function init() {
     }
   });
 
-  // イベント委譲でプリセット関連のボタンを処理（タッチイベント - モバイル対応）
+  // 統計読み込みボタンのタッチイベントリスナー（モバイル対応）
   document.addEventListener('touchend', (e) => {
-    // 編集ボタン
-    if (e.target.classList.contains('preset-btn-edit')) {
-      e.preventDefault();
-      const presetId = parseInt(e.target.dataset.presetId);
-      editPresetFromModal(presetId);
-    }
-    // 削除ボタン
-    else if (e.target.classList.contains('preset-btn-delete')) {
-      e.preventDefault();
-      const presetId = parseInt(e.target.dataset.presetId);
-      deletePresetFromModal(presetId);
-    }
-    // ペア削除ボタン
-    else if (e.target.classList.contains('btn-remove-pair')) {
-      e.preventDefault();
-      const index = parseInt(e.target.dataset.pairIndex);
-      removeTempPair(index);
-    }
     // 統計読み込みボタン（平均値）
-    else if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
+    if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
       e.preventDefault();
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';

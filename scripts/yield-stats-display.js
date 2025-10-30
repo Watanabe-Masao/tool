@@ -38,6 +38,7 @@ import {
   getMatrixEvaluation,
   calculateRequiredSampleSize
 } from './yield-stats-helpers.js';
+import { updateToleranceUnit } from './event-handlers-setup.js';
 // 新しいモジュール（将来の拡張用にモジュールは保持、実際の使用は一部のみ）
 import {
   highlightOutlierRows,
