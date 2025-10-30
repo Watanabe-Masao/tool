@@ -2456,25 +2456,45 @@ function init() {
 
   if (fixedBtn) {
     fixedBtn.addEventListener('click', () => {
-      handleModeSwitch(MODE.FIXED);
+      handleModeSwitch(MODE.FIXED, {
+        resetSteps,
+        resetWeightSteps,
+        resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+        updateLoadStatsButtons
+      });
     });
   }
 
   if (weightBtn) {
     weightBtn.addEventListener('click', () => {
-      handleModeSwitch(MODE.WEIGHT);
+      handleModeSwitch(MODE.WEIGHT, {
+        resetSteps,
+        resetWeightSteps,
+        resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+        updateLoadStatsButtons
+      });
     });
   }
 
   if (yieldStatsBtn) {
     yieldStatsBtn.addEventListener('click', () => {
-      handleModeSwitch(MODE.YIELD_STATS);
+      handleModeSwitch(MODE.YIELD_STATS, {
+        resetSteps,
+        resetWeightSteps,
+        resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+        updateLoadStatsButtons
+      });
     });
   }
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
-      handleModeSwitch(MODE.MULTI_PATTERN);
+      handleModeSwitch(MODE.MULTI_PATTERN, {
+        resetSteps,
+        resetWeightSteps,
+        resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+        updateLoadStatsButtons
+      });
     });
   }
 
