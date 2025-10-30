@@ -376,6 +376,89 @@
             <!-- 動的に行が追加される -->
           </tbody>
         </table>
+
+        <!-- z-score判定基準の説明 -->
+        <div class="info-box" style="margin-top: 1em; padding: 1em; background: #f8f9fa; border-left: 4px solid #2196F3; border-radius: 4px;">
+          <h4 style="margin: 0 0 0.8em 0; font-size: 1em; color: #1976D2;">
+            📊 z-score（標準偏差）の判定基準について
+          </h4>
+
+          <div style="margin-bottom: 1em;">
+            <strong>z-scoreとは？</strong>
+            <p style="margin: 0.5em 0;">
+              個別の測定値が平均からどれだけ離れているかを、標準偏差を単位として表した値です。<br>
+              データのばらつき（標準偏差）を考慮した統計的に正しい判定が可能になります。
+            </p>
+          </div>
+
+          <div style="margin-bottom: 1em;">
+            <strong>計算式：</strong>
+            <code style="background: #fff; padding: 0.3em 0.6em; border-radius: 3px; font-family: monospace;">
+              z = (個別値 - 平均) / 標準偏差
+            </code>
+          </div>
+
+          <div style="margin-bottom: 1em;">
+            <strong>判定基準：</strong>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 0.5em; font-size: 0.9em;">
+              <thead>
+                <tr style="background: #e3f2fd;">
+                  <th style="padding: 0.6em; border: 1px solid #ddd; text-align: left;">z-scoreの範囲</th>
+                  <th style="padding: 0.6em; border: 1px solid #ddd; text-align: left;">判定</th>
+                  <th style="padding: 0.6em; border: 1px solid #ddd; text-align: left;">確率的意味</th>
+                  <th style="padding: 0.6em; border: 1px solid #ddd; text-align: center;">説明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">|z| ≤ 1</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd; color: #1b5e20; font-weight: bold;">✓ 非常に良好</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">68.3%範囲内</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">正規分布では約68%のデータが含まれる範囲。正常な値です。</td>
+                </tr>
+                <tr style="background: #fafafa;">
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">|z| ≤ 2</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd; color: #388e3c; font-weight: bold;">○ 良好</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">95.4%範囲内</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">正規分布では約95%のデータが含まれる範囲。問題ない値です。</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">|z| ≤ 3</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd; color: #f57c00; font-weight: bold;">△ 注意</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">99.7%範囲内</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">正規分布では約99.7%のデータが含まれる範囲。やや外れた値ですが、発生する可能性はあります。</td>
+                </tr>
+                <tr style="background: #fafafa;">
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">|z| > 3</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd; color: #c62828; font-weight: bold;">× 外れ値の可能性</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">0.3%未満</td>
+                  <td style="padding: 0.6em; border: 1px solid #ddd;">正規分布では0.3%未満でしか発生しない値。測定ミスや特異値の可能性があります。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 0.5em;">
+            <strong>具体例：</strong>
+            <p style="margin: 0.5em 0;">
+              歩留まり率の平均が50%、標準偏差が2%の場合：
+            </p>
+            <ul style="margin: 0.5em 0; padding-left: 1.5em;">
+              <li><strong>48%</strong> → z = (48-50)/2 = <strong>-1.0σ</strong> → ✓ 非常に良好（68%範囲内）</li>
+              <li><strong>46%</strong> → z = (46-50)/2 = <strong>-2.0σ</strong> → ○ 良好（95%範囲内）</li>
+              <li><strong>44%</strong> → z = (44-50)/2 = <strong>-3.0σ</strong> → △ 注意（99.7%範囲内）</li>
+              <li><strong>42%</strong> → z = (42-50)/2 = <strong>-4.0σ</strong> → × 外れ値の可能性</li>
+            </ul>
+          </div>
+
+          <div style="background: #fff3cd; padding: 0.8em; border-radius: 4px; border: 1px solid #ffc107; margin-top: 1em;">
+            <strong style="color: #856404;">💡 なぜz-scoreを使うのか？</strong>
+            <p style="margin: 0.5em 0 0 0; color: #856404;">
+              以前の「相対偏差率」では、データのばらつき（標準偏差）が考慮されていませんでした。
+              z-scoreを使うことで、ばらつきが大きいデータでも小さいデータでも、統計的に公平な判定が可能になります。
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- 統計情報ウィンドウ -->
