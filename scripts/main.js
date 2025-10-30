@@ -3317,7 +3317,6 @@ function updateLoadStatsButtons() {
 
     // イベントハンドラを設定
     attachButtonHandler(bulkImportBtn, () => {
-      console.log('[DEBUG] 一括転記ボタンが押されました');
       if (window.loadAllStatsToMultiPattern) {
         window.loadAllStatsToMultiPattern();
       } else {
@@ -3326,8 +3325,6 @@ function updateLoadStatsButtons() {
     });
 
     bulkImportBtnContainer.appendChild(bulkImportBtn);
-    console.log('[DEBUG] 一括転記ボタンをDOMに追加しました', bulkImportBtn);
-    console.log('[DEBUG] ボタンのonclickハンドラー:', bulkImportBtn.onclick);
 
     return;
   }
@@ -3570,6 +3567,12 @@ function addPairToTemp() {
     return;
   }
 
+  // 原価が売価を上回っている場合のチェック
+  if (unitCost > unitPrice) {
+    alert('原価が売価を上回っています。\n通常、売価は原価よりも高く設定されます。\n入力内容を確認してください。');
+    return;
+  }
+
   tempPairs.push({ unitCost, unitPrice });
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
@@ -3742,38 +3745,55 @@ function addSelectedPresetsToTable() {
   // プリセット追加前に空欄行を削除
   removeEmptyRows();
 
-  // 選択されたプリセットの全ペアをテーブルに追加
+  // 全てのパターンを配列にまとめる
+  const allPatterns = [];
   checkedBoxes.forEach(checkbox => {
     const presetId = parseInt(checkbox.dataset.presetId);
     const preset = presets.find(p => p.id === presetId);
+    if (preset && Array.isArray(preset.patterns)) {
+      allPatterns.push(...preset.patterns);
+    }
+  });
 
-    if (!preset || !Array.isArray(preset.patterns) || preset.patterns.length === 0) return;
+  // 既存の空欄行を取得
+  const existingRows = Array.from(tableBody.querySelectorAll('tr'));
+  const firstEmptyRow = existingRows.find(row => {
+    const costInput = row.querySelector('.pattern-unit-cost');
+    const priceInput = row.querySelector('.pattern-unit-price');
+    return costInput && priceInput && costInput.value.trim() === '' && priceInput.value.trim() === '';
+  });
 
-    // プリセットの各ペアを追加
-    preset.patterns.forEach(pattern => {
+  // パターンを追加
+  allPatterns.forEach((pattern, index) => {
+    let targetRow;
+
+    if (index === 0 && firstEmptyRow) {
+      // 最初のパターンで空行が存在する場合、その行を使う
+      targetRow = firstEmptyRow;
+    } else {
+      // それ以外は新しい行を追加
       const addBtn = qs('#addPatternBtn');
       if (addBtn) {
         addBtn.click();
-
-        // 最後に追加された行を取得
         const rows = tableBody.querySelectorAll('tr');
-        const lastRow = rows[rows.length - 1];
-
-        if (lastRow) {
-          const unitCostInput = lastRow.querySelector('.pattern-unit-cost');
-          const unitPriceInput = lastRow.querySelector('.pattern-unit-price');
-
-          if (unitCostInput) {
-            unitCostInput.value = pattern.unitCost;
-            unitCostInput.dispatchEvent(new Event('input'));
-          }
-          if (unitPriceInput) {
-            unitPriceInput.value = pattern.unitPrice;
-            unitPriceInput.dispatchEvent(new Event('input'));
-          }
-        }
+        targetRow = rows[rows.length - 1];
       }
-    });
+    }
+
+    // 行に値を設定
+    if (targetRow) {
+      const unitCostInput = targetRow.querySelector('.pattern-unit-cost');
+      const unitPriceInput = targetRow.querySelector('.pattern-unit-price');
+
+      if (unitCostInput) {
+        unitCostInput.value = pattern.unitCost;
+        unitCostInput.dispatchEvent(new Event('input'));
+      }
+      if (unitPriceInput) {
+        unitPriceInput.value = pattern.unitPrice;
+        unitPriceInput.dispatchEvent(new Event('input'));
+      }
+    }
   });
 
   // パターン番号を更新（念のため）
@@ -5129,25 +5149,18 @@ function init() {
    * 一括取り込み：推奨値をステップ1に転記
    */
   function loadAllStatsToMultiPattern() {
-    console.log('[DEBUG] loadAllStatsToMultiPattern関数が呼び出されました');
-
     try {
       const yieldRateStats = window.statsDataByType?.yieldRate;
       const beforeWeightStats = window.statsDataByType?.beforeWeight;
       const afterWeightStats = window.statsDataByType?.afterWeight;
-      console.log('[DEBUG] yieldRateStats:', yieldRateStats);
-      console.log('[DEBUG] beforeWeightStats:', beforeWeightStats);
-      console.log('[DEBUG] afterWeightStats:', afterWeightStats);
 
       if (!yieldRateStats || yieldRateStats.count < 2) {
-        console.log('[DEBUG] 歩留まり率の統計データがありません');
         alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
         return;
       }
 
       // 推奨値を取得
       const yieldRateRecommended = getRecommendedValue(yieldRateStats);
-      console.log('[DEBUG] yieldRateRecommended:', yieldRateRecommended);
       if (!yieldRateRecommended) {
         alert('歩留まり率の推奨値を取得できませんでした。');
         return;
@@ -5157,17 +5170,14 @@ function init() {
       const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
         ? getRecommendedValue(beforeWeightStats)
         : null;
-      console.log('[DEBUG] beforeWeightRecommended:', beforeWeightRecommended);
 
       // 加工後重量の推奨値を取得（存在する場合）
       const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
         ? getRecommendedValue(afterWeightStats)
         : null;
-      console.log('[DEBUG] afterWeightRecommended:', afterWeightRecommended);
 
       // 現在のモードを取得
       const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
-      console.log('[DEBUG] currentMode:', currentMode);
 
       // 確認ダイアログ
       if (!confirm('推奨値をステップ1に転記しますか？')) {
@@ -5177,11 +5187,9 @@ function init() {
       // モードに応じて値を設定
       if (currentMode === 'direct') {
         // 歩留まり率直接入力モード：歩留まり率と加工前重量を設定
-        console.log('[DEBUG] 歩留まり率を設定:', yieldRateRecommended.value);
         setStatValue(yieldRateRecommended.value, 'yieldRate');
 
         if (beforeWeightRecommended) {
-          console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
           setStatValue(beforeWeightRecommended.value, 'beforeWeight');
           showTransferNotification(`推奨値を転記しました：歩留まり率 ${toFixed(yieldRateRecommended.value, 2)}%、加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g`);
         } else {
@@ -5198,10 +5206,7 @@ function init() {
           return;
         }
 
-        console.log('[DEBUG] 加工前重量を設定:', beforeWeightRecommended.value);
         setStatValue(beforeWeightRecommended.value, 'beforeWeight');
-
-        console.log('[DEBUG] 加工後重量を設定:', afterWeightRecommended.value);
         setStatValue(afterWeightRecommended.value, 'afterWeight');
 
         showTransferNotification(`推奨値を転記しました：加工前重量 ${toFixed(beforeWeightRecommended.value, 2)}g、加工後重量 ${toFixed(afterWeightRecommended.value, 2)}g`);
@@ -5212,7 +5217,6 @@ function init() {
       updateSaveButtonsVisibility();
 
       focusFirstPatternInput();
-      console.log('[DEBUG] 一括転記が完了しました');
     } catch (error) {
       console.error('[ERROR] 一括転記でエラーが発生しました:', error);
       alert('一括転記でエラーが発生しました。コンソールを確認してください。');
