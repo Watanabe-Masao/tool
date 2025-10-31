@@ -1,7 +1,7 @@
 # アーキテクチャドキュメント
 
-**バージョン**: v4.0 (Phase 9完了)
-**最終更新**: 2025-01-30
+**バージョン**: v4.2 (コード品質改善リファクタリング完了)
+**最終更新**: 2025-10-31
 
 ## Phase 9リファクタリング完了
 
@@ -231,11 +231,11 @@ graph LR
 | **history-ui-controls.js** | 履歴操作 |
 
 #### データ管理モジュール（3ファイル）
-| モジュール | 主要責務 |
-|-----------|---------|
-| **db.js** | IndexedDB CRUD |
-| **storage.js** | 保存ロジック |
-| **session.js** | セッション状態管理 |
+| モジュール | 主要責務 | 改善内容 |
+|-----------|---------|----------|
+| **db.js** 🔧 | IndexedDB CRUD | ユーザーフレンドリーなエラーハンドリング（v4.2） |
+| **storage.js** | 保存ロジック | - |
+| **session.js** | セッション状態管理 | - |
 
 #### イベント管理モジュール（2ファイル）
 | モジュール | 主要責務 |
@@ -247,7 +247,14 @@ graph LR
 | モジュール | 主要責務 |
 |-----------|---------|
 | **product-simulator.js** | 商品化/値引き/逆算 |
-| **dom-utils.js** | DOM操作 | なし | qs(), setText(), etc. |
+
+#### ユーティリティモジュール（4ファイル）
+| モジュール | 主要責務 | 行数 | 説明 |
+|-----------|---------|------|------|
+| **dom-utils.js** | DOM操作 | - | qs(), setText(), etc. |
+| **toast.js** 🆕 | トースト通知 | 97 | 非ブロッキングUI通知、4種類のタイプ |
+| **debounce.js** 🆕 | パフォーマンス最適化 | 85 | デバウンス、スロットル関数 |
+| **constants.js** | 定数定義 | - | TIME.DEBOUNCE_DELAY = 300ms を含む |
 
 ---
 
@@ -789,7 +796,7 @@ tool/
 │
 ├── scripts/                # JavaScriptモジュール
 │   ├── main.js            # アプリケーションエントリーポイント
-│   ├── constants.js       # 定数・ID定義
+│   ├── constants.js       # 定数・ID定義（TIME.DEBOUNCE_DELAY含む）
 │   ├── state.js           # 状態管理クラス
 │   ├── session.js         # セッション状態の永続化
 │   ├── calculation.js     # 計算ユーティリティ関数
@@ -799,10 +806,12 @@ tool/
 │   ├── display.js         # UI表示制御
 │   ├── input-handler.js   # 入力イベント処理
 │   ├── product-simulator.js  # シミュレーション機能
-│   ├── db.js              # IndexedDBラッパー
+│   ├── db.js              # IndexedDBラッパー（エラーハンドリング改善）
 │   ├── storage.js         # データ保存ロジック
 │   ├── history-ui.js      # 履歴UI管理
-│   └── dom-utils.js       # DOM操作ヘルパー
+│   ├── dom-utils.js       # DOM操作ヘルパー
+│   ├── toast.js           # トースト通知システム（v4.2）
+│   └── debounce.js        # デバウンス・スロットル関数（v4.2）
 │
 ├── styles/                 # スタイルシート
 │   ├── main.css           # メインスタイル
@@ -1074,6 +1083,6 @@ sequenceDiagram
 
 ---
 
-**最終更新**: 2025-01-28
-**バージョン**: v3.5
+**最終更新**: 2025-10-31
+**バージョン**: v4.2
 **ドキュメント作成**: Claude Code
