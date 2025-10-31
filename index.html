@@ -1153,7 +1153,10 @@
 
       <!-- ステップ2結果: 比較結果テーブル -->
       <div id="multiPatternStep2Result" class="is-hidden step-result">
-        <h3 class="section-subtitle">📈 比較結果</h3>
+        <h3 class="section-subtitle">
+          📈 比較結果
+          <span class="help-icon help-icon-modal" id="resultsHelpBtn" data-tooltip="各項目の詳しい説明を見る">ⓘ</span>
+        </h3>
 
         <div class="multi-pattern-results-container">
           <table id="multiPatternResultsTable" class="multi-pattern-results-table">
@@ -1162,42 +1165,21 @@
                 <th rowspan="2" class="header-sticky">No.</th>
                 <th colspan="3" class="header-group header-cost">100g原価（円）</th>
                 <th colspan="3" class="header-group header-price">100g売価（円）</th>
-                <th colspan="3" class="header-group header-markup">
-                  値入率（%）
-                  <span class="help-icon" data-tooltip="値入率 = (売価 - 原価) ÷ 売価 × 100&#10;粗利率とも呼ばれ、売価に占める利益の割合を示します。">ⓘ</span>
-                </th>
-                <th rowspan="2" class="header-finished">
-                  仕上がり<br>売価（円）
-                  <span class="help-icon" data-tooltip="加工後の実際の重量から計算した、1個あたりの売価です。&#10;計算式: 加工後100g売価 × (加工後重量 ÷ 100)">ⓘ</span>
-                </th>
-                <th rowspan="2" class="header-diff">
-                  1個<br>差額（円）
-                  <span class="help-icon" data-tooltip="加工前の1個売価と、加工後の仕上がり売価との差額です。&#10;プラスなら売価アップ、マイナスなら売価ダウンを意味します。">ⓘ</span>
-                </th>
-                <th rowspan="2" class="header-sensitivity">
-                  感度<br>(%/1%)
-                  <span class="help-icon" data-tooltip="歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。&#10;例: +0.5 なら、歩留まり率が1%向上すると値入率が0.5%向上します。&#10;感度が大きいほど、歩留まり改善の効果が高いことを意味します。">ⓘ</span>
-                </th>
+                <th colspan="3" class="header-group header-markup">値入率（%）</th>
+                <th rowspan="2" class="header-finished">仕上がり<br>売価（円）</th>
+                <th rowspan="2" class="header-diff">1個<br>差額（円）</th>
+                <th rowspan="2" class="header-sensitivity">感度<br>(%/1%)</th>
               </tr>
               <tr>
                 <th class="subheader-before">加工前</th>
                 <th class="subheader-after">加工後</th>
-                <th class="subheader-change">
-                  増減
-                  <span class="help-icon help-icon-small" data-tooltip="加工後 - 加工前 の差分です。&#10;原価は減少が良く、売価・値入率は増加が良いです。">ⓘ</span>
-                </th>
+                <th class="subheader-change">増減</th>
                 <th class="subheader-before">加工前</th>
                 <th class="subheader-after">加工後</th>
-                <th class="subheader-change">
-                  増減
-                  <span class="help-icon help-icon-small" data-tooltip="加工後 - 加工前 の差分です。&#10;原価は減少が良く、売価・値入率は増加が良いです。">ⓘ</span>
-                </th>
+                <th class="subheader-change">増減</th>
                 <th class="subheader-before">加工前</th>
                 <th class="subheader-after">加工後</th>
-                <th class="subheader-change">
-                  増減
-                  <span class="help-icon help-icon-small" data-tooltip="加工後 - 加工前 の差分です。&#10;原価は減少が良く、売価・値入率は増加が良いです。">ⓘ</span>
-                </th>
+                <th class="subheader-change">増減</th>
               </tr>
             </thead>
             <tbody id="multiPatternResultsTableBody">
@@ -1428,6 +1410,90 @@
         <!-- 選択したプリセットを追加ボタン -->
         <div class="modal-footer">
           <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比較結果のヘルプモーダル -->
+  <div id="resultsHelpModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">📊 比較結果テーブルの見方</h3>
+        <button type="button" class="modal-close" id="resultsHelpModalClose">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-section">
+          <h4 class="help-section-title">📍 100g原価・100g売価</h4>
+          <div class="help-item">
+            <dt>加工前</dt>
+            <dd>1個あたりの原価・売価を100g換算した値です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>加工後</dt>
+            <dd>歩留まりを考慮した100g換算の原価・売価です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>増減</dt>
+            <dd>加工後 - 加工前 の差分。原価は減少が良く、売価は増加が良いです。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 値入率（%）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>値入率 = (売価 - 原価) ÷ 売価 × 100</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>粗利率とも呼ばれ、売価に占める利益の割合を示します。値が大きいほど利益率が高いです。</dd>
+          </div>
+          <div class="help-item">
+            <dt>増減</dt>
+            <dd>加工後 - 加工前 の差分。値が増加すると利益率が改善されたことを意味します。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 仕上がり売価（円）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>加工後100g売価 × (加工後重量 ÷ 100)</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>加工後の実際の重量から計算した、1個あたりの売価です。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 1個差額（円）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>仕上がり売価 - 加工前の1個売価</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>プラスなら売価アップ、マイナスなら売価ダウンを意味します。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 感度（%/1%）</h4>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>例</dt>
+            <dd>感度が+0.5の場合、歩留まり率が1%向上すると値入率が0.5%向上します。</dd>
+          </div>
+          <div class="help-item">
+            <dt>活用</dt>
+            <dd>感度が大きいほど、歩留まり改善の効果が高いことを意味します。歩留まり改善の優先順位付けに活用できます。</dd>
+          </div>
         </div>
       </div>
     </div>

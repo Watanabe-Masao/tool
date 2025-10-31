@@ -165,6 +165,9 @@ export function initMultiPatternUI() {
 
   // ヘルプアイコンのモバイル対応（タップで表示/非表示）
   initHelpIconMobile();
+
+  // 比較結果のヘルプモーダル
+  initResultsHelpModal();
 }
 
 /**
@@ -1217,6 +1220,46 @@ export function replaceAllPatterns(newPatterns) {
   updatePatternNumbers();
 
   console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
+}
+
+/**
+ * 比較結果のヘルプモーダルを初期化
+ */
+function initResultsHelpModal() {
+  const helpBtn = document.getElementById('resultsHelpBtn');
+  const modal = document.getElementById('resultsHelpModal');
+  const closeBtn = document.getElementById('resultsHelpModalClose');
+  const overlay = modal?.querySelector('.modal-overlay');
+
+  if (!helpBtn || !modal || !closeBtn || !overlay) {
+    return;
+  }
+
+  // ヘルプボタンをクリックでモーダルを開く
+  helpBtn.addEventListener('click', () => {
+    modal.classList.add('is-active');
+    document.body.style.overflow = 'hidden'; // 背景のスクロールを無効化
+  });
+
+  // 閉じるボタンをクリックでモーダルを閉じる
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('is-active');
+    document.body.style.overflow = ''; // スクロールを復元
+  });
+
+  // オーバーレイをクリックでモーダルを閉じる
+  overlay.addEventListener('click', () => {
+    modal.classList.remove('is-active');
+    document.body.style.overflow = '';
+  });
+
+  // ESCキーでモーダルを閉じる
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+      modal.classList.remove('is-active');
+      document.body.style.overflow = '';
+    }
+  });
 }
 
 // グローバルアクセス用のAPI
