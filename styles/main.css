@@ -1758,6 +1758,102 @@ input[type="range"] {
   font-weight: 600;
 }
 
+.multi-pattern-results-table .result-neutral {
+  color: #999;
+  font-weight: 500;
+}
+
+/* ヘッダーグループの色分け */
+.multi-pattern-results-table .header-group {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 6px;
+}
+
+.multi-pattern-results-table .header-cost {
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.multi-pattern-results-table .header-price {
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.multi-pattern-results-table .header-markup {
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* サブヘッダーの色分け */
+.multi-pattern-results-table .subheader-before {
+  background: rgba(102, 126, 234, 0.85);
+  font-size: 0.8rem;
+}
+
+.multi-pattern-results-table .subheader-after {
+  background: rgba(118, 75, 162, 0.85);
+  font-size: 0.8rem;
+}
+
+.multi-pattern-results-table .subheader-change {
+  background: rgba(255, 193, 7, 0.9);
+  color: #333;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* 結果セルの背景色（グループごとに微妙に色分け） */
+.multi-pattern-results-table .result-before {
+  background-color: rgba(102, 126, 234, 0.05);
+  font-weight: 500;
+  color: #333;
+}
+
+.multi-pattern-results-table .result-after {
+  background-color: rgba(118, 75, 162, 0.05);
+  font-weight: 600;
+  color: #000;
+}
+
+/* 増減列の強調 */
+.multi-pattern-results-table td.result-positive,
+.multi-pattern-results-table td.result-negative {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* No.列のスタイル */
+.multi-pattern-results-table .header-sticky {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* 仕上がり関連の列 */
+.multi-pattern-results-table .header-finished,
+.multi-pattern-results-table .header-diff,
+.multi-pattern-results-table .header-sensitivity {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.9) 0%, rgba(56, 142, 60, 0.9) 100%);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .multi-pattern-results-table {
+    font-size: 0.75rem;
+  }
+
+  .multi-pattern-results-table th {
+    padding: 6px 3px;
+    font-size: 0.7rem;
+  }
+
+  .multi-pattern-results-table td {
+    padding: 6px 3px;
+    font-size: 0.75rem;
+  }
+}
+
 /* 複数パターン分析へのリンク */
 .multi-pattern-link {
   margin-top: 1em;

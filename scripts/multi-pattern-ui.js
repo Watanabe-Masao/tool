@@ -468,7 +468,31 @@ function recalculateAll() {
     if (result) {
       const row = document.createElement('tr');
 
-      // 差額の表示クラス
+      // 各指標の増減を計算
+      const costChange = result.afterCost100 - result.beforeCost100;
+      const priceChange = result.afterPrice100 - result.beforePrice100;
+      const markupChange = result.afterMarkup - result.beforeMarkup;
+
+      // 増減の表示クラスを決定
+      const getCostChangeClass = (val) => {
+        if (val > 0) return 'result-negative'; // 原価増加は赤
+        if (val < 0) return 'result-positive'; // 原価減少は緑
+        return 'result-neutral';
+      };
+
+      const getPriceChangeClass = (val) => {
+        if (val > 0) return 'result-positive'; // 売価増加は緑
+        if (val < 0) return 'result-negative'; // 売価減少は赤
+        return 'result-neutral';
+      };
+
+      const getMarkupChangeClass = (val) => {
+        if (val > 0) return 'result-positive'; // 値入率増加は緑
+        if (val < 0) return 'result-negative'; // 値入率減少は赤
+        return 'result-neutral';
+      };
+
+      // 1個差額の表示クラス
       let priceDiffClass = 'result-value';
       if (result.priceDiff > 0) {
         priceDiffClass = 'result-positive';
@@ -488,14 +512,23 @@ function recalculateAll() {
         }
       }
 
+      // 符号付きフォーマット関数
+      const formatChange = (val, decimals = 2) => {
+        if (!Number.isFinite(val)) return '-';
+        return (val >= 0 ? '+' : '') + toFixed(val, decimals);
+      };
+
       row.innerHTML = `
         <td class="result-number">${pattern.id}</td>
-        <td class="result-value">${toFixed(result.beforeCost100, 2)}</td>
-        <td class="result-value">${toFixed(result.beforePrice100, 2)}</td>
-        <td class="result-value">${toFixed(result.beforeMarkup, 2)}%</td>
-        <td class="result-value">${toFixed(result.afterCost100, 2)}</td>
-        <td class="result-value">${toFixed(result.afterPrice100, 2)}</td>
-        <td class="result-highlight">${toFixed(result.afterMarkup, 2)}%</td>
+        <td class="result-before">${toFixed(result.beforeCost100, 2)}</td>
+        <td class="result-after">${toFixed(result.afterCost100, 2)}</td>
+        <td class="${getCostChangeClass(costChange)}">${formatChange(costChange)}</td>
+        <td class="result-before">${toFixed(result.beforePrice100, 2)}</td>
+        <td class="result-after">${toFixed(result.afterPrice100, 2)}</td>
+        <td class="${getPriceChangeClass(priceChange)}">${formatChange(priceChange)}</td>
+        <td class="result-before">${toFixed(result.beforeMarkup, 2)}%</td>
+        <td class="result-after result-highlight">${toFixed(result.afterMarkup, 2)}%</td>
+        <td class="${getMarkupChangeClass(markupChange)}">${formatChange(markupChange)}%</td>
         <td class="result-value">${toFixed(result.finishedPrice, 2)}</td>
         <td class="${priceDiffClass}">${result.priceDiff >= 0 ? '+' : ''}${toFixed(result.priceDiff, 2)}</td>
         <td class="${sensitivityClass}">${result.sensitivity !== null ? sensitivitySign + toFixed(result.sensitivity, 3) : '-'}</td>

@@ -1119,21 +1119,24 @@
           <table id="multiPatternResultsTable" class="multi-pattern-results-table">
             <thead>
               <tr>
-                <th rowspan="2">No.</th>
-                <th colspan="3">加工前</th>
-                <th colspan="3">加工後</th>
-                <th colspan="3">仕上がり</th>
+                <th rowspan="2" class="header-sticky">No.</th>
+                <th colspan="3" class="header-group header-cost">100g原価（円）</th>
+                <th colspan="3" class="header-group header-price">100g売価（円）</th>
+                <th colspan="3" class="header-group header-markup">値入率（%）</th>
+                <th rowspan="2" class="header-finished">仕上がり<br>売価（円）</th>
+                <th rowspan="2" class="header-diff">1個<br>差額（円）</th>
+                <th rowspan="2" class="header-sensitivity">感度<br>(%/1%)</th>
               </tr>
               <tr>
-                <th>100g原価<br>（円）</th>
-                <th>100g売価<br>（円）</th>
-                <th>値入率<br>（%）</th>
-                <th>100g原価<br>（円）</th>
-                <th>100g売価<br>（円）</th>
-                <th>値入率<br>（%）</th>
-                <th>仕上がり売価<br>（円）</th>
-                <th>差額<br>（円）</th>
-                <th>感度<br>(%/1%)</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
               </tr>
             </thead>
             <tbody id="multiPatternResultsTableBody">
