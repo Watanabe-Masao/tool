@@ -53,6 +53,11 @@ export function initMultiPatternUI() {
     targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
     applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
 
+    // 丸め込みボタン
+    roundTo0Btn: document.getElementById('roundTo0Btn'),
+    roundTo5Btn: document.getElementById('roundTo5Btn'),
+    roundTo8Btn: document.getElementById('roundTo8Btn'),
+
     // 結果
     step2Result: document.getElementById('multiPatternStep2Result'),
     resultsTableBody: document.getElementById('multiPatternResultsTableBody'),
@@ -122,6 +127,20 @@ export function initMultiPatternUI() {
   if (elements.applyTargetMarkupBtn) {
     elements.applyTargetMarkupBtn.addEventListener('click', applyTargetMarkupPrices);
     elements.applyTargetMarkupBtn.addEventListener('touchend', (e) => { e.preventDefault(); applyTargetMarkupPrices(); }, { passive: false });
+  }
+
+  // 丸め込みボタン
+  if (elements.roundTo0Btn) {
+    elements.roundTo0Btn.addEventListener('click', () => roundPrices(0));
+    elements.roundTo0Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(0); }, { passive: false });
+  }
+  if (elements.roundTo5Btn) {
+    elements.roundTo5Btn.addEventListener('click', () => roundPrices(5));
+    elements.roundTo5Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(5); }, { passive: false });
+  }
+  if (elements.roundTo8Btn) {
+    elements.roundTo8Btn.addEventListener('click', () => roundPrices(8));
+    elements.roundTo8Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(8); }, { passive: false });
   }
 
   // クリアボタン
@@ -768,6 +787,91 @@ function applyTargetMarkupPrices() {
     console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
   } else {
     alert('1個原価が入力されているパターンがありません。');
+  }
+}
+
+/**
+ * 売価を丸め込み（下一桁を0, 5, 8に調整）
+ * @param {number} digit - 下一桁の数字（0, 5, 8）
+ */
+function roundPrices(digit) {
+  console.log(`[MultiPattern] roundPrices 開始: digit=${digit}`);
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    alert('パターンがありません。');
+    return;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンの加工後設定売価を丸め込み
+  rows.forEach((row, index) => {
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+    const currentValue = getNumValue(afterPriceInput);
+
+    if (isPositive(currentValue)) {
+      // 丸め込み処理
+      const roundedValue = roundToDigit(currentValue, digit);
+      console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${roundedValue}`);
+
+      // 値を設定
+      afterPriceInput.value = roundedValue;
+
+      // ハイライト表示のために入力欄を記録
+      updatedInputs.push(afterPriceInput);
+
+      // inputイベントを発火して再計算をトリガー
+      const patternId = parseInt(row.dataset.patternId);
+      handlePatternInput(patternId);
+
+      updatedCount++;
+    }
+  });
+
+  if (updatedCount > 0) {
+    // 更新された入力欄をハイライト表示
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#fff9c4'; // 黄色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+
+    console.log(`[MultiPattern] ${updatedCount}個のパターンを下一桁${digit}に丸め込みました`);
+  } else {
+    alert('加工後設定売価が入力されているパターンがありません。');
+  }
+}
+
+/**
+ * 値を指定した下一桁に丸め込み（小数点なし）
+ * @param {number} value - 元の値
+ * @param {number} digit - 下一桁の数字（0, 5, 8）
+ * @returns {number} - 丸め込み後の値
+ */
+function roundToDigit(value, digit) {
+  // 小数点を四捨五入して整数に
+  const intValue = Math.round(value);
+
+  // 下一桁を取得
+  const lastDigit = intValue % 10;
+
+  // 10の位を計算
+  const base = Math.floor(intValue / 10) * 10;
+
+  // 現在の下一桁がdigitより小さいか等しい場合、現在の10の位 + digit
+  // それ以外の場合、次の10の位 + digit
+  if (lastDigit <= digit) {
+    return base + digit;
+  } else {
+    return base + 10 + digit;
   }
 }
 
