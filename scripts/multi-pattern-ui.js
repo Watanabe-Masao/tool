@@ -3,7 +3,7 @@
  */
 
 import { calculatePattern } from './calculator-multi-pattern.js';
-import { toFixed, calcYield } from './calculation.js';
+import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
 // 定数
@@ -45,6 +45,7 @@ export function initMultiPatternUI() {
     step2: document.getElementById('multiPatternStep2'),
     tableBody: document.getElementById('multiPatternTableBody'),
     addPatternBtn: document.getElementById('addPatternBtn'),
+    breakEvenBtn: document.getElementById('breakEvenBtn'),
 
     // 結果
     step2Result: document.getElementById('multiPatternStep2Result'),
@@ -78,6 +79,12 @@ export function initMultiPatternUI() {
   if (elements.addPatternBtn) {
     elements.addPatternBtn.addEventListener('click', addPattern);
     elements.addPatternBtn.addEventListener('touchend', (e) => { e.preventDefault(); addPattern(); }, { passive: false });
+  }
+
+  // 損益分岐点一括計算ボタン
+  if (elements.breakEvenBtn) {
+    elements.breakEvenBtn.addEventListener('click', calculateBreakEvenPrices);
+    elements.breakEvenBtn.addEventListener('touchend', (e) => { e.preventDefault(); calculateBreakEvenPrices(); }, { passive: false });
   }
 
   // クリアボタン
@@ -435,6 +442,82 @@ function recalculateAll() {
 
   // 結果を表示
   elements.step2Result.classList.remove(CSS_HIDDEN);
+}
+
+/**
+ * 損益分岐点を一括計算して設定
+ * 各パターンの加工後設定売価に、損益分岐点の売価（＝加工後100g原価）を設定
+ */
+function calculateBreakEvenPrices() {
+  // 現在のモードに応じて歩留まり率と加工前重量を取得
+  let yr, bw;
+
+  if (currentYieldMethod === 'calculate') {
+    const beforeWeight = getNumValue(elements.beforeWeightCalc);
+    const afterWeight = getNumValue(elements.afterWeightCalc);
+
+    if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
+      alert('加工前重量と加工後重量を入力してください。');
+      return;
+    }
+
+    yr = calcYield(beforeWeight, afterWeight);
+    bw = beforeWeight;
+  } else {
+    yr = getNumValue(elements.yieldRateDirect);
+    bw = getNumValue(elements.beforeWeightDirect);
+  }
+
+  if (!isPositive(yr) || !isPositive(bw)) {
+    alert('歩留まり率と加工前重量を入力してください。');
+    return;
+  }
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    alert('パターンがありません。');
+    return;
+  }
+
+  let updatedCount = 0;
+
+  // 各パターンの損益分岐点を計算して設定
+  rows.forEach(row => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+
+    const unitCost = getNumValue(unitCostInput);
+
+    // 1個原価が入力されている場合のみ計算
+    if (isPositive(unitCost)) {
+      // 加工前100g原価を計算
+      const beforeCost100 = per100FromPerUnit(unitCost, bw);
+
+      if (beforeCost100) {
+        // 加工後100g原価を計算（これが損益分岐点の売価）
+        const breakEvenPrice = afterCostPer100(beforeCost100, yr);
+
+        if (isPositive(breakEvenPrice)) {
+          // 加工後設定売価に設定
+          afterPriceInput.value = toFixed(breakEvenPrice, 2);
+
+          // inputイベントを発火して再計算をトリガー
+          const patternId = parseInt(row.dataset.patternId);
+          handlePatternInput(patternId);
+
+          updatedCount++;
+        }
+      }
+    }
+  });
+
+  if (updatedCount > 0) {
+    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点を設定しました`);
+  } else {
+    alert('1個原価が入力されているパターンがありません。');
+  }
 }
 
 /**
