@@ -227,10 +227,13 @@ export function highlightOutlierRows(statsType) {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
   if (!tbody) return;
 
-  // まず全ての行からハイライトを削除（スムーズなトランジション）
+  // まず全ての行とセルからハイライトを削除（スムーズなトランジション）
   const allRows = tbody.querySelectorAll('.yield-stats-row');
   allRows.forEach(row => {
     row.classList.remove('has-outlier');
+    // セルからも外れ値クラスを削除
+    const cells = row.querySelectorAll('.outlier-cell');
+    cells.forEach(cell => cell.classList.remove('outlier-cell'));
   });
 
   // 外れ値が検出されていない場合は終了
@@ -242,6 +245,7 @@ export function highlightOutlierRows(statsType) {
   allRows.forEach((row, index) => {
     const rowId = row.dataset.rowId;
     let shouldHighlight = false;
+    let outlierCell = null;
 
     if (statsType === 'yieldRate') {
       // 歩留まり率をチェック
@@ -251,6 +255,7 @@ export function highlightOutlierRows(statsType) {
         const rate = parseFloat(rateText);
         if (!isNaN(rate) && isOutlierValue(rate)) {
           shouldHighlight = true;
+          outlierCell = yieldRateDisplay;
         }
       }
     } else if (statsType === 'beforeWeight') {
@@ -260,6 +265,7 @@ export function highlightOutlierRows(statsType) {
         const beforeWeight = parseFloat(beforeInput.value);
         if (!isNaN(beforeWeight) && isOutlierValue(beforeWeight)) {
           shouldHighlight = true;
+          outlierCell = beforeInput;
         }
       }
     } else if (statsType === 'afterWeight') {
@@ -269,6 +275,7 @@ export function highlightOutlierRows(statsType) {
         const afterWeight = parseFloat(afterInput.value);
         if (!isNaN(afterWeight) && isOutlierValue(afterWeight)) {
           shouldHighlight = true;
+          outlierCell = afterInput;
         }
       }
     }
@@ -277,6 +284,14 @@ export function highlightOutlierRows(statsType) {
       // アニメーションで表示
       setTimeout(() => {
         row.classList.add('has-outlier');
+
+        // 外れ値のセルに特別なクラスを追加
+        if (outlierCell) {
+          outlierCell.classList.add('outlier-cell');
+
+          // 外れ値のセルにツールチップを追加
+          outlierCell.setAttribute('title', '⚠ この値は外れ値として検出されました');
+        }
       }, index * 30);
     }
   });

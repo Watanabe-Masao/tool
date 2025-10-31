@@ -450,23 +450,79 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
 /* 外れ値を含む行のハイライト */
 .yield-stats-table .yield-stats-row.has-outlier {
-  background-color: #ffebee;
-  border-left: 4px solid #dc3545;
+  background-color: #ffcdd2;
+  border-left: 6px solid #d32f2f;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+  animation: outlierPulse 0.5s ease-in-out;
+}
+
+@keyframes outlierPulse {
+  0% {
+    background-color: #ffffff;
+    transform: scale(1);
+  }
+  50% {
+    background-color: #ffebee;
+    transform: scale(1.01);
+  }
+  100% {
+    background-color: #ffcdd2;
+    transform: scale(1);
+  }
 }
 
 .yield-stats-table .yield-stats-row.has-outlier td {
   position: relative;
+  border-bottom: 1px solid #ef9a9a;
 }
 
 .yield-stats-table .yield-stats-row.has-outlier .row-number {
-  background-color: #ffcdd2;
-  color: #c62828;
+  background-color: #ef5350;
+  color: #ffffff;
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .yield-stats-table .yield-stats-row.has-outlier .yield-result {
-  background-color: #ffcdd2;
-  color: #c62828;
+  background-color: #e57373;
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 外れ値セル（外れ値の値を持つ特定のセル）のスタイル */
+.yield-stats-table .outlier-cell {
+  background-color: #f44336 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border: 2px solid #c62828 !important;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2) !important;
+  position: relative;
+}
+
+.yield-stats-table .outlier-cell::before {
+  content: '⚠';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff5722;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+/* 外れ値セルのフォーカス時 */
+.yield-stats-table .outlier-cell:focus {
+  outline: 3px solid #d32f2f !important;
+  outline-offset: 2px;
 }
 
 /* 統計情報ウィンドウ */
