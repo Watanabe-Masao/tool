@@ -364,6 +364,12 @@ input[type="number"]:hover {
   color: var(--text-primary);
 }
 
+.btn-small {
+  padding: 0.4em 0.8em;
+  font-size: 0.85em;
+  min-height: auto;
+}
+
 .btn-recommended {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: var(--text-inverse);
@@ -3036,6 +3042,12 @@ input[type="range"] {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
+.price-adjustment-tools.compact .target-markup-adjust-group {
+  padding: 0.4em 0.6em;
+  border-radius: 6px;
+  gap: 0.4em;
+}
+
 .target-markup-adjust-group .adjust-label {
   font-size: 0.85em;
   color: #7f8c8d;
@@ -3044,6 +3056,10 @@ input[type="range"] {
   display: flex;
   align-items: center;
   gap: 0.3em;
+}
+
+.price-adjustment-tools.compact .adjust-label {
+  font-size: 0.75em;
 }
 
 .adjust-btn {
@@ -3056,6 +3072,14 @@ input[type="range"] {
   transition: all 0.2s ease;
   min-width: 60px;
   text-align: center;
+}
+
+.price-adjustment-tools.compact .adjust-btn {
+  padding: 0.35em 0.7em;
+  border-radius: 5px;
+  font-size: 0.8em;
+  min-width: 45px;
+  border-width: 1.5px;
 }
 
 .adjust-minus {
@@ -3099,6 +3123,12 @@ input[type="range"] {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
+.price-adjustment-tools.compact .target-markup-round-mode {
+  padding: 0.4em 0.6em;
+  border-radius: 6px;
+  gap: 0.4em;
+}
+
 .target-markup-round-mode .round-mode-label {
   font-size: 0.85em;
   color: #7f8c8d;
@@ -3109,9 +3139,17 @@ input[type="range"] {
   gap: 0.3em;
 }
 
+.price-adjustment-tools.compact .round-mode-label {
+  font-size: 0.75em;
+}
+
 .round-mode-radios {
   display: flex;
   gap: 0.8em;
+}
+
+.price-adjustment-tools.compact .round-mode-radios {
+  gap: 0.5em;
 }
 
 .round-mode-radio {
@@ -3124,11 +3162,21 @@ input[type="range"] {
   font-weight: 500;
 }
 
+.price-adjustment-tools.compact .round-mode-radio {
+  font-size: 0.75em;
+  gap: 0.2em;
+}
+
 .round-mode-radio input[type="radio"] {
   cursor: pointer;
   width: 16px;
   height: 16px;
   accent-color: #667eea;
+}
+
+.price-adjustment-tools.compact .round-mode-radio input[type="radio"] {
+  width: 14px;
+  height: 14px;
 }
 
 .round-mode-radio:hover {
@@ -3146,11 +3194,21 @@ input[type="range"] {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
+.price-adjustment-tools.compact .target-markup-round-group {
+  padding: 0.4em 0.6em;
+  border-radius: 6px;
+  gap: 0.4em;
+}
+
 .target-markup-round-group .round-label {
   font-size: 0.85em;
   color: #7f8c8d;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.price-adjustment-tools.compact .round-label {
+  font-size: 0.75em;
 }
 
 .target-markup-round-btn {
@@ -3165,6 +3223,14 @@ input[type="range"] {
   transition: all 0.2s ease;
   min-width: 48px;
   text-align: center;
+}
+
+.price-adjustment-tools.compact .target-markup-round-btn {
+  padding: 0.3em 0.6em;
+  border-radius: 5px;
+  font-size: 0.8em;
+  min-width: 38px;
+  border-width: 1.5px;
 }
 
 .target-markup-round-btn:hover {
@@ -3187,6 +3253,12 @@ input[type="range"] {
   border: 2px solid rgba(102, 126, 234, 0.15);
 }
 
+.price-adjustment-tools.compact {
+  margin-top: 1em;
+  padding: 0.8em 1em;
+  border-radius: 8px;
+}
+
 .adjustment-tools-title {
   margin: 0 0 1em 0;
   font-size: 1.1em;
@@ -3197,11 +3269,21 @@ input[type="range"] {
   gap: 0.5em;
 }
 
+.price-adjustment-tools.compact .adjustment-tools-title {
+  margin: 0 0 0.6em 0;
+  font-size: 0.95em;
+}
+
 .adjustment-tools-grid {
   display: flex;
   gap: 1em;
   flex-wrap: wrap;
   margin-bottom: 1em;
+}
+
+.price-adjustment-tools.compact .adjustment-tools-grid {
+  gap: 0.6em;
+  margin-bottom: 0;
 }
 
 /* ヘルプテキスト */
