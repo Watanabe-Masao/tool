@@ -1593,18 +1593,48 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     font-size: 0.8em;
   }
 
+  /* 歩留まり統計テーブルのタブレット最適化 */
   .yield-stats-table {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .yield-stats-table th,
   .yield-stats-table td {
-    padding: 6px 4px;
+    padding: 8px 6px;
+  }
+
+  /* No.列を狭く */
+  .yield-stats-table th:first-child,
+  .yield-stats-table td:first-child {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  /* 各列の最小幅を調整 */
+  .yield-stats-table th:nth-child(2),
+  .yield-stats-table td:nth-child(2),
+  .yield-stats-table th:nth-child(3),
+  .yield-stats-table td:nth-child(3) {
+    min-width: 85px;
+  }
+
+  .yield-stats-table th:nth-child(4),
+  .yield-stats-table td:nth-child(4) {
+    min-width: 75px;
+  }
+
+  .yield-stats-table th:nth-child(5),
+  .yield-stats-table td:nth-child(5) {
+    min-width: 70px;
+  }
+
+  .yield-stats-table th:nth-child(6),
+  .yield-stats-table td:nth-child(6) {
+    min-width: 60px;
   }
 
   .yield-stats-table .table-input {
-    padding: 6px;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .stats-grid {
@@ -2433,5 +2463,85 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
 
   .target-markup-apply-btn {
     width: 100%;
+  }
+
+  /* 歩留まり統計テーブルのモバイル最適化 */
+  .yield-stats-table {
+    font-size: 11px;
+  }
+
+  .yield-stats-table th,
+  .yield-stats-table td {
+    padding: 8px 4px;
+  }
+
+  /* No.列を狭く */
+  .yield-stats-table th:first-child,
+  .yield-stats-table td:first-child {
+    width: 35px;
+    min-width: 35px;
+    padding: 8px 2px;
+  }
+
+  /* 重量列を適切な幅に */
+  .yield-stats-table th:nth-child(2),
+  .yield-stats-table td:nth-child(2),
+  .yield-stats-table th:nth-child(3),
+  .yield-stats-table td:nth-child(3) {
+    min-width: 70px;
+  }
+
+  /* 歩留まり率列 */
+  .yield-stats-table th:nth-child(4),
+  .yield-stats-table td:nth-child(4) {
+    min-width: 65px;
+  }
+
+  /* z-score列 */
+  .yield-stats-table th:nth-child(5),
+  .yield-stats-table td:nth-child(5) {
+    min-width: 60px;
+  }
+
+  /* 判定列 */
+  .yield-stats-table th:nth-child(6),
+  .yield-stats-table td:nth-child(6) {
+    min-width: 50px;
+  }
+
+  .yield-stats-table .table-input {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+
+  /* ヘッダーテキストを短縮表示 */
+  .yield-stats-table th {
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  /* スクロールヒント */
+  .table-container {
+    position: relative;
+  }
+
+  .table-container::after {
+    content: '← スクロール →';
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    pointer-events: none;
+    opacity: 0.8;
+    animation: fadeInOut 3s ease-in-out infinite;
+  }
+
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.9; }
   }
 }
