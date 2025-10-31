@@ -150,6 +150,35 @@ export function initMultiPatternUI() {
   for (let i = 0; i < INITIAL_PATTERN_COUNT; i++) {
     addPattern();
   }
+
+  // ヘルプアイコンのモバイル対応（タップで表示/非表示）
+  initHelpIconMobile();
+}
+
+/**
+ * ヘルプアイコンのモバイル対応を初期化
+ */
+function initHelpIconMobile() {
+  // タッチデバイスの検出
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  if (isTouchDevice) {
+    // 全てのヘルプアイコンにタップイベントを設定
+    document.addEventListener('click', (e) => {
+      const helpIcon = e.target.closest('.help-icon');
+
+      if (helpIcon) {
+        // クリックされたヘルプアイコンのトグル
+        e.stopPropagation();
+        helpIcon.classList.toggle('active');
+      } else {
+        // ヘルプアイコン以外をクリックしたら全て閉じる
+        document.querySelectorAll('.help-icon.active').forEach(icon => {
+          icon.classList.remove('active');
+        });
+      }
+    });
+  }
 }
 
 /**
