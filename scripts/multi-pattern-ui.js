@@ -98,16 +98,18 @@ export function initMultiPatternUI() {
 
   // 目標値入率のスライダーと入力ボックスの連携
   if (elements.targetMarkupRate && elements.targetMarkupSlider) {
-    // スライダーを動かしたら入力ボックスとビジュアル表示を更新
+    // スライダーを動かしたら入力ボックス、ビジュアル表示、売価を自動更新
     elements.targetMarkupSlider.addEventListener('input', (e) => {
       const value = parseFloat(e.target.value);
       elements.targetMarkupRate.value = value;
       if (elements.targetMarkupSliderValue) {
         elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
       }
+      // 売価をリアルタイムで自動更新（ハイライトなし）
+      updatePricesFromTargetMarkup(value, false);
     });
 
-    // 入力ボックスを変更したらスライダーとビジュアル表示を更新
+    // 入力ボックスを変更したらスライダー、ビジュアル表示、売価を自動更新
     elements.targetMarkupRate.addEventListener('input', (e) => {
       let value = parseFloat(e.target.value);
       if (isNaN(value)) value = 0;
@@ -118,6 +120,8 @@ export function initMultiPatternUI() {
       if (elements.targetMarkupSliderValue) {
         elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
       }
+      // 売価をリアルタイムで自動更新（ハイライトなし）
+      updatePricesFromTargetMarkup(value, false);
     });
   }
 
@@ -631,7 +635,107 @@ function calculateBreakEvenPrices() {
 }
 
 /**
- * 目標値入率から売価を一括計算して設定
+ * 目標値入率から売価を更新（リアルタイム用）
+ * @param {number} targetMarkup - 目標値入率
+ * @param {boolean} showHighlight - ハイライトを表示するか
+ * @returns {number} - 更新したパターン数
+ */
+function updatePricesFromTargetMarkup(targetMarkup, showHighlight = false) {
+  // 入力値の検証
+  if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
+    return 0;
+  }
+
+  // 現在のモードに応じて歩留まり率と加工前重量を取得
+  let yr, bw;
+
+  if (currentYieldMethod === 'calculate') {
+    const beforeWeight = getNumValue(elements.beforeWeightCalc);
+    const afterWeight = getNumValue(elements.afterWeightCalc);
+
+    if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
+      return 0;
+    }
+
+    yr = calcYield(beforeWeight, afterWeight);
+    bw = beforeWeight;
+  } else {
+    yr = getNumValue(elements.yieldRateDirect);
+    bw = getNumValue(elements.beforeWeightDirect);
+  }
+
+  if (!isPositive(yr) || !isPositive(bw)) {
+    return 0;
+  }
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンに目標値入率を適用
+  rows.forEach((row) => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+
+    const unitCost = getNumValue(unitCostInput);
+
+    // 1個原価が入力されている場合のみ計算
+    if (isPositive(unitCost)) {
+      // 加工前100g原価を計算
+      const beforeCost100 = per100FromPerUnit(unitCost, bw);
+
+      if (beforeCost100) {
+        // 加工後100g原価を計算
+        const afterCost100 = afterCostPer100(beforeCost100, yr);
+
+        if (afterCost100) {
+          // 目標値入率を達成する加工後100g売価を計算
+          const targetPrice = priceFromMarkup(afterCost100, targetMarkup);
+
+          if (isPositive(targetPrice)) {
+            // 加工後設定売価に設定
+            afterPriceInput.value = toFixed(targetPrice, 2);
+
+            // ハイライト表示のために入力欄を記録
+            if (showHighlight) {
+              updatedInputs.push(afterPriceInput);
+            }
+
+            // inputイベントを発火して再計算をトリガー
+            const patternId = parseInt(row.dataset.patternId);
+            handlePatternInput(patternId);
+
+            updatedCount++;
+          }
+        }
+      }
+    }
+  });
+
+  // ハイライト表示
+  if (showHighlight && updatedInputs.length > 0) {
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#bbdefb'; // 青色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+  }
+
+  return updatedCount;
+}
+
+/**
+ * 目標値入率から売価を一括計算して設定（ボタンクリック用）
  */
 function applyTargetMarkupPrices() {
   console.log('[MultiPattern] applyTargetMarkupPrices 開始');
@@ -656,104 +760,12 @@ function applyTargetMarkupPrices() {
     return;
   }
 
-  // 現在のモードに応じて歩留まり率と加工前重量を取得
-  let yr, bw;
-
-  if (currentYieldMethod === 'calculate') {
-    const beforeWeight = getNumValue(elements.beforeWeightCalc);
-    const afterWeight = getNumValue(elements.afterWeightCalc);
-
-    if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
-      alert('加工前重量と加工後重量を入力してください。');
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '✨ 目標値入率から売価を挿入';
-      }
-      return;
-    }
-
-    yr = calcYield(beforeWeight, afterWeight);
-    bw = beforeWeight;
-  } else {
-    yr = getNumValue(elements.yieldRateDirect);
-    bw = getNumValue(elements.beforeWeightDirect);
-  }
-
-  if (!isPositive(yr) || !isPositive(bw)) {
-    alert('歩留まり率と加工前重量を入力してください。');
-    console.log('[MultiPattern] エラー: 歩留まり率または加工前重量が不正', { yr, bw });
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✨ 目標値入率から売価を挿入';
-    }
-    return;
-  }
-
-  console.log('[MultiPattern] 歩留まり率:', yr, '%, 加工前重量:', bw, 'g');
-
-  // すべてのパターン行を取得
-  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
-  console.log('[MultiPattern] パターン行数:', rows.length);
-
-  if (rows.length === 0) {
-    alert('パターンがありません。');
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✨ 目標値入率から売価を挿入';
-    }
-    return;
-  }
-
-  let updatedCount = 0;
-  const updatedInputs = [];
-
-  // 各パターンに目標値入率を適用
-  rows.forEach((row, index) => {
-    const unitCostInput = row.querySelector('.pattern-unit-cost');
-    const afterPriceInput = row.querySelector('.pattern-after-price');
-
-    const unitCost = getNumValue(unitCostInput);
-    console.log(`[MultiPattern] パターン${index + 1}: 1個原価=${unitCost}`);
-
-    // 1個原価が入力されている場合のみ計算
-    if (isPositive(unitCost)) {
-      // 加工前100g原価を計算
-      const beforeCost100 = per100FromPerUnit(unitCost, bw);
-      console.log(`[MultiPattern] パターン${index + 1}: 加工前100g原価=${beforeCost100}`);
-
-      if (beforeCost100) {
-        // 加工後100g原価を計算
-        const afterCost100 = afterCostPer100(beforeCost100, yr);
-        console.log(`[MultiPattern] パターン${index + 1}: 加工後100g原価=${afterCost100}`);
-
-        if (afterCost100) {
-          // 目標値入率を達成する加工後100g売価を計算
-          const targetPrice = priceFromMarkup(afterCost100, targetMarkup);
-          console.log(`[MultiPattern] パターン${index + 1}: 目標売価=${targetPrice}`);
-
-          if (isPositive(targetPrice)) {
-            // 加工後設定売価に設定
-            afterPriceInput.value = toFixed(targetPrice, 2);
-            console.log(`[MultiPattern] パターン${index + 1}: 設定完了 value=${afterPriceInput.value}`);
-
-            // ハイライト表示のために入力欄を記録
-            updatedInputs.push(afterPriceInput);
-
-            // inputイベントを発火して再計算をトリガー
-            const patternId = parseInt(row.dataset.patternId);
-            handlePatternInput(patternId);
-
-            updatedCount++;
-          }
-        }
-      }
-    }
-  });
+  // 売価を更新（ハイライト表示あり）
+  const updatedCount = updatePricesFromTargetMarkup(targetMarkup, true);
 
   // ボタンを元に戻す
   if (btn) {
     btn.disabled = false;
-    btn.textContent = '✨ 目標値入率から売価を挿入';
   }
 
   if (updatedCount > 0) {
@@ -765,19 +777,11 @@ function applyTargetMarkupPrices() {
       }, 2000);
     }
 
-    // 更新された入力欄をハイライト表示
-    updatedInputs.forEach(input => {
-      input.style.transition = 'background-color 0.3s ease';
-      input.style.backgroundColor = '#bbdefb'; // 青色のハイライト
-
-      // 2秒後にハイライトを解除
-      setTimeout(() => {
-        input.style.backgroundColor = '';
-      }, 2000);
-    });
-
     console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
   } else {
+    if (btn) {
+      btn.textContent = '✨ 目標値入率から売価を挿入';
+    }
     alert('1個原価が入力されているパターンがありません。');
   }
 }
