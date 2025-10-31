@@ -712,8 +712,6 @@ function calculateBreakEvenPrices() {
         input.style.backgroundColor = '';
       }, 2000);
     });
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点（加工前値入率を維持）を設定しました`);
   } else {
     alert('1個原価と1個売価が入力されているパターンがありません。');
   }
@@ -823,8 +821,6 @@ function updatePricesFromTargetMarkup(targetMarkup, showHighlight = false) {
  * 目標値入率から売価を一括計算して設定（ボタンクリック用）
  */
 function applyTargetMarkupPrices() {
-  console.log('[MultiPattern] applyTargetMarkupPrices 開始');
-
   // ボタンを無効化してローディング表示
   const btn = elements.applyTargetMarkupBtn;
   if (btn) {
@@ -834,7 +830,6 @@ function applyTargetMarkupPrices() {
 
   // 目標値入率を取得
   const targetMarkup = getNumValue(elements.targetMarkupRate);
-  console.log('[MultiPattern] 目標値入率:', targetMarkup);
 
   if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
     alert('目標値入率を0〜99の範囲で入力してください。');
@@ -861,8 +856,6 @@ function applyTargetMarkupPrices() {
         btn.textContent = '✨ 売価を挿入';
       }, 2000);
     }
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
   } else {
     if (btn) {
       btn.textContent = '✨ 売価を挿入';
@@ -876,8 +869,6 @@ function applyTargetMarkupPrices() {
  * @param {number} digit - 下一桁の数字（0, 5, 8）
  */
 function roundPrices(digit) {
-  console.log(`[MultiPattern] roundPrices 開始: digit=${digit}`);
-
   // すべてのパターン行を取得
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
@@ -897,7 +888,6 @@ function roundPrices(digit) {
     if (isPositive(currentValue)) {
       // 丸め込み処理
       const roundedValue = roundToDigit(currentValue, digit);
-      console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${roundedValue}`);
 
       // 値を設定
       afterPriceInput.value = roundedValue;
@@ -924,8 +914,6 @@ function roundPrices(digit) {
         input.style.backgroundColor = '';
       }, 2000);
     });
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンを下一桁${digit}に丸め込みました`);
   } else {
     alert('加工後設定売価が入力されているパターンがありません。');
   }
@@ -984,8 +972,6 @@ function roundToDigit(value, digit) {
  * @param {number} amount - 調整金額（+10 or -10）
  */
 function adjustPrices(amount) {
-  console.log(`[MultiPattern] adjustPrices 開始: amount=${amount}`);
-
   // すべてのパターン行を取得
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
@@ -1008,8 +994,6 @@ function adjustPrices(amount) {
 
       // 負の値にならないようにチェック
       if (adjustedValue > 0) {
-        console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${adjustedValue}`);
-
         // 値を設定
         afterPriceInput.value = toFixed(adjustedValue, 2);
 
@@ -1037,8 +1021,6 @@ function adjustPrices(amount) {
         input.style.backgroundColor = '';
       }, 2000);
     });
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンを${amount > 0 ? '+' : ''}${amount}円調整しました`);
   } else {
     alert('加工後設定売価が入力されているパターンがありません。');
   }
@@ -1213,8 +1195,6 @@ export function replaceAllPatterns(newPatterns) {
 
   // パターン番号を更新
   updatePatternNumbers();
-
-  console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
 }
 
 /**

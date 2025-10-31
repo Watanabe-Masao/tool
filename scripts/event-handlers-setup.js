@@ -538,16 +538,6 @@ function init() {
     UI_ELEMENTS.CONSUMABLE
   ];
 
-  // セッション保存機能は無効化（モード切替時に確認ダイアログを表示する方式に変更）
-  // sessionSaveFields.forEach(fieldId => {
-  //   qs(`#${fieldId}`)?.addEventListener('input', () => {
-  //     saveSessionState(appState.getMode());
-  //   });
-  // });
-
-  // セッション状態の復元は無効化（モード切替時に確認ダイアログを表示する方式に変更）
-  // restoreSession();
-
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
     let refreshing = false;
