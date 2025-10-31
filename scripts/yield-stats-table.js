@@ -454,16 +454,16 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
             let judgmentColor = '';
 
             if (absZScore <= 1) {
-              judgment = '✓ 非常に良好';
+              judgment = '✓✓';
               judgmentColor = '#1b5e20'; // 濃い緑
             } else if (absZScore <= 2) {
-              judgment = '○ 良好';
+              judgment = '○';
               judgmentColor = '#388e3c'; // 緑
             } else if (absZScore <= 3) {
-              judgment = '△ 注意';
+              judgment = '△';
               judgmentColor = '#f57c00'; // オレンジ
             } else {
-              judgment = '× 外れ値の可能性';
+              judgment = '×';
               judgmentColor = '#c62828'; // 赤
             }
 

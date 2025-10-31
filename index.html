@@ -365,18 +365,18 @@
           <thead>
             <tr>
               <th>No.</th>
-              <th>加工前重量（g）</th>
-              <th>加工後重量（g）</th>
-              <th>歩留まり率</th>
+              <th>加工前重量<br><span class="th-unit">（g）</span></th>
+              <th>加工後重量<br><span class="th-unit">（g）</span></th>
+              <th>歩留まり率<br><span class="th-unit">（%）</span></th>
               <th>
-                z-score（標準偏差）
+                z-score<br><span class="th-unit">（標準偏差）</span>
                 <span class="help-icon"
                       data-formula-name="z-score（標準偏差）の判定基準"
                       data-formula="z = (個別値 - 平均) / 標準偏差"
                       data-formula-desc="<strong>z-scoreとは？</strong><br>個別の測定値が平均からどれだけ離れているかを、標準偏差を単位として表した値です。データのばらつき（標準偏差）を考慮した統計的に正しい判定が可能になります。<br><br><strong>判定基準：</strong><br>• |z| ≤ 1 → <span style='color:#1b5e20;font-weight:bold'>✓ 非常に良好</span> (68.3%範囲内、正常な値)<br>• |z| ≤ 2 → <span style='color:#388e3c;font-weight:bold'>○ 良好</span> (95.4%範囲内、問題ない値)<br>• |z| ≤ 3 → <span style='color:#f57c00;font-weight:bold'>△ 注意</span> (99.7%範囲内、やや外れた値)<br>• |z| > 3 → <span style='color:#c62828;font-weight:bold'>× 外れ値の可能性</span> (0.3%未満、測定ミスの可能性)<br><br><strong>💡 なぜz-scoreを使うのか？</strong><br>以前の「相対偏差率」では、データのばらつき（標準偏差）が考慮されていませんでした。z-scoreを使うことで、ばらつきが大きいデータでも小さいデータでも、統計的に公平な判定が可能になります。"
                       data-formula-example="平均50%、標準偏差2%の場合：<br>• 48% → z = (48-50)/2 = -1.0σ → ✓ 非常に良好<br>• 46% → z = (46-50)/2 = -2.0σ → ○ 良好<br>• 44% → z = (44-50)/2 = -3.0σ → △ 注意<br>• 42% → z = (42-50)/2 = -4.0σ → × 外れ値の可能性">?</span>
               </th>
-              <th title="z-scoreに基づく統計的判定&#10;±1σ以内: 非常に良好&#10;±2σ以内: 良好&#10;±3σ以内: 注意&#10;3σ外: 外れ値の可能性">判定</th>
+              <th title="z-scoreに基づく統計的判定&#10;✓✓: 非常に良好 (±1σ以内)&#10;○: 良好 (±2σ以内)&#10;△: 注意 (±3σ以内)&#10;×: 外れ値の可能性 (3σ外)">判定</th>
             </tr>
           </thead>
           <tbody id="yieldStatsTableBody">
