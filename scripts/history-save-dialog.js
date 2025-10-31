@@ -13,15 +13,12 @@ import { escapeHTML } from './history-item-renderer.js';
  * 保存ダイアログを表示
  */
 export async function showSaveDialog(showToastCallback) {
-  console.log('[showSaveDialog] 関数が呼び出されました');
   const dialog = qs('#saveDialog');
-  console.log('[showSaveDialog] dialog要素:', dialog);
   if (!dialog) {
     console.error('[showSaveDialog] エラー: dialog要素が見つかりません!');
     return;
   }
 
-  console.log('[showSaveDialog] modal-openクラスを追加');
   // 背景のスクロールを無効化
   document.body.classList.add('modal-open');
 
@@ -38,10 +35,8 @@ export async function showSaveDialog(showToastCallback) {
   }
 
   // ダイアログをすぐに表示（UIの応答性を向上）
-  console.log('[showSaveDialog] dialog.showModal()を呼び出します');
   try {
     dialog.showModal();
-    console.log('[showSaveDialog] ダイアログを表示しました');
   } catch (error) {
     console.error('[showSaveDialog] ダイアログ表示エラー:', error);
   }
