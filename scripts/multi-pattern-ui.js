@@ -449,6 +449,13 @@ function recalculateAll() {
  * 各パターンの加工後設定売価に、加工前値入率を維持する売価を設定
  */
 function calculateBreakEvenPrices() {
+  // ボタンを無効化してローディング表示
+  const btn = elements.breakEvenBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ 計算中...';
+  }
+
   // 現在のモードに応じて歩留まり率と加工前重量を取得
   let yr, bw;
 
@@ -458,6 +465,10 @@ function calculateBreakEvenPrices() {
 
     if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
       alert('加工前重量と加工後重量を入力してください。');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🎯 値入率分岐点を一括挿入';
+      }
       return;
     }
 
@@ -470,6 +481,10 @@ function calculateBreakEvenPrices() {
 
   if (!isPositive(yr) || !isPositive(bw)) {
     alert('歩留まり率と加工前重量を入力してください。');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🎯 値入率分岐点を一括挿入';
+    }
     return;
   }
 
@@ -478,10 +493,15 @@ function calculateBreakEvenPrices() {
 
   if (rows.length === 0) {
     alert('パターンがありません。');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🎯 値入率分岐点を一括挿入';
+    }
     return;
   }
 
   let updatedCount = 0;
+  const updatedInputs = [];
 
   // 各パターンの損益分岐点を計算して設定
   rows.forEach(row => {
@@ -515,6 +535,9 @@ function calculateBreakEvenPrices() {
               // 加工後設定売価に設定
               afterPriceInput.value = toFixed(breakEvenPrice, 2);
 
+              // ハイライト表示のために入力欄を記録
+              updatedInputs.push(afterPriceInput);
+
               // inputイベントを発火して再計算をトリガー
               const patternId = parseInt(row.dataset.patternId);
               handlePatternInput(patternId);
@@ -527,7 +550,32 @@ function calculateBreakEvenPrices() {
     }
   });
 
+  // ボタンを元に戻す
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🎯 値入率分岐点を一括挿入';
+  }
+
   if (updatedCount > 0) {
+    // 成功メッセージを表示
+    if (btn) {
+      btn.textContent = '✅ 挿入完了！';
+      setTimeout(() => {
+        btn.textContent = '🎯 値入率分岐点を一括挿入';
+      }, 2000);
+    }
+
+    // 更新された入力欄をハイライト表示
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#c8e6c9'; // 緑色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+
     console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点（加工前値入率を維持）を設定しました`);
   } else {
     alert('1個原価と1個売価が入力されているパターンがありません。');
