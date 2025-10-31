@@ -4,7 +4,7 @@
  */
 
 import { qs } from './dom-utils.js';
-import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES } from './constants.js';
+import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES, TIME } from './constants.js';
 
 const SESSION_KEY = 'yieldCalculatorSession';
 
@@ -121,8 +121,7 @@ export function restoreSessionState() {
     const sessionData = JSON.parse(sessionDataStr);
 
     // 24時間以上経過したセッションデータは破棄
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    if (sessionData.timestamp && (Date.now() - sessionData.timestamp > ONE_DAY)) {
+    if (sessionData.timestamp && (Date.now() - sessionData.timestamp > TIME.ONE_DAY)) {
       clearSessionState();
       return null;
     }

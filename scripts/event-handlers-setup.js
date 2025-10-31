@@ -6,7 +6,7 @@
 // すべての必要なimportsをmain.jsからコピー
 import { qs, qsa, num, hide, show, toggleActive, setText, yen, pct, addTapListener, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
+import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS, TIME } from './constants.js';
 import { updateSaveButtonsVisibility, showHistoryModal } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
 import {
@@ -561,7 +561,7 @@ function init() {
           // 定期的な更新チェック（1時間ごと）
           setInterval(() => {
             registration.update();
-          }, 60 * 60 * 1000);
+          }, TIME.ONE_HOUR);
         })
         .catch((error) => {
           console.error('[PWA] Service Worker registration failed:', error);

@@ -7,6 +7,12 @@ export const GRAMS_PER_100G = 100;
 export const GRAMS_PER_KG = 1000;
 export const PERCENT_MULTIPLIER = 100;
 
+// 時間定数（ミリ秒）
+export const TIME = {
+  ONE_HOUR: 60 * 60 * 1000,        // 1時間
+  ONE_DAY: 24 * 60 * 60 * 1000     // 24時間
+};
+
 // 計算モード
 export const MODE = {
   FIXED: 'fixed',
