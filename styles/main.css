@@ -3062,186 +3062,171 @@ input[type="range"] {
   font-size: 0.75em;
 }
 
-.adjust-btn {
-  padding: 0.5em 1em;
+/* Enhanced Adjust Buttons */
+.adjustment-card .adjust-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  padding: 0.6em 0.8em;
   border: 2px solid;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 0.9em;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 60px;
-  text-align: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 70px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.price-adjustment-tools.compact .adjust-btn {
-  padding: 0.35em 0.7em;
-  border-radius: 5px;
-  font-size: 0.8em;
-  min-width: 45px;
-  border-width: 1.5px;
+.btn-icon {
+  font-size: 1.2em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.btn-text {
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .adjust-minus {
-  background: linear-gradient(135deg, #fff 0%, #ffe0b2 100%);
-  color: #e65100;
-  border-color: #ffb74d;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+  color: #d32f2f;
+  border-color: #ffcdd2;
 }
 
 .adjust-minus:hover {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffc947 100%);
-  border-color: #f57c00;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-color: #ef5350;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
 }
 
 .adjust-plus {
-  background: linear-gradient(135deg, #fff 0%, #c8e6c9 100%);
+  background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
   color: #2e7d32;
-  border-color: #81c784;
+  border-color: #a5d6a7;
 }
 
 .adjust-plus:hover {
-  background: linear-gradient(135deg, #e8f5e9 0%, #66bb6a 100%);
-  border-color: #388e3c;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-color: #66bb6a;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
 }
 
 .adjust-btn:active {
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* 丸め込みモード選択 */
-.target-markup-round-mode {
+/* Enhanced Round Mode Selection */
+.adjustment-card .round-mode-radios {
+  display: flex;
+  gap: 0.4em;
+  width: 100%;
+}
+
+.adjustment-card .round-mode-radio {
+  flex: 1;
+  position: relative;
+}
+
+.adjustment-card .round-mode-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radio-label {
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
-  background: white;
-  padding: 0.8em;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
-.price-adjustment-tools.compact .target-markup-round-mode {
-  padding: 0.4em 0.6em;
-  border-radius: 6px;
-  gap: 0.4em;
-}
-
-.target-markup-round-mode .round-mode-label {
-  font-size: 0.85em;
-  color: #7f8c8d;
-  font-weight: 600;
-  white-space: nowrap;
-  display: flex;
   align-items: center;
-  gap: 0.3em;
-}
-
-.price-adjustment-tools.compact .round-mode-label {
-  font-size: 0.75em;
-}
-
-.round-mode-radios {
-  display: flex;
-  gap: 0.8em;
-}
-
-.price-adjustment-tools.compact .round-mode-radios {
-  gap: 0.5em;
-}
-
-.round-mode-radio {
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-  cursor: pointer;
-  font-size: 0.85em;
-  color: #495057;
-  font-weight: 500;
-}
-
-.price-adjustment-tools.compact .round-mode-radio {
-  font-size: 0.75em;
   gap: 0.2em;
-}
-
-.round-mode-radio input[type="radio"] {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  accent-color: #667eea;
-}
-
-.price-adjustment-tools.compact .round-mode-radio input[type="radio"] {
-  width: 14px;
-  height: 14px;
-}
-
-.round-mode-radio:hover {
-  color: #667eea;
-}
-
-/* 丸め込みボタングループ */
-.target-markup-round-group {
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-  background: white;
-  padding: 0.6em 0.8em;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
-.price-adjustment-tools.compact .target-markup-round-group {
-  padding: 0.4em 0.6em;
-  border-radius: 6px;
-  gap: 0.4em;
-}
-
-.target-markup-round-group .round-label {
-  font-size: 0.85em;
-  color: #7f8c8d;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.price-adjustment-tools.compact .round-label {
-  font-size: 0.75em;
-}
-
-.target-markup-round-btn {
-  padding: 0.4em 0.9em;
+  padding: 0.5em 0.4em;
   background: #f8f9fa;
+  border: 2px solid #e0e4e8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.radio-icon {
+  font-size: 1.1em;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.radio-text {
+  font-size: 0.85em;
+}
+
+.round-mode-radio input[type="radio"]:checked + .radio-label {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.round-mode-radio:not(:has(input:checked)) .radio-label:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+/* Enhanced Round Buttons */
+.adjustment-card .round-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  padding: 0.6em 0.5em;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #495057;
   border: 2px solid #dee2e6;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9em;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 48px;
-  text-align: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 55px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.price-adjustment-tools.compact .target-markup-round-btn {
-  padding: 0.3em 0.6em;
-  border-radius: 5px;
-  font-size: 0.8em;
-  min-width: 38px;
-  border-width: 1.5px;
+.round-target {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #667eea;
 }
 
-.target-markup-round-btn:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  transform: translateY(-1px);
+.round-suffix {
+  font-size: 0.7em;
+  opacity: 0.7;
 }
 
-.target-markup-round-btn:active {
+.round-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.round-btn:hover .round-target,
+.round-btn:hover .round-suffix {
+  color: white;
+  opacity: 1;
+}
+
+.round-btn:active {
   transform: translateY(0);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* 売価調整ツールセクション */
@@ -3259,6 +3244,12 @@ input[type="range"] {
   border-radius: 8px;
 }
 
+.price-adjustment-tools.enhanced {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+}
+
 .adjustment-tools-title {
   margin: 0 0 1em 0;
   font-size: 1.1em;
@@ -3270,7 +3261,7 @@ input[type="range"] {
 }
 
 .price-adjustment-tools.compact .adjustment-tools-title {
-  margin: 0 0 0.6em 0;
+  margin: 0 0 0.8em 0;
   font-size: 0.95em;
 }
 
@@ -3282,8 +3273,54 @@ input[type="range"] {
 }
 
 .price-adjustment-tools.compact .adjustment-tools-grid {
-  gap: 0.6em;
+  gap: 0.8em;
   margin-bottom: 0;
+}
+
+/* 調整カードスタイル */
+.adjustment-card {
+  flex: 1;
+  min-width: 200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.adjustment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.7em;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.card-icon {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.card-title {
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #5a67d8;
+  letter-spacing: 0.02em;
+}
+
+.card-body {
+  padding: 0.6em;
+  display: flex;
+  gap: 0.5em;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ヘルプテキスト */

@@ -1098,45 +1098,83 @@
         </div>
 
         <!-- 売価調整ツール -->
-        <div class="price-adjustment-tools compact">
+        <div class="price-adjustment-tools compact enhanced">
           <h4 class="adjustment-tools-title">
             💰 売価の微調整・丸め込み
-            <span class="help-icon help-icon-inline" data-tooltip="各パターンの加工後設定売価を一括調整できます">ⓘ</span>
           </h4>
 
           <div class="adjustment-tools-grid">
             <!-- 微調整ボタン -->
-            <div class="target-markup-adjust-group">
-              <span class="adjust-label">微調整</span>
-              <button type="button" id="adjustMinus10Btn" class="adjust-btn adjust-minus">-10</button>
-              <button type="button" id="adjustPlus10Btn" class="adjust-btn adjust-plus">+10</button>
+            <div class="adjustment-card">
+              <div class="card-header">
+                <span class="card-icon">⚡</span>
+                <span class="card-title">クイック調整</span>
+              </div>
+              <div class="card-body">
+                <button type="button" id="adjustMinus10Btn" class="adjust-btn adjust-minus">
+                  <span class="btn-icon">−</span>
+                  <span class="btn-text">10円</span>
+                </button>
+                <button type="button" id="adjustPlus10Btn" class="adjust-btn adjust-plus">
+                  <span class="btn-icon">+</span>
+                  <span class="btn-text">10円</span>
+                </button>
+              </div>
             </div>
 
             <!-- 丸め込みモード選択 -->
-            <div class="target-markup-round-mode">
-              <span class="round-mode-label">方法</span>
-              <div class="round-mode-radios">
-                <label class="round-mode-radio">
-                  <input type="radio" name="roundMode" value="round" checked />
-                  <span>近接</span>
-                </label>
-                <label class="round-mode-radio">
-                  <input type="radio" name="roundMode" value="ceil" />
-                  <span>切上</span>
-                </label>
-                <label class="round-mode-radio">
-                  <input type="radio" name="roundMode" value="floor" />
-                  <span>切捨</span>
-                </label>
+            <div class="adjustment-card">
+              <div class="card-header">
+                <span class="card-icon">🎯</span>
+                <span class="card-title">丸め方法</span>
+              </div>
+              <div class="card-body">
+                <div class="round-mode-radios">
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="round" checked />
+                    <span class="radio-label">
+                      <span class="radio-icon">≈</span>
+                      <span class="radio-text">近接</span>
+                    </span>
+                  </label>
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="ceil" />
+                    <span class="radio-label">
+                      <span class="radio-icon">↑</span>
+                      <span class="radio-text">切上</span>
+                    </span>
+                  </label>
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="floor" />
+                    <span class="radio-label">
+                      <span class="radio-icon">↓</span>
+                      <span class="radio-text">切捨</span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
             <!-- 丸め込みボタン -->
-            <div class="target-markup-round-group">
-              <span class="round-label">下一桁</span>
-              <button type="button" id="roundTo0Btn" class="target-markup-round-btn">→0</button>
-              <button type="button" id="roundTo5Btn" class="target-markup-round-btn">→5</button>
-              <button type="button" id="roundTo8Btn" class="target-markup-round-btn">→8</button>
+            <div class="adjustment-card">
+              <div class="card-header">
+                <span class="card-icon">🔢</span>
+                <span class="card-title">下一桁調整</span>
+              </div>
+              <div class="card-body">
+                <button type="button" id="roundTo0Btn" class="round-btn">
+                  <span class="round-target">0</span>
+                  <span class="round-suffix">円</span>
+                </button>
+                <button type="button" id="roundTo5Btn" class="round-btn">
+                  <span class="round-target">5</span>
+                  <span class="round-suffix">円</span>
+                </button>
+                <button type="button" id="roundTo8Btn" class="round-btn">
+                  <span class="round-target">8</span>
+                  <span class="round-suffix">円</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1146,7 +1184,6 @@
       <div id="multiPatternStep2Result" class="is-hidden step-result">
         <h3 class="section-subtitle">
           📈 比較結果
-          <span class="help-icon help-icon-modal" id="resultsHelpBtn" data-tooltip="各項目の詳しい説明を見る">ⓘ</span>
         </h3>
 
         <div class="multi-pattern-results-container">
