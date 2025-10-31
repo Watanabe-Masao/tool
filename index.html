@@ -1026,6 +1026,49 @@
           <button type="button" id="breakEvenBtn" class="btn btn-primary">🎯 値入率分岐点を一括挿入</button>
         </div>
 
+        <!-- 目標値入率から売価を挿入 -->
+        <div class="target-markup-section" style="margin-bottom: 1em; padding: 1em; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+          <div style="margin-bottom: 0.5em;">
+            <label for="targetMarkupRate" style="font-weight: 600; color: #495057; font-size: 0.95em;">
+              📊 目標値入率を設定
+            </label>
+          </div>
+          <div style="display: flex; gap: 1em; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 0 0 auto;">
+              <input
+                type="number"
+                id="targetMarkupRate"
+                min="0"
+                max="99"
+                step="0.1"
+                value="30"
+                style="width: 100px; padding: 0.5em; font-size: 1em; border: 2px solid #ced4da; border-radius: 4px;"
+                placeholder="30"
+              />
+              <span style="margin-left: 0.3em; color: #6c757d; font-weight: 600;">%</span>
+            </div>
+            <div style="flex: 1 1 200px; min-width: 200px;">
+              <input
+                type="range"
+                id="targetMarkupSlider"
+                min="0"
+                max="99"
+                step="0.1"
+                value="30"
+                style="width: 100%;"
+              />
+            </div>
+            <div style="flex: 0 0 auto;">
+              <button type="button" id="applyTargetMarkupBtn" class="btn btn-primary">
+                ✨ 目標値入率から売価を挿入
+              </button>
+            </div>
+          </div>
+          <div style="margin-top: 0.5em; font-size: 0.85em; color: #6c757d;">
+            設定した目標値入率を達成する売価を、各パターンの「加工後設定売価」に一括挿入します
+          </div>
+        </div>
+
         <!-- パターン入力テーブル -->
         <div class="multi-pattern-table-container">
           <table id="multiPatternTable" class="multi-pattern-table">
