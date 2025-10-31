@@ -3861,3 +3861,87 @@ input[type="range"] {
     margin-bottom: 0.3em;
   }
 }
+
+/* ========================================
+   トースト通知システム
+   ======================================== */
+
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  min-width: 250px;
+  max-width: 400px;
+  padding: 1em 1.5em;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  font-size: 0.95em;
+  font-weight: 500;
+  z-index: 10000;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.toast-show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.toast-hide {
+  opacity: 0;
+  transform: translateX(400px);
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+}
+
+.toast-icon {
+  font-size: 1.3em;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  line-height: 1.5;
+}
+
+/* トーストタイプ別スタイル */
+.toast-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.toast-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  color: white;
+}
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  .toast {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    min-width: auto;
+  }
+
+  .toast-message {
+    font-size: 0.9em;
+  }
+}

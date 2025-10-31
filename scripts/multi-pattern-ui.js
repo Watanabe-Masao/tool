@@ -5,6 +5,7 @@
 import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
+import { showError, showWarning } from './toast.js';
 
 // 定数
 const INITIAL_PATTERN_COUNT = 3;
@@ -323,7 +324,7 @@ function addPattern() {
 function removePattern(patternId) {
   // 最低1つは残す
   if (patterns.length <= 1) {
-    alert('最低1つのパターンが必要です。');
+    showWarning('最低1つのパターンが必要です。');
     return;
   }
 
@@ -601,7 +602,7 @@ function calculateBreakEvenPrices() {
     const afterWeight = getNumValue(elements.afterWeightCalc);
 
     if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
-      alert('加工前重量と加工後重量を入力してください。');
+      showWarning('加工前重量と加工後重量を入力してください。');
       if (btn) {
         btn.disabled = false;
         btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -617,7 +618,7 @@ function calculateBreakEvenPrices() {
   }
 
   if (!isPositive(yr) || !isPositive(bw)) {
-    alert('歩留まり率と加工前重量を入力してください。');
+    showWarning('歩留まり率と加工前重量を入力してください。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -629,7 +630,7 @@ function calculateBreakEvenPrices() {
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
   if (rows.length === 0) {
-    alert('パターンがありません。');
+    showWarning('パターンがありません。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -713,7 +714,7 @@ function calculateBreakEvenPrices() {
       }, 2000);
     });
   } else {
-    alert('1個原価と1個売価が入力されているパターンがありません。');
+    showWarning('1個原価と1個売価が入力されているパターンがありません。');
   }
 }
 
@@ -832,7 +833,7 @@ function applyTargetMarkupPrices() {
   const targetMarkup = getNumValue(elements.targetMarkupRate);
 
   if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
-    alert('目標値入率を0〜99の範囲で入力してください。');
+    showWarning('目標値入率を0〜99の範囲で入力してください。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '✨ 売価を挿入';
@@ -860,7 +861,7 @@ function applyTargetMarkupPrices() {
     if (btn) {
       btn.textContent = '✨ 売価を挿入';
     }
-    alert('1個原価が入力されているパターンがありません。');
+    showWarning('1個原価が入力されているパターンがありません。');
   }
 }
 
@@ -873,7 +874,7 @@ function roundPrices(digit) {
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
   if (rows.length === 0) {
-    alert('パターンがありません。');
+    showWarning('パターンがありません。');
     return;
   }
 
@@ -915,7 +916,7 @@ function roundPrices(digit) {
       }, 2000);
     });
   } else {
-    alert('加工後設定売価が入力されているパターンがありません。');
+    showWarning('加工後設定売価が入力されているパターンがありません。');
   }
 }
 
@@ -976,7 +977,7 @@ function adjustPrices(amount) {
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
   if (rows.length === 0) {
-    alert('パターンがありません。');
+    showWarning('パターンがありません。');
     return;
   }
 
@@ -1022,7 +1023,7 @@ function adjustPrices(amount) {
       }, 2000);
     });
   } else {
-    alert('加工後設定売価が入力されているパターンがありません。');
+    showWarning('加工後設定売価が入力されているパターンがありません。');
   }
 }
 

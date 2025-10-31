@@ -5,6 +5,7 @@
  */
 
 import { qs, qsa } from './dom-utils.js';
+import { showError, showWarning } from './toast.js';
 
 const PRESET_STORAGE_KEY = 'multiPatternPresets';
 let currentEditingPreset = null; // 編集中のプリセット
@@ -149,13 +150,13 @@ function addPairToTemp() {
   const unitPrice = parseFloat(qs('#tempUnitPrice')?.value);
 
   if (!Number.isFinite(unitCost) || !Number.isFinite(unitPrice) || unitCost <= 0 || unitPrice <= 0) {
-    alert('原価と売価を正しく入力してください。');
+    showWarning('原価と売価を正しく入力してください。');
     return;
   }
 
   // 原価が売価を上回っている場合のチェック
   if (unitCost > unitPrice) {
-    alert('原価が売価を上回っています。\n通常、売価は原価よりも高く設定されます。\n入力内容を確認してください。');
+    showError('原価が売価を上回っています。\n通常、売価は原価よりも高く設定されます。\n入力内容を確認してください。');
     return;
   }
 
@@ -195,12 +196,12 @@ function savePresetFromModal() {
   const name = qs('#presetName')?.value.trim();
 
   if (!name) {
-    alert('プリセット名を入力してください。');
+    showWarning('プリセット名を入力してください。');
     return;
   }
 
   if (tempPairs.length === 0) {
-    alert('少なくとも1つの原価・売価ペアを追加してください。');
+    showWarning('少なくとも1つの原価・売価ペアを追加してください。');
     return;
   }
 
@@ -342,7 +343,7 @@ function addSelectedPresetsToTable() {
   const checkedBoxes = qsa('.preset-checkbox:checked');
 
   if (checkedBoxes.length === 0) {
-    alert('追加するプリセットを選択してください。');
+    showWarning('追加するプリセットを選択してください。');
     return;
   }
 

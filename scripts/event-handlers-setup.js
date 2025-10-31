@@ -9,6 +9,7 @@ import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS, TIME } from './constants.js';
 import { updateSaveButtonsVisibility, showHistoryModal } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
+import { showError, showWarning } from './toast.js';
 import {
   hasInputValues,
   handleModeSwitch,
@@ -635,7 +636,7 @@ function init() {
     const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
-      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      showWarning('統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
@@ -647,7 +648,7 @@ function init() {
     const sigmaPatterns = generateSigmaPatterns(statsData, 2);
 
     if (sigmaPatterns.length === 0) {
-      alert('パターンを生成できませんでした。');
+      showError('パターンを生成できませんでした。');
       return;
     }
 
@@ -657,7 +658,7 @@ function init() {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
     } else {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
-      alert('パターン生成機能の初期化に失敗しました。');
+      showError('パターン生成機能の初期化に失敗しました。');
     }
   });
   qs('#generateSigmaPatternsBtn')?.addEventListener('touchend', (e) => {
@@ -667,7 +668,7 @@ function init() {
     const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
-      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      showWarning('統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
@@ -679,7 +680,7 @@ function init() {
     const sigmaPatterns = generateSigmaPatterns(statsData, 2);
 
     if (sigmaPatterns.length === 0) {
-      alert('パターンを生成できませんでした。');
+      showError('パターンを生成できませんでした。');
       return;
     }
 
@@ -689,7 +690,7 @@ function init() {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
     } else {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
-      alert('パターン生成機能の初期化に失敗しました。');
+      showError('パターン生成機能の初期化に失敗しました。');
     }
   }, { passive: false });
 
