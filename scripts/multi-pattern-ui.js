@@ -89,13 +89,11 @@ export function initMultiPatternUI() {
   // パターン追加ボタン
   if (elements.addPatternBtn) {
     elements.addPatternBtn.addEventListener('click', addPattern);
-    elements.addPatternBtn.addEventListener('touchend', (e) => { e.preventDefault(); addPattern(); }, { passive: false });
   }
 
   // 損益分岐点一括計算ボタン
   if (elements.breakEvenBtn) {
     elements.breakEvenBtn.addEventListener('click', calculateBreakEvenPrices);
-    elements.breakEvenBtn.addEventListener('touchend', (e) => { e.preventDefault(); calculateBreakEvenPrices(); }, { passive: false });
   }
 
   // 目標値入率のスライダーと入力ボックスの連携
@@ -126,27 +124,22 @@ export function initMultiPatternUI() {
   // 目標値入率から売価を挿入ボタン
   if (elements.applyTargetMarkupBtn) {
     elements.applyTargetMarkupBtn.addEventListener('click', applyTargetMarkupPrices);
-    elements.applyTargetMarkupBtn.addEventListener('touchend', (e) => { e.preventDefault(); applyTargetMarkupPrices(); }, { passive: false });
   }
 
   // 丸め込みボタン
   if (elements.roundTo0Btn) {
     elements.roundTo0Btn.addEventListener('click', () => roundPrices(0));
-    elements.roundTo0Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(0); }, { passive: false });
   }
   if (elements.roundTo5Btn) {
     elements.roundTo5Btn.addEventListener('click', () => roundPrices(5));
-    elements.roundTo5Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(5); }, { passive: false });
   }
   if (elements.roundTo8Btn) {
     elements.roundTo8Btn.addEventListener('click', () => roundPrices(8));
-    elements.roundTo8Btn.addEventListener('touchend', (e) => { e.preventDefault(); roundPrices(8); }, { passive: false });
   }
 
   // クリアボタン
   if (elements.clearBtn) {
     elements.clearBtn.addEventListener('click', clearAll);
-    elements.clearBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
   }
 
   // 初期パターンを追加
@@ -276,7 +269,6 @@ function addPattern() {
   // 削除ボタンのイベント
   const removeBtn = row.querySelector('.btn-remove');
   removeBtn.addEventListener('click', () => removePattern(patternId));
-  removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
 
   // パターン番号を更新
   updatePatternNumbers();
@@ -1040,7 +1032,6 @@ export function replaceAllPatterns(newPatterns) {
     // 削除ボタンのイベント
     const removeBtn = row.querySelector('.btn-remove');
     removeBtn.addEventListener('click', () => removePattern(patternId));
-    removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
   });
 
   // パターン番号を更新
