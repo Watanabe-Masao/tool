@@ -10,7 +10,8 @@ export const PERCENT_MULTIPLIER = 100;
 // 時間定数（ミリ秒）
 export const TIME = {
   ONE_HOUR: 60 * 60 * 1000,        // 1時間
-  ONE_DAY: 24 * 60 * 60 * 1000     // 24時間
+  ONE_DAY: 24 * 60 * 60 * 1000,    // 24時間
+  DEBOUNCE_DELAY: 300              // デバウンス遅延（300ms）
 };
 
 // 計算モード

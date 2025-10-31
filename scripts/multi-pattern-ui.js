@@ -6,6 +6,7 @@ import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 import { showError, showWarning } from './toast.js';
+import { debounce } from './debounce.js';
 
 // 定数
 const INITIAL_PATTERN_COUNT = 3;
@@ -15,6 +16,9 @@ const CSS_HIDDEN = 'is-hidden';
 let patternIdCounter = 1;
 const patterns = [];
 let currentYieldMethod = 'calculate'; // 'calculate' or 'direct'
+
+// デバウンス用マップ（パターンIDごとにデバウンスインスタンスを保持）
+const debouncedHandlers = new Map();
 
 // DOM要素（初期化時に取得）
 let elements = {};
@@ -83,12 +87,14 @@ export function initMultiPatternUI() {
   });
 
   // 重量から計算モードの入力イベント
-  elements.beforeWeightCalc.addEventListener('input', handleCalculateModeInput);
-  elements.afterWeightCalc.addEventListener('input', handleCalculateModeInput);
+  const debouncedHandleCalculateModeInput = debounce(handleCalculateModeInput);
+  elements.beforeWeightCalc.addEventListener('input', debouncedHandleCalculateModeInput);
+  elements.afterWeightCalc.addEventListener('input', debouncedHandleCalculateModeInput);
 
   // 歩留まり率直接入力モードの入力イベント
-  elements.beforeWeightDirect.addEventListener('input', handleDirectModeInput);
-  elements.yieldRateDirect.addEventListener('input', handleDirectModeInput);
+  const debouncedHandleDirectModeInput = debounce(handleDirectModeInput);
+  elements.beforeWeightDirect.addEventListener('input', debouncedHandleDirectModeInput);
+  elements.yieldRateDirect.addEventListener('input', debouncedHandleDirectModeInput);
 
   // パターン追加ボタン
   if (elements.addPatternBtn) {
@@ -102,12 +108,16 @@ export function initMultiPatternUI() {
 
   // 目標値入率のスライダーと入力ボックスの連携
   if (elements.targetMarkupRate && elements.targetMarkupSlider) {
+    const debouncedUpdatePricesFromTargetMarkup = debounce((value) => {
+      updatePricesFromTargetMarkup(value, false);
+    });
+
     // スライダーを動かしたら入力ボックス、売価を自動更新
     elements.targetMarkupSlider.addEventListener('input', (e) => {
       const value = parseFloat(e.target.value);
       elements.targetMarkupRate.value = toFixed(value, 1);
       // 売価をリアルタイムで自動更新（ハイライトなし）
-      updatePricesFromTargetMarkup(value, false);
+      debouncedUpdatePricesFromTargetMarkup(value);
     });
 
     // 入力ボックスを変更したらスライダー、売価を自動更新
@@ -121,7 +131,7 @@ export function initMultiPatternUI() {
       // スライダーのカスタムプロパティを更新
       elements.targetMarkupSlider.style.setProperty('--slider-percent', `${value}%`);
       // 売価をリアルタイムで自動更新（ハイライトなし）
-      updatePricesFromTargetMarkup(value, false);
+      debouncedUpdatePricesFromTargetMarkup(value);
     });
   }
 
@@ -304,10 +314,13 @@ function addPattern() {
     afterPrice100: null
   });
 
-  // 入力イベントを設定
+  // 入力イベントを設定（デバウンス化）
+  const debouncedHandler = debounce(() => handlePatternInput(patternId));
+  debouncedHandlers.set(patternId, debouncedHandler);
+
   const inputs = row.querySelectorAll('input');
   inputs.forEach(input => {
-    input.addEventListener('input', () => handlePatternInput(patternId));
+    input.addEventListener('input', debouncedHandler);
   });
 
   // 削除ボタンのイベント
@@ -339,6 +352,9 @@ function removePattern(patternId) {
   if (index !== -1) {
     patterns.splice(index, 1);
   }
+
+  // デバウンスハンドラーを削除
+  debouncedHandlers.delete(patternId);
 
   // パターン番号を更新
   updatePatternNumbers();
@@ -1183,10 +1199,13 @@ export function replaceAllPatterns(newPatterns) {
       afterPrice100: null
     });
 
-    // 入力イベントを設定
+    // 入力イベントを設定（デバウンス化）
+    const debouncedHandler = debounce(() => handlePatternInput(patternId));
+    debouncedHandlers.set(patternId, debouncedHandler);
+
     const inputs = row.querySelectorAll('input');
     inputs.forEach(input => {
-      input.addEventListener('input', () => handlePatternInput(patternId));
+      input.addEventListener('input', debouncedHandler);
     });
 
     // 削除ボタンのイベント

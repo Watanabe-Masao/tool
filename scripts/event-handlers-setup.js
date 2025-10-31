@@ -10,6 +10,7 @@ import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STAT
 import { updateSaveButtonsVisibility, showHistoryModal } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
 import { showError, showWarning } from './toast.js';
+import { debounce } from './debounce.js';
 import {
   hasInputValues,
   handleModeSwitch,
@@ -300,54 +301,59 @@ function init() {
   });
 
   // 定額モード - 重量から計算モード - Step 1の入力監視
+  const debouncedHandleStep1 = debounce(handleStep1);
   [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
    FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleStep1);
   });
 
   // 定額モード - 重量から計算モード - Step 2の入力監視
-  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', handleStep2);
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', debounce(handleStep2));
 
   // 定額モード - 重量から計算モード - Step 3の入力監視
-  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleStep3);
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleStep3));
 
   // 定額モード - 歩留まり率直接入力モード - Step 1の入力監視
+  const debouncedHandleDirectStep1 = debounce(handleDirectStep1);
   [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
    FIXED_FIELDS.DIRECT.BEFORE_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleDirectStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleDirectStep1);
   });
 
   // 定額モード - 歩留まり率直接入力モード - Step 2の入力監視
-  qs(`#${FIXED_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleDirectStep2);
+  qs(`#${FIXED_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', debounce(handleDirectStep2));
 
   // 定額モード - 歩留まり率直接入力モード - Step 3の入力監視
-  qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleDirectStep3);
+  qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleDirectStep3));
 
   // 計量モード - 重量から計算モード - Step 1の入力監視
+  const debouncedHandleWeightStep1 = debounce(handleWeightStep1);
   [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
    WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightStep1);
   });
 
   // 計量モード - 重量から計算モード - Step 2の入力監視
+  const debouncedHandleWeightStep2 = debounce(handleWeightStep2);
   [WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE, WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightStep2);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightStep2);
   });
 
   // 計量モード - 重量から計算モード - Step 3の入力監視
-  qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightStep3);
+  qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleWeightStep3));
 
   // 計量モード - 歩留まり率直接入力モード - Step 1の入力監視
+  const debouncedHandleWeightDirectStep1 = debounce(handleWeightDirectStep1);
   [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
    WEIGHT_FIELDS.DIRECT.BOX_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightDirectStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightDirectStep1);
   });
 
   // 計量モード - 歩留まり率直接入力モード - Step 2の入力監視
-  qs(`#${WEIGHT_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleWeightDirectStep2);
+  qs(`#${WEIGHT_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', debounce(handleWeightDirectStep2));
 
   // 計量モード - 歩留まり率直接入力モード - Step 3の入力監視
-  qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightDirectStep3);
+  qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleWeightDirectStep3));
 
   // 歩留まり率統計モード - 統計タイプ選択
   qs('#statsTypeSelect')?.addEventListener('change', () => {
@@ -360,13 +366,9 @@ function init() {
   });
 
   // 歩留まり率統計モード - サンプルサイズ妥当性判断
-  qs('#toleranceError')?.addEventListener('input', () => {
-    displaySampleSizeValidation();
-  });
-
-  qs('#confidenceLevel')?.addEventListener('change', () => {
-    displaySampleSizeValidation();
-  });
+  const debouncedDisplaySampleSizeValidation = debounce(displaySampleSizeValidation);
+  qs('#toleranceError')?.addEventListener('input', debouncedDisplaySampleSizeValidation);
+  qs('#confidenceLevel')?.addEventListener('change', debouncedDisplaySampleSizeValidation);
 
   // 外れ値の全選択・全解除ボタン
   qs('#selectAllOutliers')?.addEventListener('click', () => {
@@ -409,14 +411,16 @@ function init() {
   setupFormulaModal();
 
   // 商品化シミュレーション
+  const debouncedHandleProductCalculation = debounce(handleProductCalculation);
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleProductCalculation);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleProductCalculation);
   });
 
   // 値引きシミュレーション
+  const debouncedHandleDiscountUpdate = debounce(handleDiscountUpdate);
   qs(`#${UI_ELEMENTS.DISC_SLIDER}`)?.addEventListener('input', (e) => {
     qs(`#${UI_ELEMENTS.DISC_INPUT}`).value = e.target.value;
-    handleDiscountUpdate();
+    debouncedHandleDiscountUpdate();
   });
 
   qs(`#${UI_ELEMENTS.DISC_INPUT}`)?.addEventListener('input', (e) => {
@@ -424,7 +428,7 @@ function init() {
     v = Math.max(0, Math.min(100, v));
     e.target.value = v;
     qs(`#${UI_ELEMENTS.DISC_SLIDER}`).value = Math.min(v, 50);
-    handleDiscountUpdate();
+    debouncedHandleDiscountUpdate();
   });
 
   // 逆算シミュレーション
@@ -447,9 +451,10 @@ function init() {
     }
   });
 
-  qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', handleReverseCalculation);
+  const debouncedHandleReverseCalculation = debounce(handleReverseCalculation);
+  qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', debouncedHandleReverseCalculation);
   qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
-    r.addEventListener('change', handleReverseCalculation);
+    r.addEventListener('change', debouncedHandleReverseCalculation);
   });
 
   // ステップ1-5の入力が変更されたら逆算シミュレーションをリセット
