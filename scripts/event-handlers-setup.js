@@ -370,42 +370,47 @@ function init() {
   qs('#toleranceError')?.addEventListener('input', debouncedDisplaySampleSizeValidation);
   qs('#confidenceLevel')?.addEventListener('change', debouncedDisplaySampleSizeValidation);
 
-  // 外れ値の全選択・全解除ボタン
-  qs('#selectAllOutliers')?.addEventListener('click', () => {
+  /**
+   * 外れ値の全選択処理
+   */
+  function handleSelectAllOutliers() {
     const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
       checkbox.checked = true;
     });
     handleOutlierCheckboxChange();
-  });
+  }
+
+  /**
+   * 外れ値の全解除処理
+   */
+  function handleDeselectAllOutliers() {
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    handleOutlierCheckboxChange();
+  }
+
+  // 外れ値の全選択・全解除ボタン
+  qs('#selectAllOutliers')?.addEventListener('click', handleSelectAllOutliers);
   qs('#selectAllOutliers')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = true;
-    });
-    handleOutlierCheckboxChange();
+    handleSelectAllOutliers();
   }, { passive: false });
 
-  qs('#deselectAllOutliers')?.addEventListener('click', () => {
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = false;
-    });
-    handleOutlierCheckboxChange();
-  });
+  qs('#deselectAllOutliers')?.addEventListener('click', handleDeselectAllOutliers);
   qs('#deselectAllOutliers')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = false;
-    });
-    handleOutlierCheckboxChange();
+    handleDeselectAllOutliers();
   }, { passive: false });
 
   // 外れ値を含む行を削除
   qs('#deleteOutlierRows')?.addEventListener('click', deleteOutlierRows);
-  qs('#deleteOutlierRows')?.addEventListener('touchend', (e) => { e.preventDefault(); deleteOutlierRows(); }, { passive: false });
+  qs('#deleteOutlierRows')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    deleteOutlierRows();
+  }, { passive: false });
 
   // 計算式詳細モーダル
   setupFormulaModal();
@@ -634,8 +639,10 @@ function init() {
   // updateLoadStatsButtons関数内で設定されます。
   // ここには静的なイベントハンドラーは設置しません（競合を防ぐため）。
 
-  // σパターン一括生成ボタン
-  qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
+  /**
+   * σパターン一括生成処理
+   */
+  function handleGenerateSigmaPatterns() {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
     const statsData = window.statsDataByType?.[selectedStatsType];
@@ -665,38 +672,13 @@ function init() {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
       showError('パターン生成機能の初期化に失敗しました。');
     }
-  });
+  }
+
+  // σパターン一括生成ボタン
+  qs('#generateSigmaPatternsBtn')?.addEventListener('click', handleGenerateSigmaPatterns);
   qs('#generateSigmaPatternsBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-    const statsData = window.statsDataByType?.[selectedStatsType];
-
-    if (!statsData) {
-      showWarning('統計データがありません。先に歩留まり統計で計算を実行してください。');
-      return;
-    }
-
-    if (!confirm('現在のパターンをクリアして、標準偏差パターン（平均±1σ、±2σ）を自動生成しますか？')) {
-      return;
-    }
-
-    // σパターンを生成
-    const sigmaPatterns = generateSigmaPatterns(statsData, 2);
-
-    if (sigmaPatterns.length === 0) {
-      showError('パターンを生成できませんでした。');
-      return;
-    }
-
-    // 複数パターン分析のパターンテーブルをクリアして、σパターンを追加
-    // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
-    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
-      window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
-    } else {
-      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
-      showError('パターン生成機能の初期化に失敗しました。');
-    }
+    handleGenerateSigmaPatterns();
   }, { passive: false });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
@@ -722,8 +704,10 @@ function init() {
   // プリセット管理機能のイベントリスナーは setupPresetEventListeners() で設定済み
   // （重複を避けるため、ここでの設定は削除）
 
-  // 統計読み込みボタンのイベントリスナー
-  document.addEventListener('click', (e) => {
+  /**
+   * 統計読み込みボタンのハンドラー（共通処理）
+   */
+  function handleStatsLoadButtonClick(e) {
     // 統計読み込みボタン（平均値）
     if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
@@ -744,45 +728,25 @@ function init() {
     }
     // 統計読み込みボタン（推奨値）
     else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      loadRecommendedValueToMultiPattern(false, selectedStatsType);
-    }
-  });
-
-  // 統計読み込みボタンのタッチイベントリスナー（モバイル対応）
-  document.addEventListener('touchend', (e) => {
-    // 統計読み込みボタン（平均値）
-    if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
-      e.preventDefault();
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
-      if (statsData) {
-        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-      }
-    }
-    // 統計読み込みボタン（中央値）
-    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
-      e.preventDefault();
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
-      if (statsData) {
-        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-      }
-    }
-    // 統計読み込みボタン（推奨値）
-    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
-      e.preventDefault();
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
       loadRecommendedValueToMultiPattern(false, selectedStatsType);
     }
     // 歩留まり統計データを読み込むボタン
     else if (e.target.id === 'loadYieldStatsDataBtn' || e.target.closest('#loadYieldStatsDataBtn')) {
-      e.preventDefault();
       showHistoryModal();
+    }
+  }
+
+  // 統計読み込みボタンのイベントリスナー
+  document.addEventListener('click', handleStatsLoadButtonClick);
+
+  // 統計読み込みボタンのタッチイベントリスナー（モバイル対応）
+  document.addEventListener('touchend', (e) => {
+    // タッチイベントの場合のみpreventDefault
+    if (e.target.closest('#loadStatsMeanBtn, #loadStatsMedianBtn, #loadStatsRecommendedBtn, #loadYieldStatsDataBtn')) {
+      e.preventDefault();
+      handleStatsLoadButtonClick(e);
     }
   }, { passive: false });
 
