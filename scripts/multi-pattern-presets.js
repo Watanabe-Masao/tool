@@ -424,12 +424,14 @@ export function setupPresetEventListeners() {
   const openModalBtn = qs('#openPresetModalBtn') || qs('#showPresetManagerBtn');
   if (openModalBtn) {
     openModalBtn.addEventListener('click', openPresetModal);
+    openModalBtn.addEventListener('touchend', (e) => { e.preventDefault(); openPresetModal(); }, { passive: false });
   }
 
   // モーダルを閉じるボタン
   const closeBtn = qs('#closePresetModalBtn');
   if (closeBtn) {
     closeBtn.addEventListener('click', closePresetModal);
+    closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); closePresetModal(); }, { passive: false });
   }
 
   // バックドロップをクリックで閉じる
@@ -446,18 +448,21 @@ export function setupPresetEventListeners() {
   const newBtn = qs('#newPresetBtn');
   if (newBtn) {
     newBtn.addEventListener('click', openNewPresetEditor);
+    newBtn.addEventListener('touchend', (e) => { e.preventDefault(); openNewPresetEditor(); }, { passive: false });
   }
 
   // 一覧に戻るボタン
   const backBtn = qs('#backToListBtn');
   if (backBtn) {
     backBtn.addEventListener('click', showPresetList);
+    backBtn.addEventListener('touchend', (e) => { e.preventDefault(); showPresetList(); }, { passive: false });
   }
 
   // ペアを追加ボタン
   const addPairBtn = qs('#addPairBtn');
   if (addPairBtn) {
     addPairBtn.addEventListener('click', addPairToTemp);
+    addPairBtn.addEventListener('touchend', (e) => { e.preventDefault(); addPairToTemp(); }, { passive: false });
   }
 
   // Enter キーでペアを追加
@@ -482,12 +487,13 @@ export function setupPresetEventListeners() {
   const saveBtn = qs('#savePresetBtn');
   if (saveBtn) {
     saveBtn.addEventListener('click', savePresetFromModal);
+    saveBtn.addEventListener('touchend', (e) => { e.preventDefault(); savePresetFromModal(); }, { passive: false });
   }
 
   // プリセットリストのイベント（委任）
   const presetList = qs('#presetList');
   if (presetList) {
-    presetList.addEventListener('click', (e) => {
+    const handlePresetListEvent = (e) => {
       const target = e.target;
 
       // 編集ボタン
@@ -501,23 +507,36 @@ export function setupPresetEventListeners() {
         const id = parseInt(target.dataset.presetId);
         deletePresetFromModal(id);
       }
-    });
+    };
+
+    presetList.addEventListener('click', handlePresetListEvent);
+    presetList.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handlePresetListEvent(e);
+    }, { passive: false });
   }
 
   // ペアテーブルのイベント（委任）
   const pairsTableBody = qs('#presetPairsTableBody');
   if (pairsTableBody) {
-    pairsTableBody.addEventListener('click', (e) => {
+    const handlePairsTableEvent = (e) => {
       if (e.target.classList.contains('btn-remove-pair')) {
         const index = parseInt(e.target.dataset.pairIndex);
         removeTempPair(index);
       }
-    });
+    };
+
+    pairsTableBody.addEventListener('click', handlePairsTableEvent);
+    pairsTableBody.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handlePairsTableEvent(e);
+    }, { passive: false });
   }
 
   // 選択したプリセットを追加ボタン
   const addSelectedBtn = qs('#addSelectedPresetsBtn');
   if (addSelectedBtn) {
     addSelectedBtn.addEventListener('click', addSelectedPresetsToTable);
+    addSelectedBtn.addEventListener('touchend', (e) => { e.preventDefault(); addSelectedPresetsToTable(); }, { passive: false });
   }
 }
