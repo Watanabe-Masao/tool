@@ -1047,7 +1047,12 @@
               />
               <span style="margin-left: 0.3em; color: #6c757d; font-weight: 600;">%</span>
             </div>
-            <div style="flex: 1 1 200px; min-width: 200px;">
+            <div style="flex: 1 1 200px; min-width: 200px; display: flex; flex-direction: column; gap: 0.3em;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.85em; color: #6c757d;">0%</span>
+                <span id="targetMarkupSliderValue" style="font-size: 1.1em; font-weight: 600; color: #007bff;">30.0%</span>
+                <span style="font-size: 0.85em; color: #6c757d;">99%</span>
+              </div>
               <input
                 type="range"
                 id="targetMarkupSlider"

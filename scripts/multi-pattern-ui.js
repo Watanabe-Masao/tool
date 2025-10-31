@@ -50,6 +50,7 @@ export function initMultiPatternUI() {
     // 目標値入率
     targetMarkupRate: document.getElementById('targetMarkupRate'),
     targetMarkupSlider: document.getElementById('targetMarkupSlider'),
+    targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
     applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
 
     // 結果
@@ -94,12 +95,16 @@ export function initMultiPatternUI() {
 
   // 目標値入率のスライダーと入力ボックスの連携
   if (elements.targetMarkupRate && elements.targetMarkupSlider) {
-    // スライダーを動かしたら入力ボックスを更新
+    // スライダーを動かしたら入力ボックスとビジュアル表示を更新
     elements.targetMarkupSlider.addEventListener('input', (e) => {
-      elements.targetMarkupRate.value = e.target.value;
+      const value = parseFloat(e.target.value);
+      elements.targetMarkupRate.value = value;
+      if (elements.targetMarkupSliderValue) {
+        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
+      }
     });
 
-    // 入力ボックスを変更したらスライダーを更新
+    // 入力ボックスを変更したらスライダーとビジュアル表示を更新
     elements.targetMarkupRate.addEventListener('input', (e) => {
       let value = parseFloat(e.target.value);
       if (isNaN(value)) value = 0;
@@ -107,6 +112,9 @@ export function initMultiPatternUI() {
       if (value > 99) value = 99;
       elements.targetMarkupRate.value = value;
       elements.targetMarkupSlider.value = value;
+      if (elements.targetMarkupSliderValue) {
+        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
+      }
     });
   }
 
@@ -615,6 +623,8 @@ function calculateBreakEvenPrices() {
  * 目標値入率から売価を一括計算して設定
  */
 function applyTargetMarkupPrices() {
+  console.log('[MultiPattern] applyTargetMarkupPrices 開始');
+
   // ボタンを無効化してローディング表示
   const btn = elements.applyTargetMarkupBtn;
   if (btn) {
@@ -624,6 +634,7 @@ function applyTargetMarkupPrices() {
 
   // 目標値入率を取得
   const targetMarkup = getNumValue(elements.targetMarkupRate);
+  console.log('[MultiPattern] 目標値入率:', targetMarkup);
 
   if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
     alert('目標値入率を0〜99の範囲で入力してください。');
@@ -659,6 +670,7 @@ function applyTargetMarkupPrices() {
 
   if (!isPositive(yr) || !isPositive(bw)) {
     alert('歩留まり率と加工前重量を入力してください。');
+    console.log('[MultiPattern] エラー: 歩留まり率または加工前重量が不正', { yr, bw });
     if (btn) {
       btn.disabled = false;
       btn.textContent = '✨ 目標値入率から売価を挿入';
@@ -666,8 +678,11 @@ function applyTargetMarkupPrices() {
     return;
   }
 
+  console.log('[MultiPattern] 歩留まり率:', yr, '%, 加工前重量:', bw, 'g');
+
   // すべてのパターン行を取得
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+  console.log('[MultiPattern] パターン行数:', rows.length);
 
   if (rows.length === 0) {
     alert('パターンがありません。');
@@ -682,28 +697,33 @@ function applyTargetMarkupPrices() {
   const updatedInputs = [];
 
   // 各パターンに目標値入率を適用
-  rows.forEach(row => {
+  rows.forEach((row, index) => {
     const unitCostInput = row.querySelector('.pattern-unit-cost');
     const afterPriceInput = row.querySelector('.pattern-after-price');
 
     const unitCost = getNumValue(unitCostInput);
+    console.log(`[MultiPattern] パターン${index + 1}: 1個原価=${unitCost}`);
 
     // 1個原価が入力されている場合のみ計算
     if (isPositive(unitCost)) {
       // 加工前100g原価を計算
       const beforeCost100 = per100FromPerUnit(unitCost, bw);
+      console.log(`[MultiPattern] パターン${index + 1}: 加工前100g原価=${beforeCost100}`);
 
       if (beforeCost100) {
         // 加工後100g原価を計算
         const afterCost100 = afterCostPer100(beforeCost100, yr);
+        console.log(`[MultiPattern] パターン${index + 1}: 加工後100g原価=${afterCost100}`);
 
         if (afterCost100) {
           // 目標値入率を達成する加工後100g売価を計算
           const targetPrice = priceFromMarkup(afterCost100, targetMarkup);
+          console.log(`[MultiPattern] パターン${index + 1}: 目標売価=${targetPrice}`);
 
           if (isPositive(targetPrice)) {
             // 加工後設定売価に設定
             afterPriceInput.value = toFixed(targetPrice, 2);
+            console.log(`[MultiPattern] パターン${index + 1}: 設定完了 value=${afterPriceInput.value}`);
 
             // ハイライト表示のために入力欄を記録
             updatedInputs.push(afterPriceInput);
