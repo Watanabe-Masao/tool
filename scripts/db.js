@@ -7,6 +7,52 @@ const DB_NAME = 'YieldCalculatorDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'calculations';
 
+/**
+ * IndexedDBエラーをユーザーフレンドリーなメッセージに変換
+ * @param {Error} error - エラーオブジェクト
+ * @param {string} operation - 実行していた操作
+ * @returns {Error} 変換されたエラー
+ */
+function createUserFriendlyError(error, operation) {
+  let message = `データベース操作に失敗しました: ${operation}`;
+
+  if (error.name === 'QuotaExceededError') {
+    message = 'ストレージの容量が不足しています。不要なデータを削除してください。';
+  } else if (error.name === 'VersionError') {
+    message = 'データベースのバージョンが競合しています。ページを再読み込みしてください。';
+  } else if (error.name === 'InvalidStateError') {
+    message = 'データベースが無効な状態です。ページを再読み込みしてください。';
+  } else if (error.name === 'DataError') {
+    message = 'データの形式が正しくありません。';
+  } else if (error.name === 'AbortError') {
+    message = 'データベース操作が中断されました。';
+  }
+
+  const userError = new Error(message);
+  userError.originalError = error;
+  userError.operation = operation;
+  return userError;
+}
+
+/**
+ * IndexedDBが利用可能かチェック
+ * @returns {boolean}
+ */
+function isIndexedDBAvailable() {
+  if (!window.indexedDB) {
+    return false;
+  }
+
+  // プライベートモードなどでIndexedDBが無効な場合をチェック
+  try {
+    const test = indexedDB.open('test');
+    test.onerror = () => test.result && test.result.close();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export class YieldCalculatorDB {
   constructor() {
     this.db = null;
@@ -18,6 +64,14 @@ export class YieldCalculatorDB {
    * @returns {Promise<IDBDatabase>}
    */
   async open() {
+    // IndexedDBが利用可能かチェック
+    if (!isIndexedDBAvailable()) {
+      throw createUserFriendlyError(
+        new Error('IndexedDB not available'),
+        'データベースへのアクセス（ブラウザがIndexedDBをサポートしていないか、プライベートモードの可能性があります）'
+      );
+    }
+
     // 既に開いている場合は既存のDBインスタンスを返す
     if (this.db) {
       return Promise.resolve(this.db);
@@ -34,29 +88,41 @@ export class YieldCalculatorDB {
 
       request.onerror = () => {
         this.openPromise = null; // エラー時にリセット
-        reject(request.error);
+        reject(createUserFriendlyError(request.error, 'データベースを開く'));
       };
+
       request.onsuccess = () => {
         this.db = request.result;
         this.openPromise = null; // 成功時にリセット
+
+        // データベース接続エラーを監視
+        this.db.onerror = (event) => {
+          console.error('IndexedDB error:', event.target.error);
+        };
+
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
 
-        // calculations ストアを作成
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, {
-            keyPath: 'id',
-            autoIncrement: true
-          });
+        try {
+          // calculations ストアを作成
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, {
+              keyPath: 'id',
+              autoIncrement: true
+            });
 
-          // インデックスを作成（高速検索用）
-          store.createIndex('timestamp', 'timestamp', { unique: false });
-          store.createIndex('name', 'name', { unique: false });
-          store.createIndex('mode', 'mode', { unique: false });
-          store.createIndex('category', 'category', { unique: false });
+            // インデックスを作成（高速検索用）
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+            store.createIndex('name', 'name', { unique: false });
+            store.createIndex('mode', 'mode', { unique: false });
+            store.createIndex('category', 'category', { unique: false });
+          }
+        } catch (error) {
+          console.error('Failed to create object store:', error);
+          reject(createUserFriendlyError(error, 'データベーススキーマの作成'));
         }
       };
     });
@@ -73,21 +139,25 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを保存'));
 
-      const store = transaction.objectStore(STORE_NAME);
+        const store = transaction.objectStore(STORE_NAME);
 
-      const record = {
-        ...data,
-        timestamp: data.timestamp || Date.now(),
-        createdAt: new Date().toISOString()
-      };
+        const record = {
+          ...data,
+          timestamp: data.timestamp || Date.now(),
+          createdAt: new Date().toISOString()
+        };
 
-      const request = store.add(record);
+        const request = store.add(record);
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを保存'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを保存'));
+      }
     });
   }
 
@@ -100,37 +170,41 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを取得'));
 
-      const store = transaction.objectStore(STORE_NAME);
+        const store = transaction.objectStore(STORE_NAME);
 
-      let request;
+        let request;
 
-      // インデックスを使用した検索
-      if (options.sortBy === 'timestamp') {
-        const index = store.index('timestamp');
-        request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
-      } else if (options.sortBy === 'name') {
-        const index = store.index('name');
-        request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
-      } else {
-        request = store.openCursor();
-      }
-
-      const results = [];
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          results.push(cursor.value);
-          cursor.continue();
+        // インデックスを使用した検索
+        if (options.sortBy === 'timestamp') {
+          const index = store.index('timestamp');
+          request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
+        } else if (options.sortBy === 'name') {
+          const index = store.index('name');
+          request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
         } else {
-          resolve(results);
+          request = store.openCursor();
         }
-      };
 
-      request.onerror = () => reject(request.error);
+        const results = [];
+
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            results.push(cursor.value);
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        };
+
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを取得'));
+      }
     });
   }
 
@@ -143,14 +217,18 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readonly');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを取得'));
 
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(id);
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(id);
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを取得'));
+      }
     });
   }
 
@@ -164,33 +242,40 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを更新'));
 
-      const store = transaction.objectStore(STORE_NAME);
+        const store = transaction.objectStore(STORE_NAME);
 
-      const getRequest = store.get(id);
+        const getRequest = store.get(id);
 
-      getRequest.onsuccess = () => {
-        const record = getRequest.result;
-        if (!record) {
-          reject(new Error(`Record with id ${id} not found`));
-          return;
-        }
+        getRequest.onsuccess = () => {
+          const record = getRequest.result;
+          if (!record) {
+            reject(createUserFriendlyError(
+              new Error(`Record with id ${id} not found`),
+              'データを更新（レコードが見つかりません）'
+            ));
+            return;
+          }
 
-        const updatedRecord = {
-          ...record,
-          ...data,
-          id, // IDは保持
-          updatedAt: new Date().toISOString()
+          const updatedRecord = {
+            ...record,
+            ...data,
+            id, // IDは保持
+            updatedAt: new Date().toISOString()
+          };
+
+          const updateRequest = store.put(updatedRecord);
+          updateRequest.onsuccess = () => resolve();
+          updateRequest.onerror = () => reject(createUserFriendlyError(updateRequest.error, 'データを更新'));
         };
 
-        const updateRequest = store.put(updatedRecord);
-        updateRequest.onsuccess = () => resolve();
-        updateRequest.onerror = () => reject(updateRequest.error);
-      };
-
-      getRequest.onerror = () => reject(getRequest.error);
+        getRequest.onerror = () => reject(createUserFriendlyError(getRequest.error, 'データを更新'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを更新'));
+      }
     });
   }
 
@@ -203,14 +288,18 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを削除'));
 
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(id);
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(id);
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを削除'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを削除'));
+      }
     });
   }
 
@@ -220,12 +309,16 @@ export class YieldCalculatorDB {
    * @returns {Promise<Array>}
    */
   async search(query) {
-    const all = await this.getAll();
-    const lowerQuery = query.toLowerCase();
+    try {
+      const all = await this.getAll();
+      const lowerQuery = query.toLowerCase();
 
-    return all.filter(item =>
-      item.name && item.name.toLowerCase().includes(lowerQuery)
-    );
+      return all.filter(item =>
+        item.name && item.name.toLowerCase().includes(lowerQuery)
+      );
+    } catch (error) {
+      throw createUserFriendlyError(error, 'データを検索');
+    }
   }
 
   /**
@@ -233,8 +326,12 @@ export class YieldCalculatorDB {
    * @returns {Promise<string>}
    */
   async exportJSON() {
-    const data = await this.getAll();
-    return JSON.stringify(data, null, 2);
+    try {
+      const data = await this.getAll();
+      return JSON.stringify(data, null, 2);
+    } catch (error) {
+      throw createUserFriendlyError(error, 'データをエクスポート');
+    }
   }
 
   /**
@@ -247,11 +344,17 @@ export class YieldCalculatorDB {
     try {
       data = JSON.parse(jsonString);
     } catch (parseError) {
-      throw new Error('Invalid JSON format: ' + parseError.message);
+      throw createUserFriendlyError(
+        parseError,
+        'データをインポート（JSONの形式が正しくありません）'
+      );
     }
 
     if (!Array.isArray(data)) {
-      throw new Error('Invalid JSON format: expected array');
+      throw createUserFriendlyError(
+        new Error('Invalid JSON format: expected array'),
+        'データをインポート（配列形式のJSONが必要です）'
+      );
     }
 
     let count = 0;
@@ -284,14 +387,18 @@ export class YieldCalculatorDB {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      transaction.onerror = () => reject(transaction.error);
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'すべてのデータを削除'));
 
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.clear();
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.clear();
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'すべてのデータを削除'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'すべてのデータを削除'));
+      }
     });
   }
 
