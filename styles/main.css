@@ -2104,3 +2104,334 @@ input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: 
     opacity: 1;
   }
 }
+
+/* ================================================
+   目標値入率設定セクション - モダンUI
+   ================================================ */
+
+.target-markup-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  padding: 1.5em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.3s ease;
+}
+
+.target-markup-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ヘッダーセクション */
+.target-markup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1.2em;
+  padding-bottom: 0.8em;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.target-markup-header .header-icon {
+  font-size: 1.5em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.target-markup-header .header-title {
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* メインコントロールエリア */
+.target-markup-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.5em;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+/* 入力ボックスエリア */
+.target-markup-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: white;
+  padding: 0.8em 1em;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.target-markup-input-group:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+.target-markup-input-group input[type="number"] {
+  width: 90px;
+  padding: 0.5em;
+  font-size: 1.2em;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  color: #2c3e50;
+  background: transparent;
+  text-align: center;
+}
+
+.target-markup-input-group input[type="number"]::-webkit-inner-spin-button,
+.target-markup-input-group input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 30px;
+}
+
+.target-markup-input-group .unit-label {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* スライダーエリア */
+.target-markup-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  min-width: 250px;
+}
+
+.target-markup-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.3em;
+}
+
+.target-markup-slider-labels .range-label {
+  font-size: 0.8em;
+  color: #95a5a6;
+  font-weight: 500;
+}
+
+.target-markup-slider-labels .current-value {
+  font-size: 1.3em;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* カスタムスライダー */
+.target-markup-slider-group input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 10px;
+  background: linear-gradient(to right,
+    #667eea 0%,
+    #667eea var(--slider-percent, 30%),
+    #e9ecef var(--slider-percent, 30%),
+    #e9ecef 100%);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.target-markup-slider-group input[type="range"]:hover {
+  transform: scaleY(1.2);
+}
+
+.target-markup-slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s ease;
+}
+
+.target-markup-slider-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+.target-markup-slider-group input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+}
+
+.target-markup-slider-group input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s ease;
+}
+
+.target-markup-slider-group input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+/* ボタングループ */
+.target-markup-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+}
+
+.target-markup-apply-btn {
+  padding: 0.7em 1.5em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95em;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.target-markup-apply-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.target-markup-apply-btn:active {
+  transform: translateY(0);
+}
+
+.target-markup-apply-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 丸め込みボタングループ */
+.target-markup-round-group {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  background: white;
+  padding: 0.6em 0.8em;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.target-markup-round-group .round-label {
+  font-size: 0.85em;
+  color: #7f8c8d;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.target-markup-round-btn {
+  padding: 0.4em 0.9em;
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 48px;
+  text-align: center;
+}
+
+.target-markup-round-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.target-markup-round-btn:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ヘルプテキスト */
+.target-markup-help {
+  display: flex;
+  align-items: start;
+  gap: 0.5em;
+  padding: 0.8em 1em;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+  margin-top: 1em;
+}
+
+.target-markup-help .help-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.target-markup-help .help-text {
+  font-size: 0.85em;
+  color: #5a6c7d;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1024px) {
+  .target-markup-controls {
+    grid-template-columns: 1fr;
+    gap: 1em;
+  }
+
+  .target-markup-input-group {
+    justify-content: center;
+  }
+
+  .target-markup-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .target-markup-round-group {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .target-markup-section {
+    padding: 1em;
+  }
+
+  .target-markup-slider-group {
+    min-width: 200px;
+  }
+
+  .target-markup-buttons {
+    flex-direction: column;
+  }
+
+  .target-markup-round-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .target-markup-apply-btn {
+    width: 100%;
+  }
+}

@@ -755,7 +755,7 @@ function applyTargetMarkupPrices() {
     alert('目標値入率を0〜99の範囲で入力してください。');
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '✨ 目標値入率から売価を挿入';
+      btn.textContent = '✨ 売価を挿入';
     }
     return;
   }
@@ -773,14 +773,14 @@ function applyTargetMarkupPrices() {
     if (btn) {
       btn.textContent = `✅ 挿入完了！（${toFixed(targetMarkup, 1)}%）`;
       setTimeout(() => {
-        btn.textContent = '✨ 目標値入率から売価を挿入';
+        btn.textContent = '✨ 売価を挿入';
       }, 2000);
     }
 
     console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
   } else {
     if (btn) {
-      btn.textContent = '✨ 目標値入率から売価を挿入';
+      btn.textContent = '✨ 売価を挿入';
     }
     alert('1個原価が入力されているパターンがありません。');
   }
