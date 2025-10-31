@@ -1147,7 +1147,14 @@
                 <th colspan="3" class="header-group header-markup">値入率（%）</th>
                 <th rowspan="2" class="header-finished">仕上がり<br>売価（円）</th>
                 <th rowspan="2" class="header-diff">1個<br>差額（円）</th>
-                <th rowspan="2" class="header-sensitivity">感度<br>(%/1%)</th>
+                <th rowspan="2" class="header-sensitivity">
+                  感度<br>(%/1%)
+                  <span class="help-icon"
+                    data-formula-name="感度分析（Sensitivity Analysis）"
+                    data-formula="感度 = (歩留まり率+1%時の値入率) - (現在の値入率)"
+                    data-formula-desc="<strong>感度とは？</strong><br>歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。<br><br><strong>数値の意味：</strong><br>• プラス（+）：歩留まり率が上がると値入率も上がる<br>• 値が大きいほど：歩留まり改善の効果が大きい<br>• ゼロに近い：歩留まり変動の影響が小さい"
+                    data-formula-example="<strong>例1：</strong>感度が+0.5の場合<br>→ 歩留まり率が1%向上すると、値入率が0.5%向上<br><br><strong>例2：</strong>感度が+1.2の場合<br>→ 歩留まり率が1%向上すると、値入率が1.2%向上<br><br><strong>活用方法：</strong><br>感度が大きい商品ほど、歩留まり改善による利益向上効果が高いため、優先的に改善対策を実施すべきです。">?</span>
+                </th>
               </tr>
               <tr>
                 <th class="subheader-before">加工前</th>
