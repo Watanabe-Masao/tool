@@ -3,7 +3,7 @@
  */
 
 import { calculatePattern } from './calculator-multi-pattern.js';
-import { toFixed, calcYield } from './calculation.js';
+import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
 // 定数
@@ -45,6 +45,18 @@ export function initMultiPatternUI() {
     step2: document.getElementById('multiPatternStep2'),
     tableBody: document.getElementById('multiPatternTableBody'),
     addPatternBtn: document.getElementById('addPatternBtn'),
+    breakEvenBtn: document.getElementById('breakEvenBtn'),
+
+    // 目標値入率
+    targetMarkupRate: document.getElementById('targetMarkupRate'),
+    targetMarkupSlider: document.getElementById('targetMarkupSlider'),
+    targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
+    applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
+
+    // 丸め込みボタン
+    roundTo0Btn: document.getElementById('roundTo0Btn'),
+    roundTo5Btn: document.getElementById('roundTo5Btn'),
+    roundTo8Btn: document.getElementById('roundTo8Btn'),
 
     // 結果
     step2Result: document.getElementById('multiPatternStep2Result'),
@@ -77,13 +89,61 @@ export function initMultiPatternUI() {
   // パターン追加ボタン
   if (elements.addPatternBtn) {
     elements.addPatternBtn.addEventListener('click', addPattern);
-    elements.addPatternBtn.addEventListener('touchend', (e) => { e.preventDefault(); addPattern(); }, { passive: false });
+  }
+
+  // 損益分岐点一括計算ボタン
+  if (elements.breakEvenBtn) {
+    elements.breakEvenBtn.addEventListener('click', calculateBreakEvenPrices);
+  }
+
+  // 目標値入率のスライダーと入力ボックスの連携
+  if (elements.targetMarkupRate && elements.targetMarkupSlider) {
+    // スライダーを動かしたら入力ボックス、ビジュアル表示、売価を自動更新
+    elements.targetMarkupSlider.addEventListener('input', (e) => {
+      const value = parseFloat(e.target.value);
+      elements.targetMarkupRate.value = value;
+      if (elements.targetMarkupSliderValue) {
+        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
+      }
+      // 売価をリアルタイムで自動更新（ハイライトなし）
+      updatePricesFromTargetMarkup(value, false);
+    });
+
+    // 入力ボックスを変更したらスライダー、ビジュアル表示、売価を自動更新
+    elements.targetMarkupRate.addEventListener('input', (e) => {
+      let value = parseFloat(e.target.value);
+      if (isNaN(value)) value = 0;
+      if (value < 0) value = 0;
+      if (value > 99) value = 99;
+      elements.targetMarkupRate.value = value;
+      elements.targetMarkupSlider.value = value;
+      if (elements.targetMarkupSliderValue) {
+        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
+      }
+      // 売価をリアルタイムで自動更新（ハイライトなし）
+      updatePricesFromTargetMarkup(value, false);
+    });
+  }
+
+  // 目標値入率から売価を挿入ボタン
+  if (elements.applyTargetMarkupBtn) {
+    elements.applyTargetMarkupBtn.addEventListener('click', applyTargetMarkupPrices);
+  }
+
+  // 丸め込みボタン
+  if (elements.roundTo0Btn) {
+    elements.roundTo0Btn.addEventListener('click', () => roundPrices(0));
+  }
+  if (elements.roundTo5Btn) {
+    elements.roundTo5Btn.addEventListener('click', () => roundPrices(5));
+  }
+  if (elements.roundTo8Btn) {
+    elements.roundTo8Btn.addEventListener('click', () => roundPrices(8));
   }
 
   // クリアボタン
   if (elements.clearBtn) {
     elements.clearBtn.addEventListener('click', clearAll);
-    elements.clearBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAll(); }, { passive: false });
   }
 
   // 初期パターンを追加
@@ -213,7 +273,6 @@ function addPattern() {
   // 削除ボタンのイベント
   const removeBtn = row.querySelector('.btn-remove');
   removeBtn.addEventListener('click', () => removePattern(patternId));
-  removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
 
   // パターン番号を更新
   updatePatternNumbers();
@@ -438,6 +497,381 @@ function recalculateAll() {
 }
 
 /**
+ * 損益分岐点を一括計算して設定
+ * 各パターンの加工後設定売価に、加工前値入率を維持する売価を設定
+ */
+function calculateBreakEvenPrices() {
+  // ボタンを無効化してローディング表示
+  const btn = elements.breakEvenBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ 計算中...';
+  }
+
+  // 現在のモードに応じて歩留まり率と加工前重量を取得
+  let yr, bw;
+
+  if (currentYieldMethod === 'calculate') {
+    const beforeWeight = getNumValue(elements.beforeWeightCalc);
+    const afterWeight = getNumValue(elements.afterWeightCalc);
+
+    if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
+      alert('加工前重量と加工後重量を入力してください。');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🎯 値入率分岐点を一括挿入';
+      }
+      return;
+    }
+
+    yr = calcYield(beforeWeight, afterWeight);
+    bw = beforeWeight;
+  } else {
+    yr = getNumValue(elements.yieldRateDirect);
+    bw = getNumValue(elements.beforeWeightDirect);
+  }
+
+  if (!isPositive(yr) || !isPositive(bw)) {
+    alert('歩留まり率と加工前重量を入力してください。');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🎯 値入率分岐点を一括挿入';
+    }
+    return;
+  }
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    alert('パターンがありません。');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🎯 値入率分岐点を一括挿入';
+    }
+    return;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンの損益分岐点を計算して設定
+  rows.forEach(row => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+
+    const unitCost = getNumValue(unitCostInput);
+    const unitPrice = getNumValue(unitPriceInput);
+
+    // 1個原価と1個売価が入力されている場合のみ計算
+    if (isPositive(unitCost) && isPositive(unitPrice)) {
+      // 加工前100g原価を計算
+      const beforeCost100 = per100FromPerUnit(unitCost, bw);
+      // 加工前100g売価を計算
+      const beforePrice100 = per100FromPerUnit(unitPrice, bw);
+
+      if (beforeCost100 && beforePrice100) {
+        // 加工前値入率を計算
+        const beforeMarkupRate = markup(beforeCost100, beforePrice100);
+
+        if (Number.isFinite(beforeMarkupRate) && beforeMarkupRate >= 0 && beforeMarkupRate < 100) {
+          // 加工後100g原価を計算
+          const afterCost100 = afterCostPer100(beforeCost100, yr);
+
+          if (afterCost100) {
+            // 加工前値入率を維持する加工後100g売価を計算
+            const breakEvenPrice = priceFromMarkup(afterCost100, beforeMarkupRate);
+
+            if (isPositive(breakEvenPrice)) {
+              // 加工後設定売価に設定
+              afterPriceInput.value = toFixed(breakEvenPrice, 2);
+
+              // ハイライト表示のために入力欄を記録
+              updatedInputs.push(afterPriceInput);
+
+              // inputイベントを発火して再計算をトリガー
+              const patternId = parseInt(row.dataset.patternId);
+              handlePatternInput(patternId);
+
+              updatedCount++;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ボタンを元に戻す
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🎯 値入率分岐点を一括挿入';
+  }
+
+  if (updatedCount > 0) {
+    // 成功メッセージを表示
+    if (btn) {
+      btn.textContent = '✅ 挿入完了！';
+      setTimeout(() => {
+        btn.textContent = '🎯 値入率分岐点を一括挿入';
+      }, 2000);
+    }
+
+    // 更新された入力欄をハイライト表示
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#c8e6c9'; // 緑色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+
+    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点（加工前値入率を維持）を設定しました`);
+  } else {
+    alert('1個原価と1個売価が入力されているパターンがありません。');
+  }
+}
+
+/**
+ * 目標値入率から売価を更新（リアルタイム用）
+ * @param {number} targetMarkup - 目標値入率
+ * @param {boolean} showHighlight - ハイライトを表示するか
+ * @returns {number} - 更新したパターン数
+ */
+function updatePricesFromTargetMarkup(targetMarkup, showHighlight = false) {
+  // 入力値の検証
+  if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
+    return 0;
+  }
+
+  // 現在のモードに応じて歩留まり率と加工前重量を取得
+  let yr, bw;
+
+  if (currentYieldMethod === 'calculate') {
+    const beforeWeight = getNumValue(elements.beforeWeightCalc);
+    const afterWeight = getNumValue(elements.afterWeightCalc);
+
+    if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
+      return 0;
+    }
+
+    yr = calcYield(beforeWeight, afterWeight);
+    bw = beforeWeight;
+  } else {
+    yr = getNumValue(elements.yieldRateDirect);
+    bw = getNumValue(elements.beforeWeightDirect);
+  }
+
+  if (!isPositive(yr) || !isPositive(bw)) {
+    return 0;
+  }
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンに目標値入率を適用
+  rows.forEach((row) => {
+    const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+
+    const unitCost = getNumValue(unitCostInput);
+
+    // 1個原価が入力されている場合のみ計算
+    if (isPositive(unitCost)) {
+      // 加工前100g原価を計算
+      const beforeCost100 = per100FromPerUnit(unitCost, bw);
+
+      if (beforeCost100) {
+        // 加工後100g原価を計算
+        const afterCost100 = afterCostPer100(beforeCost100, yr);
+
+        if (afterCost100) {
+          // 目標値入率を達成する加工後100g売価を計算
+          const targetPrice = priceFromMarkup(afterCost100, targetMarkup);
+
+          if (isPositive(targetPrice)) {
+            // 加工後設定売価に設定
+            afterPriceInput.value = toFixed(targetPrice, 2);
+
+            // ハイライト表示のために入力欄を記録
+            if (showHighlight) {
+              updatedInputs.push(afterPriceInput);
+            }
+
+            // inputイベントを発火して再計算をトリガー
+            const patternId = parseInt(row.dataset.patternId);
+            handlePatternInput(patternId);
+
+            updatedCount++;
+          }
+        }
+      }
+    }
+  });
+
+  // ハイライト表示
+  if (showHighlight && updatedInputs.length > 0) {
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#bbdefb'; // 青色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+  }
+
+  return updatedCount;
+}
+
+/**
+ * 目標値入率から売価を一括計算して設定（ボタンクリック用）
+ */
+function applyTargetMarkupPrices() {
+  console.log('[MultiPattern] applyTargetMarkupPrices 開始');
+
+  // ボタンを無効化してローディング表示
+  const btn = elements.applyTargetMarkupBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ 計算中...';
+  }
+
+  // 目標値入率を取得
+  const targetMarkup = getNumValue(elements.targetMarkupRate);
+  console.log('[MultiPattern] 目標値入率:', targetMarkup);
+
+  if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
+    alert('目標値入率を0〜99の範囲で入力してください。');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✨ 売価を挿入';
+    }
+    return;
+  }
+
+  // 売価を更新（ハイライト表示あり）
+  const updatedCount = updatePricesFromTargetMarkup(targetMarkup, true);
+
+  // ボタンを元に戻す
+  if (btn) {
+    btn.disabled = false;
+  }
+
+  if (updatedCount > 0) {
+    // 成功メッセージを表示
+    if (btn) {
+      btn.textContent = `✅ 挿入完了！（${toFixed(targetMarkup, 1)}%）`;
+      setTimeout(() => {
+        btn.textContent = '✨ 売価を挿入';
+      }, 2000);
+    }
+
+    console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
+  } else {
+    if (btn) {
+      btn.textContent = '✨ 売価を挿入';
+    }
+    alert('1個原価が入力されているパターンがありません。');
+  }
+}
+
+/**
+ * 売価を丸め込み（下一桁を0, 5, 8に調整）
+ * @param {number} digit - 下一桁の数字（0, 5, 8）
+ */
+function roundPrices(digit) {
+  console.log(`[MultiPattern] roundPrices 開始: digit=${digit}`);
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    alert('パターンがありません。');
+    return;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンの加工後設定売価を丸め込み
+  rows.forEach((row, index) => {
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+    const currentValue = getNumValue(afterPriceInput);
+
+    if (isPositive(currentValue)) {
+      // 丸め込み処理
+      const roundedValue = roundToDigit(currentValue, digit);
+      console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${roundedValue}`);
+
+      // 値を設定
+      afterPriceInput.value = roundedValue;
+
+      // ハイライト表示のために入力欄を記録
+      updatedInputs.push(afterPriceInput);
+
+      // inputイベントを発火して再計算をトリガー
+      const patternId = parseInt(row.dataset.patternId);
+      handlePatternInput(patternId);
+
+      updatedCount++;
+    }
+  });
+
+  if (updatedCount > 0) {
+    // 更新された入力欄をハイライト表示
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = '#fff9c4'; // 黄色のハイライト
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+
+    console.log(`[MultiPattern] ${updatedCount}個のパターンを下一桁${digit}に丸め込みました`);
+  } else {
+    alert('加工後設定売価が入力されているパターンがありません。');
+  }
+}
+
+/**
+ * 値を指定した下一桁に丸め込み（小数点なし）
+ * @param {number} value - 元の値
+ * @param {number} digit - 下一桁の数字（0, 5, 8）
+ * @returns {number} - 丸め込み後の値
+ */
+function roundToDigit(value, digit) {
+  // 小数点を四捨五入して整数に
+  const intValue = Math.round(value);
+
+  // 下一桁を取得
+  const lastDigit = intValue % 10;
+
+  // 10の位を計算
+  const base = Math.floor(intValue / 10) * 10;
+
+  // 現在の下一桁がdigitより小さいか等しい場合、現在の10の位 + digit
+  // それ以外の場合、次の10の位 + digit
+  if (lastDigit <= digit) {
+    return base + digit;
+  } else {
+    return base + 10 + digit;
+  }
+}
+
+/**
  * すべてクリア
  */
 function clearAll() {
@@ -602,7 +1036,6 @@ export function replaceAllPatterns(newPatterns) {
     // 削除ボタンのイベント
     const removeBtn = row.querySelector('.btn-remove');
     removeBtn.addEventListener('click', () => removePattern(patternId));
-    removeBtn.addEventListener('touchend', (e) => { e.preventDefault(); removePattern(patternId); }, { passive: false });
   });
 
   // パターン番号を更新

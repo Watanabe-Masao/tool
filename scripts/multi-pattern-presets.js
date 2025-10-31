@@ -487,32 +487,40 @@ export function setupPresetEventListeners() {
   // プリセットリストのイベント（委任）
   const presetList = qs('#presetList');
   if (presetList) {
-    presetList.addEventListener('click', (e) => {
+    const handlePresetListEvent = (e) => {
       const target = e.target;
 
       // 編集ボタン
       if (target.classList.contains('preset-btn-edit')) {
         const id = parseInt(target.dataset.presetId);
         editPresetFromModal(id);
+        return;
       }
 
       // 削除ボタン
       if (target.classList.contains('preset-btn-delete')) {
         const id = parseInt(target.dataset.presetId);
         deletePresetFromModal(id);
+        return;
       }
-    });
+    };
+
+    // clickイベントのみを使用（タッチデバイスでも正しく動作）
+    presetList.addEventListener('click', handlePresetListEvent);
   }
 
   // ペアテーブルのイベント（委任）
   const pairsTableBody = qs('#presetPairsTableBody');
   if (pairsTableBody) {
-    pairsTableBody.addEventListener('click', (e) => {
+    const handlePairsTableEvent = (e) => {
       if (e.target.classList.contains('btn-remove-pair')) {
         const index = parseInt(e.target.dataset.pairIndex);
         removeTempPair(index);
       }
-    });
+    };
+
+    // clickイベントのみを使用（タッチデバイスでも正しく動作）
+    pairsTableBody.addEventListener('click', handlePairsTableEvent);
   }
 
   // 選択したプリセットを追加ボタン

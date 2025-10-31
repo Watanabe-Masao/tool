@@ -29,6 +29,12 @@ export function markup(costPer100, pricePer100) {
   return ((pricePer100 - costPer100) / pricePer100) * 100;
 }
 
+export function priceFromMarkup(costPer100, markupPct) {
+  // 値入率から売価を逆算: price = cost / (1 - markup/100)
+  if (!isPositive(costPer100) || !isNonNegative(markupPct) || markupPct >= 100) return null;
+  return costPer100 / (1 - (markupPct / 100));
+}
+
 export function grossFromMarkup(markupPct, discountPct = 0) {
   const m = markupPct / 100;
   const d = discountPct / 100;

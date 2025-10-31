@@ -76,6 +76,12 @@ function markup(costPer100, pricePer100) {
   return ((pricePer100 - costPer100) / pricePer100) * 100;
 }
 
+function priceFromMarkup(costPer100, markupPct) {
+  // 値入率から売価を逆算: price = cost / (1 - markup/100)
+  if (!isPositive(costPer100) || !isNonNegative(markupPct) || markupPct >= 100) return null;
+  return costPer100 / (1 - (markupPct / 100));
+}
+
 function grossFromMarkup(markupPct, discountPct = 0) {
   const m = markupPct / 100;
   const d = discountPct / 100;
@@ -299,6 +305,60 @@ test('原価と売価が同じ場合 → 値入率0%', () => {
 });
 
 // ========================================
+// 値入率から売価を逆算するテスト
+// ========================================
+
+console.log('\n========================================');
+console.log('値入率から売価を逆算するテスト');
+console.log('========================================\n');
+
+test('原価50円、値入率50% → 売価100円', () => {
+  const result = priceFromMarkup(50, 50);
+  assertAlmostEquals(result, 100, 0.01, '売価は100円であるべき');
+});
+
+test('原価75円、値入率25% → 売価100円', () => {
+  const result = priceFromMarkup(75, 25);
+  assertAlmostEquals(result, 100, 0.01, '売価は100円であるべき');
+});
+
+test('原価80円、値入率33.33% → 売価120円', () => {
+  const result = priceFromMarkup(80, 33.33);
+  assertAlmostEquals(result, 120, 0.1, '売価は約120円であるべき');
+});
+
+test('原価100円、値入率0% → 売価100円', () => {
+  const result = priceFromMarkup(100, 0);
+  assertAlmostEquals(result, 100, 0.01, '売価は100円であるべき');
+});
+
+test('値入率100%の場合はnullを返す（売価が無限大になる）', () => {
+  const result = priceFromMarkup(100, 100);
+  assertEquals(result, null, '値入率100%ではnullを返すべき');
+});
+
+test('負の値入率はnullを返す', () => {
+  const result = priceFromMarkup(100, -10);
+  assertEquals(result, null, '負の値入率ではnullを返すべき');
+});
+
+test('値入率100%超過はnullを返す', () => {
+  const result = priceFromMarkup(100, 110);
+  assertEquals(result, null, '値入率100%超過ではnullを返すべき');
+});
+
+test('逆算の検証: 原価62.5円、値入率52.65% → 売価約132.0円（元の値入率と一致）', () => {
+  const cost = 62.5;
+  const markupRate = 52.65;
+  const price = priceFromMarkup(cost, markupRate);
+  assertAlmostEquals(price, 132.0, 0.1, '売価は約132.0円であるべき');
+
+  // 逆算した売価から値入率を再計算して一致することを確認
+  const recalculatedMarkup = markup(cost, price);
+  assertAlmostEquals(recalculatedMarkup, markupRate, 0.1, '逆算した値入率は元の値入率と一致すべき');
+});
+
+// ========================================
 // 粗利率計算テスト
 // ========================================
 
@@ -464,6 +524,35 @@ test('計量モード完全シナリオ: 豚バラ10kg箱5000円 → サンプ�
   // Step 5: 値入率計算
   const markupRate = markup(afterCost, afterPrice);
   assertAlmostEquals(markupRate, 51.17, 0.1);
+});
+
+test('損益分岐点計算シナリオ: 1個150円/200g、1個198円/200g、歩留まり80% → 加工前値入率を維持', () => {
+  // Step 1: 加工前の原価・売価を計算
+  const unitCost = 150;
+  const unitPrice = 198;
+  const beforeWeight = 200;
+
+  const beforeCost100 = per100FromPerUnit(unitCost, beforeWeight);
+  const beforePrice100 = per100FromPerUnit(unitPrice, beforeWeight);
+  assertAlmostEquals(beforeCost100, 75, 0.01, '加工前100g原価は75円');
+  assertAlmostEquals(beforePrice100, 99, 0.01, '加工前100g売価は99円');
+
+  // Step 2: 加工前値入率を計算
+  const beforeMarkup = markup(beforeCost100, beforePrice100);
+  assertAlmostEquals(beforeMarkup, 24.24, 0.1, '加工前値入率は約24.24%');
+
+  // Step 3: 歩留まり率から加工後原価を計算
+  const yieldRate = 80;
+  const afterCost100 = afterCostPer100(beforeCost100, yieldRate);
+  assertAlmostEquals(afterCost100, 93.75, 0.01, '加工後100g原価は93.75円');
+
+  // Step 4: 加工前値入率を維持する売価を計算（損益分岐点）
+  const breakEvenPrice = priceFromMarkup(afterCost100, beforeMarkup);
+  assertAlmostEquals(breakEvenPrice, 123.76, 0.1, '損益分岐点（加工前値入率を維持）は約123.76円');
+
+  // Step 5: 検証：計算した売価での値入率が加工前値入率と一致することを確認
+  const afterMarkup = markup(afterCost100, breakEvenPrice);
+  assertAlmostEquals(afterMarkup, beforeMarkup, 0.1, '加工後値入率は加工前値入率と一致すべき');
 });
 
 // ========================================
