@@ -50,7 +50,6 @@ export function initMultiPatternUI() {
     // 目標値入率
     targetMarkupRate: document.getElementById('targetMarkupRate'),
     targetMarkupSlider: document.getElementById('targetMarkupSlider'),
-    targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
     applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
 
     // 微調整ボタン
@@ -102,28 +101,24 @@ export function initMultiPatternUI() {
 
   // 目標値入率のスライダーと入力ボックスの連携
   if (elements.targetMarkupRate && elements.targetMarkupSlider) {
-    // スライダーを動かしたら入力ボックス、ビジュアル表示、売価を自動更新
+    // スライダーを動かしたら入力ボックス、売価を自動更新
     elements.targetMarkupSlider.addEventListener('input', (e) => {
       const value = parseFloat(e.target.value);
-      elements.targetMarkupRate.value = value;
-      if (elements.targetMarkupSliderValue) {
-        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
-      }
+      elements.targetMarkupRate.value = toFixed(value, 1);
       // 売価をリアルタイムで自動更新（ハイライトなし）
       updatePricesFromTargetMarkup(value, false);
     });
 
-    // 入力ボックスを変更したらスライダー、ビジュアル表示、売価を自動更新
+    // 入力ボックスを変更したらスライダー、売価を自動更新
     elements.targetMarkupRate.addEventListener('input', (e) => {
       let value = parseFloat(e.target.value);
       if (isNaN(value)) value = 0;
       if (value < 0) value = 0;
       if (value > 99) value = 99;
-      elements.targetMarkupRate.value = value;
+      elements.targetMarkupRate.value = toFixed(value, 1);
       elements.targetMarkupSlider.value = value;
-      if (elements.targetMarkupSliderValue) {
-        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
-      }
+      // スライダーのカスタムプロパティを更新
+      elements.targetMarkupSlider.style.setProperty('--slider-percent', `${value}%`);
       // 売価をリアルタイムで自動更新（ハイライトなし）
       updatePricesFromTargetMarkup(value, false);
     });

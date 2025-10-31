@@ -2938,6 +2938,43 @@ input[type="range"] {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.editable-value-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+}
+
+.target-markup-slider-labels .editable-value {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #667eea;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.2em 0.4em;
+  text-align: center;
+  width: 3em;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.target-markup-slider-labels .editable-value:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-bottom-color: rgba(102, 126, 234, 0.3);
+}
+
+.target-markup-slider-labels .editable-value:focus {
+  outline: none;
+  background: rgba(102, 126, 234, 0.1);
+  border-bottom-color: #667eea;
+}
+
+.value-suffix {
+  font-size: 1em;
+  font-weight: 700;
+  color: #667eea;
+}
+
 /* カスタムスライダー */
 .target-markup-slider-group input[type="range"] {
   -webkit-appearance: none;
@@ -3665,6 +3702,7 @@ input[type="range"] {
   margin: 0;
   font-size: 1.3em;
   font-weight: 700;
+  color: white;
   display: flex;
   align-items: center;
   gap: 0.5em;
