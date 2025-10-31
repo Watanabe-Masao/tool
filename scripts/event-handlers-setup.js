@@ -546,17 +546,13 @@ function init() {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/tool/sw.js')
         .then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration.scope);
-
           // 更新チェック
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
-            console.log('[PWA] New Service Worker found');
 
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // 新しいバージョンが利用可能
-                console.log('[PWA] New version available');
                 showUpdateNotification(newWorker);
               }
             });
@@ -576,7 +572,6 @@ function init() {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
         refreshing = true;
-        console.log('[PWA] Reloading page with new Service Worker');
         window.location.reload();
       }
     });
@@ -597,7 +592,6 @@ function init() {
 
     // 更新ボタンクリック
     updateBtn.addEventListener('click', () => {
-      console.log('[PWA] User triggered update');
       newWorker.postMessage({ type: 'SKIP_WAITING' });
     }, { once: true });
 
@@ -661,7 +655,6 @@ function init() {
     // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
     if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
-      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
     } else {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
       alert('パターン生成機能の初期化に失敗しました。');
@@ -694,7 +687,6 @@ function init() {
     // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
     if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
-      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
     } else {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
       alert('パターン生成機能の初期化に失敗しました。');
