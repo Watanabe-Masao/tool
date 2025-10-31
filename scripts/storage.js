@@ -28,7 +28,6 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
 
   try {
     const id = await db.save(data);
-    console.log(`Saved calculation with ID: ${id}`);
     return id;
   } catch (error) {
     console.error('Failed to save calculation:', error);
@@ -111,7 +110,6 @@ export async function searchHistory(query) {
 export async function deleteHistory(id) {
   try {
     await db.delete(id);
-    console.log(`Deleted calculation with ID: ${id}`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
     throw error;
@@ -142,7 +140,6 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 
   try {
     await db.update(id, updates);
-    console.log(`Updated calculation with ID: ${id}`);
   } catch (error) {
     console.error('Failed to update calculation:', error);
     throw error;
@@ -163,7 +160,6 @@ export async function updateCalculationName(id, name, category = null) {
       updates.category = category;
     }
     await db.update(id, updates);
-    console.log(`Updated calculation ${id} with name: ${name}`);
   } catch (error) {
     console.error('Failed to update calculation name:', error);
     throw error;
@@ -186,7 +182,6 @@ export async function exportData() {
     a.click();
 
     URL.revokeObjectURL(url);
-    console.log('Data exported successfully');
   } catch (error) {
     console.error('Failed to export data:', error);
     throw error;
@@ -220,7 +215,6 @@ export async function importData(file) {
         }
 
         const count = await db.importJSON(jsonString);
-        console.log(`Imported ${count} calculations`);
         resolve(count);
       } catch (error) {
         console.error('Failed to import data:', error);
@@ -245,7 +239,6 @@ export async function importData(file) {
 export async function clearAllHistory() {
   try {
     await db.clear();
-    console.log('All history cleared');
   } catch (error) {
     console.error('Failed to clear history:', error);
     throw error;

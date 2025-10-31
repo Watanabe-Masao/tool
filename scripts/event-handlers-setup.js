@@ -6,9 +6,11 @@
 // すべての必要なimportsをmain.jsからコピー
 import { qs, qsa, num, hide, show, toggleActive, setText, yen, pct, addTapListener, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS } from './constants.js';
+import { MODE, UI_ELEMENTS, FIXED_FIELDS, WEIGHT_FIELDS, RADIO_NAMES, YIELD_STATS_FIELDS, TIME } from './constants.js';
 import { updateSaveButtonsVisibility, showHistoryModal } from './history-ui.js';
 import { saveSessionState, restoreSessionState, applySessionState, clearSessionState } from './session.js';
+import { showError, showWarning } from './toast.js';
+import { debounce } from './debounce.js';
 import {
   hasInputValues,
   handleModeSwitch,
@@ -299,54 +301,59 @@ function init() {
   });
 
   // 定額モード - 重量から計算モード - Step 1の入力監視
+  const debouncedHandleStep1 = debounce(handleStep1);
   [FIXED_FIELDS.CALCULATE.UNIT_COST, FIXED_FIELDS.CALCULATE.UNIT_PRICE,
    FIXED_FIELDS.CALCULATE.BEFORE_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleStep1);
   });
 
   // 定額モード - 重量から計算モード - Step 2の入力監視
-  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', handleStep2);
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_WEIGHT}`)?.addEventListener('input', debounce(handleStep2));
 
   // 定額モード - 重量から計算モード - Step 3の入力監視
-  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleStep3);
+  qs(`#${FIXED_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleStep3));
 
   // 定額モード - 歩留まり率直接入力モード - Step 1の入力監視
+  const debouncedHandleDirectStep1 = debounce(handleDirectStep1);
   [FIXED_FIELDS.DIRECT.UNIT_COST, FIXED_FIELDS.DIRECT.UNIT_PRICE,
    FIXED_FIELDS.DIRECT.BEFORE_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleDirectStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleDirectStep1);
   });
 
   // 定額モード - 歩留まり率直接入力モード - Step 2の入力監視
-  qs(`#${FIXED_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleDirectStep2);
+  qs(`#${FIXED_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', debounce(handleDirectStep2));
 
   // 定額モード - 歩留まり率直接入力モード - Step 3の入力監視
-  qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleDirectStep3);
+  qs(`#${FIXED_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleDirectStep3));
 
   // 計量モード - 重量から計算モード - Step 1の入力監視
+  const debouncedHandleWeightStep1 = debounce(handleWeightStep1);
   [WEIGHT_FIELDS.CALCULATE.BOX_COST, WEIGHT_FIELDS.CALCULATE.BOX_PRICE,
    WEIGHT_FIELDS.CALCULATE.BOX_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightStep1);
   });
 
   // 計量モード - 重量から計算モード - Step 2の入力監視
+  const debouncedHandleWeightStep2 = debounce(handleWeightStep2);
   [WEIGHT_FIELDS.CALCULATE.BEFORE_SAMPLE, WEIGHT_FIELDS.CALCULATE.AFTER_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightStep2);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightStep2);
   });
 
   // 計量モード - 重量から計算モード - Step 3の入力監視
-  qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightStep3);
+  qs(`#${WEIGHT_FIELDS.CALCULATE.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleWeightStep3));
 
   // 計量モード - 歩留まり率直接入力モード - Step 1の入力監視
+  const debouncedHandleWeightDirectStep1 = debounce(handleWeightDirectStep1);
   [WEIGHT_FIELDS.DIRECT.BOX_COST, WEIGHT_FIELDS.DIRECT.BOX_PRICE,
    WEIGHT_FIELDS.DIRECT.BOX_WEIGHT].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleWeightDirectStep1);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleWeightDirectStep1);
   });
 
   // 計量モード - 歩留まり率直接入力モード - Step 2の入力監視
-  qs(`#${WEIGHT_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', handleWeightDirectStep2);
+  qs(`#${WEIGHT_FIELDS.DIRECT.YIELD_RATE}`)?.addEventListener('input', debounce(handleWeightDirectStep2));
 
   // 計量モード - 歩留まり率直接入力モード - Step 3の入力監視
-  qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', handleWeightDirectStep3);
+  qs(`#${WEIGHT_FIELDS.DIRECT.AFTER_PRICE_100}`)?.addEventListener('input', debounce(handleWeightDirectStep3));
 
   // 歩留まり率統計モード - 統計タイプ選択
   qs('#statsTypeSelect')?.addEventListener('change', () => {
@@ -359,63 +366,66 @@ function init() {
   });
 
   // 歩留まり率統計モード - サンプルサイズ妥当性判断
-  qs('#toleranceError')?.addEventListener('input', () => {
-    displaySampleSizeValidation();
-  });
+  const debouncedDisplaySampleSizeValidation = debounce(displaySampleSizeValidation);
+  qs('#toleranceError')?.addEventListener('input', debouncedDisplaySampleSizeValidation);
+  qs('#confidenceLevel')?.addEventListener('change', debouncedDisplaySampleSizeValidation);
 
-  qs('#confidenceLevel')?.addEventListener('change', () => {
-    displaySampleSizeValidation();
-  });
+  /**
+   * 外れ値の全選択処理
+   */
+  function handleSelectAllOutliers() {
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    handleOutlierCheckboxChange();
+  }
+
+  /**
+   * 外れ値の全解除処理
+   */
+  function handleDeselectAllOutliers() {
+    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    handleOutlierCheckboxChange();
+  }
 
   // 外れ値の全選択・全解除ボタン
-  qs('#selectAllOutliers')?.addEventListener('click', () => {
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = true;
-    });
-    handleOutlierCheckboxChange();
-  });
+  qs('#selectAllOutliers')?.addEventListener('click', handleSelectAllOutliers);
   qs('#selectAllOutliers')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = true;
-    });
-    handleOutlierCheckboxChange();
+    handleSelectAllOutliers();
   }, { passive: false });
 
-  qs('#deselectAllOutliers')?.addEventListener('click', () => {
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = false;
-    });
-    handleOutlierCheckboxChange();
-  });
+  qs('#deselectAllOutliers')?.addEventListener('click', handleDeselectAllOutliers);
   qs('#deselectAllOutliers')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = false;
-    });
-    handleOutlierCheckboxChange();
+    handleDeselectAllOutliers();
   }, { passive: false });
 
   // 外れ値を含む行を削除
   qs('#deleteOutlierRows')?.addEventListener('click', deleteOutlierRows);
-  qs('#deleteOutlierRows')?.addEventListener('touchend', (e) => { e.preventDefault(); deleteOutlierRows(); }, { passive: false });
+  qs('#deleteOutlierRows')?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    deleteOutlierRows();
+  }, { passive: false });
 
   // 計算式詳細モーダル
   setupFormulaModal();
 
   // 商品化シミュレーション
+  const debouncedHandleProductCalculation = debounce(handleProductCalculation);
   [UI_ELEMENTS.EXP_WEIGHT, UI_ELEMENTS.CONSUMABLE].forEach(id => {
-    qs(`#${id}`)?.addEventListener('input', handleProductCalculation);
+    qs(`#${id}`)?.addEventListener('input', debouncedHandleProductCalculation);
   });
 
   // 値引きシミュレーション
+  const debouncedHandleDiscountUpdate = debounce(handleDiscountUpdate);
   qs(`#${UI_ELEMENTS.DISC_SLIDER}`)?.addEventListener('input', (e) => {
     qs(`#${UI_ELEMENTS.DISC_INPUT}`).value = e.target.value;
-    handleDiscountUpdate();
+    debouncedHandleDiscountUpdate();
   });
 
   qs(`#${UI_ELEMENTS.DISC_INPUT}`)?.addEventListener('input', (e) => {
@@ -423,7 +433,7 @@ function init() {
     v = Math.max(0, Math.min(100, v));
     e.target.value = v;
     qs(`#${UI_ELEMENTS.DISC_SLIDER}`).value = Math.min(v, 50);
-    handleDiscountUpdate();
+    debouncedHandleDiscountUpdate();
   });
 
   // 逆算シミュレーション
@@ -446,9 +456,10 @@ function init() {
     }
   });
 
-  qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', handleReverseCalculation);
+  const debouncedHandleReverseCalculation = debounce(handleReverseCalculation);
+  qs(`#${UI_ELEMENTS.TARGET_MARKUP}`)?.addEventListener('input', debouncedHandleReverseCalculation);
   qsa(`input[name="${RADIO_NAMES.REVERSE_CALC_TARGET}"]`).forEach(r => {
-    r.addEventListener('change', handleReverseCalculation);
+    r.addEventListener('change', debouncedHandleReverseCalculation);
   });
 
   // ステップ1-5の入力が変更されたら逆算シミュレーションをリセット
@@ -538,16 +549,6 @@ function init() {
     UI_ELEMENTS.CONSUMABLE
   ];
 
-  // セッション保存機能は無効化（モード切替時に確認ダイアログを表示する方式に変更）
-  // sessionSaveFields.forEach(fieldId => {
-  //   qs(`#${fieldId}`)?.addEventListener('input', () => {
-  //     saveSessionState(appState.getMode());
-  //   });
-  // });
-
-  // セッション状態の復元は無効化（モード切替時に確認ダイアログを表示する方式に変更）
-  // restoreSession();
-
   // Service Workerを登録（PWA対応 + 更新通知）
   if ('serviceWorker' in navigator) {
     let refreshing = false;
@@ -556,17 +557,13 @@ function init() {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/tool/sw.js')
         .then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration.scope);
-
           // 更新チェック
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
-            console.log('[PWA] New Service Worker found');
 
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // 新しいバージョンが利用可能
-                console.log('[PWA] New version available');
                 showUpdateNotification(newWorker);
               }
             });
@@ -575,7 +572,7 @@ function init() {
           // 定期的な更新チェック（1時間ごと）
           setInterval(() => {
             registration.update();
-          }, 60 * 60 * 1000);
+          }, TIME.ONE_HOUR);
         })
         .catch((error) => {
           console.error('[PWA] Service Worker registration failed:', error);
@@ -586,7 +583,6 @@ function init() {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
         refreshing = true;
-        console.log('[PWA] Reloading page with new Service Worker');
         window.location.reload();
       }
     });
@@ -607,7 +603,6 @@ function init() {
 
     // 更新ボタンクリック
     updateBtn.addEventListener('click', () => {
-      console.log('[PWA] User triggered update');
       newWorker.postMessage({ type: 'SKIP_WAITING' });
     }, { once: true });
 
@@ -644,14 +639,16 @@ function init() {
   // updateLoadStatsButtons関数内で設定されます。
   // ここには静的なイベントハンドラーは設置しません（競合を防ぐため）。
 
-  // σパターン一括生成ボタン
-  qs('#generateSigmaPatternsBtn')?.addEventListener('click', () => {
+  /**
+   * σパターン一括生成処理
+   */
+  function handleGenerateSigmaPatterns() {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
     const statsData = window.statsDataByType?.[selectedStatsType];
 
     if (!statsData) {
-      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
+      showWarning('統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
@@ -663,7 +660,7 @@ function init() {
     const sigmaPatterns = generateSigmaPatterns(statsData, 2);
 
     if (sigmaPatterns.length === 0) {
-      alert('パターンを生成できませんでした。');
+      showError('パターンを生成できませんでした。');
       return;
     }
 
@@ -671,44 +668,17 @@ function init() {
     // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
     if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
-      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
     } else {
       console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
-      alert('パターン生成機能の初期化に失敗しました。');
+      showError('パターン生成機能の初期化に失敗しました。');
     }
-  });
+  }
+
+  // σパターン一括生成ボタン
+  qs('#generateSigmaPatternsBtn')?.addEventListener('click', handleGenerateSigmaPatterns);
   qs('#generateSigmaPatternsBtn')?.addEventListener('touchend', (e) => {
     e.preventDefault();
-    const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-    const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-    const statsData = window.statsDataByType?.[selectedStatsType];
-
-    if (!statsData) {
-      alert('統計データがありません。先に歩留まり統計で計算を実行してください。');
-      return;
-    }
-
-    if (!confirm('現在のパターンをクリアして、標準偏差パターン（平均±1σ、±2σ）を自動生成しますか？')) {
-      return;
-    }
-
-    // σパターンを生成
-    const sigmaPatterns = generateSigmaPatterns(statsData, 2);
-
-    if (sigmaPatterns.length === 0) {
-      alert('パターンを生成できませんでした。');
-      return;
-    }
-
-    // 複数パターン分析のパターンテーブルをクリアして、σパターンを追加
-    // この処理はmulti-pattern-ui.jsに実装された関数を呼び出す
-    if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
-      window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
-      console.log(`[MultiPattern] ${sigmaPatterns.length}個のσパターンを生成しました`, sigmaPatterns);
-    } else {
-      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
-      alert('パターン生成機能の初期化に失敗しました。');
-    }
+    handleGenerateSigmaPatterns();
   }, { passive: false });
 
   // グローバル入力変更検知：全ての入力フィールドの変更を監視してUI状態フラグを更新
@@ -734,8 +704,10 @@ function init() {
   // プリセット管理機能のイベントリスナーは setupPresetEventListeners() で設定済み
   // （重複を避けるため、ここでの設定は削除）
 
-  // 統計読み込みボタンのイベントリスナー
-  document.addEventListener('click', (e) => {
+  /**
+   * 統計読み込みボタンのハンドラー（共通処理）
+   */
+  function handleStatsLoadButtonClick(e) {
     // 統計読み込みボタン（平均値）
     if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
@@ -756,45 +728,25 @@ function init() {
     }
     // 統計読み込みボタン（推奨値）
     else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      loadRecommendedValueToMultiPattern(false, selectedStatsType);
-    }
-  });
-
-  // 統計読み込みボタンのタッチイベントリスナー（モバイル対応）
-  document.addEventListener('touchend', (e) => {
-    // 統計読み込みボタン（平均値）
-    if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
-      e.preventDefault();
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
-      if (statsData) {
-        loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
-      }
-    }
-    // 統計読み込みボタン（中央値）
-    else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
-      e.preventDefault();
-      const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
-      const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
-      if (statsData) {
-        loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
-      }
-    }
-    // 統計読み込みボタン（推奨値）
-    else if (e.target.id === 'loadStatsRecommendedBtn' || e.target.closest('#loadStatsRecommendedBtn')) {
-      e.preventDefault();
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
       loadRecommendedValueToMultiPattern(false, selectedStatsType);
     }
     // 歩留まり統計データを読み込むボタン
     else if (e.target.id === 'loadYieldStatsDataBtn' || e.target.closest('#loadYieldStatsDataBtn')) {
-      e.preventDefault();
       showHistoryModal();
+    }
+  }
+
+  // 統計読み込みボタンのイベントリスナー
+  document.addEventListener('click', handleStatsLoadButtonClick);
+
+  // 統計読み込みボタンのタッチイベントリスナー（モバイル対応）
+  document.addEventListener('touchend', (e) => {
+    // タッチイベントの場合のみpreventDefault
+    if (e.target.closest('#loadStatsMeanBtn, #loadStatsMedianBtn, #loadStatsRecommendedBtn, #loadYieldStatsDataBtn')) {
+      e.preventDefault();
+      handleStatsLoadButtonClick(e);
     }
   }, { passive: false });
 

@@ -61,6 +61,17 @@ export function calculatePattern(params) {
   // 売価差額を計算
   const priceDiff = Number.isFinite(finishedPrice) ? finishedPrice - unitPrice : null;
 
+  // 感度分析: 歩留まり率が1%変動した場合の値入率への影響
+  // 歩留まり率を+1%した場合の加工後値入率を計算
+  const yieldRatePlus1 = yieldRate + 1;
+  const afterCost100Plus1 = afterCostPer100(beforeCost100, yieldRatePlus1);
+  const afterMarkupPlus1 = afterCost100Plus1 ? markup(afterCost100Plus1, afterPrice100) : null;
+
+  // 感度 = (歩留まり率+1%の値入率) - (現在の値入率)
+  const sensitivity = (Number.isFinite(afterMarkupPlus1) && Number.isFinite(afterMarkup))
+    ? afterMarkupPlus1 - afterMarkup
+    : null;
+
   return {
     beforeCost100,      // 加工前100g原価
     beforePrice100,     // 加工前100g売価
@@ -70,7 +81,8 @@ export function calculatePattern(params) {
     afterMarkup,        // 加工後値入率
     afterWeight,        // 加工後重量
     finishedPrice,      // 仕上がり売価
-    priceDiff           // 売価差額
+    priceDiff,          // 売価差額
+    sensitivity         // 感度分析（歩留まり1%変動時の値入率変動）
   };
 }
 

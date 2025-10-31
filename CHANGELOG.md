@@ -1,5 +1,53 @@
 # 変更履歴
 
+## [v4.2] - 2025-10-31 - UX/DX改善リファクタリング 🔧
+
+### リファクタリング
+- **トースト通知システム実装**（`scripts/toast.js`：97行）
+  - alert()によるブロッキングUIを廃止
+  - 非ブロッキングなトースト通知に置換（30箇所）
+  - 4種類の通知タイプ（info, success, warning, error）
+  - グラデーション背景、自動消去（3秒）
+  - アニメーション効果（スライドイン/アウト）
+
+- **デバウンス処理実装**（`scripts/debounce.js`：85行）
+  - 入力イベントハンドラーにデバウンス適用（19箇所）
+  - 300ms遅延で不要な再計算を削減
+  - パフォーマンス改善とレスポンシブ性向上
+  - 3種類の関数（debounce, debounceLeading, throttle）
+  - Map-based handler managementで動的パターンのメモリリーク防止
+
+- **重複コード削減**（約80行削減）
+  - σパターン生成の重複削除（62→33行、47%削減）
+  - 統計ロードボタンの重複削除（62→39行、37%削減）
+  - 外れ値選択ボタンの関数抽出
+
+- **IndexedDBエラーハンドリング改善**（`scripts/db.js`）
+  - ユーザーフレンドリーな日本語エラーメッセージ
+  - QuotaExceededError, VersionError, InvalidStateError等に対応
+  - ブラウザ互換性チェック（isIndexedDBAvailable）
+  - 全CRUD操作にエラーハンドリング適用（10メソッド）
+
+### 変更
+- **constants.js**: TIME.DEBOUNCE_DELAY = 300ms を追加
+- **main.css**: トースト通知用CSS追加（85行）
+
+### 技術的改善
+- **UXの向上**: ブロッキングダイアログ → 非ブロッキングトースト
+- **パフォーマンス**: 入力時の過剰な再計算を抑制
+- **保守性**: 重複コードの削減、一貫性のあるエラー処理
+- **DX改善**: 明確なエラーメッセージで開発・デバッグが容易に
+
+### コミット
+- `908a4bb`: Time constant extraction
+- `2d41343`: console.log removal (24 statements)
+- `a4f6361`: Toast notification system (30 alerts replaced)
+- `d0c9155`: Debounce implementation
+- `829b982`: Duplicate code refactoring
+- `a36b12c`: IndexedDB error handling improvements
+
+---
+
 ## [v4.1] - 2025-01-30 - z-score判定システム実装 📊
 
 ### 重要な変更

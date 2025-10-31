@@ -5,6 +5,8 @@
 import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
+import { showError, showWarning } from './toast.js';
+import { debounce } from './debounce.js';
 
 // 定数
 const INITIAL_PATTERN_COUNT = 3;
@@ -14,6 +16,9 @@ const CSS_HIDDEN = 'is-hidden';
 let patternIdCounter = 1;
 const patterns = [];
 let currentYieldMethod = 'calculate'; // 'calculate' or 'direct'
+
+// デバウンス用マップ（パターンIDごとにデバウンスインスタンスを保持）
+const debouncedHandlers = new Map();
 
 // DOM要素（初期化時に取得）
 let elements = {};
@@ -50,8 +55,11 @@ export function initMultiPatternUI() {
     // 目標値入率
     targetMarkupRate: document.getElementById('targetMarkupRate'),
     targetMarkupSlider: document.getElementById('targetMarkupSlider'),
-    targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
     applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
+
+    // 微調整ボタン
+    adjustMinus10Btn: document.getElementById('adjustMinus10Btn'),
+    adjustPlus10Btn: document.getElementById('adjustPlus10Btn'),
 
     // 丸め込みボタン
     roundTo0Btn: document.getElementById('roundTo0Btn'),
@@ -79,12 +87,14 @@ export function initMultiPatternUI() {
   });
 
   // 重量から計算モードの入力イベント
-  elements.beforeWeightCalc.addEventListener('input', handleCalculateModeInput);
-  elements.afterWeightCalc.addEventListener('input', handleCalculateModeInput);
+  const debouncedHandleCalculateModeInput = debounce(handleCalculateModeInput);
+  elements.beforeWeightCalc.addEventListener('input', debouncedHandleCalculateModeInput);
+  elements.afterWeightCalc.addEventListener('input', debouncedHandleCalculateModeInput);
 
   // 歩留まり率直接入力モードの入力イベント
-  elements.beforeWeightDirect.addEventListener('input', handleDirectModeInput);
-  elements.yieldRateDirect.addEventListener('input', handleDirectModeInput);
+  const debouncedHandleDirectModeInput = debounce(handleDirectModeInput);
+  elements.beforeWeightDirect.addEventListener('input', debouncedHandleDirectModeInput);
+  elements.yieldRateDirect.addEventListener('input', debouncedHandleDirectModeInput);
 
   // パターン追加ボタン
   if (elements.addPatternBtn) {
@@ -98,36 +108,44 @@ export function initMultiPatternUI() {
 
   // 目標値入率のスライダーと入力ボックスの連携
   if (elements.targetMarkupRate && elements.targetMarkupSlider) {
-    // スライダーを動かしたら入力ボックス、ビジュアル表示、売価を自動更新
-    elements.targetMarkupSlider.addEventListener('input', (e) => {
-      const value = parseFloat(e.target.value);
-      elements.targetMarkupRate.value = value;
-      if (elements.targetMarkupSliderValue) {
-        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
-      }
-      // 売価をリアルタイムで自動更新（ハイライトなし）
+    const debouncedUpdatePricesFromTargetMarkup = debounce((value) => {
       updatePricesFromTargetMarkup(value, false);
     });
 
-    // 入力ボックスを変更したらスライダー、ビジュアル表示、売価を自動更新
+    // スライダーを動かしたら入力ボックス、売価を自動更新
+    elements.targetMarkupSlider.addEventListener('input', (e) => {
+      const value = parseFloat(e.target.value);
+      elements.targetMarkupRate.value = toFixed(value, 1);
+      // 売価をリアルタイムで自動更新（ハイライトなし）
+      debouncedUpdatePricesFromTargetMarkup(value);
+    });
+
+    // 入力ボックスを変更したらスライダー、売価を自動更新
     elements.targetMarkupRate.addEventListener('input', (e) => {
       let value = parseFloat(e.target.value);
       if (isNaN(value)) value = 0;
       if (value < 0) value = 0;
       if (value > 99) value = 99;
-      elements.targetMarkupRate.value = value;
+      elements.targetMarkupRate.value = toFixed(value, 1);
       elements.targetMarkupSlider.value = value;
-      if (elements.targetMarkupSliderValue) {
-        elements.targetMarkupSliderValue.textContent = `${toFixed(value, 1)}%`;
-      }
+      // スライダーのカスタムプロパティを更新
+      elements.targetMarkupSlider.style.setProperty('--slider-percent', `${value}%`);
       // 売価をリアルタイムで自動更新（ハイライトなし）
-      updatePricesFromTargetMarkup(value, false);
+      debouncedUpdatePricesFromTargetMarkup(value);
     });
   }
 
   // 目標値入率から売価を挿入ボタン
   if (elements.applyTargetMarkupBtn) {
     elements.applyTargetMarkupBtn.addEventListener('click', applyTargetMarkupPrices);
+  }
+
+  // 微調整ボタン
+  if (elements.adjustMinus10Btn) {
+    elements.adjustMinus10Btn.addEventListener('click', () => adjustPrices(-10));
+  }
+  if (elements.adjustPlus10Btn) {
+    elements.adjustPlus10Btn.addEventListener('click', () => adjustPrices(10));
   }
 
   // 丸め込みボタン
@@ -149,6 +167,38 @@ export function initMultiPatternUI() {
   // 初期パターンを追加
   for (let i = 0; i < INITIAL_PATTERN_COUNT; i++) {
     addPattern();
+  }
+
+  // ヘルプアイコンのモバイル対応（タップで表示/非表示）
+  initHelpIconMobile();
+
+  // 比較結果のヘルプモーダル
+  initResultsHelpModal();
+}
+
+/**
+ * ヘルプアイコンのモバイル対応を初期化
+ */
+function initHelpIconMobile() {
+  // タッチデバイスの検出
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  if (isTouchDevice) {
+    // 全てのヘルプアイコンにタップイベントを設定
+    document.addEventListener('click', (e) => {
+      const helpIcon = e.target.closest('.help-icon');
+
+      if (helpIcon) {
+        // クリックされたヘルプアイコンのトグル
+        e.stopPropagation();
+        helpIcon.classList.toggle('active');
+      } else {
+        // ヘルプアイコン以外をクリックしたら全て閉じる
+        document.querySelectorAll('.help-icon.active').forEach(icon => {
+          icon.classList.remove('active');
+        });
+      }
+    });
   }
 }
 
@@ -264,10 +314,13 @@ function addPattern() {
     afterPrice100: null
   });
 
-  // 入力イベントを設定
+  // 入力イベントを設定（デバウンス化）
+  const debouncedHandler = debounce(() => handlePatternInput(patternId));
+  debouncedHandlers.set(patternId, debouncedHandler);
+
   const inputs = row.querySelectorAll('input');
   inputs.forEach(input => {
-    input.addEventListener('input', () => handlePatternInput(patternId));
+    input.addEventListener('input', debouncedHandler);
   });
 
   // 削除ボタンのイベント
@@ -284,7 +337,7 @@ function addPattern() {
 function removePattern(patternId) {
   // 最低1つは残す
   if (patterns.length <= 1) {
-    alert('最低1つのパターンが必要です。');
+    showWarning('最低1つのパターンが必要です。');
     return;
   }
 
@@ -299,6 +352,9 @@ function removePattern(patternId) {
   if (index !== -1) {
     patterns.splice(index, 1);
   }
+
+  // デバウンスハンドラーを削除
+  debouncedHandlers.delete(patternId);
 
   // パターン番号を更新
   updatePatternNumbers();
@@ -468,7 +524,31 @@ function recalculateAll() {
     if (result) {
       const row = document.createElement('tr');
 
-      // 差額の表示クラス
+      // 各指標の増減を計算
+      const costChange = result.afterCost100 - result.beforeCost100;
+      const priceChange = result.afterPrice100 - result.beforePrice100;
+      const markupChange = result.afterMarkup - result.beforeMarkup;
+
+      // 増減の表示クラスを決定
+      const getCostChangeClass = (val) => {
+        if (val > 0) return 'result-negative'; // 原価増加は赤
+        if (val < 0) return 'result-positive'; // 原価減少は緑
+        return 'result-neutral';
+      };
+
+      const getPriceChangeClass = (val) => {
+        if (val > 0) return 'result-positive'; // 売価増加は緑
+        if (val < 0) return 'result-negative'; // 売価減少は赤
+        return 'result-neutral';
+      };
+
+      const getMarkupChangeClass = (val) => {
+        if (val > 0) return 'result-positive'; // 値入率増加は緑
+        if (val < 0) return 'result-negative'; // 値入率減少は赤
+        return 'result-neutral';
+      };
+
+      // 1個差額の表示クラス
       let priceDiffClass = 'result-value';
       if (result.priceDiff > 0) {
         priceDiffClass = 'result-positive';
@@ -476,16 +556,38 @@ function recalculateAll() {
         priceDiffClass = 'result-negative';
       }
 
+      // 感度の表示クラス
+      let sensitivityClass = 'result-value';
+      let sensitivitySign = '';
+      if (result.sensitivity !== null && Number.isFinite(result.sensitivity)) {
+        if (result.sensitivity > 0) {
+          sensitivityClass = 'result-positive';
+          sensitivitySign = '+';
+        } else if (result.sensitivity < 0) {
+          sensitivityClass = 'result-negative';
+        }
+      }
+
+      // 符号付きフォーマット関数
+      const formatChange = (val, decimals = 2) => {
+        if (!Number.isFinite(val)) return '-';
+        return (val >= 0 ? '+' : '') + toFixed(val, decimals);
+      };
+
       row.innerHTML = `
         <td class="result-number">${pattern.id}</td>
-        <td class="result-value">${toFixed(result.beforeCost100, 2)}</td>
-        <td class="result-value">${toFixed(result.beforePrice100, 2)}</td>
-        <td class="result-value">${toFixed(result.beforeMarkup, 2)}%</td>
-        <td class="result-value">${toFixed(result.afterCost100, 2)}</td>
-        <td class="result-value">${toFixed(result.afterPrice100, 2)}</td>
-        <td class="result-highlight">${toFixed(result.afterMarkup, 2)}%</td>
+        <td class="result-before">${toFixed(result.beforeCost100, 2)}</td>
+        <td class="result-after">${toFixed(result.afterCost100, 2)}</td>
+        <td class="${getCostChangeClass(costChange)}">${formatChange(costChange)}</td>
+        <td class="result-before">${toFixed(result.beforePrice100, 2)}</td>
+        <td class="result-after">${toFixed(result.afterPrice100, 2)}</td>
+        <td class="${getPriceChangeClass(priceChange)}">${formatChange(priceChange)}</td>
+        <td class="result-before">${toFixed(result.beforeMarkup, 2)}%</td>
+        <td class="result-after result-highlight">${toFixed(result.afterMarkup, 2)}%</td>
+        <td class="${getMarkupChangeClass(markupChange)}">${formatChange(markupChange)}%</td>
         <td class="result-value">${toFixed(result.finishedPrice, 2)}</td>
         <td class="${priceDiffClass}">${result.priceDiff >= 0 ? '+' : ''}${toFixed(result.priceDiff, 2)}</td>
+        <td class="${sensitivityClass}">${result.sensitivity !== null ? sensitivitySign + toFixed(result.sensitivity, 3) : '-'}</td>
       `;
 
       elements.resultsTableBody.appendChild(row);
@@ -516,7 +618,7 @@ function calculateBreakEvenPrices() {
     const afterWeight = getNumValue(elements.afterWeightCalc);
 
     if (!isPositive(beforeWeight) || !isPositive(afterWeight)) {
-      alert('加工前重量と加工後重量を入力してください。');
+      showWarning('加工前重量と加工後重量を入力してください。');
       if (btn) {
         btn.disabled = false;
         btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -532,7 +634,7 @@ function calculateBreakEvenPrices() {
   }
 
   if (!isPositive(yr) || !isPositive(bw)) {
-    alert('歩留まり率と加工前重量を入力してください。');
+    showWarning('歩留まり率と加工前重量を入力してください。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -544,7 +646,7 @@ function calculateBreakEvenPrices() {
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
   if (rows.length === 0) {
-    alert('パターンがありません。');
+    showWarning('パターンがありません。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '🎯 値入率分岐点を一括挿入';
@@ -627,10 +729,8 @@ function calculateBreakEvenPrices() {
         input.style.backgroundColor = '';
       }, 2000);
     });
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点（加工前値入率を維持）を設定しました`);
   } else {
-    alert('1個原価と1個売価が入力されているパターンがありません。');
+    showWarning('1個原価と1個売価が入力されているパターンがありません。');
   }
 }
 
@@ -738,8 +838,6 @@ function updatePricesFromTargetMarkup(targetMarkup, showHighlight = false) {
  * 目標値入率から売価を一括計算して設定（ボタンクリック用）
  */
 function applyTargetMarkupPrices() {
-  console.log('[MultiPattern] applyTargetMarkupPrices 開始');
-
   // ボタンを無効化してローディング表示
   const btn = elements.applyTargetMarkupBtn;
   if (btn) {
@@ -749,10 +847,9 @@ function applyTargetMarkupPrices() {
 
   // 目標値入率を取得
   const targetMarkup = getNumValue(elements.targetMarkupRate);
-  console.log('[MultiPattern] 目標値入率:', targetMarkup);
 
   if (!Number.isFinite(targetMarkup) || targetMarkup < 0 || targetMarkup >= 100) {
-    alert('目標値入率を0〜99の範囲で入力してください。');
+    showWarning('目標値入率を0〜99の範囲で入力してください。');
     if (btn) {
       btn.disabled = false;
       btn.textContent = '✨ 売価を挿入';
@@ -776,13 +873,11 @@ function applyTargetMarkupPrices() {
         btn.textContent = '✨ 売価を挿入';
       }, 2000);
     }
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンに目標値入率${toFixed(targetMarkup, 1)}%の売価を設定しました`);
   } else {
     if (btn) {
       btn.textContent = '✨ 売価を挿入';
     }
-    alert('1個原価が入力されているパターンがありません。');
+    showWarning('1個原価が入力されているパターンがありません。');
   }
 }
 
@@ -791,13 +886,11 @@ function applyTargetMarkupPrices() {
  * @param {number} digit - 下一桁の数字（0, 5, 8）
  */
 function roundPrices(digit) {
-  console.log(`[MultiPattern] roundPrices 開始: digit=${digit}`);
-
   // すべてのパターン行を取得
   const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
 
   if (rows.length === 0) {
-    alert('パターンがありません。');
+    showWarning('パターンがありません。');
     return;
   }
 
@@ -812,7 +905,6 @@ function roundPrices(digit) {
     if (isPositive(currentValue)) {
       // 丸め込み処理
       const roundedValue = roundToDigit(currentValue, digit);
-      console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${roundedValue}`);
 
       // 値を設定
       afterPriceInput.value = roundedValue;
@@ -839,10 +931,8 @@ function roundPrices(digit) {
         input.style.backgroundColor = '';
       }, 2000);
     });
-
-    console.log(`[MultiPattern] ${updatedCount}個のパターンを下一桁${digit}に丸め込みました`);
   } else {
-    alert('加工後設定売価が入力されているパターンがありません。');
+    showWarning('加工後設定売価が入力されているパターンがありません。');
   }
 }
 
@@ -853,6 +943,10 @@ function roundPrices(digit) {
  * @returns {number} - 丸め込み後の値
  */
 function roundToDigit(value, digit) {
+  // 丸め込みモードを取得
+  const roundModeRadio = document.querySelector('input[name="roundMode"]:checked');
+  const roundMode = roundModeRadio ? roundModeRadio.value : 'round';
+
   // 小数点を四捨五入して整数に
   const intValue = Math.round(value);
 
@@ -862,12 +956,90 @@ function roundToDigit(value, digit) {
   // 10の位を計算
   const base = Math.floor(intValue / 10) * 10;
 
-  // 現在の下一桁がdigitより小さいか等しい場合、現在の10の位 + digit
-  // それ以外の場合、次の10の位 + digit
-  if (lastDigit <= digit) {
-    return base + digit;
+  // モードに応じて処理
+  if (roundMode === 'round') {
+    // 近接値: 従来の動作（最も近い方）
+    if (lastDigit <= digit) {
+      return base + digit;
+    } else {
+      return base + 10 + digit;
+    }
+  } else if (roundMode === 'ceil') {
+    // 切り上げ: digitより小さければ現在の10の位+digit、それ以外は次の10の位+digit
+    if (lastDigit <= digit) {
+      return base + digit;
+    } else {
+      return base + 10 + digit;
+    }
+  } else if (roundMode === 'floor') {
+    // 切り捨て: digitより大きければ現在の10の位+digit、それ以外は前の10の位+digit
+    if (lastDigit >= digit) {
+      return base + digit;
+    } else {
+      return base - 10 + digit;
+    }
+  }
+
+  // デフォルト（念のため）
+  return base + digit;
+}
+
+/**
+ * 売価を指定の金額だけ調整（一括加算/減算）
+ * @param {number} amount - 調整金額（+10 or -10）
+ */
+function adjustPrices(amount) {
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    showWarning('パターンがありません。');
+    return;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンの加工後設定売価を調整
+  rows.forEach((row, index) => {
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+    const currentValue = getNumValue(afterPriceInput);
+
+    if (isPositive(currentValue)) {
+      // 調整後の値
+      const adjustedValue = currentValue + amount;
+
+      // 負の値にならないようにチェック
+      if (adjustedValue > 0) {
+        // 値を設定
+        afterPriceInput.value = toFixed(adjustedValue, 2);
+
+        // ハイライト表示のために入力欄を記録
+        updatedInputs.push(afterPriceInput);
+
+        // inputイベントを発火して再計算をトリガー
+        const patternId = parseInt(row.dataset.patternId);
+        handlePatternInput(patternId);
+
+        updatedCount++;
+      }
+    }
+  });
+
+  if (updatedCount > 0) {
+    // 更新された入力欄をハイライト表示
+    const highlightColor = amount > 0 ? '#c8e6c9' : '#ffccbc'; // +は緑、-はオレンジ
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = highlightColor;
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
   } else {
-    return base + 10 + digit;
+    showWarning('加工後設定売価が入力されているパターンがありません。');
   }
 }
 
@@ -1027,10 +1199,13 @@ export function replaceAllPatterns(newPatterns) {
       afterPrice100: null
     });
 
-    // 入力イベントを設定
+    // 入力イベントを設定（デバウンス化）
+    const debouncedHandler = debounce(() => handlePatternInput(patternId));
+    debouncedHandlers.set(patternId, debouncedHandler);
+
     const inputs = row.querySelectorAll('input');
     inputs.forEach(input => {
-      input.addEventListener('input', () => handlePatternInput(patternId));
+      input.addEventListener('input', debouncedHandler);
     });
 
     // 削除ボタンのイベント
@@ -1040,8 +1215,46 @@ export function replaceAllPatterns(newPatterns) {
 
   // パターン番号を更新
   updatePatternNumbers();
+}
 
-  console.log(`[MultiPattern] ${newPatterns.length}個のパターンを追加しました`);
+/**
+ * 比較結果のヘルプモーダルを初期化
+ */
+function initResultsHelpModal() {
+  const helpBtn = document.getElementById('resultsHelpBtn');
+  const modal = document.getElementById('resultsHelpModal');
+  const closeBtn = document.getElementById('resultsHelpModalClose');
+  const overlay = modal?.querySelector('.modal-overlay');
+
+  if (!helpBtn || !modal || !closeBtn || !overlay) {
+    return;
+  }
+
+  // ヘルプボタンをクリックでモーダルを開く
+  helpBtn.addEventListener('click', () => {
+    modal.classList.add('is-active');
+    document.body.style.overflow = 'hidden'; // 背景のスクロールを無効化
+  });
+
+  // 閉じるボタンをクリックでモーダルを閉じる
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('is-active');
+    document.body.style.overflow = ''; // スクロールを復元
+  });
+
+  // オーバーレイをクリックでモーダルを閉じる
+  overlay.addEventListener('click', () => {
+    modal.classList.remove('is-active');
+    document.body.style.overflow = '';
+  });
+
+  // ESCキーでモーダルを閉じる
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+      modal.classList.remove('is-active');
+      document.body.style.overflow = '';
+    }
+  });
 }
 
 // グローバルアクセス用のAPI

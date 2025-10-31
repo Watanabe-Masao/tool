@@ -31,6 +31,7 @@
 import { qs, qsa, hide, show, setText, yen, pct, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, UI_ELEMENTS, YIELD_STATS_FIELDS } from './constants.js';
+import { showInfo, showWarning } from './toast.js';
 import { calculateStatistics, detectOutliers } from './yield-stats-calc.js';
 import { renderStatsChart } from './yield-stats-charts.js';
 import {
@@ -722,7 +723,7 @@ function deleteOutlierRows() {
 
   // 外れ値が検出されていない場合は何もしない
   if (!currentOutlierValues || currentOutlierValues.length === 0) {
-    alert('削除する外れ値がありません。');
+    showWarning('削除する外れ値がありません。');
     return;
   }
 
@@ -778,7 +779,7 @@ function deleteOutlierRows() {
 
   // 行を削除
   if (rowsToDelete.length === 0) {
-    alert('削除する行が見つかりませんでした。');
+    showWarning('削除する行が見つかりませんでした。');
     return;
   }
 
@@ -793,7 +794,7 @@ function deleteOutlierRows() {
   updateYieldStatsStatistics(displayCurrentStatistics);
 
   // 削除完了メッセージ
-  alert(`${rowsToDelete.length}行を削除しました。`);
+  showInfo(`${rowsToDelete.length}行を削除しました。`);
 }
 
 /**

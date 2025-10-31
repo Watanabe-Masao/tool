@@ -1016,12 +1016,12 @@
         <p class="section-description" style="margin-bottom: 1em;">時期や仕入先によって変わる原価・売価パターンを入力してください。</p>
 
         <!-- プリセット管理へのリンク -->
-        <div class="btn-row" style="margin-bottom: 1em;">
+        <div class="btn-row" style="margin-bottom: 1em; display: flex; gap: 0.8em; flex-wrap: wrap;">
           <button
             type="button"
             id="showPresetManagerBtn"
             class="btn btn-secondary">
-            📋 プリセットから選択
+            📋 PLから選択
           </button>
           <button type="button" id="breakEvenBtn" class="btn btn-primary">🎯 値入率分岐点を一括挿入</button>
         </div>
@@ -1036,25 +1036,22 @@
 
           <!-- メインコントロール -->
           <div class="target-markup-controls">
-            <!-- 入力ボックス -->
-            <div class="target-markup-input-group">
-              <input
-                type="number"
-                id="targetMarkupRate"
-                min="0"
-                max="99"
-                step="0.1"
-                value="30"
-                placeholder="30"
-              />
-              <span class="unit-label">%</span>
-            </div>
-
             <!-- スライダー -->
             <div class="target-markup-slider-group">
               <div class="target-markup-slider-labels">
                 <span class="range-label">0%</span>
-                <span id="targetMarkupSliderValue" class="current-value">30.0%</span>
+                <div class="editable-value-wrapper">
+                  <input
+                    type="number"
+                    id="targetMarkupRate"
+                    class="editable-value"
+                    min="0"
+                    max="99"
+                    step="0.1"
+                    value="30"
+                  />
+                  <span class="value-suffix">%</span>
+                </div>
                 <span class="range-label">99%</span>
               </div>
               <input
@@ -1072,21 +1069,8 @@
               <button type="button" id="applyTargetMarkupBtn" class="target-markup-apply-btn">
                 ✨ 売価を挿入
               </button>
-              <div class="target-markup-round-group">
-                <span class="round-label">丸め込み</span>
-                <button type="button" id="roundTo0Btn" class="target-markup-round-btn">0円</button>
-                <button type="button" id="roundTo5Btn" class="target-markup-round-btn">5円</button>
-                <button type="button" id="roundTo8Btn" class="target-markup-round-btn">8円</button>
-              </div>
             </div>
           </div>
-
-          <!-- ヘルプテキスト -->
-          <div class="target-markup-help">
-            <span class="help-icon">💡</span>
-            <p class="help-text">スライダーを動かすと、リアルタイムで各パターンの「加工後設定売価」が自動更新されます。丸め込みボタンで下一桁を調整できます。</p>
-          </div>
-        </div>
 
         <!-- パターン入力テーブル -->
         <div class="multi-pattern-table-container">
@@ -1106,33 +1090,82 @@
           </table>
         </div>
 
-        <div class="btn-row" style="margin-top: 1em;">
-          <button type="button" id="addPatternBtn" class="btn btn-secondary">+ パターンを追加</button>
+        <div class="btn-row" style="margin-top: 1em; display: flex; gap: 0.8em; align-items: center; flex-wrap: wrap;">
+          <button type="button" id="addPatternBtn" class="btn btn-secondary btn-small">+ パターンを追加</button>
+
+          <!-- クイック調整 -->
+          <div class="quick-adjust-inline">
+            <span class="inline-label">一括調整:</span>
+            <button type="button" id="adjustMinus10Btn" class="btn-adjust btn-adjust-minus">-10円</button>
+            <button type="button" id="adjustPlus10Btn" class="btn-adjust btn-adjust-plus">+10円</button>
+          </div>
+        </div>
+
+        <!-- 売価調整ツール -->
+        <div class="price-adjustment-tools-inline">
+          <!-- 丸め込み設定 -->
+          <div class="rounding-controls">
+            <span class="control-label">丸め方法:</span>
+            <div class="radio-group-inline">
+              <label class="radio-inline">
+                <input type="radio" name="roundMode" value="round" checked />
+                <span>近接値</span>
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="roundMode" value="ceil" />
+                <span>切上</span>
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="roundMode" value="floor" />
+                <span>切捨</span>
+              </label>
+            </div>
+
+            <span class="control-label" style="margin-left: 1.5em;">下一桁:</span>
+            <div class="round-buttons-inline">
+              <button type="button" id="roundTo0Btn" class="btn-round">→0円</button>
+              <button type="button" id="roundTo5Btn" class="btn-round">→5円</button>
+              <button type="button" id="roundTo8Btn" class="btn-round">→8円</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- ステップ2結果: 比較結果テーブル -->
       <div id="multiPatternStep2Result" class="is-hidden step-result">
-        <h3 class="section-subtitle">📈 比較結果</h3>
+        <h3 class="section-subtitle">
+          📈 比較結果
+        </h3>
 
         <div class="multi-pattern-results-container">
           <table id="multiPatternResultsTable" class="multi-pattern-results-table">
             <thead>
               <tr>
-                <th rowspan="2">No.</th>
-                <th colspan="3">加工前</th>
-                <th colspan="3">加工後</th>
-                <th colspan="2">仕上がり</th>
+                <th rowspan="2" class="header-sticky">No.</th>
+                <th colspan="3" class="header-group header-cost">100g原価（円）</th>
+                <th colspan="3" class="header-group header-price">100g売価（円）</th>
+                <th colspan="3" class="header-group header-markup">値入率（%）</th>
+                <th rowspan="2" class="header-finished">仕上がり<br>売価（円）</th>
+                <th rowspan="2" class="header-diff">1個<br>差額（円）</th>
+                <th rowspan="2" class="header-sensitivity">
+                  感度<br>(%/1%)
+                  <span class="help-icon"
+                    data-formula-name="感度分析（Sensitivity Analysis）"
+                    data-formula="感度 = (歩留まり率+1%時の値入率) - (現在の値入率)"
+                    data-formula-desc="<strong>感度とは？</strong><br>歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。<br><br><strong>数値の意味：</strong><br>• プラス（+）：歩留まり率が上がると値入率も上がる<br>• 値が大きいほど：歩留まり改善の効果が大きい<br>• ゼロに近い：歩留まり変動の影響が小さい"
+                    data-formula-example="<strong>例1：</strong>感度が+0.5の場合<br>→ 歩留まり率が1%向上すると、値入率が0.5%向上<br><br><strong>例2：</strong>感度が+1.2の場合<br>→ 歩留まり率が1%向上すると、値入率が1.2%向上<br><br><strong>活用方法：</strong><br>感度が大きい商品ほど、歩留まり改善による利益向上効果が高いため、優先的に改善対策を実施すべきです。">?</span>
+                </th>
               </tr>
               <tr>
-                <th>100g原価<br>（円）</th>
-                <th>100g売価<br>（円）</th>
-                <th>値入率<br>（%）</th>
-                <th>100g原価<br>（円）</th>
-                <th>100g売価<br>（円）</th>
-                <th>値入率<br>（%）</th>
-                <th>仕上がり売価<br>（円）</th>
-                <th>差額<br>（円）</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
+                <th class="subheader-before">加工前</th>
+                <th class="subheader-after">加工後</th>
+                <th class="subheader-change">増減</th>
               </tr>
             </thead>
             <tbody id="multiPatternResultsTableBody">
@@ -1363,6 +1396,90 @@
         <!-- 選択したプリセットを追加ボタン -->
         <div class="modal-footer">
           <button type="button" id="addSelectedPresetsBtn" class="btn btn-primary">✅ 選択したプリセットをパターンに追加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比較結果のヘルプモーダル -->
+  <div id="resultsHelpModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">📊 比較結果テーブルの見方</h3>
+        <button type="button" class="modal-close" id="resultsHelpModalClose">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-section">
+          <h4 class="help-section-title">📍 100g原価・100g売価</h4>
+          <div class="help-item">
+            <dt>加工前</dt>
+            <dd>1個あたりの原価・売価を100g換算した値です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>加工後</dt>
+            <dd>歩留まりを考慮した100g換算の原価・売価です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>増減</dt>
+            <dd>加工後 - 加工前 の差分。原価は減少が良く、売価は増加が良いです。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 値入率（%）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>値入率 = (売価 - 原価) ÷ 売価 × 100</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>粗利率とも呼ばれ、売価に占める利益の割合を示します。値が大きいほど利益率が高いです。</dd>
+          </div>
+          <div class="help-item">
+            <dt>増減</dt>
+            <dd>加工後 - 加工前 の差分。値が増加すると利益率が改善されたことを意味します。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 仕上がり売価（円）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>加工後100g売価 × (加工後重量 ÷ 100)</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>加工後の実際の重量から計算した、1個あたりの売価です。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 1個差額（円）</h4>
+          <div class="help-item">
+            <dt>計算式</dt>
+            <dd>仕上がり売価 - 加工前の1個売価</dd>
+          </div>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>プラスなら売価アップ、マイナスなら売価ダウンを意味します。</dd>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4 class="help-section-title">📍 感度（%/1%）</h4>
+          <div class="help-item">
+            <dt>意味</dt>
+            <dd>歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。</dd>
+          </div>
+          <div class="help-item">
+            <dt>例</dt>
+            <dd>感度が+0.5の場合、歩留まり率が1%向上すると値入率が0.5%向上します。</dd>
+          </div>
+          <div class="help-item">
+            <dt>活用</dt>
+            <dd>感度が大きいほど、歩留まり改善の効果が高いことを意味します。歩留まり改善の優先順位付けに活用できます。</dd>
+          </div>
         </div>
       </div>
     </div>

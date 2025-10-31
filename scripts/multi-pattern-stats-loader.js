@@ -6,6 +6,7 @@
 import { qs, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE } from './constants.js';
+import { showError, showWarning } from './toast.js';
 import { switchMode } from './mode-manager.js';
 import {
   resetSteps,
@@ -86,7 +87,7 @@ export function loadAllStatsToMultiPattern() {
     const afterWeightStats = window.statsDataByType?.afterWeight;
 
     if (!yieldRateStats || yieldRateStats.count < 2) {
-      alert('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
+      showWarning('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
       return;
     }
 
@@ -97,7 +98,7 @@ export function loadAllStatsToMultiPattern() {
     // 推奨値を取得
     const yieldRateRecommended = getRecommendedValue(yieldRateStats);
     if (!yieldRateRecommended) {
-      alert('歩留まり率の推奨値を取得できませんでした。');
+      showError('歩留まり率の推奨値を取得できませんでした。');
       return;
     }
 
@@ -133,11 +134,11 @@ export function loadAllStatsToMultiPattern() {
     } else {
       // 重量から計算モード：加工前重量と加工後重量を設定
       if (!beforeWeightRecommended) {
-        alert('加工前重量の統計データがありません。');
+        showWarning('加工前重量の統計データがありません。');
         return;
       }
       if (!afterWeightRecommended) {
-        alert('加工後重量の統計データがありません。');
+        showWarning('加工後重量の統計データがありません。');
         return;
       }
 
@@ -154,7 +155,7 @@ export function loadAllStatsToMultiPattern() {
     focusFirstPatternInput();
   } catch (error) {
     console.error('[ERROR] 一括転記でエラーが発生しました:', error);
-    alert('一括転記でエラーが発生しました。コンソールを確認してください。');
+    showError('一括転記でエラーが発生しました。コンソールを確認してください。');
   }
 }
 
