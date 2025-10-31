@@ -3,7 +3,7 @@
  */
 
 import { calculatePattern } from './calculator-multi-pattern.js';
-import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, isPositive } from './calculation.js';
+import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
 
 // 定数
@@ -446,7 +446,7 @@ function recalculateAll() {
 
 /**
  * 損益分岐点を一括計算して設定
- * 各パターンの加工後設定売価に、損益分岐点の売価（＝加工後100g原価）を設定
+ * 各パターンの加工後設定売価に、加工前値入率を維持する売価を設定
  */
 function calculateBreakEvenPrices() {
   // 現在のモードに応じて歩留まり率と加工前重量を取得
@@ -486,37 +486,51 @@ function calculateBreakEvenPrices() {
   // 各パターンの損益分岐点を計算して設定
   rows.forEach(row => {
     const unitCostInput = row.querySelector('.pattern-unit-cost');
+    const unitPriceInput = row.querySelector('.pattern-unit-price');
     const afterPriceInput = row.querySelector('.pattern-after-price');
 
     const unitCost = getNumValue(unitCostInput);
+    const unitPrice = getNumValue(unitPriceInput);
 
-    // 1個原価が入力されている場合のみ計算
-    if (isPositive(unitCost)) {
+    // 1個原価と1個売価が入力されている場合のみ計算
+    if (isPositive(unitCost) && isPositive(unitPrice)) {
       // 加工前100g原価を計算
       const beforeCost100 = per100FromPerUnit(unitCost, bw);
+      // 加工前100g売価を計算
+      const beforePrice100 = per100FromPerUnit(unitPrice, bw);
 
-      if (beforeCost100) {
-        // 加工後100g原価を計算（これが損益分岐点の売価）
-        const breakEvenPrice = afterCostPer100(beforeCost100, yr);
+      if (beforeCost100 && beforePrice100) {
+        // 加工前値入率を計算
+        const beforeMarkupRate = markup(beforeCost100, beforePrice100);
 
-        if (isPositive(breakEvenPrice)) {
-          // 加工後設定売価に設定
-          afterPriceInput.value = toFixed(breakEvenPrice, 2);
+        if (Number.isFinite(beforeMarkupRate) && beforeMarkupRate >= 0 && beforeMarkupRate < 100) {
+          // 加工後100g原価を計算
+          const afterCost100 = afterCostPer100(beforeCost100, yr);
 
-          // inputイベントを発火して再計算をトリガー
-          const patternId = parseInt(row.dataset.patternId);
-          handlePatternInput(patternId);
+          if (afterCost100) {
+            // 加工前値入率を維持する加工後100g売価を計算
+            const breakEvenPrice = priceFromMarkup(afterCost100, beforeMarkupRate);
 
-          updatedCount++;
+            if (isPositive(breakEvenPrice)) {
+              // 加工後設定売価に設定
+              afterPriceInput.value = toFixed(breakEvenPrice, 2);
+
+              // inputイベントを発火して再計算をトリガー
+              const patternId = parseInt(row.dataset.patternId);
+              handlePatternInput(patternId);
+
+              updatedCount++;
+            }
+          }
         }
       }
     }
   });
 
   if (updatedCount > 0) {
-    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点を設定しました`);
+    console.log(`[MultiPattern] ${updatedCount}個のパターンに損益分岐点（加工前値入率を維持）を設定しました`);
   } else {
-    alert('1個原価が入力されているパターンがありません。');
+    alert('1個原価と1個売価が入力されているパターンがありません。');
   }
 }
 
