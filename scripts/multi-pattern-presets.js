@@ -500,19 +500,31 @@ export function setupPresetEventListeners() {
       if (target.classList.contains('preset-btn-edit')) {
         const id = parseInt(target.dataset.presetId);
         editPresetFromModal(id);
+        return;
       }
 
       // 削除ボタン
       if (target.classList.contains('preset-btn-delete')) {
         const id = parseInt(target.dataset.presetId);
         deletePresetFromModal(id);
+        return;
       }
     };
 
     presetList.addEventListener('click', handlePresetListEvent);
     presetList.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      handlePresetListEvent(e);
+      const target = e.target;
+
+      // チェックボックスの場合はpreventDefaultしない（デフォルトの動作を許可）
+      if (target.classList.contains('preset-checkbox') || target.type === 'checkbox') {
+        return;
+      }
+
+      // ボタンの場合のみpreventDefaultして処理
+      if (target.classList.contains('preset-btn-edit') || target.classList.contains('preset-btn-delete')) {
+        e.preventDefault();
+        handlePresetListEvent(e);
+      }
     }, { passive: false });
   }
 
