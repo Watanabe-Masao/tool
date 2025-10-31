@@ -53,6 +53,10 @@ export function initMultiPatternUI() {
     targetMarkupSliderValue: document.getElementById('targetMarkupSliderValue'),
     applyTargetMarkupBtn: document.getElementById('applyTargetMarkupBtn'),
 
+    // 微調整ボタン
+    adjustMinus10Btn: document.getElementById('adjustMinus10Btn'),
+    adjustPlus10Btn: document.getElementById('adjustPlus10Btn'),
+
     // 丸め込みボタン
     roundTo0Btn: document.getElementById('roundTo0Btn'),
     roundTo5Btn: document.getElementById('roundTo5Btn'),
@@ -128,6 +132,14 @@ export function initMultiPatternUI() {
   // 目標値入率から売価を挿入ボタン
   if (elements.applyTargetMarkupBtn) {
     elements.applyTargetMarkupBtn.addEventListener('click', applyTargetMarkupPrices);
+  }
+
+  // 微調整ボタン
+  if (elements.adjustMinus10Btn) {
+    elements.adjustMinus10Btn.addEventListener('click', () => adjustPrices(-10));
+  }
+  if (elements.adjustPlus10Btn) {
+    elements.adjustPlus10Btn.addEventListener('click', () => adjustPrices(10));
   }
 
   // 丸め込みボタン
@@ -928,6 +940,10 @@ function roundPrices(digit) {
  * @returns {number} - 丸め込み後の値
  */
 function roundToDigit(value, digit) {
+  // 丸め込みモードを取得
+  const roundModeRadio = document.querySelector('input[name="roundMode"]:checked');
+  const roundMode = roundModeRadio ? roundModeRadio.value : 'round';
+
   // 小数点を四捨五入して整数に
   const intValue = Math.round(value);
 
@@ -937,12 +953,96 @@ function roundToDigit(value, digit) {
   // 10の位を計算
   const base = Math.floor(intValue / 10) * 10;
 
-  // 現在の下一桁がdigitより小さいか等しい場合、現在の10の位 + digit
-  // それ以外の場合、次の10の位 + digit
-  if (lastDigit <= digit) {
-    return base + digit;
+  // モードに応じて処理
+  if (roundMode === 'round') {
+    // 近接値: 従来の動作（最も近い方）
+    if (lastDigit <= digit) {
+      return base + digit;
+    } else {
+      return base + 10 + digit;
+    }
+  } else if (roundMode === 'ceil') {
+    // 切り上げ: digitより小さければ現在の10の位+digit、それ以外は次の10の位+digit
+    if (lastDigit <= digit) {
+      return base + digit;
+    } else {
+      return base + 10 + digit;
+    }
+  } else if (roundMode === 'floor') {
+    // 切り捨て: digitより大きければ現在の10の位+digit、それ以外は前の10の位+digit
+    if (lastDigit >= digit) {
+      return base + digit;
+    } else {
+      return base - 10 + digit;
+    }
+  }
+
+  // デフォルト（念のため）
+  return base + digit;
+}
+
+/**
+ * 売価を指定の金額だけ調整（一括加算/減算）
+ * @param {number} amount - 調整金額（+10 or -10）
+ */
+function adjustPrices(amount) {
+  console.log(`[MultiPattern] adjustPrices 開始: amount=${amount}`);
+
+  // すべてのパターン行を取得
+  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
+
+  if (rows.length === 0) {
+    alert('パターンがありません。');
+    return;
+  }
+
+  let updatedCount = 0;
+  const updatedInputs = [];
+
+  // 各パターンの加工後設定売価を調整
+  rows.forEach((row, index) => {
+    const afterPriceInput = row.querySelector('.pattern-after-price');
+    const currentValue = getNumValue(afterPriceInput);
+
+    if (isPositive(currentValue)) {
+      // 調整後の値
+      const adjustedValue = currentValue + amount;
+
+      // 負の値にならないようにチェック
+      if (adjustedValue > 0) {
+        console.log(`[MultiPattern] パターン${index + 1}: ${currentValue} → ${adjustedValue}`);
+
+        // 値を設定
+        afterPriceInput.value = toFixed(adjustedValue, 2);
+
+        // ハイライト表示のために入力欄を記録
+        updatedInputs.push(afterPriceInput);
+
+        // inputイベントを発火して再計算をトリガー
+        const patternId = parseInt(row.dataset.patternId);
+        handlePatternInput(patternId);
+
+        updatedCount++;
+      }
+    }
+  });
+
+  if (updatedCount > 0) {
+    // 更新された入力欄をハイライト表示
+    const highlightColor = amount > 0 ? '#c8e6c9' : '#ffccbc'; // +は緑、-はオレンジ
+    updatedInputs.forEach(input => {
+      input.style.transition = 'background-color 0.3s ease';
+      input.style.backgroundColor = highlightColor;
+
+      // 2秒後にハイライトを解除
+      setTimeout(() => {
+        input.style.backgroundColor = '';
+      }, 2000);
+    });
+
+    console.log(`[MultiPattern] ${updatedCount}個のパターンを${amount > 0 ? '+' : ''}${amount}円調整しました`);
   } else {
-    return base + 10 + digit;
+    alert('加工後設定売価が入力されているパターンがありません。');
   }
 }
 

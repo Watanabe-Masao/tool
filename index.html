@@ -1072,19 +1072,53 @@
               <button type="button" id="applyTargetMarkupBtn" class="target-markup-apply-btn">
                 ✨ 売価を挿入
               </button>
+
+              <!-- 微調整ボタン -->
+              <div class="target-markup-adjust-group">
+                <span class="adjust-label">
+                  微調整
+                  <span class="help-icon help-icon-inline" data-tooltip="各パターンの加工後設定売価を一括で10円ずつ増減できます。">ⓘ</span>
+                </span>
+                <button type="button" id="adjustMinus10Btn" class="adjust-btn adjust-minus">-10円</button>
+                <button type="button" id="adjustPlus10Btn" class="adjust-btn adjust-plus">+10円</button>
+              </div>
+
+              <!-- 丸め込みモード選択 -->
+              <div class="target-markup-round-mode">
+                <span class="round-mode-label">
+                  丸め込み方法
+                  <span class="help-icon help-icon-inline" data-tooltip="下一桁を指定の数字に変更する方法を選択します。&#10;近接値: 最も近い値に調整&#10;切り上げ: 指定の桁に切り上げ&#10;切り捨て: 指定の桁に切り捨て">ⓘ</span>
+                </span>
+                <div class="round-mode-radios">
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="round" checked />
+                    <span>近接値</span>
+                  </label>
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="ceil" />
+                    <span>切り上げ</span>
+                  </label>
+                  <label class="round-mode-radio">
+                    <input type="radio" name="roundMode" value="floor" />
+                    <span>切り捨て</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 丸め込みボタン -->
               <div class="target-markup-round-group">
-                <span class="round-label">丸め込み</span>
-                <button type="button" id="roundTo0Btn" class="target-markup-round-btn">0円</button>
-                <button type="button" id="roundTo5Btn" class="target-markup-round-btn">5円</button>
-                <button type="button" id="roundTo8Btn" class="target-markup-round-btn">8円</button>
+                <span class="round-label">下一桁を変更</span>
+                <button type="button" id="roundTo0Btn" class="target-markup-round-btn">→ 0円</button>
+                <button type="button" id="roundTo5Btn" class="target-markup-round-btn">→ 5円</button>
+                <button type="button" id="roundTo8Btn" class="target-markup-round-btn">→ 8円</button>
               </div>
             </div>
           </div>
 
-          <!-- ヘルプテキスト -->
+          <!-- ヘルプテキスト（ヘルプアイコン化） -->
           <div class="target-markup-help">
-            <span class="help-icon">💡</span>
-            <p class="help-text">スライダーを動かすと、リアルタイムで各パターンの「加工後設定売価」が自動更新されます。丸め込みボタンで下一桁を調整できます。</p>
+            <span class="help-icon help-icon-inline" data-tooltip="目標値入率のスライダーを動かすと、リアルタイムで各パターンの「加工後設定売価」が自動更新されます。&#10;丸め込みボタンで下一桁を調整し、微調整ボタンで±10円単位の微調整ができます。">ⓘ</span>
+            <span class="help-text">目標値入率と丸め込みの使い方</span>
           </div>
         </div>
 

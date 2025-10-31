@@ -1936,6 +1936,19 @@ input[type="range"] {
   background: #fff;
 }
 
+/* インラインヘルプアイコン（通常の文中で使用） */
+.help-icon-inline {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  margin-left: 3px;
+  vertical-align: baseline;
+}
+
+.help-icon-inline:hover {
+  transform: scale(1.1);
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .multi-pattern-results-table {
@@ -3007,6 +3020,116 @@ input[type="range"] {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* 微調整ボタングループ */
+.target-markup-adjust-group {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  background: white;
+  padding: 0.6em 0.8em;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.target-markup-adjust-group .adjust-label {
+  font-size: 0.85em;
+  color: #7f8c8d;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.adjust-btn {
+  padding: 0.5em 1em;
+  border: 2px solid;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.adjust-minus {
+  background: linear-gradient(135deg, #fff 0%, #ffe0b2 100%);
+  color: #e65100;
+  border-color: #ffb74d;
+}
+
+.adjust-minus:hover {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffc947 100%);
+  border-color: #f57c00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.2);
+}
+
+.adjust-plus {
+  background: linear-gradient(135deg, #fff 0%, #c8e6c9 100%);
+  color: #2e7d32;
+  border-color: #81c784;
+}
+
+.adjust-plus:hover {
+  background: linear-gradient(135deg, #e8f5e9 0%, #66bb6a 100%);
+  border-color: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+}
+
+.adjust-btn:active {
+  transform: translateY(0);
+}
+
+/* 丸め込みモード選択 */
+.target-markup-round-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  background: white;
+  padding: 0.8em;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.target-markup-round-mode .round-mode-label {
+  font-size: 0.85em;
+  color: #7f8c8d;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.round-mode-radios {
+  display: flex;
+  gap: 0.8em;
+}
+
+.round-mode-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  cursor: pointer;
+  font-size: 0.85em;
+  color: #495057;
+  font-weight: 500;
+}
+
+.round-mode-radio input[type="radio"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #667eea;
+}
+
+.round-mode-radio:hover {
+  color: #667eea;
 }
 
 /* 丸め込みボタングループ */
