@@ -476,6 +476,18 @@ function recalculateAll() {
         priceDiffClass = 'result-negative';
       }
 
+      // 感度の表示クラス
+      let sensitivityClass = 'result-value';
+      let sensitivitySign = '';
+      if (result.sensitivity !== null && Number.isFinite(result.sensitivity)) {
+        if (result.sensitivity > 0) {
+          sensitivityClass = 'result-positive';
+          sensitivitySign = '+';
+        } else if (result.sensitivity < 0) {
+          sensitivityClass = 'result-negative';
+        }
+      }
+
       row.innerHTML = `
         <td class="result-number">${pattern.id}</td>
         <td class="result-value">${toFixed(result.beforeCost100, 2)}</td>
@@ -486,6 +498,7 @@ function recalculateAll() {
         <td class="result-highlight">${toFixed(result.afterMarkup, 2)}%</td>
         <td class="result-value">${toFixed(result.finishedPrice, 2)}</td>
         <td class="${priceDiffClass}">${result.priceDiff >= 0 ? '+' : ''}${toFixed(result.priceDiff, 2)}</td>
+        <td class="${sensitivityClass}">${result.sensitivity !== null ? sensitivitySign + toFixed(result.sensitivity, 3) : '-'}</td>
       `;
 
       elements.resultsTableBody.appendChild(row);
