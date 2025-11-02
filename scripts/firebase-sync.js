@@ -10,6 +10,49 @@ import { showToast } from './toast.js';
 let isSyncing = false;
 let lastSyncTime = null;
 
+// LocalStorageキー
+const LAST_SYNC_TIME_KEY = 'yield-calculator-last-sync-time';
+
+/**
+ * 最終同期時刻をLocalStorageから読み込む
+ */
+function loadLastSyncTime() {
+  try {
+    const stored = localStorage.getItem(LAST_SYNC_TIME_KEY);
+    if (stored) {
+      const parsedDate = new Date(stored);
+      // 有効な日付かチェック（Safari対応）
+      if (!isNaN(parsedDate.getTime())) {
+        lastSyncTime = parsedDate;
+        console.log('最終同期時刻を読み込み:', lastSyncTime);
+      } else {
+        console.warn('無効な日付形式のため最終同期時刻をリセット:', stored);
+        localStorage.removeItem(LAST_SYNC_TIME_KEY);
+        lastSyncTime = null;
+      }
+    }
+  } catch (error) {
+    console.error('最終同期時刻の読み込みエラー:', error);
+    lastSyncTime = null;
+  }
+}
+
+/**
+ * 最終同期時刻をLocalStorageに保存
+ */
+function saveLastSyncTime(time) {
+  try {
+    lastSyncTime = time;
+    localStorage.setItem(LAST_SYNC_TIME_KEY, time.toISOString());
+    console.log('最終同期時刻を保存:', lastSyncTime);
+  } catch (error) {
+    console.error('最終同期時刻の保存エラー:', error);
+  }
+}
+
+// 初期化時に最終同期時刻を読み込む
+loadLastSyncTime();
+
 /**
  * Firestoreインスタンスを取得
  */
@@ -64,10 +107,34 @@ export async function uploadToCloud() {
     }
 
     // IndexedDBから全履歴を取得
-    const localHistory = await getAllHistoryFromIndexedDB();
+    const allHistory = await getAllHistoryFromIndexedDB();
+
+    // 差分同期: 最終同期時刻以降に更新されたデータのみをフィルタリング
+    let localHistory;
+    if (lastSyncTime && !isNaN(lastSyncTime.getTime())) {
+      localHistory = allHistory.filter(item => {
+        // updatedAtフィールドを確認（Date型または文字列）
+        if (!item.updatedAt) {
+          // updatedAtがない場合は常にアップロード
+          return true;
+        }
+        const updatedAt = new Date(item.updatedAt);
+        // 有効な日付でない場合もアップロード
+        if (isNaN(updatedAt.getTime())) {
+          return true;
+        }
+        return updatedAt > lastSyncTime;
+      });
+      console.log(`差分同期: 全${allHistory.length}件中${localHistory.length}件をアップロード`);
+    } else {
+      // 初回同期: 全データをアップロード
+      localHistory = allHistory;
+      console.log(`初回同期: 全${localHistory.length}件をアップロード`);
+    }
 
     if (localHistory.length === 0) {
       showToast('アップロードするデータがありません', 'info');
+      saveLastSyncTime(new Date()); // 同期時刻だけ更新
       return true;
     }
 
@@ -106,7 +173,7 @@ export async function uploadToCloud() {
       await batch.commit();
     }
 
-    lastSyncTime = new Date();
+    saveLastSyncTime(new Date());
     updateSyncStatus('success');
     showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
 
@@ -163,17 +230,51 @@ export async function downloadFromCloud() {
       return false;
     }
 
-    // Firestoreから全履歴を取得
-    const snapshot = await firestore
-      .collection('users')
-      .doc(user.uid)
-      .collection('history')
-      .get();
+    // Firestoreから履歴を取得（差分同期）
+    let snapshot;
+    let usedDifferentialSync = false;
+
+    try {
+      let query = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('history');
+
+      // 差分同期: 最終同期時刻以降に更新されたデータのみを取得
+      if (lastSyncTime) {
+        try {
+          const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
+          query = query.where('updatedAt', '>', lastSyncTimestamp);
+          console.log('差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
+          snapshot = await query.get();
+          usedDifferentialSync = true;
+          console.log(`差分同期成功: ${snapshot.size}件取得`);
+        } catch (differentialError) {
+          console.warn('差分同期に失敗、全件取得にフォールバック:', differentialError);
+          // 差分同期に失敗した場合は全件取得
+          query = firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('history');
+          snapshot = await query.get();
+          console.log('全件取得成功:', snapshot.size);
+        }
+      } else {
+        console.log('初回同期: 全データを取得');
+        snapshot = await query.get();
+      }
+    } catch (error) {
+      console.error('Firestore取得エラー:', error);
+      throw error;
+    }
 
     if (snapshot.empty) {
-      showToast('クラウドにデータがありません', 'info');
+      showToast('ダウンロードする新しいデータがありません', 'info');
+      saveLastSyncTime(new Date()); // 同期時刻だけ更新
       return true;
     }
+
+    console.log(`${snapshot.size}件のデータをダウンロード`);
 
     const cloudHistory = snapshot.docs.map(doc => ({
       ...doc.data(),
@@ -185,14 +286,21 @@ export async function downloadFromCloud() {
     let updated = 0;
     let skipped = 0;
 
-    for (const cloudItem of cloudHistory) {
+    // Safari対応: トランザクション間に小さな遅延を入れて競合を防ぐ
+    for (let i = 0; i < cloudHistory.length; i++) {
+      const cloudItem = cloudHistory[i];
       const result = await mergeHistoryItem(cloudItem);
       if (result === 'imported') imported++;
       else if (result === 'updated') updated++;
       else skipped++;
+
+      // 10件ごとに少し長めの遅延（Safari対応）
+      if ((i + 1) % 10 === 0 && i < cloudHistory.length - 1) {
+        await sleep(50);
+      }
     }
 
-    lastSyncTime = new Date();
+    saveLastSyncTime(new Date());
     updateSyncStatus('success');
     showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
 
@@ -247,9 +355,20 @@ async function getAllHistoryFromIndexedDB() {
 }
 
 /**
- * 履歴アイテムをマージ（競合解決）
+ * ユーティリティ：指定時間待機
  */
-async function mergeHistoryItem(cloudItem) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 履歴アイテムをマージ（競合解決）
+ * Safari対応: リトライロジック付き
+ */
+async function mergeHistoryItem(cloudItem, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 100; // ミリ秒
+
   try {
     // 既存のアイテムを確認
     const localItem = await dbInstance.getById(cloudItem.id);
@@ -273,6 +392,17 @@ async function mergeHistoryItem(cloudItem) {
       }
     }
   } catch (error) {
+    // Safari特有のトランザクション競合エラーをリトライ
+    const isTransactionError = error.name === 'InvalidStateError' ||
+                                error.name === 'TransactionInactiveError' ||
+                                error.name === 'AbortError';
+
+    if (isTransactionError && retryCount < MAX_RETRIES) {
+      console.warn(`トランザクション競合エラー、リトライ ${retryCount + 1}/${MAX_RETRIES}:`, error.name);
+      await sleep(RETRY_DELAY * (retryCount + 1)); // 指数バックオフ
+      return await mergeHistoryItem(cloudItem, retryCount + 1);
+    }
+
     console.error('アイテムマージエラー:', error);
     throw error;
   }
