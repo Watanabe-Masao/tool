@@ -286,11 +286,18 @@ export async function downloadFromCloud() {
     let updated = 0;
     let skipped = 0;
 
-    for (const cloudItem of cloudHistory) {
+    // Safari対応: トランザクション間に小さな遅延を入れて競合を防ぐ
+    for (let i = 0; i < cloudHistory.length; i++) {
+      const cloudItem = cloudHistory[i];
       const result = await mergeHistoryItem(cloudItem);
       if (result === 'imported') imported++;
       else if (result === 'updated') updated++;
       else skipped++;
+
+      // 10件ごとに少し長めの遅延（Safari対応）
+      if ((i + 1) % 10 === 0 && i < cloudHistory.length - 1) {
+        await sleep(50);
+      }
     }
 
     saveLastSyncTime(new Date());
@@ -348,9 +355,20 @@ async function getAllHistoryFromIndexedDB() {
 }
 
 /**
- * 履歴アイテムをマージ（競合解決）
+ * ユーティリティ：指定時間待機
  */
-async function mergeHistoryItem(cloudItem) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 履歴アイテムをマージ（競合解決）
+ * Safari対応: リトライロジック付き
+ */
+async function mergeHistoryItem(cloudItem, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 100; // ミリ秒
+
   try {
     // 既存のアイテムを確認
     const localItem = await dbInstance.getById(cloudItem.id);
@@ -374,6 +392,17 @@ async function mergeHistoryItem(cloudItem) {
       }
     }
   } catch (error) {
+    // Safari特有のトランザクション競合エラーをリトライ
+    const isTransactionError = error.name === 'InvalidStateError' ||
+                                error.name === 'TransactionInactiveError' ||
+                                error.name === 'AbortError';
+
+    if (isTransactionError && retryCount < MAX_RETRIES) {
+      console.warn(`トランザクション競合エラー、リトライ ${retryCount + 1}/${MAX_RETRIES}:`, error.name);
+      await sleep(RETRY_DELAY * (retryCount + 1)); // 指数バックオフ
+      return await mergeHistoryItem(cloudItem, retryCount + 1);
+    }
+
     console.error('アイテムマージエラー:', error);
     throw error;
   }
