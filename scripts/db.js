@@ -57,13 +57,23 @@ export class YieldCalculatorDB {
   constructor() {
     this.db = null;
     this.openPromise = null; // Race Condition対策用
+    this.openRetryCount = 0; // リトライカウント
+    this.maxRetries = 3; // 最大リトライ回数
+  }
+
+  /**
+   * 指定時間待機
+   */
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
    * データベースを開く
+   * Safari対応: リトライロジック付き
    * @returns {Promise<IDBDatabase>}
    */
-  async open() {
+  async open(retryCount = 0) {
     // IndexedDBが利用可能かチェック
     if (!isIndexedDBAvailable()) {
       throw createUserFriendlyError(
@@ -83,21 +93,49 @@ export class YieldCalculatorDB {
     }
 
     // 新しい開く処理を開始
-    this.openPromise = new Promise((resolve, reject) => {
+    this.openPromise = new Promise(async (resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onerror = () => {
+      request.onerror = async () => {
         this.openPromise = null; // エラー時にリセット
-        reject(createUserFriendlyError(request.error, 'データベースを開く'));
+
+        // Safari対応: データベース接続エラーをリトライ
+        const error = request.error;
+        const isRetriableError = error && (
+          error.name === 'UnknownError' ||
+          error.name === 'InvalidStateError' ||
+          error.name === 'AbortError'
+        );
+
+        if (isRetriableError && retryCount < this.maxRetries) {
+          console.warn(`データベース接続エラー、リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
+          await this.sleep(200 * (retryCount + 1)); // 指数バックオフ
+          try {
+            const db = await this.open(retryCount + 1);
+            resolve(db);
+          } catch (retryError) {
+            reject(retryError);
+          }
+        } else {
+          reject(createUserFriendlyError(error, 'データベースを開く'));
+        }
       };
 
       request.onsuccess = () => {
         this.db = request.result;
         this.openPromise = null; // 成功時にリセット
+        this.openRetryCount = 0; // リトライカウントをリセット
 
         // データベース接続エラーを監視
         this.db.onerror = (event) => {
           console.error('IndexedDB error:', event.target.error);
+        };
+
+        // Safariでのバージョン競合対策
+        this.db.onversionchange = () => {
+          console.warn('IndexedDB version change detected, closing connection');
+          this.db.close();
+          this.db = null;
         };
 
         resolve(this.db);
@@ -124,6 +162,10 @@ export class YieldCalculatorDB {
           console.error('Failed to create object store:', error);
           reject(createUserFriendlyError(error, 'データベーススキーマの作成'));
         }
+      };
+
+      request.onblocked = () => {
+        console.warn('IndexedDB open blocked, waiting...');
       };
     });
 
