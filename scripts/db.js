@@ -122,11 +122,47 @@ export class YieldCalculatorDB {
   }
 
   /**
+   * データベース環境をチェック
+   * Safari対応: 接続前の状態確認
+   */
+  checkDatabaseEnvironment() {
+    const checks = {
+      indexedDBAvailable: !!window.indexedDB,
+      isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+      isPrivateMode: false,
+      storageEstimate: null,
+      timestamp: new Date().toISOString()
+    };
+
+    // ストレージ容量チェック（Safari対応）
+    if (navigator.storage && navigator.storage.estimate) {
+      navigator.storage.estimate().then(estimate => {
+        checks.storageEstimate = {
+          usage: estimate.usage,
+          quota: estimate.quota,
+          usagePercent: ((estimate.usage / estimate.quota) * 100).toFixed(2)
+        };
+        console.log('💾 ストレージ使用状況:', checks.storageEstimate);
+      }).catch(err => {
+        console.warn('ストレージ使用状況の取得に失敗:', err);
+      });
+    }
+
+    console.log('🔍 データベース環境チェック:', checks);
+    return checks;
+  }
+
+  /**
    * データベースを開く
    * Safari対応: リトライロジック付き
    * @returns {Promise<IDBDatabase>}
    */
   async open(retryCount = 0) {
+    // 初回接続時のみ環境チェック
+    if (retryCount === 0) {
+      this.checkDatabaseEnvironment();
+    }
+
     // IndexedDBが利用可能かチェック
     if (!isIndexedDBAvailable()) {
       throw createUserFriendlyError(
@@ -142,6 +178,7 @@ export class YieldCalculatorDB {
 
     // 開く処理が進行中の場合は、同じPromiseを返す
     if (this.openPromise) {
+      console.log('⏳ データベース接続処理が進行中です...');
       return this.openPromise;
     }
 
@@ -154,23 +191,43 @@ export class YieldCalculatorDB {
 
         // Safari対応: データベース接続エラーをリトライ
         const error = request.error;
-        const isRetriableError = error && (
-          error.name === 'UnknownError' ||
-          error.name === 'InvalidStateError' ||
-          error.name === 'AbortError'
-        );
+
+        // エラーの詳細情報をログ出力（Safari デバッグ用）
+        console.error('❌ IndexedDB接続エラー詳細:', {
+          name: error?.name || 'Unknown',
+          message: error?.message || 'No message',
+          code: error?.code || 'No code',
+          retryCount,
+          maxRetries: this.maxRetries,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        });
+
+        // Safari対応: より広範なエラーをリトライ対象に
+        // DOMExceptionはすべてリトライを試みる（プライベートモードエラー以外）
+        const isPrivateModeError = error?.message?.includes('private') ||
+                                    error?.message?.includes('プライベート');
+
+        const isRetriableError = error && !isPrivateModeError;
 
         if (isRetriableError && retryCount < this.maxRetries) {
-          console.warn(`データベース接続エラー、リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
+          console.warn(`🔄 データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
           // Safari対応: 指数バックオフの遅延を強化 (300ms, 600ms, 900ms)
           await this.sleep(300 * (retryCount + 1));
           try {
             const db = await this.open(retryCount + 1);
+            console.log(`✅ リトライ成功 (試行 ${retryCount + 1})`);
             resolve(db);
           } catch (retryError) {
+            console.error(`❌ リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
             reject(retryError);
           }
         } else {
+          if (!isRetriableError) {
+            console.error('⛔ リトライ不可能なエラー（プライベートモード等）');
+          } else {
+            console.error(`⛔ 最大リトライ回数に達しました (${this.maxRetries}回)`);
+          }
           reject(createUserFriendlyError(error, 'データベースを開く'));
         }
       };
@@ -218,8 +275,38 @@ export class YieldCalculatorDB {
         }
       };
 
-      request.onblocked = () => {
-        console.warn('IndexedDB open blocked, waiting...');
+      request.onblocked = async (event) => {
+        console.warn('⚠️ IndexedDB接続がブロックされました（他のタブでDBが開かれている可能性）');
+        console.log('ブロックイベント詳細:', {
+          oldVersion: event.oldVersion,
+          newVersion: event.newVersion,
+          retryCount,
+          timestamp: new Date().toISOString()
+        });
+
+        // Safari対応: Broadcast Channel で他のタブに接続クローズを要求
+        if ('BroadcastChannel' in window) {
+          try {
+            const channel = new BroadcastChannel('indexeddb-control');
+            channel.postMessage({ type: 'REQUEST_CLOSE_DB', dbName: DB_NAME });
+            console.log('📢 他のタブにDB接続クローズを要求しました');
+            channel.close();
+          } catch (err) {
+            console.warn('BroadcastChannel送信エラー:', err);
+          }
+        }
+
+        // ブロックされた場合、少し待機してからタイムアウト
+        setTimeout(() => {
+          if (this.openPromise) {
+            console.error('⏱️ データベース接続タイムアウト（10秒）');
+            this.openPromise = null;
+            reject(createUserFriendlyError(
+              new Error('Database connection blocked'),
+              'データベースを開く（他のタブでデータベースが使用されています。他のタブを閉じてから再試行してください）'
+            ));
+          }
+        }, 10000); // 10秒待機
       };
     });
 
@@ -606,4 +693,94 @@ if (typeof window !== 'undefined') {
       db.close();
     }
   });
+
+  // Safari対応: Broadcast Channel でタブ間通信
+  // 他のタブから接続クローズ要求を受け取る
+  if ('BroadcastChannel' in window) {
+    try {
+      const dbControlChannel = new BroadcastChannel('indexeddb-control');
+      dbControlChannel.addEventListener('message', (event) => {
+        if (event.data.type === 'REQUEST_CLOSE_DB' && event.data.dbName === DB_NAME) {
+          console.log('📨 他のタブからDB接続クローズ要求を受信');
+          if (db.db) {
+            console.log('🔒 DB接続をクローズします');
+            db.close();
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('BroadcastChannel初期化エラー:', err);
+    }
+  }
+
+  // グローバルデバッグヘルパー関数（コンソールから実行可能）
+  window.debugIndexedDB = {
+    /**
+     * データベース状態を表示
+     */
+    getStatus: () => {
+      console.log('📊 IndexedDB 状態:', {
+        isOpen: !!db.db,
+        activeTransactions: db.activeTransactions,
+        openPromise: !!db.openPromise,
+        retryCount: db.openRetryCount,
+        maxRetries: db.maxRetries
+      });
+    },
+
+    /**
+     * トランザクションログを表示
+     */
+    getTransactionLog: () => {
+      const log = db.getTransactionLog();
+      console.log('📜 トランザクションログ (最新50件):', log);
+      return log;
+    },
+
+    /**
+     * 環境情報を表示
+     */
+    checkEnvironment: () => {
+      return db.checkDatabaseEnvironment();
+    },
+
+    /**
+     * データベースを強制的にクローズ
+     */
+    forceClose: () => {
+      console.log('🔒 データベースを強制クローズします...');
+      db.close();
+      console.log('✅ クローズ完了');
+    },
+
+    /**
+     * データベースを強制的に再接続
+     */
+    forceReconnect: async () => {
+      console.log('🔄 データベースを再接続します...');
+      db.close();
+      try {
+        await db.open();
+        console.log('✅ 再接続成功');
+      } catch (err) {
+        console.error('❌ 再接続失敗:', err);
+      }
+    },
+
+    /**
+     * 全てのデバッグ情報を表示
+     */
+    showAll: () => {
+      console.log('=== IndexedDB デバッグ情報 ===');
+      window.debugIndexedDB.getStatus();
+      window.debugIndexedDB.checkEnvironment();
+      window.debugIndexedDB.getTransactionLog();
+    }
+  };
+
+  console.log('🛠️ デバッグヘルパー関数が利用可能です: window.debugIndexedDB');
+  console.log('   - debugIndexedDB.getStatus() - データベース状態を表示');
+  console.log('   - debugIndexedDB.getTransactionLog() - トランザクションログを表示');
+  console.log('   - debugIndexedDB.checkEnvironment() - 環境情報を表示');
+  console.log('   - debugIndexedDB.showAll() - 全情報を表示');
 }
