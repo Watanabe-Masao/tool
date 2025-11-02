@@ -20,11 +20,20 @@ function loadLastSyncTime() {
   try {
     const stored = localStorage.getItem(LAST_SYNC_TIME_KEY);
     if (stored) {
-      lastSyncTime = new Date(stored);
-      console.log('最終同期時刻を読み込み:', lastSyncTime);
+      const parsedDate = new Date(stored);
+      // 有効な日付かチェック（Safari対応）
+      if (!isNaN(parsedDate.getTime())) {
+        lastSyncTime = parsedDate;
+        console.log('最終同期時刻を読み込み:', lastSyncTime);
+      } else {
+        console.warn('無効な日付形式のため最終同期時刻をリセット:', stored);
+        localStorage.removeItem(LAST_SYNC_TIME_KEY);
+        lastSyncTime = null;
+      }
     }
   } catch (error) {
     console.error('最終同期時刻の読み込みエラー:', error);
+    lastSyncTime = null;
   }
 }
 
@@ -102,11 +111,19 @@ export async function uploadToCloud() {
 
     // 差分同期: 最終同期時刻以降に更新されたデータのみをフィルタリング
     let localHistory;
-    if (lastSyncTime) {
+    if (lastSyncTime && !isNaN(lastSyncTime.getTime())) {
       localHistory = allHistory.filter(item => {
         // updatedAtフィールドを確認（Date型または文字列）
-        const updatedAt = item.updatedAt ? new Date(item.updatedAt) : null;
-        return !updatedAt || updatedAt > lastSyncTime;
+        if (!item.updatedAt) {
+          // updatedAtがない場合は常にアップロード
+          return true;
+        }
+        const updatedAt = new Date(item.updatedAt);
+        // 有効な日付でない場合もアップロード
+        if (isNaN(updatedAt.getTime())) {
+          return true;
+        }
+        return updatedAt > lastSyncTime;
       });
       console.log(`差分同期: 全${allHistory.length}件中${localHistory.length}件をアップロード`);
     } else {
@@ -214,21 +231,42 @@ export async function downloadFromCloud() {
     }
 
     // Firestoreから履歴を取得（差分同期）
-    let query = firestore
-      .collection('users')
-      .doc(user.uid)
-      .collection('history');
+    let snapshot;
+    let usedDifferentialSync = false;
 
-    // 差分同期: 最終同期時刻以降に更新されたデータのみを取得
-    if (lastSyncTime) {
-      const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
-      query = query.where('updatedAt', '>', lastSyncTimestamp);
-      console.log('差分同期: 最終同期時刻以降のデータのみ取得', lastSyncTime);
-    } else {
-      console.log('初回同期: 全データを取得');
+    try {
+      let query = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('history');
+
+      // 差分同期: 最終同期時刻以降に更新されたデータのみを取得
+      if (lastSyncTime) {
+        try {
+          const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
+          query = query.where('updatedAt', '>', lastSyncTimestamp);
+          console.log('差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
+          snapshot = await query.get();
+          usedDifferentialSync = true;
+          console.log(`差分同期成功: ${snapshot.size}件取得`);
+        } catch (differentialError) {
+          console.warn('差分同期に失敗、全件取得にフォールバック:', differentialError);
+          // 差分同期に失敗した場合は全件取得
+          query = firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('history');
+          snapshot = await query.get();
+          console.log('全件取得成功:', snapshot.size);
+        }
+      } else {
+        console.log('初回同期: 全データを取得');
+        snapshot = await query.get();
+      }
+    } catch (error) {
+      console.error('Firestore取得エラー:', error);
+      throw error;
     }
-
-    const snapshot = await query.get();
 
     if (snapshot.empty) {
       showToast('ダウンロードする新しいデータがありません', 'info');
