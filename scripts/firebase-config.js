@@ -9,19 +9,19 @@
  * 5. Firestore Database を作成（テストモードで開始）
  */
 
-// TODO: Firebaseコンソールから取得した設定値に置き換えてください
+// Firebase設定値（プロジェクト情報から取得）
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA7UMMKgnwweA8PJYQIL7zvhBexqyiCi0k",
+  authDomain: "yield-calculator-ffc3a.firebaseapp.com",
+  projectId: "yield-calculator-ffc3a",
+  storageBucket: "yield-calculator-ffc3a.appspot.com",
+  messagingSenderId: "31235016265",
+  appId: "1:31235016265:web:PLACEHOLDER" // ← ここを実際のappIdに置き換えてください
 };
 
 // Firebase機能の有効/無効切り替え
 export const firebaseFeatures = {
-  enabled: false, // trueにするとFirebase同期が有効になります
+  enabled: true, // Firebase同期を有効化
   autoSync: true, // 自動同期を有効にする
   syncInterval: 300000, // 自動同期の間隔（ミリ秒、デフォルト5分）
 };
