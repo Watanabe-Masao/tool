@@ -1523,17 +1523,19 @@
               匿名でログイン
             </button>
             <div class="divider">または</div>
-            <div class="form-group">
-              <label for="signin-email">メールアドレス</label>
-              <input type="email" id="signin-email" class="form-input" placeholder="email@example.com" />
-            </div>
-            <div class="form-group">
-              <label for="signin-password">パスワード</label>
-              <input type="password" id="signin-password" class="form-input" placeholder="パスワード" />
-            </div>
-            <button type="button" id="email-signin-btn" class="btn btn-primary btn-block">
-              メールでログイン
-            </button>
+            <form id="signin-form" onsubmit="return false;">
+              <div class="form-group">
+                <label for="signin-email">メールアドレス</label>
+                <input type="email" id="signin-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+              </div>
+              <div class="form-group">
+                <label for="signin-password">パスワード</label>
+                <input type="password" id="signin-password" class="form-input" placeholder="パスワード" autocomplete="current-password" />
+              </div>
+              <button type="button" id="email-signin-btn" class="btn btn-primary btn-block">
+                メールでログイン
+              </button>
+            </form>
             <div class="auth-links">
               <a href="#" onclick="showSignUpSection(); return false;">アカウント作成</a>
               <a href="#" onclick="showResetSection(); return false;">パスワードを忘れた</a>
@@ -1545,21 +1547,23 @@
         <div id="signup-section" class="auth-section" style="display: none;">
           <h3 class="auth-section-title">アカウント作成</h3>
           <div class="auth-form">
-            <div class="form-group">
-              <label for="signup-email">メールアドレス</label>
-              <input type="email" id="signup-email" class="form-input" placeholder="email@example.com" />
-            </div>
-            <div class="form-group">
-              <label for="signup-password">パスワード（6文字以上）</label>
-              <input type="password" id="signup-password" class="form-input" placeholder="パスワード" />
-            </div>
-            <div class="form-group">
-              <label for="signup-password-confirm">パスワード（確認）</label>
-              <input type="password" id="signup-password-confirm" class="form-input" placeholder="パスワード（確認）" />
-            </div>
-            <button type="button" id="email-signup-btn" class="btn btn-primary btn-block">
-              アカウント作成
-            </button>
+            <form id="signup-form" onsubmit="return false;">
+              <div class="form-group">
+                <label for="signup-email">メールアドレス</label>
+                <input type="email" id="signup-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+              </div>
+              <div class="form-group">
+                <label for="signup-password">パスワード（6文字以上）</label>
+                <input type="password" id="signup-password" class="form-input" placeholder="パスワード" autocomplete="new-password" />
+              </div>
+              <div class="form-group">
+                <label for="signup-password-confirm">パスワード（確認）</label>
+                <input type="password" id="signup-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" />
+              </div>
+              <button type="button" id="email-signup-btn" class="btn btn-primary btn-block">
+                アカウント作成
+              </button>
+            </form>
             <div class="auth-links">
               <a href="#" onclick="showSignInSection(); return false;">ログインに戻る</a>
             </div>
@@ -1574,21 +1578,23 @@
             メールアドレスを登録すると、デバイスを変更してもデータにアクセスできるようになります。
           </p>
           <div class="auth-form">
-            <div class="form-group">
-              <label for="upgrade-email">メールアドレス</label>
-              <input type="email" id="upgrade-email" class="form-input" placeholder="email@example.com" />
-            </div>
-            <div class="form-group">
-              <label for="upgrade-password">パスワード（6文字以上）</label>
-              <input type="password" id="upgrade-password" class="form-input" placeholder="パスワード" />
-            </div>
-            <div class="form-group">
-              <label for="upgrade-password-confirm">パスワード（確認）</label>
-              <input type="password" id="upgrade-password-confirm" class="form-input" placeholder="パスワード（確認）" />
-            </div>
-            <button type="button" id="upgrade-account-btn" class="btn btn-primary btn-block">
-              アカウントをアップグレード
-            </button>
+            <form id="upgrade-form" onsubmit="return false;">
+              <div class="form-group">
+                <label for="upgrade-email">メールアドレス</label>
+                <input type="email" id="upgrade-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+              </div>
+              <div class="form-group">
+                <label for="upgrade-password">パスワード（6文字以上）</label>
+                <input type="password" id="upgrade-password" class="form-input" placeholder="パスワード" autocomplete="new-password" />
+              </div>
+              <div class="form-group">
+                <label for="upgrade-password-confirm">パスワード（確認）</label>
+                <input type="password" id="upgrade-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" />
+              </div>
+              <button type="button" id="upgrade-account-btn" class="btn btn-primary btn-block">
+                アカウントをアップグレード
+              </button>
+            </form>
           </div>
         </div>
 
@@ -1599,13 +1605,15 @@
             登録したメールアドレスにパスワードリセットのリンクを送信します。
           </p>
           <div class="auth-form">
-            <div class="form-group">
-              <label for="reset-email">メールアドレス</label>
-              <input type="email" id="reset-email" class="form-input" placeholder="email@example.com" />
-            </div>
-            <button type="button" id="reset-password-btn" class="btn btn-primary btn-block">
-              リセットメールを送信
-            </button>
+            <form id="reset-form" onsubmit="return false;">
+              <div class="form-group">
+                <label for="reset-email">メールアドレス</label>
+                <input type="email" id="reset-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+              </div>
+              <button type="button" id="reset-password-btn" class="btn btn-primary btn-block">
+                リセットメールを送信
+              </button>
+            </form>
             <div class="auth-links">
               <a href="#" onclick="showSignInSection(); return false;">ログインに戻る</a>
             </div>

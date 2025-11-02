@@ -4,10 +4,9 @@
  */
 
 import { getCurrentUser, isSignedIn } from './firebase-auth.js';
-import { openDB } from './db.js';
+import { db as dbInstance } from './db.js';
 import { showToast } from './toast.js';
 
-let db = null;
 let isSyncing = false;
 let lastSyncTime = null;
 
@@ -41,7 +40,9 @@ export async function uploadToCloud() {
 
     const user = getCurrentUser();
     const firestore = getFirestore();
-    db = await openDB();
+
+    // IndexedDBを開く
+    await dbInstance.open();
 
     // IndexedDBから全履歴を取得
     const localHistory = await getAllHistoryFromIndexedDB();
@@ -121,7 +122,9 @@ export async function downloadFromCloud() {
 
     const user = getCurrentUser();
     const firestore = getFirestore();
-    db = await openDB();
+
+    // IndexedDBを開く
+    await dbInstance.open();
 
     // Firestoreから全履歴を取得
     const snapshot = await firestore
@@ -198,54 +201,44 @@ export async function syncData() {
  * IndexedDBから全履歴を取得
  */
 async function getAllHistoryFromIndexedDB() {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['history'], 'readonly');
-    const store = transaction.objectStore('history');
-    const request = store.getAll();
-
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+  try {
+    return await dbInstance.getAll();
+  } catch (error) {
+    console.error('履歴取得エラー:', error);
+    throw error;
+  }
 }
 
 /**
  * 履歴アイテムをマージ（競合解決）
  */
 async function mergeHistoryItem(cloudItem) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['history'], 'readwrite');
-    const store = transaction.objectStore('history');
-
+  try {
     // 既存のアイテムを確認
-    const getRequest = store.get(cloudItem.id);
+    const localItem = await dbInstance.getById(cloudItem.id);
 
-    getRequest.onsuccess = () => {
-      const localItem = getRequest.result;
+    if (!localItem) {
+      // 新規アイテム
+      await dbInstance.save(cloudItem);
+      return 'imported';
+    } else {
+      // 競合解決：タイムスタンプで判定
+      const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
+      const localTime = localItem.updatedAt?.toDate?.() || new Date(localItem.timestamp);
 
-      if (!localItem) {
-        // 新規アイテム
-        const addRequest = store.add(cloudItem);
-        addRequest.onsuccess = () => resolve('imported');
-        addRequest.onerror = () => reject(addRequest.error);
+      if (cloudTime > localTime) {
+        // クラウドの方が新しい→更新
+        await dbInstance.update(cloudItem.id, cloudItem);
+        return 'updated';
       } else {
-        // 競合解決：タイムスタンプで判定
-        const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
-        const localTime = localItem.updatedAt?.toDate?.() || new Date(localItem.timestamp);
-
-        if (cloudTime > localTime) {
-          // クラウドの方が新しい→更新
-          const putRequest = store.put(cloudItem);
-          putRequest.onsuccess = () => resolve('updated');
-          putRequest.onerror = () => reject(putRequest.error);
-        } else {
-          // ローカルの方が新しい→スキップ
-          resolve('skipped');
-        }
+        // ローカルの方が新しい→スキップ
+        return 'skipped';
       }
-    };
-
-    getRequest.onerror = () => reject(getRequest.error);
-  });
+    }
+  } catch (error) {
+    console.error('アイテムマージエラー:', error);
+    throw error;
+  }
 }
 
 /**
