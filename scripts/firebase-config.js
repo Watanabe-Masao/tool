@@ -16,7 +16,7 @@ export const firebaseConfig = {
   projectId: "yield-calculator-ffc3a",
   storageBucket: "yield-calculator-ffc3a.appspot.com",
   messagingSenderId: "31235016265",
-  appId: "1:31235016265:web:PLACEHOLDER" // ← ここを実際のappIdに置き換えてください
+  appId: "1:31235016265:web:65b8f13d9e7408a9472198"
 };
 
 // Firebase機能の有効/無効切り替え
