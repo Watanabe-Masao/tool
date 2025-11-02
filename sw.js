@@ -78,6 +78,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // フェッチ時: Network First戦略（常に最新を取得、オフライン時のみキャッシュ）
+// Safari対応: 完全なエラーハンドリングとフォールバック
 self.addEventListener('fetch', (event) => {
   // Firebase API や外部APIはキャッシュしない
   const url = new URL(event.request.url);
@@ -95,24 +96,25 @@ self.addEventListener('fetch', (event) => {
   // POSTリクエストはキャッシュしない（Cache APIはGETのみサポート）
   const isGetRequest = event.request.method === 'GET';
 
+  // Safari対応: respondWith内で必ず有効なPromise<Response>を返す
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
+    (async () => {
+      try {
+        // ネットワークリクエストを試行
+        const response = await fetch(event.request);
+
         // ネットワークから取得成功
         console.log('[Service Worker] Network success:', event.request.url);
 
         // レスポンスが有効か確認 & GETリクエスト & Firebase APIでない場合のみキャッシュ
         if (response && response.status === 200 && response.type !== 'error' && isGetRequest && !shouldSkipCache) {
-          // レスポンスをクローンしてキャッシュに保存（オフライン時のバックアップ）
-          // Safari対応: キャッシュ操作のエラーハンドリング
+          // Safari対応: キャッシュ操作を非同期で実行し、エラーを無視
           try {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache).catch((cacheError) => {
-                console.warn('[Service Worker] Cache put failed:', cacheError);
-              });
-            }).catch((openError) => {
-              console.warn('[Service Worker] Cache open failed:', openError);
+              return cache.put(event.request, responseToCache);
+            }).catch((cacheError) => {
+              console.warn('[Service Worker] Cache put failed:', cacheError);
             });
           } catch (cloneError) {
             console.warn('[Service Worker] Response clone failed:', cloneError);
@@ -120,28 +122,51 @@ self.addEventListener('fetch', (event) => {
         }
 
         return response;
-      })
-      .catch((error) => {
+      } catch (networkError) {
         // ネットワーク失敗時（オフライン）: キャッシュから取得
         console.log('[Service Worker] Network failed, using cache:', event.request.url);
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            if (cachedResponse) {
-              console.log('[Service Worker] Cache hit:', event.request.url);
-              return cachedResponse;
+
+        try {
+          const cachedResponse = await caches.match(event.request);
+
+          if (cachedResponse) {
+            console.log('[Service Worker] Cache hit:', event.request.url);
+            return cachedResponse;
+          }
+
+          // キャッシュにもない場合
+          console.warn('[Service Worker] No cache available:', event.request.url);
+
+          // Safari対応: ナビゲーションリクエストの場合はindex.htmlを返す
+          if (event.request.mode === 'navigate') {
+            const fallbackResponse = await caches.match('/tool/index.html');
+            if (fallbackResponse) {
+              return fallbackResponse;
             }
-            console.error('[Service Worker] No cache available:', event.request.url);
-            // Safari対応: エラーの代わりに基本的なレスポンスを返す
-            if (event.request.mode === 'navigate') {
-              return caches.match('/tool/index.html');
-            }
-            throw error;
-          })
-          .catch((cacheError) => {
-            console.error('[Service Worker] Cache match failed:', cacheError);
-            throw error;
+          }
+
+          // 最終フォールバック: 503エラーレスポンスを返す（Safari対応）
+          return new Response('Service Unavailable', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({
+              'Content-Type': 'text/plain'
+            })
           });
-      })
+        } catch (cacheError) {
+          console.error('[Service Worker] Cache operation failed:', cacheError);
+
+          // Safari対応: キャッシュ操作に失敗しても必ずレスポンスを返す
+          return new Response('Cache Error', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({
+              'Content-Type': 'text/plain'
+            })
+          });
+        }
+      }
+    })()
   );
 });
 

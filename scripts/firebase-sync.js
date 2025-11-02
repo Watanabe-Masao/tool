@@ -306,7 +306,7 @@ export async function downloadFromCloud() {
     let updated = 0;
     let skipped = 0;
 
-    // Safari対応: トランザクション間に小さな遅延を入れて競合を防ぐ
+    // Safari対応: トランザクション間に遅延を入れて競合を防ぐ
     for (let i = 0; i < cloudHistory.length; i++) {
       const cloudItem = cloudHistory[i];
       const result = await mergeHistoryItem(cloudItem);
@@ -314,9 +314,9 @@ export async function downloadFromCloud() {
       else if (result === 'updated') updated++;
       else skipped++;
 
-      // 10件ごとに少し長めの遅延（Safari対応）
-      if ((i + 1) % 10 === 0 && i < cloudHistory.length - 1) {
-        await sleep(50);
+      // 5件ごとに遅延を挿入（Safari対応: トランザクション競合を防止）
+      if ((i + 1) % 5 === 0 && i < cloudHistory.length - 1) {
+        await sleep(100);
       }
     }
 
@@ -383,11 +383,11 @@ function sleep(ms) {
 
 /**
  * 履歴アイテムをマージ（競合解決）
- * Safari対応: リトライロジック付き
+ * Safari対応: リトライロジック付き（強化版）
  */
 async function mergeHistoryItem(cloudItem, retryCount = 0) {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 100; // ミリ秒
+  const MAX_RETRIES = 5; // リトライ回数を増加
+  const RETRY_DELAY = 200; // 基本遅延を100ms→200msに増加
 
   try {
     // 既存のアイテムを確認
