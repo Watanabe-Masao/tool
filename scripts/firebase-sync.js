@@ -41,8 +41,27 @@ export async function uploadToCloud() {
     const user = getCurrentUser();
     const firestore = getFirestore();
 
-    // IndexedDBを開く
-    await dbInstance.open();
+    // IndexedDBを開く（エラーハンドリング強化）
+    try {
+      await dbInstance.open();
+    } catch (dbError) {
+      console.error('IndexedDB接続エラー:', dbError);
+
+      // ユーザーフレンドリーなエラーメッセージ
+      let errorMessage = 'ローカルデータベースに接続できません。';
+
+      if (dbError.message && dbError.message.includes('プライベートモード')) {
+        errorMessage = 'プライベートモード/シークレットモードではデータベースが使用できません。通常モードで開いてください。';
+      } else if (dbError.name === 'QuotaExceededError') {
+        errorMessage = 'ストレージ容量が不足しています。不要なデータを削除してください。';
+      } else {
+        errorMessage = `データベースエラー: ${dbError.message}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする`;
+      }
+
+      showToast(errorMessage, 'error');
+      updateSyncStatus('error');
+      return false;
+    }
 
     // IndexedDBから全履歴を取得
     const localHistory = await getAllHistoryFromIndexedDB();
@@ -123,8 +142,26 @@ export async function downloadFromCloud() {
     const user = getCurrentUser();
     const firestore = getFirestore();
 
-    // IndexedDBを開く
-    await dbInstance.open();
+    // IndexedDBを開く（エラーハンドリング強化）
+    try {
+      await dbInstance.open();
+    } catch (dbError) {
+      console.error('IndexedDB接続エラー:', dbError);
+
+      let errorMessage = 'ローカルデータベースに接続できません。';
+
+      if (dbError.message && dbError.message.includes('プライベートモード')) {
+        errorMessage = 'プライベートモード/シークレットモードではデータベースが使用できません。通常モードで開いてください。';
+      } else if (dbError.name === 'QuotaExceededError') {
+        errorMessage = 'ストレージ容量が不足しています。不要なデータを削除してください。';
+      } else {
+        errorMessage = `データベースエラー: ${dbError.message}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする`;
+      }
+
+      showToast(errorMessage, 'error');
+      updateSyncStatus('error');
+      return false;
+    }
 
     // Firestoreから全履歴を取得
     const snapshot = await firestore
