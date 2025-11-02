@@ -59,6 +59,59 @@ export class YieldCalculatorDB {
     this.openPromise = null; // Race Condition対策用
     this.openRetryCount = 0; // リトライカウント
     this.maxRetries = 3; // 最大リトライ回数
+    this.activeTransactions = 0; // アクティブなトランザクション数（Safari競合監視用）
+    this.transactionLog = []; // トランザクションログ（デバッグ用）
+    this.maxLogSize = 50; // ログの最大サイズ
+  }
+
+  /**
+   * トランザクション開始をログ
+   * Safari対応: トランザクション競合の原因調査用
+   */
+  logTransactionStart(operation) {
+    this.activeTransactions++;
+    const logEntry = {
+      operation,
+      type: 'start',
+      timestamp: new Date().toISOString(),
+      activeCount: this.activeTransactions
+    };
+    this.transactionLog.push(logEntry);
+
+    // ログサイズを制限
+    if (this.transactionLog.length > this.maxLogSize) {
+      this.transactionLog.shift();
+    }
+
+    if (this.activeTransactions > 2) {
+      console.warn(`⚠️ 複数トランザクション検出: ${this.activeTransactions}個同時実行中 (${operation})`);
+    }
+  }
+
+  /**
+   * トランザクション終了をログ
+   */
+  logTransactionEnd(operation, success = true) {
+    this.activeTransactions = Math.max(0, this.activeTransactions - 1);
+    const logEntry = {
+      operation,
+      type: success ? 'success' : 'error',
+      timestamp: new Date().toISOString(),
+      activeCount: this.activeTransactions
+    };
+    this.transactionLog.push(logEntry);
+
+    // ログサイズを制限
+    if (this.transactionLog.length > this.maxLogSize) {
+      this.transactionLog.shift();
+    }
+  }
+
+  /**
+   * トランザクションログを取得（デバッグ用）
+   */
+  getTransactionLog() {
+    return [...this.transactionLog];
   }
 
   /**
@@ -109,7 +162,8 @@ export class YieldCalculatorDB {
 
         if (isRetriableError && retryCount < this.maxRetries) {
           console.warn(`データベース接続エラー、リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
-          await this.sleep(200 * (retryCount + 1)); // 指数バックオフ
+          // Safari対応: 指数バックオフの遅延を強化 (300ms, 600ms, 900ms)
+          await this.sleep(300 * (retryCount + 1));
           try {
             const db = await this.open(retryCount + 1);
             resolve(db);
@@ -180,10 +234,24 @@ export class YieldCalculatorDB {
   async save(data) {
     if (!this.db) await this.open();
 
+    this.logTransactionStart('save');
+
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを保存'));
+        transaction.onerror = () => {
+          this.logTransactionEnd('save', false);
+          console.error('トランザクションエラー [save]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを保存'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('save', true);
+        };
 
         const store = transaction.objectStore(STORE_NAME);
 
@@ -196,8 +264,22 @@ export class YieldCalculatorDB {
         const request = store.add(record);
 
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを保存'));
+        request.onerror = () => {
+          this.logTransactionEnd('save', false);
+          console.error('リクエストエラー [save]:', {
+            error: request.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(request.error, 'データを保存'));
+        };
       } catch (error) {
+        this.logTransactionEnd('save', false);
+        console.error('例外エラー [save]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
         reject(createUserFriendlyError(error, 'データを保存'));
       }
     });
@@ -283,10 +365,24 @@ export class YieldCalculatorDB {
   async update(id, data) {
     if (!this.db) await this.open();
 
+    this.logTransactionStart('update');
+
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを更新'));
+        transaction.onerror = () => {
+          this.logTransactionEnd('update', false);
+          console.error('トランザクションエラー [update]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを更新'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('update', true);
+        };
 
         const store = transaction.objectStore(STORE_NAME);
 
@@ -295,6 +391,7 @@ export class YieldCalculatorDB {
         getRequest.onsuccess = () => {
           const record = getRequest.result;
           if (!record) {
+            this.logTransactionEnd('update', false);
             reject(createUserFriendlyError(
               new Error(`Record with id ${id} not found`),
               'データを更新（レコードが見つかりません）'
@@ -311,11 +408,33 @@ export class YieldCalculatorDB {
 
           const updateRequest = store.put(updatedRecord);
           updateRequest.onsuccess = () => resolve();
-          updateRequest.onerror = () => reject(createUserFriendlyError(updateRequest.error, 'データを更新'));
+          updateRequest.onerror = () => {
+            this.logTransactionEnd('update', false);
+            console.error('リクエストエラー [update]:', {
+              error: updateRequest.error,
+              activeTransactions: this.activeTransactions,
+              timestamp: new Date().toISOString()
+            });
+            reject(createUserFriendlyError(updateRequest.error, 'データを更新'));
+          };
         };
 
-        getRequest.onerror = () => reject(createUserFriendlyError(getRequest.error, 'データを更新'));
+        getRequest.onerror = () => {
+          this.logTransactionEnd('update', false);
+          console.error('リクエストエラー [update/get]:', {
+            error: getRequest.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(getRequest.error, 'データを更新'));
+        };
       } catch (error) {
+        this.logTransactionEnd('update', false);
+        console.error('例外エラー [update]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
         reject(createUserFriendlyError(error, 'データを更新'));
       }
     });
@@ -458,3 +577,33 @@ export class YieldCalculatorDB {
 
 // シングルトンインスタンス
 export const db = new YieldCalculatorDB();
+
+/**
+ * ページライフサイクルイベントハンドラ
+ * Safari対応: ページ離脱時やタブ非アクティブ時にDB接続をクローズして競合を防止
+ */
+if (typeof window !== 'undefined') {
+  // ページを離れる前にDB接続をクローズ
+  window.addEventListener('beforeunload', () => {
+    if (db.db) {
+      console.log('ページ離脱: IndexedDB接続をクローズ');
+      db.close();
+    }
+  });
+
+  // タブが非アクティブになったらDB接続をクローズ（Safari対応）
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && db.db) {
+      console.log('タブ非アクティブ: IndexedDB接続をクローズ');
+      db.close();
+    }
+  });
+
+  // ページがフリーズされる前にクローズ（モバイルSafari対応）
+  window.addEventListener('pagehide', () => {
+    if (db.db) {
+      console.log('ページ隠蔽: IndexedDB接続をクローズ');
+      db.close();
+    }
+  });
+}
