@@ -4,7 +4,7 @@
 
 // バージョン管理: GitHub Actionsデプロイ時に自動的にタイムスタンプが注入されます
 // ローカル開発時は 'dev' として動作します
-const CACHE_VERSION = 30;
+const CACHE_VERSION = 31;
 const CACHE_BUILD = '__BUILD_TIMESTAMP__'; // デプロイ時に置換されます（例: 20250126-153045-a1b2c3d）
 const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
@@ -104,10 +104,19 @@ self.addEventListener('fetch', (event) => {
         // レスポンスが有効か確認 & GETリクエスト & Firebase APIでない場合のみキャッシュ
         if (response && response.status === 200 && response.type !== 'error' && isGetRequest && !shouldSkipCache) {
           // レスポンスをクローンしてキャッシュに保存（オフライン時のバックアップ）
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          // Safari対応: キャッシュ操作のエラーハンドリング
+          try {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache).catch((cacheError) => {
+                console.warn('[Service Worker] Cache put failed:', cacheError);
+              });
+            }).catch((openError) => {
+              console.warn('[Service Worker] Cache open failed:', openError);
+            });
+          } catch (cloneError) {
+            console.warn('[Service Worker] Response clone failed:', cloneError);
+          }
         }
 
         return response;
@@ -122,6 +131,14 @@ self.addEventListener('fetch', (event) => {
               return cachedResponse;
             }
             console.error('[Service Worker] No cache available:', event.request.url);
+            // Safari対応: エラーの代わりに基本的なレスポンスを返す
+            if (event.request.mode === 'navigate') {
+              return caches.match('/tool/index.html');
+            }
+            throw error;
+          })
+          .catch((cacheError) => {
+            console.error('[Service Worker] Cache match failed:', cacheError);
             throw error;
           });
       })
