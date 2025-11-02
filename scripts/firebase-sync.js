@@ -356,6 +356,141 @@ export function setupRealtimeListener() {
   return unsubscribe;
 }
 
+/**
+ * Firebaseから直接JSONファイルとしてダウンロード
+ * IndexedDBが使えない環境向け
+ */
+export async function downloadToFile() {
+  if (!isSignedIn()) {
+    showToast('ログインしてください', 'warning');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    showToast('クラウドからダウンロード中...', 'info');
+
+    // Firestoreから全履歴を取得
+    const snapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .get();
+
+    if (snapshot.empty) {
+      showToast('クラウドにデータがありません', 'info');
+      return false;
+    }
+
+    const cloudHistory = snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      // Timestamp を文字列に変換
+      updatedAt: doc.data().updatedAt?.toDate?.().toISOString() || null,
+      timestamp: doc.data().timestamp,
+    }));
+
+    // JSONファイルとしてダウンロード
+    const jsonString = JSON.stringify(cloudHistory, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `yield-calculator-data-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast(`${cloudHistory.length}件のデータをダウンロードしました`, 'success');
+    return true;
+  } catch (error) {
+    console.error('ファイルダウンロードエラー:', error);
+    showToast(`ダウンロードに失敗: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+/**
+ * JSONファイルからFirebaseへアップロード
+ * IndexedDBが使えない環境向け
+ */
+export async function uploadFromFile(file) {
+  if (!isSignedIn()) {
+    showToast('ログインしてください', 'warning');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    showToast('ファイルを読み込み中...', 'info');
+
+    // ファイルを読み込み
+    const fileContent = await file.text();
+    const data = JSON.parse(fileContent);
+
+    if (!Array.isArray(data)) {
+      showToast('ファイル形式が正しくありません（配列形式のJSONが必要です）', 'error');
+      return false;
+    }
+
+    showToast(`${data.length}件のデータをアップロード中...`, 'info');
+
+    // バッチ書き込み（最大500件ずつ）
+    let totalUploaded = 0;
+    const batchSize = 500;
+
+    for (let i = 0; i < data.length; i += batchSize) {
+      const batch = firestore.batch();
+      const chunk = data.slice(i, i + batchSize);
+
+      chunk.forEach(item => {
+        const docRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('history')
+          .doc(item.id || generateId());
+
+        // タイムスタンプを復元
+        const dataToUpload = {
+          ...item,
+          updatedAt: item.updatedAt ? firebase.firestore.Timestamp.fromDate(new Date(item.updatedAt)) : firebase.firestore.FieldValue.serverTimestamp(),
+          deviceId: getDeviceId(),
+        };
+
+        batch.set(docRef, dataToUpload, { merge: true });
+      });
+
+      await batch.commit();
+      totalUploaded += chunk.length;
+
+      // 進捗表示
+      if (data.length > batchSize) {
+        showToast(`アップロード中... ${totalUploaded}/${data.length}件`, 'info');
+      }
+    }
+
+    showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
+    return true;
+  } catch (error) {
+    console.error('ファイルアップロードエラー:', error);
+
+    let errorMessage = 'アップロードに失敗しました';
+    if (error instanceof SyntaxError) {
+      errorMessage = 'JSONファイルの形式が正しくありません';
+    } else {
+      errorMessage = `アップロードに失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
 // グローバルイベントリスナー
 window.addEventListener('requestSync', () => {
   syncData();
