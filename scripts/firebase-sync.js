@@ -384,13 +384,16 @@ export async function downloadToFile() {
       return false;
     }
 
-    const cloudHistory = snapshot.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id,
-      // Timestamp を文字列に変換
-      updatedAt: doc.data().updatedAt?.toDate?.().toISOString() || null,
-      timestamp: doc.data().timestamp,
-    }));
+    const cloudHistory = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: String(doc.id), // IDを確実に文字列として保存
+        // Timestamp を文字列に変換
+        updatedAt: data.updatedAt?.toDate?.().toISOString() || null,
+        timestamp: data.timestamp,
+      };
+    });
 
     // JSONファイルとしてダウンロード
     const jsonString = JSON.stringify(cloudHistory, null, 2);
@@ -449,15 +452,19 @@ export async function uploadFromFile(file) {
       const chunk = data.slice(i, i + batchSize);
 
       chunk.forEach(item => {
+        // IDを文字列として確実に取得
+        const docId = (item.id && typeof item.id === 'string') ? item.id : generateId();
+
         const docRef = firestore
           .collection('users')
           .doc(user.uid)
           .collection('history')
-          .doc(item.id || generateId());
+          .doc(docId);
 
         // タイムスタンプを復元
         const dataToUpload = {
           ...item,
+          id: docId, // IDを確実に設定
           updatedAt: item.updatedAt ? firebase.firestore.Timestamp.fromDate(new Date(item.updatedAt)) : firebase.firestore.FieldValue.serverTimestamp(),
           deviceId: getDeviceId(),
         };
