@@ -139,7 +139,7 @@ export async function uploadToCloud() {
     }
 
     // バッチ書き込み（最大500件ずつ）
-    const batch = firestore.batch();
+    let batch = firestore.batch();
     let batchCount = 0;
     let totalUploaded = 0;
 
@@ -164,6 +164,7 @@ export async function uploadToCloud() {
       // 500件ごとにコミット
       if (batchCount >= 500) {
         await batch.commit();
+        batch = firestore.batch(); // 新しいバッチを作成
         batchCount = 0;
       }
     }
@@ -180,8 +181,25 @@ export async function uploadToCloud() {
     return true;
   } catch (error) {
     console.error('アップロードエラー:', error);
+    console.error('エラー詳細:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     updateSyncStatus('error');
-    showToast(`アップロードに失敗: ${error.message}`, 'error');
+
+    // エラーメッセージをより詳細に
+    let errorMessage = 'アップロードに失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `アップロードに失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
     return false;
   } finally {
     isSyncing = false;
