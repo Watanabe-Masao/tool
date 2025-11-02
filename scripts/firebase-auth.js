@@ -32,15 +32,19 @@ export async function initializeFirebase() {
 
     auth = firebase.auth();
 
-    // オフライン対応
-    firebase.firestore().enablePersistence({ synchronizeTabs: true })
-      .catch((err) => {
-        if (err.code === 'failed-precondition') {
-          console.warn('複数のタブが開いています。永続化は1つのタブでのみ有効です。');
-        } else if (err.code === 'unimplemented') {
-          console.warn('このブラウザは永続化をサポートしていません。');
-        }
-      });
+    // オフライン対応（Firestore永続化）
+    // 注: enablePersistence()はFirebase v9で非推奨となりました
+    // ただし、アプリ側でIndexedDBを使用しているため、Firestoreの永続化は必須ではありません
+    // 将来的にFirebase v10に移行する際は、FirestoreSettings.cacheを使用します
+    //
+    // firebase.firestore().enablePersistence({ synchronizeTabs: true })
+    //   .catch((err) => {
+    //     if (err.code === 'failed-precondition') {
+    //       console.warn('複数のタブが開いています。永続化は1つのタブでのみ有効です。');
+    //     } else if (err.code === 'unimplemented') {
+    //       console.warn('このブラウザは永続化をサポートしていません。');
+    //     }
+    //   });
 
     // 認証状態の監視
     auth.onAuthStateChanged((user) => {

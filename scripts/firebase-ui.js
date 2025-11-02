@@ -304,9 +304,7 @@ async function handleSignOut() {
  * 認証モーダルを表示
  */
 function showAuthModal() {
-  console.log('showAuthModal が呼ばれました');
   const modal = document.getElementById('auth-modal');
-  console.log('モーダル要素:', modal);
 
   if (!modal) {
     console.error('auth-modal が見つかりません');
@@ -315,14 +313,11 @@ function showAuthModal() {
 
   // 匿名ユーザーならアップグレード画面を表示
   if (isAnonymous()) {
-    console.log('匿名ユーザー: アップグレード画面を表示');
     showUpgradeSection();
   } else {
-    console.log('未ログイン: サインイン画面を表示');
     showSignInSection();
   }
 
-  console.log('モーダルを表示します');
   // is-openクラスを追加してモーダルを表示
   modal.classList.add('is-open');
 }

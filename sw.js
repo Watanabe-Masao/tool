@@ -4,7 +4,7 @@
 
 // バージョン管理: GitHub Actionsデプロイ時に自動的にタイムスタンプが注入されます
 // ローカル開発時は 'dev' として動作します
-const CACHE_VERSION = 29;
+const CACHE_VERSION = 30;
 const CACHE_BUILD = '__BUILD_TIMESTAMP__'; // デプロイ時に置換されます（例: 20250126-153045-a1b2c3d）
 const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
@@ -13,6 +13,7 @@ const urlsToCache = [
   '/tool/index.html',
   '/tool/styles/main.css',
   '/tool/styles/history.css',
+  '/tool/styles/firebase.css',
   '/tool/scripts/main.js',
   '/tool/scripts/constants.js',
   '/tool/scripts/state.js',
@@ -27,6 +28,10 @@ const urlsToCache = [
   '/tool/scripts/db.js',
   '/tool/scripts/storage.js',
   '/tool/scripts/history-ui.js',
+  '/tool/scripts/firebase-config.js',
+  '/tool/scripts/firebase-auth.js',
+  '/tool/scripts/firebase-sync.js',
+  '/tool/scripts/firebase-ui.js',
   '/tool/manifest.json',
   '/tool/icons/icon-192.png',
   '/tool/icons/icon-512.png'
@@ -74,14 +79,30 @@ self.addEventListener('activate', (event) => {
 
 // フェッチ時: Network First戦略（常に最新を取得、オフライン時のみキャッシュ）
 self.addEventListener('fetch', (event) => {
+  // Firebase API や外部APIはキャッシュしない
+  const url = new URL(event.request.url);
+  const skipCacheDomains = [
+    'googleapis.com',
+    'firebaseio.com',
+    'firebase.google.com',
+    'identitytoolkit.googleapis.com',
+    'firestore.googleapis.com',
+    'securetoken.googleapis.com'
+  ];
+
+  const shouldSkipCache = skipCacheDomains.some(domain => url.hostname.includes(domain));
+
+  // POSTリクエストはキャッシュしない（Cache APIはGETのみサポート）
+  const isGetRequest = event.request.method === 'GET';
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // ネットワークから取得成功
         console.log('[Service Worker] Network success:', event.request.url);
 
-        // レスポンスが有効か確認
-        if (response && response.status === 200 && response.type !== 'error') {
+        // レスポンスが有効か確認 & GETリクエスト & Firebase APIでない場合のみキャッシュ
+        if (response && response.status === 200 && response.type !== 'error' && isGetRequest && !shouldSkipCache) {
           // レスポンスをクローンしてキャッシュに保存（オフライン時のバックアップ）
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
