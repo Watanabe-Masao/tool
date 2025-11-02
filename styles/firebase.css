@@ -73,9 +73,23 @@
 /* ========================================
    認証モーダル
    ======================================== */
+#auth-modal {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+#auth-modal.is-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .auth-modal-content {
   max-width: 450px;
   width: 90%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .auth-section {
