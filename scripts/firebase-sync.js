@@ -10,6 +10,40 @@ import { showToast } from './toast.js';
 let isSyncing = false;
 let lastSyncTime = null;
 
+// LocalStorageキー
+const LAST_SYNC_TIME_KEY = 'yield-calculator-last-sync-time';
+
+/**
+ * 最終同期時刻をLocalStorageから読み込む
+ */
+function loadLastSyncTime() {
+  try {
+    const stored = localStorage.getItem(LAST_SYNC_TIME_KEY);
+    if (stored) {
+      lastSyncTime = new Date(stored);
+      console.log('最終同期時刻を読み込み:', lastSyncTime);
+    }
+  } catch (error) {
+    console.error('最終同期時刻の読み込みエラー:', error);
+  }
+}
+
+/**
+ * 最終同期時刻をLocalStorageに保存
+ */
+function saveLastSyncTime(time) {
+  try {
+    lastSyncTime = time;
+    localStorage.setItem(LAST_SYNC_TIME_KEY, time.toISOString());
+    console.log('最終同期時刻を保存:', lastSyncTime);
+  } catch (error) {
+    console.error('最終同期時刻の保存エラー:', error);
+  }
+}
+
+// 初期化時に最終同期時刻を読み込む
+loadLastSyncTime();
+
 /**
  * Firestoreインスタンスを取得
  */
@@ -64,10 +98,26 @@ export async function uploadToCloud() {
     }
 
     // IndexedDBから全履歴を取得
-    const localHistory = await getAllHistoryFromIndexedDB();
+    const allHistory = await getAllHistoryFromIndexedDB();
+
+    // 差分同期: 最終同期時刻以降に更新されたデータのみをフィルタリング
+    let localHistory;
+    if (lastSyncTime) {
+      localHistory = allHistory.filter(item => {
+        // updatedAtフィールドを確認（Date型または文字列）
+        const updatedAt = item.updatedAt ? new Date(item.updatedAt) : null;
+        return !updatedAt || updatedAt > lastSyncTime;
+      });
+      console.log(`差分同期: 全${allHistory.length}件中${localHistory.length}件をアップロード`);
+    } else {
+      // 初回同期: 全データをアップロード
+      localHistory = allHistory;
+      console.log(`初回同期: 全${localHistory.length}件をアップロード`);
+    }
 
     if (localHistory.length === 0) {
       showToast('アップロードするデータがありません', 'info');
+      saveLastSyncTime(new Date()); // 同期時刻だけ更新
       return true;
     }
 
@@ -106,7 +156,7 @@ export async function uploadToCloud() {
       await batch.commit();
     }
 
-    lastSyncTime = new Date();
+    saveLastSyncTime(new Date());
     updateSyncStatus('success');
     showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
 
@@ -163,17 +213,30 @@ export async function downloadFromCloud() {
       return false;
     }
 
-    // Firestoreから全履歴を取得
-    const snapshot = await firestore
+    // Firestoreから履歴を取得（差分同期）
+    let query = firestore
       .collection('users')
       .doc(user.uid)
-      .collection('history')
-      .get();
+      .collection('history');
+
+    // 差分同期: 最終同期時刻以降に更新されたデータのみを取得
+    if (lastSyncTime) {
+      const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
+      query = query.where('updatedAt', '>', lastSyncTimestamp);
+      console.log('差分同期: 最終同期時刻以降のデータのみ取得', lastSyncTime);
+    } else {
+      console.log('初回同期: 全データを取得');
+    }
+
+    const snapshot = await query.get();
 
     if (snapshot.empty) {
-      showToast('クラウドにデータがありません', 'info');
+      showToast('ダウンロードする新しいデータがありません', 'info');
+      saveLastSyncTime(new Date()); // 同期時刻だけ更新
       return true;
     }
+
+    console.log(`${snapshot.size}件のデータをダウンロード`);
 
     const cloudHistory = snapshot.docs.map(doc => ({
       ...doc.data(),
@@ -192,7 +255,7 @@ export async function downloadFromCloud() {
       else skipped++;
     }
 
-    lastSyncTime = new Date();
+    saveLastSyncTime(new Date());
     updateSyncStatus('success');
     showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
 
