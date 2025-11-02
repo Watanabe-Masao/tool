@@ -174,9 +174,14 @@ async function handleSyncClick() {
     return;
   }
 
-  const success = await syncData();
-  if (success) {
-    console.log('同期完了');
+  try {
+    const success = await syncData();
+    if (success) {
+      console.log('同期完了');
+    }
+  } catch (error) {
+    console.error('同期エラー:', error);
+    showToast('同期に失敗しました。詳細はコンソールを確認してください。', 'error');
   }
 }
 
@@ -189,7 +194,12 @@ async function handleDownloadFile() {
     return;
   }
 
-  await downloadToFile();
+  try {
+    await downloadToFile();
+  } catch (error) {
+    console.error('ファイルダウンロードエラー:', error);
+    showToast('ファイルのダウンロードに失敗しました。', 'error');
+  }
 }
 
 /**
@@ -214,10 +224,15 @@ async function handleUploadFileChange(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  await uploadFromFile(file);
-
-  // ファイル入力をリセット
-  event.target.value = '';
+  try {
+    await uploadFromFile(file);
+  } catch (error) {
+    console.error('ファイルアップロードエラー:', error);
+    showToast('ファイルのアップロードに失敗しました。', 'error');
+  } finally {
+    // ファイル入力をリセット
+    event.target.value = '';
+  }
 }
 
 /**

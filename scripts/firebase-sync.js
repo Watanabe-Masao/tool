@@ -98,11 +98,12 @@ export async function uploadToCloud() {
       } else if (dbError.name === 'QuotaExceededError') {
         errorMessage = 'ストレージ容量が不足しています。不要なデータを削除してください。';
       } else {
-        errorMessage = `データベースエラー: ${dbError.message}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする`;
+        errorMessage = `データベースエラー: ${dbError.message || dbError.toString()}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする\n\n代替手段として、手動ダウンロード/アップロードボタンをご利用ください。`;
       }
 
       showToast(errorMessage, 'error');
       updateSyncStatus('error');
+      isSyncing = false; // エラー時にフラグをリセット
       return false;
     }
 
@@ -240,11 +241,12 @@ export async function downloadFromCloud() {
       } else if (dbError.name === 'QuotaExceededError') {
         errorMessage = 'ストレージ容量が不足しています。不要なデータを削除してください。';
       } else {
-        errorMessage = `データベースエラー: ${dbError.message}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする`;
+        errorMessage = `データベースエラー: ${dbError.message || dbError.toString()}\n\n【対処方法】\n• 他のタブを閉じる\n• ブラウザを再起動する\n• プライベートモードを無効にする\n\n代替手段として、手動ダウンロード/アップロードボタンをご利用ください。`;
       }
 
       showToast(errorMessage, 'error');
       updateSyncStatus('error');
+      isSyncing = false; // エラー時にフラグをリセット
       return false;
     }
 
