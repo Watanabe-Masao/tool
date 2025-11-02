@@ -233,6 +233,13 @@
 
   .sync-buttons {
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .btn-sm {
+    font-size: 11px;
+    padding: 5px 10px;
   }
 
   .auth-modal-content {

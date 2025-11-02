@@ -19,6 +19,8 @@ import {
   syncData,
   uploadToCloud,
   downloadFromCloud,
+  downloadToFile,
+  uploadFromFile,
   getLastSyncTime,
   getIsSyncing,
   setupRealtimeListener,
@@ -145,6 +147,22 @@ function setupEventListeners() {
   if (closeModalBtn) {
     closeModalBtn.addEventListener('click', closeAuthModal);
   }
+
+  // 手動ダウンロード/アップロードボタン
+  const downloadFileBtn = document.getElementById('download-file-btn');
+  if (downloadFileBtn) {
+    downloadFileBtn.addEventListener('click', handleDownloadFile);
+  }
+
+  const uploadFileBtn = document.getElementById('upload-file-btn');
+  if (uploadFileBtn) {
+    uploadFileBtn.addEventListener('click', handleUploadFileClick);
+  }
+
+  const uploadFileInput = document.getElementById('upload-file-input');
+  if (uploadFileInput) {
+    uploadFileInput.addEventListener('change', handleUploadFileChange);
+  }
 }
 
 /**
@@ -160,6 +178,46 @@ async function handleSyncClick() {
   if (success) {
     console.log('同期完了');
   }
+}
+
+/**
+ * ファイルダウンロードボタンクリック
+ */
+async function handleDownloadFile() {
+  if (!isSignedIn()) {
+    showAuthModal();
+    return;
+  }
+
+  await downloadToFile();
+}
+
+/**
+ * ファイルアップロードボタンクリック
+ */
+function handleUploadFileClick() {
+  if (!isSignedIn()) {
+    showAuthModal();
+    return;
+  }
+
+  const uploadFileInput = document.getElementById('upload-file-input');
+  if (uploadFileInput) {
+    uploadFileInput.click();
+  }
+}
+
+/**
+ * ファイル選択時
+ */
+async function handleUploadFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  await uploadFromFile(file);
+
+  // ファイル入力をリセット
+  event.target.value = '';
 }
 
 /**
@@ -402,6 +460,8 @@ function updateUIForAuthState(user) {
   const signInButton = document.getElementById('signin-button');
   const signOutButton = document.getElementById('signout-button');
   const syncButton = document.getElementById('sync-button');
+  const downloadFileBtn = document.getElementById('download-file-btn');
+  const uploadFileBtn = document.getElementById('upload-file-btn');
 
   if (user) {
     // ログイン中
@@ -416,6 +476,8 @@ function updateUIForAuthState(user) {
     if (signInButton) signInButton.style.display = 'none';
     if (signOutButton) signOutButton.style.display = 'inline-block';
     if (syncButton) syncButton.disabled = false;
+    if (downloadFileBtn) downloadFileBtn.disabled = false;
+    if (uploadFileBtn) uploadFileBtn.disabled = false;
   } else {
     // 未ログイン
     if (authStatus) {
@@ -426,6 +488,8 @@ function updateUIForAuthState(user) {
     if (signInButton) signInButton.style.display = 'inline-block';
     if (signOutButton) signOutButton.style.display = 'none';
     if (syncButton) syncButton.disabled = true;
+    if (downloadFileBtn) downloadFileBtn.disabled = true;
+    if (uploadFileBtn) uploadFileBtn.disabled = true;
   }
 }
 
