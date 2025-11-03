@@ -52,7 +52,8 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
  * 保存済みのデータから入力値を復元
  *
  * キャッシュ整合性保証:
- * - 履歴モーダル表示時に既にFirestoreと同期済み（ensureFreshDataBeforeDisplay）
+ * - handleLoadCalculation()内でFirestoreと同期済み（ensureFreshDataBeforeDisplay）
+ * - モーダルを開いてから時間が経過している可能性を考慮し、読み込み直前に再同期
  * - そのため、ここで読み込むIndexedDBデータは最新であることが保証されている
  *
  * @param {number} id - レコードID

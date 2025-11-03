@@ -319,6 +319,11 @@ function bindHistoryItemEvents() {
  */
 async function handleLoadCalculation(id) {
   try {
+    // 🔄 重要: 読み込み前にFirestoreと同期して最新データを取得
+    // モーダルを開いてから時間が経過している可能性があるため、
+    // 他の端末での変更を確実に反映する
+    await ensureFreshDataBeforeDisplay();
+
     const data = await loadCalculation(id);
 
     // 履歴から読み込んだ計算のIDを保存（上書き保存用）
