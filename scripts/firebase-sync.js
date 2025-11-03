@@ -65,6 +65,26 @@ function getFirestore() {
 }
 
 /**
+ * サーバータイムスタンプを取得
+ */
+function getServerTimestamp() {
+  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+    throw new Error('Firebaseが初期化されていません');
+  }
+  return firebase.firestore.FieldValue.serverTimestamp();
+}
+
+/**
+ * JavaScriptのDateをFirestore Timestampに変換
+ */
+function getTimestampFromDate(date) {
+  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+    throw new Error('Firebaseが初期化されていません');
+  }
+  return firebase.firestore.Timestamp.fromDate(date);
+}
+
+/**
  * データをクラウドにアップロード
  */
 export async function uploadToCloud() {
@@ -170,7 +190,7 @@ export async function uploadToCloud() {
         const { id, firestoreId, ...itemData } = item; // firestoreIdも除外（互換性のため）
         const dataToUpload = {
           ...itemData,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: getServerTimestamp(),
           deviceId: getDeviceId(),
         };
 
@@ -306,7 +326,7 @@ export async function downloadFromCloud() {
       // 2回目以降は差分同期
       else if (lastSyncTime) {
         try {
-          const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
+          const lastSyncTimestamp = getTimestampFromDate(lastSyncTime);
           query = query.where('updatedAt', '>', lastSyncTimestamp);
           console.log('⚡ 差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
           snapshot = await query.get();
@@ -519,8 +539,8 @@ export async function saveToCloud(data) {
     const dataToSave = {
       ...data,
       uuid: uuid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: getServerTimestamp(),
+      updatedAt: getServerTimestamp(),
       deviceId: getDeviceId()
     };
 
@@ -579,7 +599,7 @@ export async function updateInCloud(id, updates) {
 
     const dataToUpdate = {
       ...updates,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      updatedAt: getServerTimestamp()
     };
 
     await docRef.update(dataToUpdate);
@@ -1028,7 +1048,7 @@ export async function uploadFromFile(file) {
         const dataToUpload = {
           ...item,
           id: docId, // IDを確実に設定
-          updatedAt: item.updatedAt ? firebase.firestore.Timestamp.fromDate(new Date(item.updatedAt)) : firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: item.updatedAt ? getTimestampFromDate(new Date(item.updatedAt)) : getServerTimestamp(),
           deviceId: getDeviceId(),
         };
 
