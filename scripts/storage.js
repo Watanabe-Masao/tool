@@ -4,7 +4,7 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
-import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
+import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud, downloadFromCloud } from './firebase-sync.js';
 import { isSignedIn } from './firebase-auth.js';
 
 /**
@@ -177,17 +177,9 @@ export async function deleteHistory(id) {
   } catch (error) {
     console.error('Failed to delete calculation:', error);
 
-    // エラー情報を詳細化
-    if (!cloudDeleteSuccess) {
-      // クラウド削除が失敗した場合は致命的
-      throw new Error(`削除に失敗しました: ${error.message || error}`);
-    } else if (!localDeleteSuccess) {
-      // ローカル削除のみ失敗の場合は警告のみ（次回同期で回復）
-      console.warn('⚠️ ローカルキャッシュの削除に失敗しましたが、データはクラウドから削除されています');
-    } else {
-      // その他のエラー
-      throw error;
-    }
+    // クラウド削除が失敗した場合は致命的エラー
+    // （ローカル削除のエラーは内部try-catchで処理済み）
+    throw new Error(`削除に失敗しました: ${error.message || error}`);
   }
 }
 
@@ -231,8 +223,6 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 
     // 2. オンラインの場合、Firestoreから最新データを取得して競合チェック
     if (isSignedIn()) {
-      const { downloadFromCloud } = await import('./firebase-sync.js');
-
       try {
         // 最新データを取得
         await downloadFromCloud();
@@ -343,19 +333,7 @@ export async function importData(file) {
       try {
         const jsonString = event.target.result;
 
-        // JSON形式の検証
-        let parsedData;
-        try {
-          parsedData = JSON.parse(jsonString);
-        } catch (parseError) {
-          throw new Error('Invalid JSON format: ' + parseError.message);
-        }
-
-        // データ形式の検証
-        if (!Array.isArray(parsedData)) {
-          throw new Error('Invalid data format: expected array');
-        }
-
+        // db.importJSON内でJSON検証とデータ形式検証を行うため、ここでは不要
         const result = await db.importJSON(jsonString);
         resolve(result);
       } catch (error) {

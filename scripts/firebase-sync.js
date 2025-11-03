@@ -121,8 +121,8 @@ function isFirebaseFieldValue(obj) {
   try {
     const fb = window.firebase;
     if (fb && fb.firestore && fb.firestore.FieldValue) {
-      // FieldValueは特殊なシングルトンなので、isEqualチェック
-      return obj.isEqual !== undefined || obj.constructor?.name === 'FieldValue';
+      // FieldValueは特殊なシングルトンなので、isEqualメソッドの存在で判定
+      return obj.isEqual !== undefined;
     }
   } catch (e) {
     // Firebase未初期化の場合
@@ -1033,16 +1033,6 @@ function generateUUID() {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
-}
-
-/**
- * IDを生成（後方互換性のため残す）
- * 非推奨: 代わりにgenerateUUID()を使用してください
- * @deprecated
- */
-function generateId() {
-  console.warn('⚠️ generateId()は非推奨です。generateUUID()を使用してください。');
-  return generateUUID();
 }
 
 /**
