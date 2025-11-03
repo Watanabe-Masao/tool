@@ -86,14 +86,38 @@ function getTimestampFromDate(date) {
 
 /**
  * undefinedフィールドを削除（Firestoreはundefinedを許可しない）
- * @param {Object} obj - クリーンアップするオブジェクト
- * @returns {Object} undefinedが削除されたオブジェクト
+ * 再帰的にネストされたオブジェクトもクリーンアップ
+ * @param {any} obj - クリーンアップするオブジェクト
+ * @returns {any} undefinedが削除されたオブジェクト
  */
 function removeUndefinedFields(obj) {
+  // null、undefined、プリミティブ型はそのまま返す
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  // プリミティブ型
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Date、Timestamp、その他の特殊なオブジェクトはそのまま返す
+  if (obj instanceof Date || obj.constructor?.name === 'Timestamp' || obj.constructor?.name === 'FieldValue') {
+    return obj;
+  }
+
+  // 配列の場合
+  if (Array.isArray(obj)) {
+    return obj
+      .filter(item => item !== undefined)
+      .map(item => removeUndefinedFields(item));
+  }
+
+  // オブジェクトの場合（再帰的にクリーンアップ）
   const cleaned = {};
   for (const key in obj) {
-    if (obj[key] !== undefined) {
-      cleaned[key] = obj[key];
+    if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+      cleaned[key] = removeUndefinedFields(obj[key]);
     }
   }
   return cleaned;
@@ -556,7 +580,9 @@ export async function saveToCloud(data) {
       .doc(uuid);
 
     // undefinedフィールドを削除（Firestoreはundefinedを許可しない）
+    console.log('📝 保存前のデータ:', JSON.parse(JSON.stringify(data)));
     const cleanedData = removeUndefinedFields(data);
+    console.log('🧹 クリーンアップ後のデータ:', JSON.parse(JSON.stringify(cleanedData)));
 
     const dataToSave = {
       ...cleanedData,
@@ -565,6 +591,10 @@ export async function saveToCloud(data) {
       updatedAt: getServerTimestamp(),
       deviceId: getDeviceId()
     };
+
+    console.log('💾 Firestoreに送信するデータのキー:', Object.keys(dataToSave));
+    console.log('💾 createdAt type:', typeof dataToSave.createdAt, dataToSave.createdAt);
+    console.log('💾 updatedAt type:', typeof dataToSave.updatedAt, dataToSave.updatedAt);
 
     await docRef.set(dataToSave);
     console.log(`✅ Firestoreに保存しました (UUID: ${uuid})`);
@@ -581,7 +611,13 @@ export async function saveToCloud(data) {
 
     return { id: localId, uuid: uuid };
   } catch (error) {
-    console.error('クラウド保存エラー:', error);
+    console.error('❌ クラウド保存エラー:', error);
+    console.error('エラー詳細:', {
+      code: error.code,
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     throw error;
   }
 }
