@@ -219,8 +219,52 @@ export class YieldCalculatorDB {
           console.error('   1. すべてのタブを閉じる');
           console.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
           console.error('   3. それでも解決しない場合、ハードリロード (Cmd+Shift+R / Ctrl+Shift+R)');
-          console.error('   4. 最終手段: デバッグコンソールで以下を実行');
-          console.error('      indexedDB.deleteDatabase("YieldCalculatorDB")');
+          console.error('   4. 最終手段: データベースを削除');
+
+          // iOS Safari対応: DBリセットボタンを表示
+          const resetButton = document.getElementById('reset-db-button');
+          if (resetButton) {
+            resetButton.style.display = 'inline-block';
+            console.log('💡 画面上部の「🔧 DBリセット」ボタンを押してデータベースをリセットしてください');
+          }
+
+          // 自動的にユーザーに確認ダイアログを表示
+          setTimeout(async () => {
+            const userChoice = confirm(
+              'データベースバージョンの競合が発生しました。\n\n' +
+              '【対処方法】\n' +
+              '1. すべてのタブを閉じて再読み込み\n' +
+              '2. 「🔧 DBリセット」ボタンを押す（推奨）\n\n' +
+              '今すぐデータベースをリセットしますか？\n' +
+              '（クラウド同期を使用している場合、データは再ダウンロードできます）'
+            );
+
+            if (userChoice) {
+              // データベースを削除
+              try {
+                this.close();
+                const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+                deleteRequest.onsuccess = () => {
+                  alert('データベースを削除しました。ページを再読み込みします。');
+                  window.location.reload();
+                };
+
+                deleteRequest.onerror = () => {
+                  alert('データベースの削除に失敗しました。ページを手動で再読み込みしてください。');
+                };
+
+                deleteRequest.onblocked = () => {
+                  alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
+                };
+              } catch (err) {
+                console.error('データベース削除エラー:', err);
+                alert('データベースの削除に失敗しました。ページを再読み込みしてください。');
+              }
+            } else {
+              alert('画面上部の「🔧 DBリセット」ボタンを使用するか、ページを再読み込みしてください。');
+            }
+          }, 100);
 
           reject(createUserFriendlyError(
             error,
