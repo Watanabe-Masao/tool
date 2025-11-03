@@ -548,6 +548,7 @@ export class YieldCalculatorDB {
   /**
    * すべてのデータを取得
    * @param {Object} options - ソート・フィルタオプション
+   * @param {boolean} options.includeDeleted - 削除済みデータも含めるか（デフォルト: false）
    * @returns {Promise<Array>}
    */
   async getAll(options = {}) {
@@ -578,7 +579,11 @@ export class YieldCalculatorDB {
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
-            results.push(cursor.value);
+            const item = cursor.value;
+            // 削除済みデータをフィルタリング（includeDeletedがtrueの場合は除外しない）
+            if (options.includeDeleted || !item.deleted) {
+              results.push(item);
+            }
             cursor.continue();
           } else {
             resolve(results);
@@ -595,9 +600,11 @@ export class YieldCalculatorDB {
   /**
    * IDでデータを取得
    * @param {number} id
+   * @param {Object} options - オプション
+   * @param {boolean} options.includeDeleted - 削除済みデータも取得するか（デフォルト: true。削除操作のため）
    * @returns {Promise<Object>}
    */
-  async getById(id) {
+  async getById(id, options = { includeDeleted: true }) {
     if (!this.db) await this.open();
 
     return new Promise((resolve, reject) => {
@@ -608,7 +615,15 @@ export class YieldCalculatorDB {
         const store = transaction.objectStore(STORE_NAME);
         const request = store.get(id);
 
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => {
+          const item = request.result;
+          // 削除済みデータのフィルタリング（includeDeletedがfalseかつ削除済みの場合）
+          if (item && !options.includeDeleted && item.deleted) {
+            resolve(undefined);
+          } else {
+            resolve(item);
+          }
+        };
         request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
       } catch (error) {
         reject(createUserFriendlyError(error, 'データを取得'));
@@ -757,7 +772,94 @@ export class YieldCalculatorDB {
   }
 
   /**
-   * データを削除
+   * データを論理削除（Soft Delete）
+   * マルチデバイス環境での削除を追跡するため、削除フラグを設定
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async softDelete(id) {
+    if (!this.db) await this.open();
+
+    this.logTransactionStart('softDelete');
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => {
+          this.logTransactionEnd('softDelete', false);
+          console.error('トランザクションエラー [softDelete]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを削除'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('softDelete', true);
+        };
+
+        const store = transaction.objectStore(STORE_NAME);
+        const getRequest = store.get(id);
+
+        getRequest.onsuccess = () => {
+          const record = getRequest.result;
+          if (!record) {
+            this.logTransactionEnd('softDelete', false);
+            reject(createUserFriendlyError(
+              new Error(`Record with id ${id} not found`),
+              'データを削除（レコードが見つかりません）'
+            ));
+            return;
+          }
+
+          // 削除フラグを設定
+          const deletedRecord = {
+            ...record,
+            deleted: true,
+            deletedAt: new Date().toISOString()
+          };
+
+          const updateRequest = store.put(deletedRecord);
+          updateRequest.onsuccess = () => {
+            console.log(`🗑️ 論理削除完了 (ID: ${id})`);
+            resolve();
+          };
+          updateRequest.onerror = () => {
+            this.logTransactionEnd('softDelete', false);
+            console.error('リクエストエラー [softDelete]:', {
+              error: updateRequest.error,
+              activeTransactions: this.activeTransactions,
+              timestamp: new Date().toISOString()
+            });
+            reject(createUserFriendlyError(updateRequest.error, 'データを削除'));
+          };
+        };
+
+        getRequest.onerror = () => {
+          this.logTransactionEnd('softDelete', false);
+          console.error('リクエストエラー [softDelete/get]:', {
+            error: getRequest.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(getRequest.error, 'データを削除'));
+        };
+      } catch (error) {
+        this.logTransactionEnd('softDelete', false);
+        console.error('例外エラー [softDelete]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
+        reject(createUserFriendlyError(error, 'データを削除'));
+      }
+    });
+  }
+
+  /**
+   * データを物理削除（Hard Delete）
+   * 通常は使用せず、softDelete()を使用すること
    * @param {number} id
    * @returns {Promise<void>}
    */

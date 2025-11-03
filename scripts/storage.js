@@ -105,17 +105,18 @@ export async function searchHistory(query) {
 
 /**
  * 履歴を削除（ローカル＋クラウド）
+ * 論理削除を使用してマルチデバイス環境での削除を追跡
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
   try {
-    // クラウド（Firestore）から削除（ログイン中の場合のみ）
+    // ローカル（IndexedDB）で論理削除
+    await db.softDelete(id);
+
+    // クラウド（Firestore）にも論理削除を同期（ログイン中の場合のみ）
     // deleteFromCloud内でログインチェックとエラーハンドリングが行われる
     await deleteFromCloud(id);
-
-    // ローカル（IndexedDB）から削除
-    await db.delete(id);
 
     console.log(`✅ データを削除しました (ID: ${id})`);
   } catch (error) {

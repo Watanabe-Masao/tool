@@ -108,24 +108,25 @@ export async function uploadToCloud() {
       return false;
     }
 
-    // IndexedDBから全履歴を取得
+    // IndexedDBから全履歴を取得（削除済みも含む）
     const allHistory = await getAllHistoryFromIndexedDB();
 
     // 差分同期: 最終同期時刻以降に更新されたデータのみをフィルタリング
     let localHistory;
     if (lastSyncTime && !isNaN(lastSyncTime.getTime())) {
       localHistory = allHistory.filter(item => {
-        // updatedAtフィールドを確認（Date型または文字列）
-        if (!item.updatedAt) {
-          // updatedAtがない場合は常にアップロード
+        // updatedAtまたはdeletedAtフィールドを確認
+        const checkTime = item.deletedAt || item.updatedAt;
+        if (!checkTime) {
+          // タイムスタンプがない場合は常にアップロード
           return true;
         }
-        const updatedAt = new Date(item.updatedAt);
+        const itemTime = new Date(checkTime);
         // 有効な日付でない場合もアップロード
-        if (isNaN(updatedAt.getTime())) {
+        if (isNaN(itemTime.getTime())) {
           return true;
         }
-        return updatedAt > lastSyncTime;
+        return itemTime > lastSyncTime;
       });
       console.log(`差分同期: 全${allHistory.length}件中${localHistory.length}件をアップロード`);
     } else {
@@ -434,7 +435,8 @@ export async function downloadFromCloud() {
 }
 
 /**
- * クラウドから特定のデータを削除
+ * クラウドで論理削除マーカーを設定
+ * マルチデバイス環境での削除を追跡するため、削除フラグを設定
  * @param {number} id - IndexedDBのID
  * @returns {Promise<boolean>}
  */
@@ -448,7 +450,7 @@ export async function deleteFromCloud(id) {
     const user = getCurrentUser();
     const firestore = getFirestore();
 
-    // IndexedDBからUUIDを取得
+    // IndexedDBからUUIDと削除情報を取得
     const localItem = await dbInstance.getById(id);
     if (!localItem) {
       console.warn(`IndexedDB ID:${id} が見つかりません`);
@@ -462,15 +464,20 @@ export async function deleteFromCloud(id) {
       return true;
     }
 
-    // FirestoreからUUIDで削除
+    // Firestoreに削除マーカーを設定（論理削除）
     const docRef = firestore
       .collection('users')
       .doc(user.uid)
       .collection('history')
       .doc(uuid);
 
-    await docRef.delete();
-    console.log(`✅ Firestoreから削除しました (UUID: ${uuid})`);
+    await docRef.set({
+      deleted: true,
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uuid: uuid
+    }, { merge: true });
+
+    console.log(`🗑️ Firestoreに削除マーカーを設定しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -588,11 +595,13 @@ export async function syncData() {
 }
 
 /**
- * IndexedDBから全履歴を取得
+ * IndexedDBから全履歴を取得（削除済みも含む）
+ * アップロード時は削除マーカーも同期する必要があるため
  */
 async function getAllHistoryFromIndexedDB() {
   try {
-    return await dbInstance.getAll();
+    // includeDeleted: true で削除済みも含めて取得
+    return await dbInstance.getAll({ includeDeleted: true });
   } catch (error) {
     console.error('履歴取得エラー:', error);
     throw error;
@@ -665,13 +674,21 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
         itemWithoutId.uuid = uuid || cloudItem.id || generateUUID();
       }
 
+      // 削除済みデータはインポートしない（論理削除）
+      if (itemWithoutId.deleted) {
+        console.log(`🗑️ 削除済みデータをスキップ (UUID: ${itemWithoutId.uuid})`);
+        return 'skipped';
+      }
+
       const newId = await dbInstance.save(itemWithoutId);
       console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
-      const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
-      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) : new Date(localItem.timestamp);
+      const cloudTime = cloudItem.updatedAt?.toDate?.() ||
+                        (cloudItem.deletedAt?.toDate?.() || new Date(cloudItem.timestamp));
+      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) :
+                        (localItem.deletedAt ? new Date(localItem.deletedAt) : new Date(localItem.timestamp));
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
@@ -687,6 +704,13 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
           // UUID不一致の場合はローカルのUUIDを保持（データ整合性優先）
           console.warn('⚠️ ローカルのUUIDを保持します');
           delete itemWithoutId.uuid; // updateメソッドで上書きされないように削除
+        }
+
+        // クラウドで削除済みの場合、ローカルでも論理削除
+        if (itemWithoutId.deleted) {
+          await dbInstance.softDelete(localItem.id);
+          console.log(`🗑️ 削除マーカーを同期 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
+          return 'updated';
         }
 
         await dbInstance.update(localItem.id, itemWithoutId);
