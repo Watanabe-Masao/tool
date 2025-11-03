@@ -586,28 +586,6 @@ export async function handleClearAll() {
 }
 
 /**
- * トースト通知を表示
- * @param {string} message
- * @param {string} type - 'success' | 'error'
- */
-function showToast(message, type = 'success') {
-  // トースト要素が存在しない場合は作成
-  let toast = qs('#toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast';
-    document.body.appendChild(toast);
-  }
-
-  toast.textContent = message;
-  toast.className = `toast toast--${type} toast--show`;
-
-  setTimeout(() => {
-    toast.classList.remove('toast--show');
-  }, 3000);
-}
-
-/**
  * 履歴メニューの表示/非表示を切り替え
  */
 function toggleHistoryMenu() {
