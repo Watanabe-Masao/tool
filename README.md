@@ -425,15 +425,24 @@ yield-calculator/
 ### ユーザー向け
 - [README.md](./README.md) - このファイル（使い方ガイド）
 - [CHANGELOG.md](./CHANGELOG.md) - 変更履歴
-- [QUICK_TEST_GUIDE.md](./QUICK_TEST_GUIDE.md) - クイックテストガイド（1分で機能確認）
-- [CACHE_CLEAR_GUIDE.md](./CACHE_CLEAR_GUIDE.md) - ブラウザキャッシュクリア方法
+- [docs/GUIDES.md](./docs/GUIDES.md) - 運用ガイド（キャッシュクリア、データクリーンアップ）
 
 ### 開発者向け
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - アーキテクチャ設計、フローチャート詳細
+
+#### アーキテクチャ・設計
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - アーキテクチャ設計、フローチャート、レビュー
 - [docs/FEATURES.md](./docs/FEATURES.md) - 機能詳細仕様
+- [docs/CRUD_OPERATIONS.md](./docs/CRUD_OPERATIONS.md) - CRUD操作の詳細（図解付き）
 - [docs/reverse-sim-spec.md](./docs/reverse-sim-spec.md) - 逆算シミュレーション仕様
-- [TEST_PLAN_PHASE9.md](./TEST_PLAN_PHASE9.md) - Phase 9 UX改善テスト計画
-- [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) - MVP実装の詳細、開発ガイド
+
+#### テスト
+- [docs/TESTING.md](./docs/TESTING.md) - テストドキュメント（Phase 9 UX、バグ修正、計算ロジック、統計）
+
+#### Firebase連携
+- [docs/FIREBASE_SETUP.md](./docs/FIREBASE_SETUP.md) - Firebase設定ガイド
+
+#### アーカイブ（履歴参考用）
+- [docs/archive/](./docs/archive/) - 完了したリファクタリング計画とMVP実装ドキュメント
 
 ## 🐛 問題が発生した場合
 
@@ -446,7 +455,7 @@ Windows/Linux: Ctrl + Shift + R
 Mac:           Cmd + Shift + R
 ```
 
-**詳細な手順:** [CACHE_CLEAR_GUIDE.md](./CACHE_CLEAR_GUIDE.md)
+**詳細な手順:** [docs/GUIDES.md](./docs/GUIDES.md)
 
 ### その他の問題
 1. DevToolsのConsoleでエラーを確認
