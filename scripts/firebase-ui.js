@@ -139,6 +139,12 @@ function setupEventListeners() {
     resetDbButton.addEventListener('click', handleResetDatabase);
   }
 
+  // 同期状態確認ボタン（iOS Safari対応）
+  const checkSyncStatusButton = document.getElementById('check-sync-status-button');
+  if (checkSyncStatusButton) {
+    checkSyncStatusButton.addEventListener('click', handleCheckSyncStatus);
+  }
+
   // モーダルを閉じる
   const authModal = document.getElementById('auth-modal');
   if (authModal) {
@@ -612,6 +618,83 @@ async function handleResetDatabase() {
   } catch (err) {
     console.error('データベース削除に失敗:', err);
     showToast('データベースの削除に失敗しました', 'error');
+  }
+}
+
+/**
+ * 同期状態を確認（iOS Safari対応）
+ */
+async function handleCheckSyncStatus() {
+  try {
+    showToast('状態を確認中...', 'info');
+
+    // 認証状態を確認
+    const signedIn = isSignedIn();
+    const user = getCurrentUser();
+    const anonymous = isAnonymous();
+
+    // IndexedDBのデータ数を取得
+    const { db } = await import('./db.js');
+    await db.open();
+    const localData = await db.getAll();
+    const localCount = localData.length;
+
+    // 最終同期時刻を取得
+    const lastSync = getLastSyncTime();
+    const lastSyncStr = lastSync
+      ? `${lastSync.toLocaleString('ja-JP')}\n（${formatTime(lastSync)}）`
+      : '未同期';
+
+    // 状態メッセージを作成
+    let statusMessage = '【同期状態】\n\n';
+
+    // 認証状態
+    statusMessage += '■ ログイン状態\n';
+    if (signedIn) {
+      statusMessage += `✅ ログイン済み\n`;
+      statusMessage += `   種類: ${anonymous ? '匿名' : 'メールアドレス'}\n`;
+      statusMessage += `   UID: ${user.uid.substring(0, 8)}...\n`;
+    } else {
+      statusMessage += `❌ 未ログイン\n`;
+    }
+    statusMessage += '\n';
+
+    // ローカルデータ
+    statusMessage += '■ ローカルデータ\n';
+    statusMessage += `   件数: ${localCount}件\n`;
+    statusMessage += '\n';
+
+    // 同期状態
+    statusMessage += '■ 最終同期時刻\n';
+    statusMessage += `   ${lastSyncStr}\n`;
+    statusMessage += '\n';
+
+    // 推奨アクション
+    statusMessage += '【推奨アクション】\n';
+    if (!signedIn) {
+      statusMessage += '⚠️ ログインしてください\n';
+    } else if (localCount === 0 && lastSync) {
+      statusMessage += '⚠️ ローカルにデータがありません\n';
+      statusMessage += '   「🔄 同期」ボタンを押して\n   クラウドからダウンロードしてください\n';
+    } else if (localCount === 0 && !lastSync) {
+      statusMessage += 'ℹ️ データがありません\n';
+      statusMessage += '   新規計算を実行してください\n';
+    } else if (!lastSync) {
+      statusMessage += 'ℹ️ 同期を実行してください\n';
+      statusMessage += '   「🔄 同期」ボタンを押してください\n';
+    } else {
+      statusMessage += '✅ 正常に動作しています\n';
+    }
+
+    alert(statusMessage);
+
+  } catch (err) {
+    console.error('状態確認エラー:', err);
+    alert(
+      '状態確認に失敗しました。\n\n' +
+      `エラー: ${err.message}\n\n` +
+      '詳細はコンソールログをご確認ください。'
+    );
   }
 }
 
