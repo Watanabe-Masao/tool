@@ -19,6 +19,9 @@ import {
   handleSaveCalculation as handleSaveCalculationBase
 } from './history-save-dialog.js';
 import { initializeCarousels, initHistoryFilterUI, setupHistoryFilterListeners } from './history-ui-controls.js';
+import { isSignedIn } from './firebase-auth.js';
+import { downloadFromCloud } from './firebase-sync.js';
+import { showToast } from './toast.js';
 
 // 保存ダイアログモードはappStateで管理（'new', 'overwrite', 'normal'）
 
@@ -65,10 +68,41 @@ export async function showHistoryModal() {
     // フィルタリングUIのイベントリスナーを設定（初回のみ）
     setupHistoryFilterListeners(renderHistoryList);
 
+    // 🔄 重要: 表示前にFirestoreから最新データを取得（キャッシュ整合性保証）
+    // 他の端末での削除・更新を反映するため
+    await ensureFreshDataBeforeDisplay();
+
     await renderHistoryList(null, currentMode, currentYieldMethod);
   } catch (error) {
     console.error('履歴モーダルを開く際にエラーが発生しました:', error);
     showToast('❌ 履歴を読み込めませんでした', 'error');
+  }
+}
+
+/**
+ * 表示前に最新データを取得（キャッシュ整合性保証）
+ * 他の端末での変更を反映するため、必ずFirestoreと同期
+ */
+async function ensureFreshDataBeforeDisplay() {
+  // Firebase認証チェック
+  if (!isSignedIn()) {
+    console.log('オフラインのため、ローカルキャッシュを表示します');
+    return;
+  }
+
+  try {
+    console.log('🔄 履歴表示前にFirestoreと同期中...');
+    const success = await downloadFromCloud();
+
+    if (success) {
+      console.log('✅ 最新データの取得完了');
+    } else {
+      console.warn('⚠️ 同期に失敗しましたが、ローカルキャッシュを表示します');
+    }
+  } catch (error) {
+    console.error('❌ 同期エラー:', error);
+    console.warn('⚠️ ローカルキャッシュを表示します');
+    // エラーが発生してもローカルデータは表示
   }
 }
 
@@ -767,6 +801,32 @@ export function initHistoryUI() {
     clearAllBtn.addEventListener('click', clearAllHandler);
     clearAllBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAllHandler(); }, { passive: false });
   }
+
+  // 🔄 historyUpdatedイベントリスナー: Firestore同期後にUI自動更新
+  window.addEventListener('historyUpdated', async () => {
+    console.log('📢 historyUpdatedイベントを受信: UIを更新します');
+
+    // モーダルが開いている場合のみ再描画
+    const modal = qs('#historyModal');
+    if (modal && modal.open) {
+      console.log('✅ 履歴モーダルが開いているため、リストを再描画します');
+
+      // 現在のフィルタ条件を維持して再描画
+      const activeBtn = qs('.btn-mode.is-active[data-mode]');
+      const modeValue = activeBtn ? activeBtn.dataset.mode : null;
+      const mode = (modeValue === 'all') ? null : modeValue;
+
+      let yieldMethod = null;
+      if (mode && mode !== MODE.YIELD_STATS) {
+        const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
+        yieldMethod = methodRadio ? methodRadio.value : null;
+      }
+
+      await renderHistoryList(null, mode, yieldMethod);
+    } else {
+      console.log('履歴モーダルが閉じているため、再描画をスキップします');
+    }
+  });
 }
 
 /**
