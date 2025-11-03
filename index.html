@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles/main.css" />
   <link rel="stylesheet" href="styles/history.css" />
   <link rel="stylesheet" href="styles/firebase.css" />
+  <link rel="stylesheet" href="styles/simple-header.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
@@ -20,24 +21,27 @@
   <main class="container">
     <h1 class="app-title">🧮 歩留まり計算ツール</h1>
 
-    <!-- クラウド同期ステータス -->
-    <div id="cloud-sync-header" class="cloud-sync-header">
-      <div class="sync-status-container">
-        <span id="auth-status" class="auth-status">☁️ 未ログイン</span>
-        <span id="sync-status" class="sync-status-text"></span>
+    <!-- シンプルなヘッダー -->
+    <div class="simple-header">
+      <span id="auth-status" class="status-badge">☁️ 未ログイン</span>
+      <div class="header-buttons">
+        <button type="button" id="signin-button" class="btn-simple">ログイン</button>
+        <button type="button" id="signout-button" class="btn-simple" style="display: none;">ログアウト</button>
+        <button type="button" id="sync-button" class="btn-simple" disabled>同期</button>
+        <button type="button" id="menu-button" class="btn-simple">メニュー ▾</button>
       </div>
-      <div class="sync-buttons">
-        <button type="button" id="signin-button" class="btn btn-secondary btn-sm">ログイン</button>
-        <button type="button" id="signout-button" class="btn btn-secondary btn-sm" style="display: none;">ログアウト</button>
-        <button type="button" id="sync-button" class="btn btn-primary btn-sm" disabled>🔄 同期</button>
-        <button type="button" id="download-file-btn" class="btn btn-secondary btn-sm" disabled title="クラウドからJSONファイルをダウンロード">📥 ダウンロード</button>
-        <button type="button" id="upload-file-btn" class="btn btn-secondary btn-sm" disabled title="JSONファイルをクラウドにアップロード">📤 アップロード</button>
-        <button type="button" id="reset-db-button" class="btn btn-secondary btn-sm" style="display: none;" title="データベースをリセット（VersionError対策）">🔧 DBリセット</button>
-        <button type="button" id="cleanup-firestore-button" class="btn btn-secondary btn-sm" disabled title="Firestore上の重複データを削除">🧹 重複削除</button>
-        <button type="button" id="check-sync-status-button" class="btn btn-secondary btn-sm" title="同期状態を確認（iOS Safari対応）">📊 状態確認</button>
-        <input type="file" id="upload-file-input" accept=".json" style="display: none;" />
-      </div>
+      <span id="sync-status" class="sync-status-text"></span>
     </div>
+
+    <!-- メニュードロップダウン -->
+    <div id="header-menu" class="header-menu" style="display: none;">
+      <button type="button" id="download-file-btn" class="menu-item" disabled>📥 ダウンロード</button>
+      <button type="button" id="upload-file-btn" class="menu-item" disabled>📤 アップロード</button>
+      <button type="button" id="cleanup-firestore-button" class="menu-item" disabled>🧹 重複削除</button>
+      <button type="button" id="check-sync-status-button" class="menu-item">📊 状態確認</button>
+      <button type="button" id="reset-db-button" class="menu-item" style="display: none;">🔧 DBリセット</button>
+    </div>
+    <input type="file" id="upload-file-input" accept=".json" style="display: none;" />
 
     <!-- モード切替 -->
     <section class="card section" aria-labelledby="modeHeading">
