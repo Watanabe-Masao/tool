@@ -4,8 +4,10 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
-import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
+import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud, downloadFromCloud } from './firebase-sync.js';
 import { isSignedIn } from './firebase-auth.js';
+import { NotFoundError, OfflineError, ValidationError, mapFirebaseError, mapIndexedDBError } from './errors.js';
+import { validateCalculationData, validateUpdateData, validateId } from './validation.js';
 
 /**
  * 現在の計算データを保存（オンライン時のみ）
@@ -24,6 +26,29 @@ import { isSignedIn } from './firebase-auth.js';
  * @returns {Promise<number>} 保存されたレコードのID
  */
 export async function saveCalculation(name, mode, inputData, resultData, category = null, productData = null) {
+  // バリデーション
+  try {
+    validateCalculationData({
+      name,
+      mode,
+      input: inputData,
+      result: resultData,
+      category,
+      productData
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error('❌ バリデーションエラー:', error.getUserMessage());
+      throw error;
+    }
+    throw error;
+  }
+
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new OfflineError('save');
+  }
+
   const data = {
     name,
     mode,
@@ -44,7 +69,7 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
     return result.id; // IndexedDB IDを返す
   } catch (error) {
     console.error('Failed to save calculation:', error);
-    throw error;
+    throw mapFirebaseError(error, 'save');
   }
 }
 
@@ -60,13 +85,24 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
  * @returns {Promise<Object>} { mode, input, result }
  */
 export async function loadCalculation(id) {
+  // IDバリデーション
+  try {
+    validateId(id);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error('❌ バリデーションエラー:', error.getUserMessage());
+      throw error;
+    }
+    throw error;
+  }
+
   try {
     const data = await db.getById(id);
     if (!data) {
       // データが見つからない場合は、他のデバイスで削除された可能性がある
       console.error(`❌ レコードが見つかりません (ID: ${id})`);
       console.error('💡 他のデバイスで削除された可能性があります');
-      throw new Error(`Record with ID ${id} not found. It may have been deleted on another device.`);
+      throw new NotFoundError('Record', id, 'It may have been deleted on another device');
     }
 
     // データが存在する場合は、最新データとして返す
@@ -80,8 +116,11 @@ export async function loadCalculation(id) {
       category: data.category
     };
   } catch (error) {
+    if (error instanceof NotFoundError || error instanceof ValidationError) {
+      throw error;
+    }
     console.error('Failed to load calculation:', error);
-    throw error;
+    throw mapIndexedDBError(error, 'load');
   }
 }
 
@@ -145,9 +184,20 @@ export async function searchHistory(query) {
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
+  // IDバリデーション
+  try {
+    validateId(id);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error('❌ バリデーションエラー:', error.getUserMessage());
+      throw error;
+    }
+    throw error;
+  }
+
   // オンラインチェック
   if (!isSignedIn()) {
-    throw new Error('削除はオンライン時のみ可能です。ログインしてください。');
+    throw new OfflineError('delete');
   }
 
   let cloudDeleteSuccess = false;
@@ -158,7 +208,7 @@ export async function deleteHistory(id) {
     cloudDeleteSuccess = await deleteFromCloud(id);
 
     if (!cloudDeleteSuccess) {
-      throw new Error('クラウドからの削除に失敗しました。処理を中断します。');
+      throw mapFirebaseError(new Error('クラウドからの削除に失敗しました'), 'delete');
     }
     console.log(`✅ Firestoreから削除しました (ID: ${id})`);
 
@@ -177,17 +227,9 @@ export async function deleteHistory(id) {
   } catch (error) {
     console.error('Failed to delete calculation:', error);
 
-    // エラー情報を詳細化
-    if (!cloudDeleteSuccess) {
-      // クラウド削除が失敗した場合は致命的
-      throw new Error(`削除に失敗しました: ${error.message || error}`);
-    } else if (!localDeleteSuccess) {
-      // ローカル削除のみ失敗の場合は警告のみ（次回同期で回復）
-      console.warn('⚠️ ローカルキャッシュの削除に失敗しましたが、データはクラウドから削除されています');
-    } else {
-      // その他のエラー
-      throw error;
-    }
+    // クラウド削除が失敗した場合は致命的エラー
+    // （ローカル削除のエラーは内部try-catchで処理済み）
+    throw new Error(`削除に失敗しました: ${error.message || error}`);
   }
 }
 
@@ -210,6 +252,22 @@ export async function deleteHistory(id) {
  * @returns {Promise<void>}
  */
 export async function updateCalculation(id, name, mode, inputData, resultData, category = null, productData = null) {
+  // バリデーション
+  try {
+    validateUpdateData(id, name, mode, inputData, resultData, category, productData);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error('❌ バリデーションエラー:', error.getUserMessage());
+      throw error;
+    }
+    throw error;
+  }
+
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new OfflineError('update');
+  }
+
   const updates = {
     name,
     mode,
@@ -226,13 +284,11 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     // 1. 更新前に現在のローカルデータを取得
     const currentLocal = await db.getById(id);
     if (!currentLocal) {
-      throw new Error(`レコードが見つかりません (ID: ${id}). 他のデバイスで削除された可能性があります。`);
+      throw new NotFoundError('Record', id, '他のデバイスで削除された可能性があります');
     }
 
     // 2. オンラインの場合、Firestoreから最新データを取得して競合チェック
     if (isSignedIn()) {
-      const { downloadFromCloud } = await import('./firebase-sync.js');
-
       try {
         // 最新データを取得
         await downloadFromCloud();
@@ -240,7 +296,7 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
         // 再度ローカルデータを確認（同期後に変更があったか）
         const currentLocalAfterSync = await db.getById(id);
         if (!currentLocalAfterSync) {
-          throw new Error(`レコードが見つかりません (ID: ${id}). 他のデバイスで削除された可能性があります。`);
+          throw new NotFoundError('Record', id, '他のデバイスで削除された可能性があります');
         }
 
         // updatedAtを比較して、他のデバイスで更新されていないか確認
@@ -264,8 +320,11 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 
     console.log(`✅ 更新完了 (ID: ${id})`);
   } catch (error) {
+    if (error instanceof NotFoundError || error instanceof ValidationError || error instanceof OfflineError) {
+      throw error;
+    }
     console.error('Failed to update calculation:', error);
-    throw error;
+    throw mapFirebaseError(error, 'update');
   }
 }
 
@@ -343,19 +402,7 @@ export async function importData(file) {
       try {
         const jsonString = event.target.result;
 
-        // JSON形式の検証
-        let parsedData;
-        try {
-          parsedData = JSON.parse(jsonString);
-        } catch (parseError) {
-          throw new Error('Invalid JSON format: ' + parseError.message);
-        }
-
-        // データ形式の検証
-        if (!Array.isArray(parsedData)) {
-          throw new Error('Invalid data format: expected array');
-        }
-
+        // db.importJSON内でJSON検証とデータ形式検証を行うため、ここでは不要
         const result = await db.importJSON(jsonString);
         resolve(result);
       } catch (error) {
