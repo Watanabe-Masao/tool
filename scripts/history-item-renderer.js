@@ -79,9 +79,13 @@ export function createHistoryItemHTML(item, isFirst = true) {
     const minYieldRate = item.result?.minYieldRate;
     const maxYieldRate = item.result?.maxYieldRate;
 
+    // 同期ステータスを取得（仮実装）
+    const syncStatus = getSyncStatus(item);
+
     return `
       <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
         <div class="history-item-header">
+          <span class="sync-status" title="${syncStatus.tooltip}">${syncStatus.icon}</span>
           <div class="history-item-title">
             <span class="history-item-mode-label">${modeIcon}</span>
             <span class="history-item-name">${escapeHTML(productName)}</span>
@@ -103,8 +107,10 @@ export function createHistoryItemHTML(item, isFirst = true) {
         <div class="history-item-date">${dateStr}</div>
         <div class="history-item-actions">
           <button type="button" class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
-          <button type="button" class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
-          <button type="button" class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+          <div class="history-item-actions-secondary">
+            <button type="button" class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
+            <button type="button" class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+          </div>
         </div>
       </div>
     `;
@@ -138,9 +144,13 @@ export function createHistoryItemHTML(item, isFirst = true) {
     finalGross = afterMarkup.toFixed(1);
   }
 
+  // 同期ステータスを取得
+  const syncStatus = getSyncStatus(item);
+
   return `
     <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
       <div class="history-item-header">
+        <span class="sync-status" title="${syncStatus.tooltip}">${syncStatus.icon}</span>
         <div class="history-item-title">
           <span class="history-item-mode-label">${modeIcon}</span>
           <span class="history-item-name">${escapeHTML(item.name || '無題')}</span>
@@ -161,11 +171,55 @@ export function createHistoryItemHTML(item, isFirst = true) {
       <div class="history-item-date">${dateStr}</div>
       <div class="history-item-actions">
         <button class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
-        <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
-        <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+        <div class="history-item-actions-secondary">
+          <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
+          <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+        </div>
       </div>
     </div>
   `;
+}
+
+/**
+ * 同期ステータスを取得
+ * @param {Object} item - 履歴データ
+ * @returns {Object} - {icon: string, tooltip: string}
+ */
+function getSyncStatus(item) {
+  // Firestoreにデータが保存されているか確認
+  const hasFirestoreId = !!item.firestoreId;
+  const hasUuid = !!item.uuid;
+
+  // 更新時刻をチェック
+  const updatedAt = item.updatedAt;
+  const now = Date.now();
+  const isRecent = updatedAt && (now - updatedAt < 5000); // 5秒以内の更新
+
+  if (hasFirestoreId && hasUuid) {
+    // Firestoreと同期済み
+    return {
+      icon: '🟢',
+      tooltip: '同期済み'
+    };
+  } else if (isRecent) {
+    // 最近更新されたが、まだ同期されていない
+    return {
+      icon: '🟡',
+      tooltip: '更新確認中'
+    };
+  } else if (!hasFirestoreId) {
+    // Firestoreに保存されていない（ローカルのみ）
+    return {
+      icon: '🔴',
+      tooltip: '未同期'
+    };
+  } else {
+    // その他のエラー状態
+    return {
+      icon: '🔴',
+      tooltip: 'エラー'
+    };
+  }
 }
 
 /**

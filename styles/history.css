@@ -420,9 +420,16 @@ body.modal-open {
 
 .history-item-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 0.5em;
   margin-bottom: 0.75em;
+}
+
+.sync-status {
+  font-size: 0.9em;
+  cursor: help;
+  flex-shrink: 0;
 }
 
 .history-item-title {
@@ -432,6 +439,7 @@ body.modal-open {
   font-weight: 700;
   font-size: 1.1em;
   color: #333;
+  flex: 1;
 }
 
 .history-item-icon {
@@ -496,8 +504,13 @@ body.modal-open {
 
 .history-item-actions {
   display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.history-item-actions-secondary {
+  display: flex;
   gap: 0.35em;
-  flex-wrap: wrap;
 }
 
 .history-empty,
@@ -658,12 +671,23 @@ body.modal-open {
     gap: 0.5em;
   }
 
+  /* ボタンのレイアウトはデスクトップと同じ（縦2行） */
   .history-item-actions {
     flex-direction: column;
   }
 
-  .history-item-actions button {
+  .history-item-actions .btn-load {
     width: 100%;
+  }
+
+  .history-item-actions-secondary {
+    display: flex;
+    gap: 0.35em;
+  }
+
+  .history-item-actions-secondary .btn-edit,
+  .history-item-actions-secondary .btn-delete {
+    flex: 1;
   }
 }
 
