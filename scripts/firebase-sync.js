@@ -86,14 +86,38 @@ function getTimestampFromDate(date) {
 
 /**
  * undefinedフィールドを削除（Firestoreはundefinedを許可しない）
- * @param {Object} obj - クリーンアップするオブジェクト
- * @returns {Object} undefinedが削除されたオブジェクト
+ * 再帰的にネストされたオブジェクトもクリーンアップ
+ * @param {any} obj - クリーンアップするオブジェクト
+ * @returns {any} undefinedが削除されたオブジェクト
  */
 function removeUndefinedFields(obj) {
+  // null、undefined、プリミティブ型はそのまま返す
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  // プリミティブ型
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Date、Timestamp、その他の特殊なオブジェクトはそのまま返す
+  if (obj instanceof Date || obj.constructor?.name === 'Timestamp' || obj.constructor?.name === 'FieldValue') {
+    return obj;
+  }
+
+  // 配列の場合
+  if (Array.isArray(obj)) {
+    return obj
+      .filter(item => item !== undefined)
+      .map(item => removeUndefinedFields(item));
+  }
+
+  // オブジェクトの場合（再帰的にクリーンアップ）
   const cleaned = {};
   for (const key in obj) {
-    if (obj[key] !== undefined) {
-      cleaned[key] = obj[key];
+    if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+      cleaned[key] = removeUndefinedFields(obj[key]);
     }
   }
   return cleaned;
