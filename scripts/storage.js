@@ -135,7 +135,8 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     input: inputData,
     result: resultData,
     product: productData,
-    timestamp: Date.now() // タイムスタンプを現在時刻に更新
+    // データ整合性: timestampは履歴のソート用、updatedAtはdb.update()で自動設定される
+    timestamp: Date.now()
   };
 
   try {
@@ -156,7 +157,8 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 export async function updateCalculationName(id, name, category = null) {
   try {
     const updates = { name };
-    if (category !== null) {
+    // データ整合性: null と undefined を区別（!= で両方をチェック）
+    if (category != null) {
       updates.category = category;
     }
     await db.update(id, updates);

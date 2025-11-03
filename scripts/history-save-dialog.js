@@ -246,9 +246,10 @@ export function collectInputValues(mode) {
 
           // 空の行はスキップ（両方が空の場合）
           if (beforeWeight !== '' || afterWeight !== '') {
+            // データ整合性: 数値として保存（文字列のままだと計算エラーの原因）
             tableData.push({
-              beforeWeight: beforeWeight,
-              afterWeight: afterWeight
+              beforeWeight: beforeWeight !== '' ? parseFloat(beforeWeight) || 0 : '',
+              afterWeight: afterWeight !== '' ? parseFloat(afterWeight) || 0 : ''
             });
           }
         }
@@ -342,8 +343,14 @@ export async function handleOverwriteSave(showToastCallback) {
     return;
   }
 
-  // 実際のIDを取得
+  // 実際のIDを取得してバリデーション
   const loadedHistoryId = appState.getLoadedHistoryId();
+
+  if (!loadedHistoryId || (typeof loadedHistoryId !== 'number' && typeof loadedHistoryId !== 'string')) {
+    console.error('❌ 無効な履歴ID:', loadedHistoryId);
+    showToastCallback('❌ 履歴IDが無効です', 'error');
+    return;
+  }
 
   try {
     // 既存の履歴データを取得して商品名とカテゴリを使用
@@ -426,7 +433,7 @@ export async function handleNewSave(showToastCallback) {
   // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
   let resultData;
   if (mode === MODE.YIELD_STATS) {
-    resultData = window.yieldStatsData || {};
+    resultData = appState.getYieldStatsData() || {};
   } else {
     resultData = appState.getSnapshot(); // 計算結果
   }
@@ -505,7 +512,7 @@ export async function handleSaveCalculation(showToastCallback) {
   // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
   let resultData;
   if (mode === MODE.YIELD_STATS) {
-    resultData = window.yieldStatsData || {};
+    resultData = appState.getYieldStatsData() || {};
   } else {
     resultData = appState.getSnapshot(); // 計算結果
   }
@@ -526,8 +533,14 @@ export async function handleSaveCalculation(showToastCallback) {
 
     // フラグで履歴から読み込まれたかチェック（一貫性のため）
     if (appState.isFromHistoryRecord()) {
-      // 実際のIDを取得して上書き保存
+      // 実際のIDを取得してバリデーション
       const loadedHistoryId = appState.getLoadedHistoryId();
+
+      if (!loadedHistoryId || (typeof loadedHistoryId !== 'number' && typeof loadedHistoryId !== 'string')) {
+        console.error('❌ 無効な履歴ID:', loadedHistoryId);
+        throw new Error('履歴IDが無効です');
+      }
+
       await updateCalculation(loadedHistoryId, name, mode, inputData, resultData, category, productData);
 
       // UI状態フラグを更新：保存済み（変更なし）

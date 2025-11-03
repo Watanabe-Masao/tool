@@ -327,6 +327,11 @@ export async function downloadFromCloud() {
       }
     } catch (error) {
       console.error('Firestore取得エラー:', error);
+      // エラー時もセッションフラグをリセット（無限ループ防止）
+      if (isFirstDownloadInSession) {
+        isFirstDownloadInSession = false;
+        console.warn('⚠️ エラーが発生しましたが、セッションフラグをリセットしました（無限ループ防止）');
+      }
       throw error;
     }
 
@@ -473,6 +478,7 @@ function sleep(ms) {
 /**
  * 履歴アイテムをマージ（競合解決）
  * Safari対応: リトライロジック付き（強化版）
+ * データ整合性: UUID検証強化、重複防止
  */
 async function mergeHistoryItem(cloudItem, retryCount = 0) {
   const MAX_RETRIES = 5; // リトライ回数を増加
@@ -488,6 +494,8 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
       localItem = await dbInstance.getByUuid(uuid);
     } else {
       // 互換性レイヤー: 古いデータ（firestoreIdまたは数値IDベース）の対応
+      console.warn('⚠️ UUID未設定のクラウドデータを検出:', cloudItem.id);
+
       if (cloudItem.firestoreId) {
         // firestoreIdベースの旧データ
         localItem = await dbInstance.getByFirestoreId(cloudItem.firestoreId);
@@ -519,23 +527,43 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
     if (!localItem) {
       // 新規アイテム: IndexedDBが自動的に新しいIDを割り当てるため、idフィールドを除外
       const { id, firestoreId, ...itemWithoutId } = cloudItem;
+
+      // データ整合性チェック: 必須フィールドの検証
+      if (!itemWithoutId.uuid) {
+        console.warn('⚠️ UUID未設定のため新規UUIDを生成します');
+        itemWithoutId.uuid = uuid || cloudItem.id || generateUUID();
+      }
+
       const newId = await dbInstance.save(itemWithoutId);
-      console.log(`📥 新規インポート (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${newId})`);
+      console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
       const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
-      const localTime = localItem.updatedAt?.toDate?.() || new Date(localItem.timestamp);
+      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) : new Date(localItem.timestamp);
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
         const { id, firestoreId, ...itemWithoutId } = cloudItem;
+
+        // データ整合性: UUIDの一致確認
+        if (itemWithoutId.uuid && localItem.uuid && itemWithoutId.uuid !== localItem.uuid) {
+          console.error('❌ UUID不一致を検出:', {
+            cloud: itemWithoutId.uuid,
+            local: localItem.uuid,
+            localId: localItem.id
+          });
+          // UUID不一致の場合はローカルのUUIDを保持（データ整合性優先）
+          console.warn('⚠️ ローカルのUUIDを保持します');
+          delete itemWithoutId.uuid; // updateメソッドで上書きされないように削除
+        }
+
         await dbInstance.update(localItem.id, itemWithoutId);
-        console.log(`🔄 更新 (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${localItem.id})`);
+        console.log(`🔄 更新 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
         return 'updated';
       } else {
         // ローカルの方が新しい→スキップ
-        console.log(`⏭️ スキップ (UUID: ${uuid || cloudItem.id})`);
+        console.log(`⏭️ スキップ (UUID: ${localItem.uuid})`);
         return 'skipped';
       }
     }

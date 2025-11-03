@@ -709,10 +709,16 @@ export class YieldCalculatorDB {
             return;
           }
 
+          // 不変フィールドを除外（データ整合性保護）
+          const { id: _, uuid: __, firestoreId: ___, createdAt: ____, ...dataToUpdate } = data;
+
           const updatedRecord = {
             ...record,
-            ...data,
-            id, // IDは保持
+            ...dataToUpdate,
+            id, // IDは保持（自動インクリメント）
+            uuid: record.uuid, // UUIDは不変
+            firestoreId: record.firestoreId, // firestoreIdも不変（後方互換性）
+            createdAt: record.createdAt, // 作成日時は不変
             updatedAt: new Date().toISOString()
           };
 
@@ -758,17 +764,45 @@ export class YieldCalculatorDB {
   async delete(id) {
     if (!this.db) await this.open();
 
+    this.logTransactionStart('delete');
+
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを削除'));
+        transaction.onerror = () => {
+          this.logTransactionEnd('delete', false);
+          console.error('トランザクションエラー [delete]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを削除'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('delete', true);
+        };
 
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(id);
 
         request.onsuccess = () => resolve();
-        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを削除'));
+        request.onerror = () => {
+          this.logTransactionEnd('delete', false);
+          console.error('リクエストエラー [delete]:', {
+            error: request.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(request.error, 'データを削除'));
+        };
       } catch (error) {
+        this.logTransactionEnd('delete', false);
+        console.error('例外エラー [delete]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
         reject(createUserFriendlyError(error, 'データを削除'));
       }
     });
