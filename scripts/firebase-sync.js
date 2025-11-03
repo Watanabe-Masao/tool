@@ -9,6 +9,7 @@ import { showToast } from './toast.js';
 
 let isSyncing = false;
 let lastSyncTime = null;
+let isFirstDownloadInSession = true; // ページ立ち上げ後の最初のダウンロードかどうか
 
 // LocalStorageキー
 const LAST_SYNC_TIME_KEY = 'yield-calculator-last-sync-time';
@@ -285,7 +286,7 @@ export async function downloadFromCloud() {
       return false;
     }
 
-    // Firestoreから履歴を取得（差分同期）
+    // Firestoreから履歴を取得（セッション初回は全件、2回目以降は差分）
     let snapshot;
     let usedDifferentialSync = false;
 
@@ -295,15 +296,21 @@ export async function downloadFromCloud() {
         .doc(user.uid)
         .collection('history');
 
-      // 差分同期: 最終同期時刻以降に更新されたデータのみを取得
-      if (lastSyncTime) {
+      // セッション初回は強制的に全件取得
+      if (isFirstDownloadInSession) {
+        console.log('📥 セッション初回: 全データを取得');
+        snapshot = await query.get();
+        console.log(`✅ 全件取得成功: ${snapshot.size}件`);
+      }
+      // 2回目以降は差分同期
+      else if (lastSyncTime) {
         try {
           const lastSyncTimestamp = firebase.firestore.Timestamp.fromDate(lastSyncTime);
           query = query.where('updatedAt', '>', lastSyncTimestamp);
-          console.log('差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
+          console.log('⚡ 差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
           snapshot = await query.get();
           usedDifferentialSync = true;
-          console.log(`差分同期成功: ${snapshot.size}件取得`);
+          console.log(`✅ 差分同期成功: ${snapshot.size}件取得`);
         } catch (differentialError) {
           console.warn('差分同期に失敗、全件取得にフォールバック:', differentialError);
           // 差分同期に失敗した場合は全件取得
@@ -312,10 +319,10 @@ export async function downloadFromCloud() {
             .doc(user.uid)
             .collection('history');
           snapshot = await query.get();
-          console.log('全件取得成功:', snapshot.size);
+          console.log('✅ 全件取得成功:', snapshot.size);
         }
       } else {
-        console.log('初回同期: 全データを取得');
+        console.log('📥 初回同期: 全データを取得');
         snapshot = await query.get();
       }
     } catch (error) {
@@ -326,6 +333,13 @@ export async function downloadFromCloud() {
     if (snapshot.empty) {
       showToast('ダウンロードする新しいデータがありません', 'info');
       saveLastSyncTime(new Date()); // 同期時刻だけ更新
+
+      // セッション初回ダウンロードが完了したらフラグを更新（データが空でも成功扱い）
+      if (isFirstDownloadInSession) {
+        isFirstDownloadInSession = false;
+        console.log('✅ セッション初回ダウンロード完了（データなし）。次回から差分同期を使用します');
+      }
+
       return true;
     }
 
@@ -391,6 +405,12 @@ export async function downloadFromCloud() {
       updateSyncStatus('success');
       showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
       console.log('✅ 全て成功したため、同期時刻を更新しました');
+
+      // セッション初回ダウンロードが成功したらフラグを更新
+      if (isFirstDownloadInSession) {
+        isFirstDownloadInSession = false;
+        console.log('✅ セッション初回ダウンロード完了。次回から差分同期を使用します');
+      }
     }
 
     // UIを更新

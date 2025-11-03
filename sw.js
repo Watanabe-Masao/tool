@@ -4,7 +4,7 @@
 
 // バージョン管理: GitHub Actionsデプロイ時に自動的にタイムスタンプが注入されます
 // ローカル開発時は 'dev' として動作します
-const CACHE_VERSION = 40; // Firestore重複データクリーンアップ機能追加
+const CACHE_VERSION = 41; // セッション初回は全件取得、2回目以降は差分同期
 const CACHE_BUILD = '__BUILD_TIMESTAMP__'; // デプロイ時に置換されます（例: 20250126-153045-a1b2c3d）
 const CACHE_NAME = `yield-calculator-v${CACHE_VERSION}-${CACHE_BUILD}`;
 
