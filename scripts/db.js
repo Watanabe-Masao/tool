@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'YieldCalculatorDB';
-const DB_VERSION = 3; // v3: uuidインデックス追加（firestoreIdから移行）
+const DB_VERSION = 4; // v4: uuidインデックスの制約修正&既存データにUUID付与
 const STORE_NAME = 'calculations';
 
 /**
@@ -375,12 +375,68 @@ export class YieldCalculatorDB {
             }
           }
 
-          // v2→v3: uuidインデックス追加
+          // v2→v3: uuidインデックス追加（初回、unique制約で失敗している可能性あり）
           if (oldVersion < 3) {
             if (!store.indexNames.contains('uuid')) {
-              store.createIndex('uuid', 'uuid', { unique: true });
-              console.log('✅ uuidインデックスを追加しました（ユニーク制約付き）');
+              // 最初はunique: trueで作成していたが、これは失敗する可能性がある
+              try {
+                store.createIndex('uuid', 'uuid', { unique: true });
+                console.log('✅ uuidインデックスを追加しました（v3）');
+              } catch (e) {
+                console.warn('⚠️ uuidインデックス作成失敗（想定内）:', e.message);
+              }
             }
+          }
+
+          // v3→v4: uuidインデックスを削除して再作成&既存データにUUID付与
+          if (oldVersion < 4) {
+            // UUID生成関数（インライン定義）
+            const generateUUID = () => {
+              if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+              }
+              return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+              });
+            };
+
+            // 既存のuuidインデックスを削除（存在する場合）
+            if (store.indexNames.contains('uuid')) {
+              store.deleteIndex('uuid');
+              console.log('🗑️ 既存のuuidインデックスを削除しました');
+            }
+
+            // unique: falseで再作成
+            store.createIndex('uuid', 'uuid', { unique: false });
+            console.log('✅ uuidインデックスを再作成しました（unique: false）');
+
+            // 既存データにUUIDを付与するマイグレーション
+            const cursorRequest = store.openCursor();
+            let migratedCount = 0;
+
+            cursorRequest.onsuccess = (event) => {
+              const cursor = event.target.result;
+              if (cursor) {
+                const record = cursor.value;
+                // uuidがない場合は生成して付与
+                if (!record.uuid) {
+                  record.uuid = generateUUID();
+                  cursor.update(record);
+                  migratedCount++;
+                }
+                cursor.continue();
+              } else {
+                if (migratedCount > 0) {
+                  console.log(`✅ ${migratedCount}件のデータにUUIDを付与しました`);
+                }
+              }
+            };
+
+            cursorRequest.onerror = () => {
+              console.error('❌ UUIDマイグレーションエラー:', cursorRequest.error);
+            };
           }
         } catch (error) {
           console.error('Failed to upgrade database schema:', error);
