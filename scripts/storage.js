@@ -5,9 +5,10 @@
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
 import { deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
+import { isSignedIn } from './firebase-auth.js';
 
 /**
- * 現在の計算データを保存
+ * 現在の計算データを保存（オンライン時のみ）
  * @param {string} name - 商品名
  * @param {string} mode - 計算モード (fixed/weight)
  * @param {Object} inputData - 入力データ
@@ -17,6 +18,11 @@ import { deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
  * @returns {Promise<number>} 保存されたレコードのID
  */
 export async function saveCalculation(name, mode, inputData, resultData, category = null, productData = null) {
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new Error('保存はオンライン時のみ可能です。ログインしてください。');
+  }
+
   const data = {
     name,
     mode,
@@ -104,19 +110,23 @@ export async function searchHistory(query) {
 }
 
 /**
- * 履歴を削除（ローカル論理削除＋クラウド物理削除）
- * ローカルに削除フラグを立て、サーバーから物理削除
+ * 履歴を削除（オンライン時のみ）
+ * Firestoreから物理削除 → ローカルからも物理削除
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
-  try {
-    // 1. ローカル（IndexedDB）で論理削除（削除フラグを立てる）
-    await db.softDelete(id);
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new Error('削除はオンライン時のみ可能です。ログインしてください。');
+  }
 
-    // 2. クラウド（Firestore）から物理削除（ログイン中の場合のみ）
-    // deleteFromCloud内でログインチェックとエラーハンドリングが行われる
+  try {
+    // 1. クラウド（Firestore）から物理削除
     await deleteFromCloud(id);
+
+    // 2. ローカル（IndexedDB）からも物理削除
+    await db.delete(id);
 
     console.log(`✅ データを削除しました (ID: ${id})`);
   } catch (error) {
@@ -126,7 +136,7 @@ export async function deleteHistory(id) {
 }
 
 /**
- * 既存の計算データを更新（上書き保存）
+ * 既存の計算データを更新（上書き保存）（オンライン時のみ）
  * @param {number} id - 更新するレコードのID
  * @param {string} name - 商品名
  * @param {string} mode - 計算モード (fixed/weight)
@@ -137,6 +147,11 @@ export async function deleteHistory(id) {
  * @returns {Promise<void>}
  */
 export async function updateCalculation(id, name, mode, inputData, resultData, category = null, productData = null) {
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new Error('更新はオンライン時のみ可能です。ログインしてください。');
+  }
+
   const updates = {
     name,
     mode,
@@ -157,13 +172,17 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 }
 
 /**
- * 商品名を更新
+ * 商品名を更新（オンライン時のみ）
  * @param {number} id - レコードID
  * @param {string} name - 新しい商品名
  * @param {string} category - 新しいカテゴリ（オプション）
  * @returns {Promise<void>}
  */
 export async function updateCalculationName(id, name, category = null) {
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new Error('商品名の更新はオンライン時のみ可能です。ログインしてください。');
+  }
   try {
     const updates = { name };
     // データ整合性: null と undefined を区別（!= で両方をチェック）
