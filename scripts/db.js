@@ -208,13 +208,14 @@ export class YieldCalculatorDB {
         const isPrivateModeError = error?.message?.includes('private') ||
                                     error?.message?.includes('プライベート');
 
-        const isVersionError = error?.name === 'VersionError';
-
-        const isRetriableError = error && !isPrivateModeError && !isVersionError;
+        // VersionErrorの判定を強化（名前とメッセージの両方をチェック）
+        const isVersionError = error?.name === 'VersionError' ||
+                                (error?.message && error.message.includes('lower version'));
 
         if (isVersionError) {
-          // VersionErrorは致命的なエラー - リトライ不可
+          // VersionErrorは致命的なエラー - リトライ絶対不可
           console.error('⛔ VersionError: データベースバージョンの競合が発生しました');
+          console.error('⚠️ このエラーはリトライできません');
           console.error('💡 対処方法:');
           console.error('   1. すべてのタブを閉じる');
           console.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
@@ -266,12 +267,15 @@ export class YieldCalculatorDB {
             }
           }, 100);
 
+          // 即座にrejectして終了（リトライさせない）
           reject(createUserFriendlyError(
             error,
             'データベースを開く（バージョン競合: 他のタブを閉じてページを再読み込みしてください）'
           ));
-          return;
+          return; // 重要: ここで必ず終了
         }
+
+        const isRetriableError = error && !isPrivateModeError && !isVersionError;
 
         if (isRetriableError && retryCount < this.maxRetries) {
           console.warn(`🔄 データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
