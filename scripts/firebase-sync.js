@@ -338,14 +338,29 @@ export async function downloadFromCloud() {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
+    let errors = 0;
+    const errorDetails = [];
 
     // Safari対応: トランザクション間に遅延を入れて競合を防ぐ
     for (let i = 0; i < cloudHistory.length; i++) {
       const cloudItem = cloudHistory[i];
-      const result = await mergeHistoryItem(cloudItem);
-      if (result === 'imported') imported++;
-      else if (result === 'updated') updated++;
-      else skipped++;
+
+      try {
+        const result = await mergeHistoryItem(cloudItem);
+        if (result === 'imported') imported++;
+        else if (result === 'updated') updated++;
+        else skipped++;
+      } catch (itemError) {
+        // 個別アイテムのエラーをキャッチし、処理を継続
+        errors++;
+        const errorMsg = `ID: ${cloudItem.id}, エラー: ${itemError.message || itemError.toString()}`;
+        errorDetails.push(errorMsg);
+        console.error(`❌ アイテム保存エラー (${i + 1}/${cloudHistory.length}):`, errorMsg);
+
+        // エラー内容をコンソールに詳細表示
+        console.error('エラー詳細:', itemError);
+        console.error('問題のアイテム:', cloudItem);
+      }
 
       // 5件ごとに遅延を挿入（Safari対応: トランザクション競合を防止）
       if ((i + 1) % 5 === 0 && i < cloudHistory.length - 1) {
@@ -354,8 +369,23 @@ export async function downloadFromCloud() {
     }
 
     saveLastSyncTime(new Date());
-    updateSyncStatus('success');
-    showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
+
+    // 結果に応じてステータスを更新
+    if (errors > 0 && imported === 0 && updated === 0) {
+      // 全てエラーの場合
+      updateSyncStatus('error');
+      showToast(`ダウンロード失敗: ${errors}件のエラーが発生しました`, 'error');
+      console.error('エラー詳細一覧:', errorDetails);
+    } else if (errors > 0) {
+      // 一部エラーの場合
+      updateSyncStatus('success');
+      showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件、エラー${errors}件`, 'warning');
+      console.warn('エラー詳細一覧:', errorDetails);
+    } else {
+      // 全て成功の場合
+      updateSyncStatus('success');
+      showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
+    }
 
     // UIを更新
     const event = new CustomEvent('historyUpdated');
