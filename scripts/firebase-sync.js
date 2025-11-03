@@ -88,6 +88,50 @@ function getTimestampFromDate(date) {
 }
 
 /**
+ * FirebaseのTimestamp型かどうかを判定
+ * @param {any} obj - 判定対象
+ * @returns {boolean}
+ */
+function isFirebaseTimestamp(obj) {
+  if (!obj) return false;
+
+  try {
+    const fb = window.firebase;
+    if (fb && fb.firestore && fb.firestore.Timestamp) {
+      return obj instanceof fb.firestore.Timestamp;
+    }
+  } catch (e) {
+    // Firebase未初期化の場合
+  }
+
+  // フォールバック: 構造で判定（toDate, toMillis メソッドを持つ）
+  return typeof obj === 'object' &&
+         typeof obj.toDate === 'function' &&
+         typeof obj.toMillis === 'function';
+}
+
+/**
+ * FirebaseのFieldValue型かどうかを判定
+ * @param {any} obj - 判定対象
+ * @returns {boolean}
+ */
+function isFirebaseFieldValue(obj) {
+  if (!obj) return false;
+
+  try {
+    const fb = window.firebase;
+    if (fb && fb.firestore && fb.firestore.FieldValue) {
+      // FieldValueは特殊なシングルトンなので、isEqualチェック
+      return obj.isEqual !== undefined || obj.constructor?.name === 'FieldValue';
+    }
+  } catch (e) {
+    // Firebase未初期化の場合
+  }
+
+  return false;
+}
+
+/**
  * undefinedフィールドを削除（Firestoreはundefinedを許可しない）
  * 再帰的にネストされたオブジェクトもクリーンアップ
  * @param {any} obj - クリーンアップするオブジェクト
@@ -104,8 +148,8 @@ function removeUndefinedFields(obj) {
     return obj;
   }
 
-  // Date、Timestamp、その他の特殊なオブジェクトはそのまま返す
-  if (obj instanceof Date || obj.constructor?.name === 'Timestamp' || obj.constructor?.name === 'FieldValue') {
+  // Date、Firebase Timestamp、FieldValueなどの特殊なオブジェクトはそのまま返す
+  if (obj instanceof Date || isFirebaseTimestamp(obj) || isFirebaseFieldValue(obj)) {
     return obj;
   }
 
@@ -394,11 +438,8 @@ export async function downloadFromCloud() {
       }
     } catch (error) {
       console.error('Firestore取得エラー:', error);
-      // エラー時もセッションフラグをリセット（無限ループ防止）
-      if (isFirstDownloadInSession) {
-        isFirstDownloadInSession = false;
-        console.warn('⚠️ エラーが発生しましたが、セッションフラグをリセットしました（無限ループ防止）');
-      }
+      // エラー時はセッションフラグを維持（次回も全件取得を試行）
+      console.warn('⚠️ エラーが発生しました。次回も全件取得を試行します。');
       throw error;
     }
 
@@ -757,24 +798,65 @@ export async function clearAllFromCloud() {
 
 /**
  * 双方向同期（アップロード→ダウンロード）
+ *
+ * 改善点：
+ * - アップロードが失敗してもダウンロードを試行（ネットワーク状況で片方だけ成功する場合がある）
+ * - 両方の結果を個別に評価し、部分的な成功も報告
+ *
+ * @returns {Promise<{uploadSuccess: boolean, downloadSuccess: boolean, overallSuccess: boolean}>}
  */
 export async function syncData() {
   if (!isSignedIn()) {
-    return false;
+    return { uploadSuccess: false, downloadSuccess: false, overallSuccess: false };
   }
 
+  let uploadSuccess = false;
+  let downloadSuccess = false;
+
   try {
-    // アップロードしてからダウンロード
-    const uploadSuccess = await uploadToCloud();
-    if (!uploadSuccess) {
-      return false;
+    // アップロードを試行（失敗してもダウンロードは試行する）
+    try {
+      uploadSuccess = await uploadToCloud();
+      if (uploadSuccess) {
+        console.log('✅ アップロード成功');
+      } else {
+        console.warn('⚠️ アップロード失敗（ダウンロードは続行します）');
+      }
+    } catch (uploadError) {
+      console.error('❌ アップロードエラー:', uploadError);
+      console.warn('⚠️ ダウンロードは続行します');
     }
 
-    const downloadSuccess = await downloadFromCloud();
-    return downloadSuccess;
+    // ダウンロードを試行
+    try {
+      downloadSuccess = await downloadFromCloud();
+      if (downloadSuccess) {
+        console.log('✅ ダウンロード成功');
+      } else {
+        console.warn('⚠️ ダウンロード失敗');
+      }
+    } catch (downloadError) {
+      console.error('❌ ダウンロードエラー:', downloadError);
+    }
+
+    // 結果の評価
+    const overallSuccess = uploadSuccess && downloadSuccess;
+
+    if (overallSuccess) {
+      console.log('✅ 双方向同期が完全に成功しました');
+    } else if (uploadSuccess || downloadSuccess) {
+      console.warn('⚠️ 部分的な同期成功:', {
+        upload: uploadSuccess ? '成功' : '失敗',
+        download: downloadSuccess ? '成功' : '失敗'
+      });
+    } else {
+      console.error('❌ 同期が完全に失敗しました');
+    }
+
+    return { uploadSuccess, downloadSuccess, overallSuccess };
   } catch (error) {
     console.error('同期エラー:', error);
-    return false;
+    return { uploadSuccess, downloadSuccess, overallSuccess: false };
   }
 }
 
@@ -868,16 +950,22 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
         // クラウドの方が新しい→更新
         const { id, firestoreId, ...itemWithoutId } = cloudItem;
 
-        // データ整合性: UUIDの一致確認
+        // データ整合性: UUIDの一致確認（Cloud-first戦略）
         if (itemWithoutId.uuid && localItem.uuid && itemWithoutId.uuid !== localItem.uuid) {
           console.error('❌ UUID不一致を検出:', {
             cloud: itemWithoutId.uuid,
             local: localItem.uuid,
             localId: localItem.id
           });
-          // UUID不一致の場合はローカルのUUIDを保持（データ整合性優先）
-          console.warn('⚠️ ローカルのUUIDを保持します');
-          delete itemWithoutId.uuid; // updateメソッドで上書きされないように削除
+
+          // Cloud-first戦略: クラウドのUUIDを優先し、別アイテムとして新規追加
+          console.warn('⚠️ UUID不一致のため、クラウドのデータを新規アイテムとして追加します（Cloud-first戦略）');
+
+          // ローカルアイテムはそのまま保持し、クラウドアイテムを新規追加
+          const newId = await dbInstance.save(itemWithoutId);
+          console.log(`📥 UUID不一致により新規インポート (Cloud UUID: ${itemWithoutId.uuid} → New IndexedDB ID: ${newId})`);
+          console.log(`   ローカルの既存データは保持されます (Local UUID: ${localItem.uuid}, Local ID: ${localItem.id})`);
+          return 'imported';
         }
 
         await dbInstance.update(localItem.id, itemWithoutId);
@@ -949,9 +1037,12 @@ function generateUUID() {
 
 /**
  * IDを生成（後方互換性のため残す）
+ * 非推奨: 代わりにgenerateUUID()を使用してください
+ * @deprecated
  */
 function generateId() {
-  return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  console.warn('⚠️ generateId()は非推奨です。generateUUID()を使用してください。');
+  return generateUUID();
 }
 
 /**
@@ -1099,8 +1190,10 @@ export async function uploadFromFile(file) {
       const chunk = data.slice(i, i + batchSize);
 
       chunk.forEach(item => {
-        // IDを文字列として確実に取得
-        const docId = (item.id && typeof item.id === 'string') ? item.id : generateId();
+        // UUIDを取得または生成（UUID v4に統一）
+        const docId = (item.uuid && typeof item.uuid === 'string') ? item.uuid :
+                      (item.id && typeof item.id === 'string') ? item.id :
+                      generateUUID();
 
         const docRef = firestore
           .collection('users')
@@ -1113,7 +1206,7 @@ export async function uploadFromFile(file) {
 
         const dataToUpload = {
           ...cleanedItem,
-          id: docId, // IDを確実に設定
+          uuid: docId, // UUIDを確実に設定
           updatedAt: item.updatedAt ? getTimestampFromDate(new Date(item.updatedAt)) : getServerTimestamp(),
           deviceId: getDeviceId(),
         };

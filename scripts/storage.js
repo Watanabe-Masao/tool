@@ -115,6 +115,10 @@ export async function searchHistory(query) {
  * 2. Firestore削除が失敗した場合、ローカルデータは保持され再試行可能
  * 3. Firestore削除が成功してローカル削除が失敗しても、次回同期で整合性が回復
  *
+ * 削除の保証：
+ * - Firestore削除が失敗した場合、処理を中断してエラーを投げる
+ * - ローカル削除が失敗した場合、警告を出すが処理は継続（次回同期で整合性回復）
+ *
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
@@ -124,19 +128,44 @@ export async function deleteHistory(id) {
     throw new Error('削除はオンライン時のみ可能です。ログインしてください。');
   }
 
+  let cloudDeleteSuccess = false;
+  let localDeleteSuccess = false;
+
   try {
     // 1. Firestoreから物理削除（UUIDを読み取るためにdeleteFromCloudに渡す）
-    await deleteFromCloud(id);
+    cloudDeleteSuccess = await deleteFromCloud(id);
+
+    if (!cloudDeleteSuccess) {
+      throw new Error('クラウドからの削除に失敗しました。処理を中断します。');
+    }
     console.log(`✅ Firestoreから削除しました (ID: ${id})`);
 
     // 2. ローカル（IndexedDB）キャッシュからも物理削除
-    await db.delete(id);
-    console.log(`✅ ローカルキャッシュからも削除しました (ID: ${id})`);
+    try {
+      await db.delete(id);
+      localDeleteSuccess = true;
+      console.log(`✅ ローカルキャッシュからも削除しました (ID: ${id})`);
+    } catch (localError) {
+      // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
+      console.warn(`⚠️ ローカルキャッシュの削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
+      console.warn('⚠️ 次回の同期時に整合性が自動的に回復されます');
+    }
 
     console.log(`✅ データを完全に削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
-    throw error;
+
+    // エラー情報を詳細化
+    if (!cloudDeleteSuccess) {
+      // クラウド削除が失敗した場合は致命的
+      throw new Error(`削除に失敗しました: ${error.message || error}`);
+    } else if (!localDeleteSuccess) {
+      // ローカル削除のみ失敗の場合は警告のみ（次回同期で回復）
+      console.warn('⚠️ ローカルキャッシュの削除に失敗しましたが、データはクラウドから削除されています');
+    } else {
+      // その他のエラー
+      throw error;
+    }
   }
 }
 
@@ -220,7 +249,7 @@ export async function exportData() {
 /**
  * データをインポート（JSONファイルをアップロード）
  * @param {File} file - JSONファイル
- * @returns {Promise<number>} インポートされた件数
+ * @returns {Promise<{count: number, errors: Array}>} インポート結果
  */
 export async function importData(file) {
   return new Promise((resolve, reject) => {
@@ -243,8 +272,8 @@ export async function importData(file) {
           throw new Error('Invalid data format: expected array');
         }
 
-        const count = await db.importJSON(jsonString);
-        resolve(count);
+        const result = await db.importJSON(jsonString);
+        resolve(result);
       } catch (error) {
         console.error('Failed to import data:', error);
         reject(error);

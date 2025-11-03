@@ -842,7 +842,7 @@ export class YieldCalculatorDB {
   /**
    * JSONデータをインポート
    * @param {string} jsonString
-   * @returns {Promise<number>} インポートされた件数
+   * @returns {Promise<{count: number, errors: Array<{item: any, error: string}>}>} インポート結果
    */
   async importJSON(jsonString) {
     let data;
@@ -881,7 +881,7 @@ export class YieldCalculatorDB {
       console.warn(`Imported ${count} items with ${errors.length} errors`);
     }
 
-    return count;
+    return { count, errors };
   }
 
   /**
