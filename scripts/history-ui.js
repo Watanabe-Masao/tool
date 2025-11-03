@@ -97,7 +97,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   // フィルタ条件が渡されていない場合、現在のUIの状態から取得
   if (filterMode === null) {
     const activeBtn = qs('.btn-mode.is-active[data-mode]');
-    filterMode = activeBtn ? activeBtn.dataset.mode : null;
+    const modeValue = activeBtn ? activeBtn.dataset.mode : null;
+    // 'all'の場合はnullとして扱う（全データ表示）
+    filterMode = (modeValue === 'all') ? null : modeValue;
   }
 
   if (filterYieldMethod === null && filterMode && filterMode !== MODE.YIELD_STATS) {
@@ -475,7 +477,9 @@ export async function handleSearch() {
 
   // 現在選択されている計算モードと歩留まり入力方法を取得
   const activeBtn = qs('.btn-mode.is-active[data-mode]');
-  const mode = activeBtn ? activeBtn.dataset.mode : null;
+  const modeValue = activeBtn ? activeBtn.dataset.mode : null;
+  // 'all'の場合はnullとして扱う（全データ表示）
+  const mode = (modeValue === 'all') ? null : modeValue;
 
   let yieldMethod = null;
   if (mode && mode !== MODE.YIELD_STATS) {
@@ -710,7 +714,9 @@ export function initHistoryUI() {
 
         // 現在選択されている計算モードと歩留まり入力方法を取得
         const activeBtn = qs('.btn-mode.is-active[data-mode]');
-        const mode = activeBtn ? activeBtn.dataset.mode : null;
+        const modeValue = activeBtn ? activeBtn.dataset.mode : null;
+        // 'all'の場合はnullとして扱う（全データ表示）
+        const mode = (modeValue === 'all') ? null : modeValue;
 
         let yieldMethod = null;
         if (mode && mode !== MODE.YIELD_STATS) {

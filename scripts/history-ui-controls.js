@@ -187,12 +187,13 @@ export function initializeCarousels() {
  */
 export function initHistoryFilterUI(mode, yieldMethod) {
   // モード選択ボタンの初期化
+  const allBtn = qs('#historyFilterAll');
   const fixedBtn = qs('#historyFilterFixed');
   const weightBtn = qs('#historyFilterWeight');
   const yieldStatsBtn = qs('#historyFilterYieldStats');
 
   // すべてのボタンからis-activeを削除
-  [fixedBtn, weightBtn, yieldStatsBtn].forEach(btn => {
+  [allBtn, fixedBtn, weightBtn, yieldStatsBtn].forEach(btn => {
     if (btn) btn.classList.remove('is-active');
   });
 
@@ -208,7 +209,8 @@ export function initHistoryFilterUI(mode, yieldMethod) {
   // 計算方法セクションの表示/非表示
   const methodSection = qs('#historyFilterMethodSection');
   if (methodSection) {
-    if (mode === MODE.YIELD_STATS) {
+    if (mode === MODE.YIELD_STATS || !mode) {
+      // 歩留まり統計モードまたは全て表示の場合は非表示
       methodSection.style.display = 'none';
     } else {
       methodSection.style.display = '';
@@ -237,6 +239,7 @@ export function setupHistoryFilterListeners(renderHistoryListCallback) {
 
   // モード選択ボタンのイベントリスナー
   const filterButtons = [
+    { id: '#historyFilterAll', mode: null },
     { id: '#historyFilterFixed', mode: MODE.FIXED },
     { id: '#historyFilterWeight', mode: MODE.WEIGHT },
     { id: '#historyFilterYieldStats', mode: MODE.YIELD_STATS }
@@ -257,7 +260,8 @@ export function setupHistoryFilterListeners(renderHistoryListCallback) {
         // 計算方法セクションの表示/非表示
         const methodSection = qs('#historyFilterMethodSection');
         if (methodSection) {
-          if (mode === MODE.YIELD_STATS) {
+          if (mode === MODE.YIELD_STATS || mode === null) {
+            // 歩留まり統計モードまたは全て表示の場合は非表示
             methodSection.style.display = 'none';
           } else {
             methodSection.style.display = '';
@@ -266,7 +270,7 @@ export function setupHistoryFilterListeners(renderHistoryListCallback) {
 
         // 現在選択されている計算方法を取得
         let yieldMethod = null;
-        if (mode !== MODE.YIELD_STATS) {
+        if (mode !== MODE.YIELD_STATS && mode !== null) {
           const methodRadio = document.querySelector('input[name="historyFilterMethod"]:checked');
           yieldMethod = methodRadio ? methodRadio.value : 'calculate';
         }
@@ -287,7 +291,9 @@ export function setupHistoryFilterListeners(renderHistoryListCallback) {
       const activeBtn = qs('.btn-mode.is-active[data-mode]');
       if (!activeBtn) return;
 
-      const mode = activeBtn.dataset.mode;
+      const modeValue = activeBtn.dataset.mode;
+      // 'all'の場合はnullとして扱う
+      const mode = modeValue === 'all' ? null : modeValue;
       const yieldMethod = radio.value;
 
       // 履歴リストを再描画
