@@ -6,6 +6,8 @@
 import { getCurrentUser, isSignedIn } from './firebase-auth.js';
 import { db as dbInstance } from './db.js';
 import { showToast } from './toast.js';
+import { retryWithBackoff } from './retry-utils.js';
+import { mapFirebaseError } from './errors.js';
 
 let isSyncing = false;
 let lastSyncTime = null;
@@ -577,7 +579,17 @@ export async function deleteFromCloud(id) {
       .collection('history')
       .doc(uuid);
 
-    await docRef.delete();
+    // リトライロジックでFirestoreから削除
+    await retryWithBackoff(
+      () => docRef.delete(),
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        onRetry: (attempt, error) => {
+          console.warn(`🔄 削除リトライ中 (${attempt}/3):`, error.message);
+        }
+      }
+    );
     console.log(`✅ Firestoreから物理削除しました (UUID: ${uuid})`);
 
     return true;
@@ -640,7 +652,17 @@ export async function saveToCloud(data) {
     console.log('💾 createdAt type:', typeof dataToSave.createdAt, dataToSave.createdAt);
     console.log('💾 updatedAt type:', typeof dataToSave.updatedAt, dataToSave.updatedAt);
 
-    await docRef.set(dataToSave);
+    // リトライロジックでFirestoreに保存
+    await retryWithBackoff(
+      () => docRef.set(dataToSave),
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        onRetry: (attempt, error) => {
+          console.warn(`🔄 保存リトライ中 (${attempt}/3):`, error.message);
+        }
+      }
+    );
     console.log(`✅ Firestoreに保存しました (UUID: ${uuid})`);
 
     // IndexedDBにもキャッシュとして保存
@@ -707,7 +729,17 @@ export async function updateInCloud(id, updates) {
       updatedAt: getServerTimestamp()
     };
 
-    await docRef.update(dataToUpdate);
+    // リトライロジックでFirestoreを更新
+    await retryWithBackoff(
+      () => docRef.update(dataToUpdate),
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        onRetry: (attempt, error) => {
+          console.warn(`🔄 更新リトライ中 (${attempt}/3):`, error.message);
+        }
+      }
+    );
     console.log(`✅ Firestoreを更新しました (UUID: ${uuid})`);
 
     // IndexedDBキャッシュも更新
