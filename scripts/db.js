@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'YieldCalculatorDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2: firestoreIdインデックス追加
 const STORE_NAME = 'calculations';
 
 /**
@@ -321,11 +321,18 @@ export class YieldCalculatorDB {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
+        const transaction = event.target.transaction;
+        const oldVersion = event.oldVersion;
+        const newVersion = event.newVersion;
+
+        console.log(`📊 データベース更新: v${oldVersion} → v${newVersion}`);
 
         try {
-          // calculations ストアを作成
+          let store;
+
+          // v0→v1: 初回作成
           if (!db.objectStoreNames.contains(STORE_NAME)) {
-            const store = db.createObjectStore(STORE_NAME, {
+            store = db.createObjectStore(STORE_NAME, {
               keyPath: 'id',
               autoIncrement: true
             });
@@ -335,10 +342,22 @@ export class YieldCalculatorDB {
             store.createIndex('name', 'name', { unique: false });
             store.createIndex('mode', 'mode', { unique: false });
             store.createIndex('category', 'category', { unique: false });
+            console.log('✅ オブジェクトストアとインデックスを作成しました');
+          } else {
+            // 既存のストアを取得
+            store = transaction.objectStore(STORE_NAME);
+          }
+
+          // v1→v2: firestoreIdインデックス追加
+          if (oldVersion < 2) {
+            if (!store.indexNames.contains('firestoreId')) {
+              store.createIndex('firestoreId', 'firestoreId', { unique: false });
+              console.log('✅ firestoreIdインデックスを追加しました');
+            }
           }
         } catch (error) {
-          console.error('Failed to create object store:', error);
-          reject(createUserFriendlyError(error, 'データベーススキーマの作成'));
+          console.error('Failed to upgrade database schema:', error);
+          reject(createUserFriendlyError(error, 'データベーススキーマの更新'));
         }
       };
 
@@ -501,6 +520,31 @@ export class YieldCalculatorDB {
 
         const store = transaction.objectStore(STORE_NAME);
         const request = store.get(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを取得'));
+      }
+    });
+  }
+
+  /**
+   * FirestoreIDでデータを検索
+   * @param {string} firestoreId - Firestore ドキュメントID
+   * @returns {Promise<Object|undefined>} 見つかったデータ、または undefined
+   */
+  async getByFirestoreId(firestoreId) {
+    if (!this.db) await this.open();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを取得'));
+
+        const store = transaction.objectStore(STORE_NAME);
+        const index = store.index('firestoreId');
+        const request = index.get(firestoreId);
 
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
