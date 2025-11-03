@@ -4,7 +4,7 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
-import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud, downloadFromCloud } from './firebase-sync.js';
+import { saveToCloud, updateInCloud, deleteFromCloud, hardDeleteFromCloud, clearAllFromCloud, downloadFromCloud } from './firebase-sync.js';
 import { isSignedIn } from './firebase-auth.js';
 import { NotFoundError, OfflineError, ValidationError, mapFirebaseError, mapIndexedDBError } from './errors.js';
 import { validateCalculationData, validateUpdateData, validateId } from './validation.js';
@@ -168,8 +168,8 @@ export async function searchHistory(query) {
 }
 
 /**
- * 履歴を削除（オンライン時のみ）
- * ベストプラクティス：Firestoreから物理削除 → IndexedDBキャッシュからも削除
+ * 履歴を論理削除（オンライン時のみ）
+ * ベストプラクティス：Firestoreで論理削除 → IndexedDBキャッシュでも論理削除
  *
  * 削除順序の理由（Firestore-first）：
  * 1. Firestoreを先に削除することで、真実の源泉（master）を即座にクリーン化
@@ -204,32 +204,97 @@ export async function deleteHistory(id) {
   let localDeleteSuccess = false;
 
   try {
-    // 1. Firestoreから物理削除（UUIDを読み取るためにdeleteFromCloudに渡す）
+    // 1. Firestoreで論理削除（UUIDを読み取るためにdeleteFromCloudに渡す）
     cloudDeleteSuccess = await deleteFromCloud(id);
 
     if (!cloudDeleteSuccess) {
-      throw mapFirebaseError(new Error('クラウドからの削除に失敗しました'), 'delete');
+      throw mapFirebaseError(new Error('クラウドでの削除に失敗しました'), 'delete');
     }
-    console.log(`✅ Firestoreから削除しました (ID: ${id})`);
+    console.log(`✅ Firestoreで論理削除しました (ID: ${id})`);
 
-    // 2. ローカル（IndexedDB）キャッシュからも物理削除
+    // 2. ローカル（IndexedDB）キャッシュでも論理削除
     try {
       await db.delete(id);
       localDeleteSuccess = true;
-      console.log(`✅ ローカルキャッシュからも削除しました (ID: ${id})`);
+      console.log(`✅ ローカルキャッシュでも論理削除しました (ID: ${id})`);
     } catch (localError) {
       // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
-      console.warn(`⚠️ ローカルキャッシュの削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
+      console.warn(`⚠️ ローカルキャッシュの削除に失敗しましたが、クラウドでは削除されています (ID: ${id})`, localError);
       console.warn('⚠️ 次回の同期時に整合性が自動的に回復されます');
     }
 
-    console.log(`✅ データを完全に削除しました (ID: ${id})`);
+    console.log(`✅ データを論理削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
 
     // クラウド削除が失敗した場合は致命的エラー
     // （ローカル削除のエラーは内部try-catchで処理済み）
     throw new Error(`削除に失敗しました: ${error.message || error}`);
+  }
+}
+
+/**
+ * 履歴を物理削除（完全削除）（オンライン時のみ）
+ * @param {number} id - レコードID
+ * @returns {Promise<void>}
+ */
+export async function hardDeleteHistory(id) {
+  // IDバリデーション
+  try {
+    validateId(id);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error('❌ バリデーションエラー:', error.getUserMessage());
+      throw error;
+    }
+    throw error;
+  }
+
+  // オンラインチェック
+  if (!isSignedIn()) {
+    throw new OfflineError('delete');
+  }
+
+  let cloudDeleteSuccess = false;
+  let localDeleteSuccess = false;
+
+  try {
+    // 1. Firestoreから物理削除
+    cloudDeleteSuccess = await hardDeleteFromCloud(id);
+
+    if (!cloudDeleteSuccess) {
+      throw mapFirebaseError(new Error('クラウドからの完全削除に失敗しました'), 'delete');
+    }
+    console.log(`✅ Firestoreから物理削除しました (ID: ${id})`);
+
+    // 2. ローカル（IndexedDB）キャッシュからも物理削除
+    try {
+      await db.hardDelete(id);
+      localDeleteSuccess = true;
+      console.log(`✅ ローカルキャッシュからも物理削除しました (ID: ${id})`);
+    } catch (localError) {
+      // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
+      console.warn(`⚠️ ローカルキャッシュの物理削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
+      console.warn('⚠️ 次回の同期時に整合性が自動的に回復されます');
+    }
+
+    console.log(`✅ データを完全に削除しました (ID: ${id})`);
+  } catch (error) {
+    console.error('Failed to hard delete calculation:', error);
+    throw new Error(`完全削除に失敗しました: ${error.message || error}`);
+  }
+}
+
+/**
+ * 論理削除された履歴を取得
+ * @returns {Promise<Array>}
+ */
+export async function getDeletedHistory() {
+  try {
+    return await db.getDeleted({ sortBy: 'timestamp', order: 'desc' });
+  } catch (error) {
+    console.error('Failed to get deleted history:', error);
+    return [];
   }
 }
 

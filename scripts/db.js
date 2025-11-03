@@ -546,12 +546,15 @@ export class YieldCalculatorDB {
   }
 
   /**
-   * すべてのデータを取得
+   * すべてのデータを取得（デフォルトで論理削除されたデータは除外）
    * @param {Object} options - ソート・フィルタオプション
+   * @param {boolean} options.includeDeleted - 論理削除されたデータも含める（デフォルト: false）
    * @returns {Promise<Array>}
    */
   async getAll(options = {}) {
     if (!this.db) await this.open();
+
+    const includeDeleted = options.includeDeleted || false;
 
     return new Promise((resolve, reject) => {
       try {
@@ -578,7 +581,11 @@ export class YieldCalculatorDB {
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
-            results.push(cursor.value);
+            const record = cursor.value;
+            // 論理削除されたデータをフィルタリング
+            if (includeDeleted || !record.deleted) {
+              results.push(record);
+            }
             cursor.continue();
           } else {
             resolve(results);
@@ -588,6 +595,57 @@ export class YieldCalculatorDB {
         request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
       } catch (error) {
         reject(createUserFriendlyError(error, 'データを取得'));
+      }
+    });
+  }
+
+  /**
+   * 論理削除されたデータのみを取得
+   * @param {Object} options - ソート・フィルタオプション
+   * @returns {Promise<Array>}
+   */
+  async getDeleted(options = {}) {
+    if (!this.db) await this.open();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, '削除済みデータを取得'));
+
+        const store = transaction.objectStore(STORE_NAME);
+
+        let request;
+
+        // インデックスを使用した検索
+        if (options.sortBy === 'timestamp') {
+          const index = store.index('timestamp');
+          request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
+        } else if (options.sortBy === 'name') {
+          const index = store.index('name');
+          request = index.openCursor(null, options.order === 'asc' ? 'next' : 'prev');
+        } else {
+          request = store.openCursor();
+        }
+
+        const results = [];
+
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            const record = cursor.value;
+            // 論理削除されたデータのみを抽出
+            if (record.deleted === true) {
+              results.push(record);
+            }
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        };
+
+        request.onerror = () => reject(createUserFriendlyError(request.error, '削除済みデータを取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, '削除済みデータを取得'));
       }
     });
   }
@@ -757,21 +815,21 @@ export class YieldCalculatorDB {
   }
 
   /**
-   * データを物理削除
+   * データを論理削除
    * @param {number} id
    * @returns {Promise<void>}
    */
   async delete(id) {
     if (!this.db) await this.open();
 
-    this.logTransactionStart('delete');
+    this.logTransactionStart('softDelete');
 
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
         transaction.onerror = () => {
-          this.logTransactionEnd('delete', false);
-          console.error('トランザクションエラー [delete]:', {
+          this.logTransactionEnd('softDelete', false);
+          console.error('トランザクションエラー [softDelete]:', {
             error: transaction.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -780,7 +838,89 @@ export class YieldCalculatorDB {
         };
 
         transaction.oncomplete = () => {
-          this.logTransactionEnd('delete', true);
+          this.logTransactionEnd('softDelete', true);
+        };
+
+        const store = transaction.objectStore(STORE_NAME);
+        const getRequest = store.get(id);
+
+        getRequest.onsuccess = () => {
+          const record = getRequest.result;
+          if (!record) {
+            this.logTransactionEnd('softDelete', false);
+            reject(createUserFriendlyError(
+              new Error(`Record with id ${id} not found`),
+              'データを削除（レコードが見つかりません）'
+            ));
+            return;
+          }
+
+          // deleted フラグを立てる
+          const updatedRecord = {
+            ...record,
+            deleted: true,
+            deletedAt: new Date().toISOString()
+          };
+
+          const updateRequest = store.put(updatedRecord);
+          updateRequest.onsuccess = () => resolve();
+          updateRequest.onerror = () => {
+            this.logTransactionEnd('softDelete', false);
+            console.error('リクエストエラー [softDelete]:', {
+              error: updateRequest.error,
+              activeTransactions: this.activeTransactions,
+              timestamp: new Date().toISOString()
+            });
+            reject(createUserFriendlyError(updateRequest.error, 'データを削除'));
+          };
+        };
+
+        getRequest.onerror = () => {
+          this.logTransactionEnd('softDelete', false);
+          console.error('リクエストエラー [softDelete/get]:', {
+            error: getRequest.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(getRequest.error, 'データを削除'));
+        };
+      } catch (error) {
+        this.logTransactionEnd('softDelete', false);
+        console.error('例外エラー [softDelete]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
+        reject(createUserFriendlyError(error, 'データを削除'));
+      }
+    });
+  }
+
+  /**
+   * データを物理削除（完全削除）
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async hardDelete(id) {
+    if (!this.db) await this.open();
+
+    this.logTransactionStart('hardDelete');
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        transaction.onerror = () => {
+          this.logTransactionEnd('hardDelete', false);
+          console.error('トランザクションエラー [hardDelete]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを完全削除'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('hardDelete', true);
         };
 
         const store = transaction.objectStore(STORE_NAME);
@@ -788,22 +928,22 @@ export class YieldCalculatorDB {
 
         request.onsuccess = () => resolve();
         request.onerror = () => {
-          this.logTransactionEnd('delete', false);
-          console.error('リクエストエラー [delete]:', {
+          this.logTransactionEnd('hardDelete', false);
+          console.error('リクエストエラー [hardDelete]:', {
             error: request.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
           });
-          reject(createUserFriendlyError(request.error, 'データを削除'));
+          reject(createUserFriendlyError(request.error, 'データを完全削除'));
         };
       } catch (error) {
-        this.logTransactionEnd('delete', false);
-        console.error('例外エラー [delete]:', {
+        this.logTransactionEnd('hardDelete', false);
+        console.error('例外エラー [hardDelete]:', {
           error,
           activeTransactions: this.activeTransactions,
           timestamp: new Date().toISOString()
         });
-        reject(createUserFriendlyError(error, 'データを削除'));
+        reject(createUserFriendlyError(error, 'データを完全削除'));
       }
     });
   }

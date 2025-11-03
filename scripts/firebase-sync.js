@@ -544,11 +544,85 @@ export async function downloadFromCloud() {
 }
 
 /**
- * クラウドから物理削除
+ * クラウドで論理削除
  * @param {number} id - IndexedDBのID
  * @returns {Promise<boolean>}
  */
 export async function deleteFromCloud(id) {
+  if (!isSignedIn()) {
+    console.warn('ログインしていないため、クラウド削除をスキップします');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // IndexedDBからUUIDを取得
+    const localItem = await dbInstance.getById(id);
+    if (!localItem) {
+      console.warn(`IndexedDB ID:${id} が見つかりません`);
+      return false;
+    }
+
+    const uuid = localItem.uuid;
+    if (!uuid) {
+      console.warn(`IndexedDB ID:${id} にUUIDが設定されていません。クラウド削除をスキップします。`);
+      // UUIDがない古いデータの場合、ローカル削除のみ許可
+      return true;
+    }
+
+    // Firestoreで論理削除（deletedフラグを立てる）
+    const docRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .doc(uuid);
+
+    const dataToUpdate = {
+      deleted: true,
+      deletedAt: getServerTimestamp(),
+      updatedAt: getServerTimestamp()
+    };
+
+    // リトライロジックでFirestoreを更新
+    await retryWithBackoff(
+      () => docRef.update(dataToUpdate),
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        onRetry: (attempt, error) => {
+          console.warn(`🔄 論理削除リトライ中 (${attempt}/3):`, error.message);
+        }
+      }
+    );
+    console.log(`✅ Firestoreで論理削除しました (UUID: ${uuid})`);
+
+    return true;
+  } catch (error) {
+    console.error('クラウド論理削除エラー:', error);
+
+    // エラーメッセージを詳細化
+    let errorMessage = 'クラウドでの削除に失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `削除に失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
+/**
+ * クラウドから物理削除（完全削除）
+ * @param {number} id - IndexedDBのID
+ * @returns {Promise<boolean>}
+ */
+export async function hardDeleteFromCloud(id) {
   if (!isSignedIn()) {
     console.warn('ログインしていないため、クラウド削除をスキップします');
     return false;
@@ -586,7 +660,7 @@ export async function deleteFromCloud(id) {
         maxRetries: 3,
         baseDelay: 1000,
         onRetry: (attempt, error) => {
-          console.warn(`🔄 削除リトライ中 (${attempt}/3):`, error.message);
+          console.warn(`🔄 物理削除リトライ中 (${attempt}/3):`, error.message);
         }
       }
     );
@@ -594,20 +668,60 @@ export async function deleteFromCloud(id) {
 
     return true;
   } catch (error) {
-    console.error('クラウド削除エラー:', error);
+    console.error('クラウド物理削除エラー:', error);
 
     // エラーメッセージを詳細化
-    let errorMessage = 'クラウドからの削除に失敗しました';
+    let errorMessage = 'クラウドからの完全削除に失敗しました';
     if (error.code === 'permission-denied') {
       errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
     } else if (error.code === 'unavailable') {
       errorMessage = 'ネットワーク接続を確認してください。';
     } else if (error.message) {
-      errorMessage = `削除に失敗: ${error.message}`;
+      errorMessage = `完全削除に失敗: ${error.message}`;
     }
 
     showToast(errorMessage, 'error');
     return false;
+  }
+}
+
+/**
+ * クラウドから論理削除されたデータを取得
+ * @returns {Promise<Array>}
+ */
+export async function getDeletedFromCloud() {
+  if (!isSignedIn()) {
+    showToast('ログインしてください', 'warning');
+    return [];
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // Firestoreから論理削除されたデータを取得
+    const snapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .where('deleted', '==', true)
+      .get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    const deletedData = snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
+
+    console.log(`✅ ${deletedData.length}件の論理削除データを取得しました`);
+    return deletedData;
+  } catch (error) {
+    console.error('クラウドからの論理削除データ取得エラー:', error);
+    showToast('論理削除されたデータの取得に失敗しました', 'error');
+    return [];
   }
 }
 

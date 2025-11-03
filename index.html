@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="styles/history.css" />
   <link rel="stylesheet" href="styles/firebase.css" />
   <link rel="stylesheet" href="styles/simple-header.css" />
+  <link rel="stylesheet" href="styles/deleted-data.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
@@ -37,6 +38,7 @@
       <button type="button" id="download-file-btn" class="menu-item" disabled>📥 ダウンロード</button>
       <button type="button" id="upload-file-btn" class="menu-item" disabled>📤 アップロード</button>
       <button type="button" id="cleanup-firestore-button" class="menu-item" disabled>🧹 重複削除</button>
+      <button type="button" id="deleted-data-button" class="menu-item" disabled>🗑️ 論理削除データ管理</button>
       <button type="button" id="check-sync-status-button" class="menu-item">📊 状態確認</button>
       <button type="button" id="signout-button" class="menu-item" style="display: none;">🚪 ログアウト</button>
       <button type="button" id="reset-db-button" class="menu-item" style="display: none;">🔧 DBリセット</button>
@@ -1512,6 +1514,22 @@
 
   <!-- ECharts ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js" crossorigin="anonymous"></script>
+
+  <!-- 論理削除データ管理モーダル -->
+  <dialog id="deletedDataModal" class="dialog dialog--large">
+    <div class="dialog-header">
+      <h2 class="dialog-title">🗑️ 論理削除データ管理</h2>
+      <button type="button" id="closeDeletedDataModal" class="btn-icon" aria-label="閉じる">✕</button>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-description">
+        論理削除されたデータの一覧です。物理削除ボタンをクリックすると、完全に削除されます。
+      </p>
+      <div id="deletedDataList" class="deleted-data-list">
+        <!-- 論理削除データがここに表示されます -->
+      </div>
+    </div>
+  </dialog>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
