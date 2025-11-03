@@ -198,15 +198,19 @@ export async function uploadToCloud() {
       console.log(`✅ 最終バッチコミット成功: ${totalUploaded}件`);
     }
 
-    saveLastSyncTime(new Date());
-    updateSyncStatus('success');
-
     // エラーがあった場合は警告を表示
     if (errors.length > 0) {
       console.warn(`⚠️ ${errors.length}件のアイテムでエラーが発生しました:`, errors);
+      updateSyncStatus('warning');
       showToast(`${totalUploaded}件アップロード完了（${errors.length}件スキップ）`, 'warning');
+      // ★重要: エラーがある場合はlastSyncTimeを更新しない（次回再試行するため）
+      console.warn('⚠️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
     } else {
+      // 全て成功の場合のみlastSyncTimeを更新
+      saveLastSyncTime(new Date());
+      updateSyncStatus('success');
       showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
+      console.log('✅ 全て成功したため、同期時刻を更新しました');
     }
 
     return true;
@@ -338,14 +342,29 @@ export async function downloadFromCloud() {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
+    let errors = 0;
+    const errorDetails = [];
 
     // Safari対応: トランザクション間に遅延を入れて競合を防ぐ
     for (let i = 0; i < cloudHistory.length; i++) {
       const cloudItem = cloudHistory[i];
-      const result = await mergeHistoryItem(cloudItem);
-      if (result === 'imported') imported++;
-      else if (result === 'updated') updated++;
-      else skipped++;
+
+      try {
+        const result = await mergeHistoryItem(cloudItem);
+        if (result === 'imported') imported++;
+        else if (result === 'updated') updated++;
+        else skipped++;
+      } catch (itemError) {
+        // 個別アイテムのエラーをキャッチし、処理を継続
+        errors++;
+        const errorMsg = `ID: ${cloudItem.id}, エラー: ${itemError.message || itemError.toString()}`;
+        errorDetails.push(errorMsg);
+        console.error(`❌ アイテム保存エラー (${i + 1}/${cloudHistory.length}):`, errorMsg);
+
+        // エラー内容をコンソールに詳細表示
+        console.error('エラー詳細:', itemError);
+        console.error('問題のアイテム:', cloudItem);
+      }
 
       // 5件ごとに遅延を挿入（Safari対応: トランザクション競合を防止）
       if ((i + 1) % 5 === 0 && i < cloudHistory.length - 1) {
@@ -353,9 +372,28 @@ export async function downloadFromCloud() {
       }
     }
 
-    saveLastSyncTime(new Date());
-    updateSyncStatus('success');
-    showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
+    // 結果に応じてステータスを更新
+    if (errors > 0 && imported === 0 && updated === 0) {
+      // 全てエラーの場合
+      updateSyncStatus('error');
+      showToast(`ダウンロード失敗: ${errors}件のエラーが発生しました`, 'error');
+      console.error('エラー詳細一覧:', errorDetails);
+      // ★重要: エラー発生時はlastSyncTimeを更新しない（次回も全データを再取得するため）
+      console.warn('⚠️ エラーが発生したため、同期時刻は更新しません');
+    } else if (errors > 0) {
+      // 一部エラーの場合
+      updateSyncStatus('warning');
+      showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件、エラー${errors}件`, 'warning');
+      console.warn('エラー詳細一覧:', errorDetails);
+      // ★重要: 一部エラーの場合もlastSyncTimeを更新しない（失敗したデータを次回再試行するため）
+      console.warn('⚠️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
+    } else {
+      // 全て成功の場合のみlastSyncTimeを更新
+      saveLastSyncTime(new Date());
+      updateSyncStatus('success');
+      showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
+      console.log('✅ 全て成功したため、同期時刻を更新しました');
+    }
 
     // UIを更新
     const event = new CustomEvent('historyUpdated');
