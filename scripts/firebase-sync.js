@@ -85,6 +85,21 @@ function getTimestampFromDate(date) {
 }
 
 /**
+ * undefinedフィールドを削除（Firestoreはundefinedを許可しない）
+ * @param {Object} obj - クリーンアップするオブジェクト
+ * @returns {Object} undefinedが削除されたオブジェクト
+ */
+function removeUndefinedFields(obj) {
+  const cleaned = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+  return cleaned;
+}
+
+/**
  * データをクラウドにアップロード
  */
 export async function uploadToCloud() {
@@ -188,8 +203,12 @@ export async function uploadToCloud() {
 
         // タイムスタンプを追加（idフィールドは除外）
         const { id, firestoreId, ...itemData } = item; // firestoreIdも除外（互換性のため）
+
+        // undefinedフィールドを削除
+        const cleanedItemData = removeUndefinedFields(itemData);
+
         const dataToUpload = {
-          ...itemData,
+          ...cleanedItemData,
           updatedAt: getServerTimestamp(),
           deviceId: getDeviceId(),
         };
@@ -536,8 +555,11 @@ export async function saveToCloud(data) {
       .collection('history')
       .doc(uuid);
 
+    // undefinedフィールドを削除（Firestoreはundefinedを許可しない）
+    const cleanedData = removeUndefinedFields(data);
+
     const dataToSave = {
-      ...data,
+      ...cleanedData,
       uuid: uuid,
       createdAt: getServerTimestamp(),
       updatedAt: getServerTimestamp(),
@@ -549,7 +571,7 @@ export async function saveToCloud(data) {
 
     // IndexedDBにもキャッシュとして保存
     const localData = {
-      ...data,
+      ...cleanedData,
       uuid: uuid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -597,8 +619,11 @@ export async function updateInCloud(id, updates) {
       .collection('history')
       .doc(uuid);
 
+    // undefinedフィールドを削除（Firestoreはundefinedを許可しない）
+    const cleanedUpdates = removeUndefinedFields(updates);
+
     const dataToUpdate = {
-      ...updates,
+      ...cleanedUpdates,
       updatedAt: getServerTimestamp()
     };
 
@@ -607,7 +632,7 @@ export async function updateInCloud(id, updates) {
 
     // IndexedDBキャッシュも更新
     const localUpdates = {
-      ...updates,
+      ...cleanedUpdates,
       updatedAt: new Date().toISOString()
     };
     await dbInstance.update(id, localUpdates);
@@ -1045,8 +1070,10 @@ export async function uploadFromFile(file) {
           .doc(docId);
 
         // タイムスタンプを復元
+        const cleanedItem = removeUndefinedFields(item);
+
         const dataToUpload = {
-          ...item,
+          ...cleanedItem,
           id: docId, // IDを確実に設定
           updatedAt: item.updatedAt ? getTimestampFromDate(new Date(item.updatedAt)) : getServerTimestamp(),
           deviceId: getDeviceId(),
