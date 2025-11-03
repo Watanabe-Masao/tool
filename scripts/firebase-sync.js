@@ -58,30 +58,33 @@ loadLastSyncTime();
  * Firestoreインスタンスを取得
  */
 function getFirestore() {
-  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+  const fb = window.firebase;
+  if (!fb || !fb.apps || !fb.apps.length) {
     throw new Error('Firebaseが初期化されていません');
   }
-  return firebase.firestore();
+  return fb.firestore();
 }
 
 /**
  * サーバータイムスタンプを取得
  */
 function getServerTimestamp() {
-  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+  const fb = window.firebase;
+  if (!fb || !fb.apps || !fb.apps.length) {
     throw new Error('Firebaseが初期化されていません');
   }
-  return firebase.firestore.FieldValue.serverTimestamp();
+  return fb.firestore.FieldValue.serverTimestamp();
 }
 
 /**
  * JavaScriptのDateをFirestore Timestampに変換
  */
 function getTimestampFromDate(date) {
-  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+  const fb = window.firebase;
+  if (!fb || !fb.apps || !fb.apps.length) {
     throw new Error('Firebaseが初期化されていません');
   }
-  return firebase.firestore.Timestamp.fromDate(date);
+  return fb.firestore.Timestamp.fromDate(date);
 }
 
 /**
