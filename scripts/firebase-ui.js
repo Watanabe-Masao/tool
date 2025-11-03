@@ -642,11 +642,8 @@ function updateUIForAuthState(user) {
   if (user) {
     // ログイン中
     if (authStatus) {
-      const userInfo = user.isAnonymous
-        ? '匿名ユーザー'
-        : user.email || 'ログイン中';
-      authStatus.textContent = `☁️ ${userInfo}`;
-      authStatus.className = 'auth-status logged-in';
+      authStatus.textContent = '☁️ ログイン済み';
+      authStatus.className = 'status-badge logged-in';
     }
 
     if (signInButton) signInButton.style.display = 'none';
@@ -659,7 +656,7 @@ function updateUIForAuthState(user) {
     // 未ログイン
     if (authStatus) {
       authStatus.textContent = '☁️ 未ログイン';
-      authStatus.className = 'auth-status logged-out';
+      authStatus.className = 'status-badge logged-out';
     }
 
     if (signInButton) signInButton.style.display = 'inline-block';
