@@ -580,7 +580,9 @@ export async function saveToCloud(data) {
       .doc(uuid);
 
     // undefinedフィールドを削除（Firestoreはundefinedを許可しない）
+    console.log('📝 保存前のデータ:', JSON.parse(JSON.stringify(data)));
     const cleanedData = removeUndefinedFields(data);
+    console.log('🧹 クリーンアップ後のデータ:', JSON.parse(JSON.stringify(cleanedData)));
 
     const dataToSave = {
       ...cleanedData,
@@ -589,6 +591,10 @@ export async function saveToCloud(data) {
       updatedAt: getServerTimestamp(),
       deviceId: getDeviceId()
     };
+
+    console.log('💾 Firestoreに送信するデータのキー:', Object.keys(dataToSave));
+    console.log('💾 createdAt type:', typeof dataToSave.createdAt, dataToSave.createdAt);
+    console.log('💾 updatedAt type:', typeof dataToSave.updatedAt, dataToSave.updatedAt);
 
     await docRef.set(dataToSave);
     console.log(`✅ Firestoreに保存しました (UUID: ${uuid})`);
@@ -605,7 +611,13 @@ export async function saveToCloud(data) {
 
     return { id: localId, uuid: uuid };
   } catch (error) {
-    console.error('クラウド保存エラー:', error);
+    console.error('❌ クラウド保存エラー:', error);
+    console.error('エラー詳細:', {
+      code: error.code,
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     throw error;
   }
 }
