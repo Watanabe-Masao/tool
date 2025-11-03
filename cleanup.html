@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>データクリーンアップ - 利回り計算機</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .warning-box h2 {
+      color: #856404;
+      font-size: 18px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .warning-box p {
+      color: #856404;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .warning-box ul {
+      color: #856404;
+      padding-left: 20px;
+      line-height: 1.8;
+    }
+
+    .status {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .status-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .status-value {
+      color: #666;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .log {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .log.show {
+      display: block;
+    }
+
+    .log-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .log-item.info {
+      background: #cfe2ff;
+      color: #084298;
+    }
+
+    .log-item.success {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
+    .log-item.error {
+      background: #f8d7da;
+      color: #842029;
+    }
+
+    .log-item.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗑️ データクリーンアップ</h1>
+    <p class="subtitle">すべてのデータを削除します</p>
+
+    <div class="warning-box">
+      <h2>⚠️ 警告</h2>
+      <p>以下のデータがすべて削除されます：</p>
+      <ul>
+        <li><strong>Firestore（クラウド）:</strong> すべての計算履歴</li>
+        <li><strong>IndexedDB（端末）:</strong> ローカルキャッシュ</li>
+        <li><strong>LocalStorage:</strong> 最終同期時刻などの設定</li>
+      </ul>
+      <p style="margin-top: 15px; font-weight: 600;">この操作は取り消せません！</p>
+    </div>
+
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">ログイン状態</span>
+        <span class="status-value" id="loginStatus">確認中...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Firestore件数</span>
+        <span class="status-value" id="firestoreCount">確認中...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">IndexedDB件数</span>
+        <span class="status-value" id="indexedDBCount">確認中...</span>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-secondary" onclick="checkStatus()">
+        🔄 状態を確認
+      </button>
+      <button class="btn-primary" onclick="location.reload()">
+        ♻️ リロード
+      </button>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-danger" id="cleanupBtn" onclick="cleanupAllData()">
+        🗑️ すべて削除
+      </button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <div class="back-link">
+      <a href="index.html">← アプリに戻る</a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="firebase-config.js"></script>
+
+  <!-- App Scripts -->
+  <script type="module">
+    import { clearAllHistory } from './scripts/storage.js';
+    import { isSignedIn, getCurrentUser } from './scripts/firebase-auth.js';
+    import { db } from './scripts/db.js';
+
+    let logElement = document.getElementById('log');
+
+    function addLog(message, type = 'info') {
+      logElement.classList.add('show');
+      const logItem = document.createElement('div');
+      logItem.className = `log-item ${type}`;
+      logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logElement.appendChild(logItem);
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    async function checkStatus() {
+      try {
+        addLog('状態を確認中...', 'info');
+
+        // ログイン状態
+        const signedIn = isSignedIn();
+        const loginStatusEl = document.getElementById('loginStatus');
+        if (signedIn) {
+          const user = getCurrentUser();
+          loginStatusEl.textContent = `ログイン中 (${user.email})`;
+          loginStatusEl.style.color = '#28a745';
+          addLog(`ログイン中: ${user.email}`, 'success');
+        } else {
+          loginStatusEl.textContent = 'ログアウト';
+          loginStatusEl.style.color = '#dc3545';
+          addLog('ログアウト状態', 'warning');
+        }
+
+        // IndexedDB件数
+        await db.open();
+        const localData = await db.getAll();
+        const indexedDBCountEl = document.getElementById('indexedDBCount');
+        indexedDBCountEl.textContent = `${localData.length} 件`;
+        addLog(`IndexedDB: ${localData.length} 件`, 'info');
+
+        // Firestore件数
+        const firestoreCountEl = document.getElementById('firestoreCount');
+        if (signedIn) {
+          try {
+            const user = getCurrentUser();
+            const firestore = firebase.firestore();
+            const snapshot = await firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('history')
+              .get();
+            firestoreCountEl.textContent = `${snapshot.size} 件`;
+            addLog(`Firestore: ${snapshot.size} 件`, 'info');
+          } catch (error) {
+            firestoreCountEl.textContent = 'エラー';
+            addLog(`Firestoreエラー: ${error.message}`, 'error');
+          }
+        } else {
+          firestoreCountEl.textContent = 'ログインが必要';
+          addLog('Firestoreの確認にはログインが必要', 'warning');
+        }
+
+        addLog('状態確認完了', 'success');
+      } catch (error) {
+        addLog(`エラー: ${error.message}`, 'error');
+        console.error('Status check error:', error);
+      }
+    }
+
+    async function cleanupAllData() {
+      const confirmed = confirm(
+        '⚠️ 本当にすべてのデータを削除しますか？\n\nこの操作は取り消せません！\n\n削除されるデータ:\n- Firestore（クラウド）\n- IndexedDB（端末）\n- LocalStorage設定'
+      );
+
+      if (!confirmed) {
+        addLog('キャンセルされました', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('cleanupBtn');
+      btn.disabled = true;
+      btn.textContent = '削除中...';
+
+      try {
+        addLog('データ削除を開始します...', 'info');
+
+        // 1. Firestore & IndexedDB削除
+        addLog('Firestore & IndexedDB を削除中...', 'info');
+        await clearAllHistory();
+        addLog('✅ Firestore & IndexedDB 削除完了', 'success');
+
+        // 2. LocalStorage削除
+        addLog('LocalStorage を削除中...', 'info');
+        localStorage.clear();
+        addLog('✅ LocalStorage 削除完了', 'success');
+
+        addLog('🎉 すべてのデータを削除しました！', 'success');
+
+        // 状態を再確認
+        setTimeout(() => {
+          checkStatus();
+        }, 1000);
+
+        btn.textContent = '✅ 削除完了';
+        btn.style.background = '#28a745';
+
+      } catch (error) {
+        addLog(`❌ エラー: ${error.message}`, 'error');
+        console.error('Cleanup error:', error);
+        btn.disabled = false;
+        btn.textContent = '🗑️ すべて削除';
+      }
+    }
+
+    // グローバルに公開
+    window.checkStatus = checkStatus;
+    window.cleanupAllData = cleanupAllData;
+
+    // 初期状態確認
+    checkStatus();
+  </script>
+</body>
+</html>
