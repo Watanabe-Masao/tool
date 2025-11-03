@@ -175,6 +175,12 @@ function setupEventListeners() {
   if (uploadFileInput) {
     uploadFileInput.addEventListener('change', handleUploadFileChange);
   }
+
+  // Firestoreクリーンアップボタン
+  const cleanupFirestoreBtn = document.getElementById('cleanup-firestore-button');
+  if (cleanupFirestoreBtn) {
+    cleanupFirestoreBtn.addEventListener('click', handleCleanupFirestore);
+  }
 }
 
 /**
@@ -244,6 +250,148 @@ async function handleUploadFileChange(event) {
   } finally {
     // ファイル入力をリセット
     event.target.value = '';
+  }
+}
+
+/**
+ * Firestoreクリーンアップボタンクリック
+ */
+async function handleCleanupFirestore() {
+  if (!isSignedIn()) {
+    showAuthModal();
+    return;
+  }
+
+  try {
+    console.log('🧹 Firestoreクリーンアップを開始します...');
+    const user = getCurrentUser();
+    const firestore = firebase.firestore();
+
+    // 全データを取得
+    const snapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .get();
+
+    console.log(`📦 取得したデータ: ${snapshot.size}件`);
+
+    if (snapshot.empty) {
+      showToast('クリーンアップするデータがありません', 'info');
+      return;
+    }
+
+    // データをグループ化（name, category, timestampが同じものを重複とみなす）
+    const dataMap = new Map();
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const key = `${data.name || 'unknown'}_${data.category || 'unknown'}_${data.timestamp || 0}`;
+
+      if (!dataMap.has(key)) {
+        dataMap.set(key, []);
+      }
+
+      dataMap.get(key).push({
+        docId: doc.id,
+        data: data,
+        hasUuid: !!data.uuid,
+        hasFirestoreId: !!data.firestoreId,
+        updatedAt: data.updatedAt?.toDate?.() || new Date(0)
+      });
+    });
+
+    console.log(`📊 ユニークなデータグループ: ${dataMap.size}個`);
+
+    // 重複を検出して削除リストを作成
+    const toDelete = [];
+    const toKeep = [];
+
+    dataMap.forEach((items, key) => {
+      if (items.length === 1) {
+        // 重複なし
+        toKeep.push(items[0]);
+      } else {
+        // 重複あり: 最適なデータを選択
+        console.log(`⚠️ [${key}] ${items.length}件の重複を検出`);
+
+        // ソート優先順位: UUID形式のデータを優先 → 最新のupdatedAtを優先
+        items.sort((a, b) => {
+          if (a.hasUuid && !b.hasUuid) return -1;
+          if (!a.hasUuid && b.hasUuid) return 1;
+          if (a.hasFirestoreId && !b.hasFirestoreId) return -1;
+          if (!a.hasFirestoreId && b.hasFirestoreId) return 1;
+          return b.updatedAt - a.updatedAt;
+        });
+
+        // 最初の1件を保持、残りを削除
+        toKeep.push(items[0]);
+        for (let i = 1; i < items.length; i++) {
+          toDelete.push(items[i]);
+        }
+      }
+    });
+
+    console.log('\n📊 クリーンアップサマリー:');
+    console.log(`  保持: ${toKeep.length}件`);
+    console.log(`  削除: ${toDelete.length}件`);
+
+    if (toDelete.length === 0) {
+      showToast('削除する重複データがありません', 'info');
+      return;
+    }
+
+    // 確認ダイアログ
+    const confirmed = confirm(
+      `Firestoreから${toDelete.length}件の重複データを削除します。\n\n` +
+      `現在: ${snapshot.size}件\n` +
+      `削除後: ${toKeep.length}件\n\n` +
+      `実行しますか？`
+    );
+
+    if (!confirmed) {
+      console.log('❌ クリーンアップをキャンセルしました');
+      return;
+    }
+
+    showToast('重複データを削除中...', 'info');
+
+    // バッチ削除（500件ずつ）
+    let deletedCount = 0;
+    const batchSize = 500;
+
+    for (let i = 0; i < toDelete.length; i += batchSize) {
+      const batch = firestore.batch();
+      const chunk = toDelete.slice(i, i + batchSize);
+
+      chunk.forEach(item => {
+        const docRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('history')
+          .doc(item.docId);
+        batch.delete(docRef);
+      });
+
+      await batch.commit();
+      deletedCount += chunk.length;
+      console.log(`🗑️ 削除完了: ${deletedCount}/${toDelete.length}件`);
+    }
+
+    console.log('\n✅ クリーンアップ完了!');
+    showToast(`クリーンアップ完了! 削除: ${deletedCount}件、残り: ${toKeep.length}件`, 'success');
+
+    // 完了後にダウンロードを促す
+    const shouldDownload = confirm(
+      'クリーンアップが完了しました。\n\nダウンロードボタンを押してデータを再同期しますか？'
+    );
+
+    if (shouldDownload) {
+      await downloadFromCloud();
+    }
+  } catch (error) {
+    console.error('❌ クリーンアップエラー:', error);
+    showToast(`クリーンアップに失敗しました: ${error.message}`, 'error');
   }
 }
 
@@ -489,6 +637,7 @@ function updateUIForAuthState(user) {
   const syncButton = document.getElementById('sync-button');
   const downloadFileBtn = document.getElementById('download-file-btn');
   const uploadFileBtn = document.getElementById('upload-file-btn');
+  const cleanupFirestoreBtn = document.getElementById('cleanup-firestore-button');
 
   if (user) {
     // ログイン中
@@ -505,6 +654,7 @@ function updateUIForAuthState(user) {
     if (syncButton) syncButton.disabled = false;
     if (downloadFileBtn) downloadFileBtn.disabled = false;
     if (uploadFileBtn) uploadFileBtn.disabled = false;
+    if (cleanupFirestoreBtn) cleanupFirestoreBtn.disabled = false;
   } else {
     // 未ログイン
     if (authStatus) {
@@ -517,6 +667,7 @@ function updateUIForAuthState(user) {
     if (syncButton) syncButton.disabled = true;
     if (downloadFileBtn) downloadFileBtn.disabled = true;
     if (uploadFileBtn) uploadFileBtn.disabled = true;
+    if (cleanupFirestoreBtn) cleanupFirestoreBtn.disabled = true;
   }
 }
 
