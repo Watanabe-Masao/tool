@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'YieldCalculatorDB';
-const DB_VERSION = 2; // v2: firestoreIdインデックス追加
+const DB_VERSION = 3; // v3: uuidインデックス追加（firestoreIdから移行）
 const STORE_NAME = 'calculations';
 
 /**
@@ -62,6 +62,25 @@ export class YieldCalculatorDB {
     this.activeTransactions = 0; // アクティブなトランザクション数（Safari競合監視用）
     this.transactionLog = []; // トランザクションログ（デバッグ用）
     this.maxLogSize = 50; // ログの最大サイズ
+  }
+
+  /**
+   * UUID v4を生成
+   * @returns {string} UUID (例: "550e8400-e29b-41d4-a916-446655440000")
+   */
+  generateUUID() {
+    // 最新ブラウザではcrypto.randomUUID()を使用
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+
+    // フォールバック: UUID v4の形式で生成
+    // xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 
   /**
@@ -355,6 +374,14 @@ export class YieldCalculatorDB {
               console.log('✅ firestoreIdインデックスを追加しました');
             }
           }
+
+          // v2→v3: uuidインデックス追加
+          if (oldVersion < 3) {
+            if (!store.indexNames.contains('uuid')) {
+              store.createIndex('uuid', 'uuid', { unique: true });
+              console.log('✅ uuidインデックスを追加しました（ユニーク制約付き）');
+            }
+          }
         } catch (error) {
           console.error('Failed to upgrade database schema:', error);
           reject(createUserFriendlyError(error, 'データベーススキーマの更新'));
@@ -428,8 +455,12 @@ export class YieldCalculatorDB {
 
         const store = transaction.objectStore(STORE_NAME);
 
+        // UUIDが設定されていない場合は自動生成
+        const uuid = data.uuid || this.generateUUID();
+
         const record = {
           ...data,
+          uuid: uuid,
           timestamp: data.timestamp || Date.now(),
           createdAt: new Date().toISOString()
         };
@@ -530,7 +561,32 @@ export class YieldCalculatorDB {
   }
 
   /**
-   * FirestoreIDでデータを検索
+   * UUIDでデータを検索
+   * @param {string} uuid - UUID
+   * @returns {Promise<Object|undefined>} 見つかったデータ、または undefined
+   */
+  async getByUuid(uuid) {
+    if (!this.db) await this.open();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを取得'));
+
+        const store = transaction.objectStore(STORE_NAME);
+        const index = store.index('uuid');
+        const request = index.get(uuid);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, 'データを取得'));
+      }
+    });
+  }
+
+  /**
+   * FirestoreIDでデータを検索（後方互換性のため残す）
    * @param {string} firestoreId - Firestore ドキュメントID
    * @returns {Promise<Object|undefined>} 見つかったデータ、または undefined
    */
