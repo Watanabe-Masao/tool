@@ -143,41 +143,71 @@ export async function uploadToCloud() {
     let batch = firestore.batch();
     let batchCount = 0;
     let totalUploaded = 0;
+    const errors = [];
 
     for (const item of localHistory) {
-      const docRef = firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('history')
-        .doc(item.id || generateId());
+      try {
+        // IndexedDBのIDは数値だが、FirestoreのドキュメントIDは文字列である必要がある
+        const itemId = item.id ? String(item.id) : generateId();
 
-      // タイムスタンプを追加
-      const dataToUpload = {
-        ...item,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        deviceId: getDeviceId(),
-      };
+        // デバッグログ: IDの型を確認
+        if (totalUploaded === 0) {
+          console.log('📤 アップロード開始 - ID型チェック:', {
+            originalId: item.id,
+            originalIdType: typeof item.id,
+            convertedId: itemId,
+            convertedIdType: typeof itemId
+          });
+        }
 
-      batch.set(docRef, dataToUpload, { merge: true });
-      batchCount++;
-      totalUploaded++;
+        const docRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('history')
+          .doc(itemId);
 
-      // 500件ごとにコミット
-      if (batchCount >= 500) {
-        await batch.commit();
-        batch = firestore.batch(); // 新しいバッチを作成
-        batchCount = 0;
+        // タイムスタンプを追加
+        const dataToUpload = {
+          ...item,
+          id: itemId, // 文字列に変換されたIDを使用
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          deviceId: getDeviceId(),
+        };
+
+        batch.set(docRef, dataToUpload, { merge: true });
+        batchCount++;
+        totalUploaded++;
+
+        // 500件ごとにコミット
+        if (batchCount >= 500) {
+          await batch.commit();
+          console.log(`✅ バッチコミット成功: ${totalUploaded}件`);
+          batch = firestore.batch(); // 新しいバッチを作成
+          batchCount = 0;
+        }
+      } catch (itemError) {
+        console.error(`❌ アイテムアップロードエラー (ID: ${item.id}):`, itemError);
+        errors.push({ itemId: item.id, error: itemError.message });
+        // エラーが発生してもバッチに追加せず、次のアイテムに進む
       }
     }
 
     // 残りをコミット
     if (batchCount > 0) {
       await batch.commit();
+      console.log(`✅ 最終バッチコミット成功: ${totalUploaded}件`);
     }
 
     saveLastSyncTime(new Date());
     updateSyncStatus('success');
-    showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
+
+    // エラーがあった場合は警告を表示
+    if (errors.length > 0) {
+      console.warn(`⚠️ ${errors.length}件のアイテムでエラーが発生しました:`, errors);
+      showToast(`${totalUploaded}件アップロード完了（${errors.length}件スキップ）`, 'warning');
+    } else {
+      showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
+    }
 
     return true;
   } catch (error) {
@@ -196,6 +226,9 @@ export async function uploadToCloud() {
       errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
     } else if (error.code === 'unavailable') {
       errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message && error.message.includes('indexOf')) {
+      errorMessage = 'データ型エラーが発生しました。ページを再読み込みして再試行してください。';
+      console.error('💡 ヒント: IndexedDBとFirestoreのID型の不一致が原因の可能性があります');
     } else if (error.message) {
       errorMessage = `アップロードに失敗: ${error.message}`;
     }
@@ -390,12 +423,18 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
   const RETRY_DELAY = 200; // 基本遅延を100ms→200msに増加
 
   try {
+    // FirestoreのIDは文字列、IndexedDBのIDは数値
+    // 数値に変換できる場合は変換、できない場合は新規作成
+    const numericId = !isNaN(Number(cloudItem.id)) ? Number(cloudItem.id) : null;
+
     // 既存のアイテムを確認
-    const localItem = await dbInstance.getById(cloudItem.id);
+    const localItem = numericId ? await dbInstance.getById(numericId) : null;
 
     if (!localItem) {
-      // 新規アイテム
-      await dbInstance.save(cloudItem);
+      // 新規アイテム: IndexedDBが自動的に新しいIDを割り当てるため、idフィールドを除外
+      const { id, ...itemWithoutId } = cloudItem;
+      await dbInstance.save(itemWithoutId);
+      console.log(`📥 新規インポート (Firestore ID: ${id} → 新規IndexedDB ID)`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
@@ -404,10 +443,13 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
-        await dbInstance.update(cloudItem.id, cloudItem);
+        const { id, ...itemWithoutId } = cloudItem;
+        await dbInstance.update(numericId, itemWithoutId);
+        console.log(`🔄 更新 (Firestore ID: ${id} → IndexedDB ID: ${numericId})`);
         return 'updated';
       } else {
         // ローカルの方が新しい→スキップ
+        console.log(`⏭️ スキップ (Firestore ID: ${cloudItem.id})`);
         return 'skipped';
       }
     }
