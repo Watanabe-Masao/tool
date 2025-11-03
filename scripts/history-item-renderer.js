@@ -176,14 +176,14 @@ export function createHistoryItemHTML(item, isFirst = true) {
  */
 export function getModeIcon(mode, yieldMethod = null) {
   if (mode === MODE.FIXED) {
-    if (yieldMethod === 'direct') return '定額売価（歩留まり率直接入力）';
-    return '定額売価（重量から計算）';
+    if (yieldMethod === 'direct') return '定額（直接）';
+    return '定額（計算）';
   }
   if (mode === MODE.WEIGHT) {
-    if (yieldMethod === 'direct') return '計量売価（歩留まり率直接入力）';
-    return '計量売価（重量から計算）';
+    if (yieldMethod === 'direct') return '計量（直接）';
+    return '計量（計算）';
   }
-  if (mode === MODE.YIELD_STATS) return '歩留まり統計';
+  if (mode === MODE.YIELD_STATS) return '統計';
   return '不明';
 }
 
