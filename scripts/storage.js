@@ -4,6 +4,7 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
+import { deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
 
 /**
  * 現在の計算データを保存
@@ -103,13 +104,20 @@ export async function searchHistory(query) {
 }
 
 /**
- * 履歴を削除
+ * 履歴を削除（ローカル＋クラウド）
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
   try {
+    // クラウド（Firestore）から削除（ログイン中の場合のみ）
+    // deleteFromCloud内でログインチェックとエラーハンドリングが行われる
+    await deleteFromCloud(id);
+
+    // ローカル（IndexedDB）から削除
     await db.delete(id);
+
+    console.log(`✅ データを削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
     throw error;
@@ -235,12 +243,19 @@ export async function importData(file) {
 }
 
 /**
- * すべての履歴をクリア
+ * すべての履歴をクリア（ローカル＋クラウド）
  * @returns {Promise<void>}
  */
 export async function clearAllHistory() {
   try {
+    // クラウド（Firestore）から全削除（ログイン中の場合のみ）
+    // clearAllFromCloud内でログインチェックとエラーハンドリングが行われる
+    await clearAllFromCloud();
+
+    // ローカル（IndexedDB）から全削除
     await db.clear();
+
+    console.log('✅ すべてのデータを削除しました');
   } catch (error) {
     console.error('Failed to clear history:', error);
     throw error;

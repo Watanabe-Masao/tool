@@ -434,6 +434,137 @@ export async function downloadFromCloud() {
 }
 
 /**
+ * クラウドから特定のデータを削除
+ * @param {number} id - IndexedDBのID
+ * @returns {Promise<boolean>}
+ */
+export async function deleteFromCloud(id) {
+  if (!isSignedIn()) {
+    console.warn('ログインしていないため、クラウド削除をスキップします');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // IndexedDBからUUIDを取得
+    const localItem = await dbInstance.getById(id);
+    if (!localItem) {
+      console.warn(`IndexedDB ID:${id} が見つかりません`);
+      return false;
+    }
+
+    const uuid = localItem.uuid;
+    if (!uuid) {
+      console.warn(`IndexedDB ID:${id} にUUIDが設定されていません。クラウド削除をスキップします。`);
+      // UUIDがない古いデータの場合、ローカル削除のみ許可
+      return true;
+    }
+
+    // FirestoreからUUIDで削除
+    const docRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .doc(uuid);
+
+    await docRef.delete();
+    console.log(`✅ Firestoreから削除しました (UUID: ${uuid})`);
+
+    return true;
+  } catch (error) {
+    console.error('クラウド削除エラー:', error);
+
+    // エラーメッセージを詳細化
+    let errorMessage = 'クラウドからの削除に失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `削除に失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
+/**
+ * クラウドから全データを削除
+ * @returns {Promise<boolean>}
+ */
+export async function clearAllFromCloud() {
+  if (!isSignedIn()) {
+    console.warn('ログインしていないため、クラウド全削除をスキップします');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // ユーザーのすべての履歴を取得
+    const snapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .get();
+
+    if (snapshot.empty) {
+      console.log('クラウドに削除するデータがありません');
+      return true;
+    }
+
+    console.log(`🗑️ Firestoreから${snapshot.size}件のデータを削除中...`);
+
+    // バッチ削除（最大500件ずつ）
+    let batch = firestore.batch();
+    let batchCount = 0;
+    let totalDeleted = 0;
+
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+      batchCount++;
+      totalDeleted++;
+
+      // 500件ごとにコミット
+      if (batchCount >= 500) {
+        await batch.commit();
+        console.log(`✅ バッチ削除完了: ${totalDeleted}件`);
+        batch = firestore.batch(); // 新しいバッチを作成
+        batchCount = 0;
+      }
+    }
+
+    // 残りをコミット
+    if (batchCount > 0) {
+      await batch.commit();
+      console.log(`✅ 最終バッチ削除完了: ${totalDeleted}件`);
+    }
+
+    console.log(`✅ Firestoreから全${totalDeleted}件を削除しました`);
+    return true;
+  } catch (error) {
+    console.error('クラウド全削除エラー:', error);
+
+    // エラーメッセージを詳細化
+    let errorMessage = 'クラウドからの全削除に失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `全削除に失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
+/**
  * 双方向同期（アップロード→ダウンロード）
  */
 export async function syncData() {
