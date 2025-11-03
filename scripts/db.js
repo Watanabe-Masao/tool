@@ -4,8 +4,9 @@
  */
 
 const DB_NAME = 'YieldCalculatorDB';
-const DB_VERSION = 4; // v4: uuidインデックスの制約修正&既存データにUUID付与
+const DB_VERSION = 5; // v5: 削除追跡ストアを追加
 const STORE_NAME = 'calculations';
+const DELETED_ITEMS_STORE = 'deletedItems';
 
 /**
  * IndexedDBエラーをユーザーフレンドリーなメッセージに変換
@@ -438,6 +439,17 @@ export class YieldCalculatorDB {
               console.error('❌ UUIDマイグレーションエラー:', cursorRequest.error);
             };
           }
+
+          // v4→v5: 削除追跡ストアを追加
+          if (oldVersion < 5) {
+            if (!db.objectStoreNames.contains(DELETED_ITEMS_STORE)) {
+              const deletedStore = db.createObjectStore(DELETED_ITEMS_STORE, {
+                keyPath: 'uuid'
+              });
+              deletedStore.createIndex('deletedAt', 'deletedAt', { unique: false });
+              console.log('✅ 削除追跡ストアを作成しました');
+            }
+          }
         } catch (error) {
           console.error('Failed to upgrade database schema:', error);
           reject(createUserFriendlyError(error, 'データベーススキーマの更新'));
@@ -709,10 +721,16 @@ export class YieldCalculatorDB {
             return;
           }
 
+          // 不変フィールドを除外（データ整合性保護）
+          const { id: _, uuid: __, firestoreId: ___, createdAt: ____, ...dataToUpdate } = data;
+
           const updatedRecord = {
             ...record,
-            ...data,
-            id, // IDは保持
+            ...dataToUpdate,
+            id, // IDは保持（自動インクリメント）
+            uuid: record.uuid, // UUIDは不変
+            firestoreId: record.firestoreId, // firestoreIdも不変（後方互換性）
+            createdAt: record.createdAt, // 作成日時は不変
             updatedAt: new Date().toISOString()
           };
 
@@ -751,24 +769,146 @@ export class YieldCalculatorDB {
   }
 
   /**
-   * データを削除
+   * 削除追跡に記録
+   * マルチデバイス環境での削除を追跡するため
+   * @param {string} uuid - 削除するデータのUUID
+   * @param {string} deviceId - デバイスID（オプション）
+   * @returns {Promise<void>}
+   */
+  async addDeletedItem(uuid, deviceId = null) {
+    if (!this.db) await this.open();
+
+    this.logTransactionStart('addDeletedItem');
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([DELETED_ITEMS_STORE], 'readwrite');
+        transaction.onerror = () => {
+          this.logTransactionEnd('addDeletedItem', false);
+          reject(createUserFriendlyError(transaction.error, '削除追跡に記録'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('addDeletedItem', true);
+        };
+
+        const store = transaction.objectStore(DELETED_ITEMS_STORE);
+        const deletedItem = {
+          uuid: uuid,
+          deletedAt: new Date().toISOString(),
+          deviceId: deviceId
+        };
+
+        const request = store.put(deletedItem);
+        request.onsuccess = () => {
+          console.log(`📝 削除追跡に記録 (UUID: ${uuid})`);
+          resolve();
+        };
+        request.onerror = () => {
+          this.logTransactionEnd('addDeletedItem', false);
+          reject(createUserFriendlyError(request.error, '削除追跡に記録'));
+        };
+      } catch (error) {
+        this.logTransactionEnd('addDeletedItem', false);
+        reject(createUserFriendlyError(error, '削除追跡に記録'));
+      }
+    });
+  }
+
+  /**
+   * 削除追跡を取得
+   * @returns {Promise<Array>}
+   */
+  async getDeletedItems() {
+    if (!this.db) await this.open();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([DELETED_ITEMS_STORE], 'readonly');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, '削除追跡を取得'));
+
+        const store = transaction.objectStore(DELETED_ITEMS_STORE);
+        const request = store.getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(createUserFriendlyError(request.error, '削除追跡を取得'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, '削除追跡を取得'));
+      }
+    });
+  }
+
+  /**
+   * 削除追跡から削除（同期完了後）
+   * @param {string} uuid
+   * @returns {Promise<void>}
+   */
+  async removeDeletedItem(uuid) {
+    if (!this.db) await this.open();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([DELETED_ITEMS_STORE], 'readwrite');
+        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, '削除追跡から削除'));
+
+        const store = transaction.objectStore(DELETED_ITEMS_STORE);
+        const request = store.delete(uuid);
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(createUserFriendlyError(request.error, '削除追跡から削除'));
+      } catch (error) {
+        reject(createUserFriendlyError(error, '削除追跡から削除'));
+      }
+    });
+  }
+
+  /**
+   * データを物理削除
    * @param {number} id
    * @returns {Promise<void>}
    */
   async delete(id) {
     if (!this.db) await this.open();
 
+    this.logTransactionStart('delete');
+
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-        transaction.onerror = () => reject(createUserFriendlyError(transaction.error, 'データを削除'));
+        transaction.onerror = () => {
+          this.logTransactionEnd('delete', false);
+          console.error('トランザクションエラー [delete]:', {
+            error: transaction.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(transaction.error, 'データを削除'));
+        };
+
+        transaction.oncomplete = () => {
+          this.logTransactionEnd('delete', true);
+        };
 
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(id);
 
         request.onsuccess = () => resolve();
-        request.onerror = () => reject(createUserFriendlyError(request.error, 'データを削除'));
+        request.onerror = () => {
+          this.logTransactionEnd('delete', false);
+          console.error('リクエストエラー [delete]:', {
+            error: request.error,
+            activeTransactions: this.activeTransactions,
+            timestamp: new Date().toISOString()
+          });
+          reject(createUserFriendlyError(request.error, 'データを削除'));
+        };
       } catch (error) {
+        this.logTransactionEnd('delete', false);
+        console.error('例外エラー [delete]:', {
+          error,
+          activeTransactions: this.activeTransactions,
+          timestamp: new Date().toISOString()
+        });
         reject(createUserFriendlyError(error, 'データを削除'));
       }
     });

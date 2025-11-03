@@ -108,24 +108,25 @@ export async function uploadToCloud() {
       return false;
     }
 
-    // IndexedDBから全履歴を取得
+    // IndexedDBから全履歴を取得（削除済みも含む）
     const allHistory = await getAllHistoryFromIndexedDB();
 
     // 差分同期: 最終同期時刻以降に更新されたデータのみをフィルタリング
     let localHistory;
     if (lastSyncTime && !isNaN(lastSyncTime.getTime())) {
       localHistory = allHistory.filter(item => {
-        // updatedAtフィールドを確認（Date型または文字列）
-        if (!item.updatedAt) {
-          // updatedAtがない場合は常にアップロード
+        // updatedAtまたはdeletedAtフィールドを確認
+        const checkTime = item.deletedAt || item.updatedAt;
+        if (!checkTime) {
+          // タイムスタンプがない場合は常にアップロード
           return true;
         }
-        const updatedAt = new Date(item.updatedAt);
+        const itemTime = new Date(checkTime);
         // 有効な日付でない場合もアップロード
-        if (isNaN(updatedAt.getTime())) {
+        if (isNaN(itemTime.getTime())) {
           return true;
         }
-        return updatedAt > lastSyncTime;
+        return itemTime > lastSyncTime;
       });
       console.log(`差分同期: 全${allHistory.length}件中${localHistory.length}件をアップロード`);
     } else {
@@ -196,6 +197,9 @@ export async function uploadToCloud() {
       await batch.commit();
       console.log(`✅ 最終バッチコミット成功: ${totalUploaded}件`);
     }
+
+    // ローカルの削除追跡をアップロード（オフライン削除の場合に備える）
+    await uploadDeletedItems(user, firestore);
 
     // エラーがあった場合は警告を表示
     if (errors.length > 0) {
@@ -327,6 +331,11 @@ export async function downloadFromCloud() {
       }
     } catch (error) {
       console.error('Firestore取得エラー:', error);
+      // エラー時もセッションフラグをリセット（無限ループ防止）
+      if (isFirstDownloadInSession) {
+        isFirstDownloadInSession = false;
+        console.warn('⚠️ エラーが発生しましたが、セッションフラグをリセットしました（無限ループ防止）');
+      }
       throw error;
     }
 
@@ -349,6 +358,9 @@ export async function downloadFromCloud() {
       ...doc.data(),
       id: doc.id,
     }));
+
+    // 削除追跡をダウンロードしてローカル削除を実行
+    await syncDeletedItems(user, firestore);
 
     // IndexedDBに保存（競合解決あり）
     let imported = 0;
@@ -429,6 +441,152 @@ export async function downloadFromCloud() {
 }
 
 /**
+ * クラウドから物理削除
+ * @param {number} id - IndexedDBのID
+ * @returns {Promise<boolean>}
+ */
+export async function deleteFromCloud(id) {
+  if (!isSignedIn()) {
+    console.warn('ログインしていないため、クラウド削除をスキップします');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // IndexedDBからUUIDを取得
+    const localItem = await dbInstance.getById(id);
+    if (!localItem) {
+      console.warn(`IndexedDB ID:${id} が見つかりません`);
+      return false;
+    }
+
+    const uuid = localItem.uuid;
+    if (!uuid) {
+      console.warn(`IndexedDB ID:${id} にUUIDが設定されていません。クラウド削除をスキップします。`);
+      // UUIDがない古いデータの場合、ローカル削除のみ許可
+      return true;
+    }
+
+    // Firestoreから物理削除
+    const docRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .doc(uuid);
+
+    await docRef.delete();
+    console.log(`✅ Firestoreから削除しました (UUID: ${uuid})`);
+
+    // 削除追跡コレクションに記録
+    const deletedRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('deletedItems')
+      .doc(uuid);
+
+    await deletedRef.set({
+      uuid: uuid,
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      deviceId: getDeviceId()
+    });
+
+    console.log(`📝 Firestore削除追跡に記録しました (UUID: ${uuid})`);
+
+    return true;
+  } catch (error) {
+    console.error('クラウド削除エラー:', error);
+
+    // エラーメッセージを詳細化
+    let errorMessage = 'クラウドからの削除に失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `削除に失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
+/**
+ * クラウドから全データを削除
+ * @returns {Promise<boolean>}
+ */
+export async function clearAllFromCloud() {
+  if (!isSignedIn()) {
+    console.warn('ログインしていないため、クラウド全削除をスキップします');
+    return false;
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // ユーザーのすべての履歴を取得
+    const snapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .get();
+
+    if (snapshot.empty) {
+      console.log('クラウドに削除するデータがありません');
+      return true;
+    }
+
+    console.log(`🗑️ Firestoreから${snapshot.size}件のデータを削除中...`);
+
+    // バッチ削除（最大500件ずつ）
+    let batch = firestore.batch();
+    let batchCount = 0;
+    let totalDeleted = 0;
+
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+      batchCount++;
+      totalDeleted++;
+
+      // 500件ごとにコミット
+      if (batchCount >= 500) {
+        await batch.commit();
+        console.log(`✅ バッチ削除完了: ${totalDeleted}件`);
+        batch = firestore.batch(); // 新しいバッチを作成
+        batchCount = 0;
+      }
+    }
+
+    // 残りをコミット
+    if (batchCount > 0) {
+      await batch.commit();
+      console.log(`✅ 最終バッチ削除完了: ${totalDeleted}件`);
+    }
+
+    console.log(`✅ Firestoreから全${totalDeleted}件を削除しました`);
+    return true;
+  } catch (error) {
+    console.error('クラウド全削除エラー:', error);
+
+    // エラーメッセージを詳細化
+    let errorMessage = 'クラウドからの全削除に失敗しました';
+    if (error.code === 'permission-denied') {
+      errorMessage = 'アクセス権限がありません。Firestoreのセキュリティルールを確認してください。';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'ネットワーク接続を確認してください。';
+    } else if (error.message) {
+      errorMessage = `全削除に失敗: ${error.message}`;
+    }
+
+    showToast(errorMessage, 'error');
+    return false;
+  }
+}
+
+/**
  * 双方向同期（アップロード→ダウンロード）
  */
 export async function syncData() {
@@ -464,6 +622,125 @@ async function getAllHistoryFromIndexedDB() {
 }
 
 /**
+ * 削除追跡を同期（ダウンロードしてローカル削除を実行）
+ * @param {Object} user - Firebaseユーザー
+ * @param {Object} firestore - Firestoreインスタンス
+ */
+async function syncDeletedItems(user, firestore) {
+  try {
+    console.log('🗑️ 削除追跡を同期中...');
+
+    // Firestoreから削除追跡を取得
+    const deletedSnapshot = await firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('deletedItems')
+      .get();
+
+    if (deletedSnapshot.empty) {
+      console.log('削除追跡データなし');
+      return;
+    }
+
+    console.log(`📥 ${deletedSnapshot.size}件の削除追跡を取得`);
+
+    let deletedCount = 0;
+
+    for (const doc of deletedSnapshot.docs) {
+      const deletedItem = doc.data();
+      const uuid = deletedItem.uuid;
+
+      // ローカルにUUIDが存在するか確認
+      const localItem = await dbInstance.getByUuid(uuid);
+      if (localItem) {
+        // 存在する場合は物理削除
+        await dbInstance.delete(localItem.id);
+        console.log(`🗑️ ローカルから削除 (UUID: ${uuid}, ID: ${localItem.id})`);
+        deletedCount++;
+      }
+
+      // ローカルの削除追跡にも記録（オフライン削除の場合に備える）
+      await dbInstance.addDeletedItem(uuid, deletedItem.deviceId);
+    }
+
+    if (deletedCount > 0) {
+      console.log(`✅ ${deletedCount}件のデータをローカルから削除しました`);
+    }
+  } catch (error) {
+    console.error('削除追跡同期エラー:', error);
+    // エラーが発生しても処理を継続
+  }
+}
+
+/**
+ * ローカルの削除追跡をFirestoreにアップロード
+ * オフライン時に削除したデータを他のデバイスと同期するため
+ * @param {Object} user - Firebaseユーザー
+ * @param {Object} firestore - Firestoreインスタンス
+ */
+async function uploadDeletedItems(user, firestore) {
+  try {
+    console.log('📤 削除追跡をアップロード中...');
+
+    // ローカルの削除追跡を取得
+    const localDeleted = await dbInstance.getDeletedItems();
+
+    if (localDeleted.length === 0) {
+      console.log('アップロードする削除追跡データなし');
+      return;
+    }
+
+    console.log(`📤 ${localDeleted.length}件の削除追跡をアップロード`);
+
+    // バッチ書き込み（最大500件ずつ）
+    let batch = firestore.batch();
+    let batchCount = 0;
+    let totalUploaded = 0;
+
+    for (const item of localDeleted) {
+      const deletedRef = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('deletedItems')
+        .doc(item.uuid);
+
+      // Timestampに変換
+      const deletedAt = item.deletedAt
+        ? firebase.firestore.Timestamp.fromDate(new Date(item.deletedAt))
+        : firebase.firestore.FieldValue.serverTimestamp();
+
+      batch.set(deletedRef, {
+        uuid: item.uuid,
+        deletedAt: deletedAt,
+        deviceId: item.deviceId || getDeviceId()
+      }, { merge: true });
+
+      batchCount++;
+      totalUploaded++;
+
+      // 500件ごとにコミット
+      if (batchCount >= 500) {
+        await batch.commit();
+        console.log(`✅ 削除追跡バッチコミット成功: ${totalUploaded}件`);
+        batch = firestore.batch();
+        batchCount = 0;
+      }
+    }
+
+    // 残りをコミット
+    if (batchCount > 0) {
+      await batch.commit();
+      console.log(`✅ 削除追跡最終バッチコミット成功: ${totalUploaded}件`);
+    }
+
+    console.log(`✅ ${totalUploaded}件の削除追跡をアップロードしました`);
+  } catch (error) {
+    console.error('削除追跡アップロードエラー:', error);
+    // エラーが発生しても処理を継続（メイン同期を妨げないため）
+  }
+}
+
+/**
  * ユーティリティ：指定時間待機
  */
 function sleep(ms) {
@@ -473,6 +750,7 @@ function sleep(ms) {
 /**
  * 履歴アイテムをマージ（競合解決）
  * Safari対応: リトライロジック付き（強化版）
+ * データ整合性: UUID検証強化、重複防止
  */
 async function mergeHistoryItem(cloudItem, retryCount = 0) {
   const MAX_RETRIES = 5; // リトライ回数を増加
@@ -488,6 +766,8 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
       localItem = await dbInstance.getByUuid(uuid);
     } else {
       // 互換性レイヤー: 古いデータ（firestoreIdまたは数値IDベース）の対応
+      console.warn('⚠️ UUID未設定のクラウドデータを検出:', cloudItem.id);
+
       if (cloudItem.firestoreId) {
         // firestoreIdベースの旧データ
         localItem = await dbInstance.getByFirestoreId(cloudItem.firestoreId);
@@ -519,23 +799,43 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
     if (!localItem) {
       // 新規アイテム: IndexedDBが自動的に新しいIDを割り当てるため、idフィールドを除外
       const { id, firestoreId, ...itemWithoutId } = cloudItem;
+
+      // データ整合性チェック: 必須フィールドの検証
+      if (!itemWithoutId.uuid) {
+        console.warn('⚠️ UUID未設定のため新規UUIDを生成します');
+        itemWithoutId.uuid = uuid || cloudItem.id || generateUUID();
+      }
+
       const newId = await dbInstance.save(itemWithoutId);
-      console.log(`📥 新規インポート (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${newId})`);
+      console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
       const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
-      const localTime = localItem.updatedAt?.toDate?.() || new Date(localItem.timestamp);
+      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) : new Date(localItem.timestamp);
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
         const { id, firestoreId, ...itemWithoutId } = cloudItem;
+
+        // データ整合性: UUIDの一致確認
+        if (itemWithoutId.uuid && localItem.uuid && itemWithoutId.uuid !== localItem.uuid) {
+          console.error('❌ UUID不一致を検出:', {
+            cloud: itemWithoutId.uuid,
+            local: localItem.uuid,
+            localId: localItem.id
+          });
+          // UUID不一致の場合はローカルのUUIDを保持（データ整合性優先）
+          console.warn('⚠️ ローカルのUUIDを保持します');
+          delete itemWithoutId.uuid; // updateメソッドで上書きされないように削除
+        }
+
         await dbInstance.update(localItem.id, itemWithoutId);
-        console.log(`🔄 更新 (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${localItem.id})`);
+        console.log(`🔄 更新 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
         return 'updated';
       } else {
         // ローカルの方が新しい→スキップ
-        console.log(`⏭️ スキップ (UUID: ${uuid || cloudItem.id})`);
+        console.log(`⏭️ スキップ (UUID: ${localItem.uuid})`);
         return 'skipped';
       }
     }

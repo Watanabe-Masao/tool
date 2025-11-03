@@ -4,6 +4,7 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
+import { deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
 
 /**
  * 現在の計算データを保存
@@ -103,13 +104,35 @@ export async function searchHistory(query) {
 }
 
 /**
- * 履歴を削除
+ * 履歴を削除（ローカル＋クラウド + 削除追跡）
+ * 削除追跡ファイルを使用してマルチデバイス環境での削除を追跡
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
   try {
+    // 1. IndexedDBからデータを取得してUUIDを確認
+    const item = await db.getById(id);
+    if (!item) {
+      throw new Error(`Record with ID ${id} not found`);
+    }
+
+    const uuid = item.uuid;
+    if (!uuid) {
+      console.warn(`ID:${id} にUUIDがありません。削除追跡なしで削除します。`);
+    } else {
+      // 2. 削除追跡に記録
+      await db.addDeletedItem(uuid);
+    }
+
+    // 3. クラウド（Firestore）から物理削除（ログイン中の場合のみ）
+    // deleteFromCloud内でログインチェックとエラーハンドリングが行われる
+    await deleteFromCloud(id);
+
+    // 4. ローカル（IndexedDB）から物理削除
     await db.delete(id);
+
+    console.log(`✅ データを削除しました (ID: ${id}, UUID: ${uuid})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
     throw error;
@@ -135,7 +158,8 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     input: inputData,
     result: resultData,
     product: productData,
-    timestamp: Date.now() // タイムスタンプを現在時刻に更新
+    // データ整合性: timestampは履歴のソート用、updatedAtはdb.update()で自動設定される
+    timestamp: Date.now()
   };
 
   try {
@@ -156,7 +180,8 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 export async function updateCalculationName(id, name, category = null) {
   try {
     const updates = { name };
-    if (category !== null) {
+    // データ整合性: null と undefined を区別（!= で両方をチェック）
+    if (category != null) {
       updates.category = category;
     }
     await db.update(id, updates);
@@ -233,12 +258,19 @@ export async function importData(file) {
 }
 
 /**
- * すべての履歴をクリア
+ * すべての履歴をクリア（ローカル＋クラウド）
  * @returns {Promise<void>}
  */
 export async function clearAllHistory() {
   try {
+    // クラウド（Firestore）から全削除（ログイン中の場合のみ）
+    // clearAllFromCloud内でログインチェックとエラーハンドリングが行われる
+    await clearAllFromCloud();
+
+    // ローカル（IndexedDB）から全削除
     await db.clear();
+
+    console.log('✅ すべてのデータを削除しました');
   } catch (error) {
     console.error('Failed to clear history:', error);
     throw error;
