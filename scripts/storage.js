@@ -104,35 +104,21 @@ export async function searchHistory(query) {
 }
 
 /**
- * 履歴を削除（ローカル＋クラウド + 削除追跡）
- * 削除追跡ファイルを使用してマルチデバイス環境での削除を追跡
+ * 履歴を削除（ローカル論理削除＋クラウド物理削除）
+ * ローカルに削除フラグを立て、サーバーから物理削除
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
 export async function deleteHistory(id) {
   try {
-    // 1. IndexedDBからデータを取得してUUIDを確認
-    const item = await db.getById(id);
-    if (!item) {
-      throw new Error(`Record with ID ${id} not found`);
-    }
+    // 1. ローカル（IndexedDB）で論理削除（削除フラグを立てる）
+    await db.softDelete(id);
 
-    const uuid = item.uuid;
-    if (!uuid) {
-      console.warn(`ID:${id} にUUIDがありません。削除追跡なしで削除します。`);
-    } else {
-      // 2. 削除追跡に記録
-      await db.addDeletedItem(uuid);
-    }
-
-    // 3. クラウド（Firestore）から物理削除（ログイン中の場合のみ）
+    // 2. クラウド（Firestore）から物理削除（ログイン中の場合のみ）
     // deleteFromCloud内でログインチェックとエラーハンドリングが行われる
     await deleteFromCloud(id);
 
-    // 4. ローカル（IndexedDB）から物理削除
-    await db.delete(id);
-
-    console.log(`✅ データを削除しました (ID: ${id}, UUID: ${uuid})`);
+    console.log(`✅ データを削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
     throw error;
