@@ -133,6 +133,12 @@ function setupEventListeners() {
     resetPasswordBtn.addEventListener('click', handleResetPassword);
   }
 
+  // データベースリセットボタン（iOS Safari対応）
+  const resetDbButton = document.getElementById('reset-db-button');
+  if (resetDbButton) {
+    resetDbButton.addEventListener('click', handleResetDatabase);
+  }
+
   // モーダルを閉じる
   const authModal = document.getElementById('auth-modal');
   if (authModal) {
@@ -566,6 +572,46 @@ function formatTime(date) {
     return `${Math.floor(diff / 3600000)}時間前`;
   } else {
     return `${Math.floor(diff / 86400000)}日前`;
+  }
+}
+
+/**
+ * データベースリセット処理（iOS Safari対応）
+ */
+async function handleResetDatabase() {
+  const confirmed = confirm(
+    'データベースをリセットしますか？\n\n' +
+    'この操作により、すべてのローカルデータが削除されます。\n' +
+    'クラウド同期を使用している場合は、再度ダウンロードできます。\n\n' +
+    '続行しますか？'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const DB_NAME = 'YieldCalculatorDB';
+    const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+    deleteRequest.onsuccess = () => {
+      showToast('データベースを削除しました。ページを再読み込みします...', 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    };
+
+    deleteRequest.onerror = (event) => {
+      console.error('データベース削除エラー:', event.target.error);
+      showToast('データベースの削除に失敗しました', 'error');
+    };
+
+    deleteRequest.onblocked = () => {
+      showToast('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください', 'warning');
+    };
+  } catch (err) {
+    console.error('データベース削除に失敗:', err);
+    showToast('データベースの削除に失敗しました', 'error');
   }
 }
 

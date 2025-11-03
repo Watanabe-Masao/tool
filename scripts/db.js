@@ -204,11 +204,78 @@ export class YieldCalculatorDB {
         });
 
         // Safari対応: より広範なエラーをリトライ対象に
-        // DOMExceptionはすべてリトライを試みる（プライベートモードエラー以外）
+        // DOMExceptionはすべてリトライを試みる（プライベートモードエラー、VersionError以外）
         const isPrivateModeError = error?.message?.includes('private') ||
                                     error?.message?.includes('プライベート');
 
-        const isRetriableError = error && !isPrivateModeError;
+        // VersionErrorの判定を強化（名前とメッセージの両方をチェック）
+        const isVersionError = error?.name === 'VersionError' ||
+                                (error?.message && error.message.includes('lower version'));
+
+        if (isVersionError) {
+          // VersionErrorは致命的なエラー - リトライ絶対不可
+          console.error('⛔ VersionError: データベースバージョンの競合が発生しました');
+          console.error('⚠️ このエラーはリトライできません');
+          console.error('💡 対処方法:');
+          console.error('   1. すべてのタブを閉じる');
+          console.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
+          console.error('   3. それでも解決しない場合、ハードリロード (Cmd+Shift+R / Ctrl+Shift+R)');
+          console.error('   4. 最終手段: データベースを削除');
+
+          // iOS Safari対応: DBリセットボタンを表示
+          const resetButton = document.getElementById('reset-db-button');
+          if (resetButton) {
+            resetButton.style.display = 'inline-block';
+            console.log('💡 画面上部の「🔧 DBリセット」ボタンを押してデータベースをリセットしてください');
+          }
+
+          // 自動的にユーザーに確認ダイアログを表示
+          setTimeout(async () => {
+            const userChoice = confirm(
+              'データベースバージョンの競合が発生しました。\n\n' +
+              '【対処方法】\n' +
+              '1. すべてのタブを閉じて再読み込み\n' +
+              '2. 「🔧 DBリセット」ボタンを押す（推奨）\n\n' +
+              '今すぐデータベースをリセットしますか？\n' +
+              '（クラウド同期を使用している場合、データは再ダウンロードできます）'
+            );
+
+            if (userChoice) {
+              // データベースを削除
+              try {
+                this.close();
+                const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+                deleteRequest.onsuccess = () => {
+                  alert('データベースを削除しました。ページを再読み込みします。');
+                  window.location.reload();
+                };
+
+                deleteRequest.onerror = () => {
+                  alert('データベースの削除に失敗しました。ページを手動で再読み込みしてください。');
+                };
+
+                deleteRequest.onblocked = () => {
+                  alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
+                };
+              } catch (err) {
+                console.error('データベース削除エラー:', err);
+                alert('データベースの削除に失敗しました。ページを再読み込みしてください。');
+              }
+            } else {
+              alert('画面上部の「🔧 DBリセット」ボタンを使用するか、ページを再読み込みしてください。');
+            }
+          }, 100);
+
+          // 即座にrejectして終了（リトライさせない）
+          reject(createUserFriendlyError(
+            error,
+            'データベースを開く（バージョン競合: 他のタブを閉じてページを再読み込みしてください）'
+          ));
+          return; // 重要: ここで必ず終了
+        }
+
+        const isRetriableError = error && !isPrivateModeError && !isVersionError;
 
         if (isRetriableError && retryCount < this.maxRetries) {
           console.warn(`🔄 データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
@@ -768,6 +835,51 @@ if (typeof window !== 'undefined') {
     },
 
     /**
+     * データベースを完全に削除（VersionError対策）
+     */
+    deleteDatabase: async () => {
+      console.warn('⚠️ データベースを完全に削除します。すべてのデータが失われます！');
+      const confirmed = confirm(
+        'IndexedDBデータベースを削除しますか？\n\n' +
+        'この操作により、すべてのローカルデータが削除されます。\n' +
+        'クラウド同期を使用している場合は、再度ダウンロードできます。\n\n' +
+        '続行しますか？'
+      );
+
+      if (!confirmed) {
+        console.log('❌ キャンセルされました');
+        return;
+      }
+
+      try {
+        // DB接続を閉じる
+        db.close();
+        console.log('🔒 DB接続をクローズしました');
+
+        // DBを削除
+        const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+
+        deleteRequest.onsuccess = () => {
+          console.log('✅ データベースを削除しました');
+          console.log('💡 ページを再読み込みしてください');
+          alert('データベースを削除しました。ページを再読み込みしてください。');
+        };
+
+        deleteRequest.onerror = (event) => {
+          console.error('❌ データベース削除エラー:', event.target.error);
+          alert('データベースの削除に失敗しました。');
+        };
+
+        deleteRequest.onblocked = () => {
+          console.warn('⚠️ データベース削除がブロックされました。すべてのタブを閉じてください。');
+          alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
+        };
+      } catch (err) {
+        console.error('❌ データベース削除に失敗:', err);
+      }
+    },
+
+    /**
      * 全てのデバッグ情報を表示
      */
     showAll: () => {
@@ -782,5 +894,6 @@ if (typeof window !== 'undefined') {
   console.log('   - debugIndexedDB.getStatus() - データベース状態を表示');
   console.log('   - debugIndexedDB.getTransactionLog() - トランザクションログを表示');
   console.log('   - debugIndexedDB.checkEnvironment() - 環境情報を表示');
+  console.log('   - debugIndexedDB.deleteDatabase() - データベースを削除（VersionError対策）');
   console.log('   - debugIndexedDB.showAll() - 全情報を表示');
 }
