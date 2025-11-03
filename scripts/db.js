@@ -734,10 +734,14 @@ export const db = new YieldCalculatorDB();
 
 /**
  * ページライフサイクルイベントハンドラ
- * Safari対応: ページ離脱時やタブ非アクティブ時にDB接続をクローズして競合を防止
+ * Safari対応: ページ完全離脱時にDB接続をクローズして競合を防止
+ *
+ * 注意: visibilitychangeでのクローズは削除しました
+ * 理由: タブ切り替えのたびにFirestore接続も切断されてしまうため
+ * 単なるタブ切り替えではDBをクローズせず、接続を維持します
  */
 if (typeof window !== 'undefined') {
-  // ページを離れる前にDB接続をクローズ
+  // ページを離れる前にDB接続をクローズ（リロード、別ページへの移動）
   window.addEventListener('beforeunload', () => {
     if (db.db) {
       console.log('ページ離脱: IndexedDB接続をクローズ');
@@ -745,15 +749,7 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // タブが非アクティブになったらDB接続をクローズ（Safari対応）
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && db.db) {
-      console.log('タブ非アクティブ: IndexedDB接続をクローズ');
-      db.close();
-    }
-  });
-
-  // ページがフリーズされる前にクローズ（モバイルSafari対応）
+  // ページがフリーズされる前にクローズ（モバイルSafari bfcache対応）
   window.addEventListener('pagehide', () => {
     if (db.db) {
       console.log('ページ隠蔽: IndexedDB接続をクローズ');
