@@ -3945,3 +3945,57 @@ input[type="range"] {
     font-size: 0.9em;
   }
 }
+
+/* ============================================
+   計算モードボタンのレスポンシブ改善
+   ============================================ */
+@media (max-width: 768px) {
+  .btn-row[role="tablist"] {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5em;
+  }
+
+  .btn-row[role="tablist"] .btn-mode {
+    font-size: 0.85em;
+    padding: 0.6em 0.5em;
+    white-space: nowrap;
+  }
+}
+
+/* ============================================
+   歩留まり率入力方法のラジオボタン改善
+   ============================================ */
+.fieldset {
+  margin-bottom: 1em;
+}
+
+.fieldset .legend {
+  font-size: 0.95em;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
+.fieldset .radio {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 1.5em;
+  margin-bottom: 0.3em;
+  gap: 0.4em;
+}
+
+@media (max-width: 768px) {
+  .fieldset {
+    margin-bottom: 0.8em;
+  }
+
+  .fieldset .legend {
+    font-size: 0.9em;
+    margin-bottom: 0.4em;
+  }
+
+  .fieldset .radio {
+    font-size: 0.9em;
+    margin-bottom: 0.2em;
+  }
+}
