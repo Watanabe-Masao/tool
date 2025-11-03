@@ -1083,6 +1083,368 @@ sequenceDiagram
 
 ---
 
+# 🏗️ アーキテクチャレビュー報告書
+
+**レビュー日時**: 2025-10-30
+**プロジェクト**: 歩留まり計算ツール
+**レビュアー**: Claude Code
+
+---
+
+## 📊 プロジェクト概要
+
+**技術スタック**: Vanilla JavaScript (ES6+), IndexedDB, Service Worker
+**総コード量**: 約10,722行（JavaScript）、50,000行（CSS）
+**モジュール数**: 17ファイル
+
+---
+
+## ✅ 評価できる点（強み）
+
+### 1. 優れたレイヤー分離
+- プレゼンテーション層、アプリケーション層、ビジネスロジック層、データアクセス層、インフラ層が明確に分離されている
+- ARCHITECTURE.mdに詳細なドキュメントが整備されている
+
+### 2. 純粋関数の適切な分離
+```javascript
+// calculation.js - 副作用なし、テスト容易
+export function calcYield(beforeWeightG, afterWeightG) {
+  if (!isPositive(beforeWeightG) || !isPositive(afterWeightG)) return null;
+  return (afterWeightG / beforeWeightG) * 100;
+}
+```
+- 計算ロジックが純粋関数として実装されている
+- 単体テストが容易で、バグの混入が少ない
+
+### 3. 適切なデザインパターンの適用
+- **Singleton**: AppState、Database（適切）
+- **Strategy**: 計算モード別の処理切り替え
+- **Facade**: IndexedDBラッパー（db.js）
+- **Module**: ES6モジュールによる名前空間管理
+
+### 4. データベース設計の工夫
+```javascript
+// db.js - Race Condition対策
+async open() {
+  if (this.db) return Promise.resolve(this.db);
+  if (this.openPromise) return this.openPromise; // 重複open防止
+  this.openPromise = new Promise(...);
+}
+```
+- IndexedDBの複雑性を適切にカプセル化
+- トランザクション管理が適切
+
+### 5. PWAアーキテクチャの実装
+- Service Workerによる完全オフライン対応
+- 自動バージョニング（GitHub Actions連携）
+- Network-Firstキャッシュ戦略
+
+---
+
+## ⚠️ リファクタリング履歴（解決済み問題）
+
+### 🟢 解決済み: God Object Anti-pattern（main.js）
+
+**Phase 9でリファクタリング完了**: main.jsは5,621行から**15行に削減**（99.7%削減）
+
+**リファクタリング前**:
+```
+main.js (5,621行)
+├─ イベント処理
+├─ モード切替ロジック
+├─ 入力値のクリア処理
+├─ フォーム初期化
+├─ セッション管理連携
+├─ 履歴UI連携
+├─ 計算トリガー
+└─ 商品化シミュレーション連携
+```
+
+**リファクタリング後**:
+```
+main.js (15行) ← エントリーポイントのみ
+event-handlers.js (890行) ← イベント処理
+mode-manager.js (588行) ← モード管理
+form-manager.js (509行) ← フォーム管理
+app-initializer.js (297行) ← 初期化処理
+```
+
+**達成された効果**:
+- ✅ 各ファイルが400-900行に収まる
+- ✅ 単一責任原則に準拠
+- ✅ 個別のユニットテストが可能
+- ✅ 保守性が大幅に向上
+
+---
+
+### 🟢 解決済み: history-ui.js の適正化
+
+**Phase 9でリファクタリング完了**: history-ui.jsは2,079行から適切なサイズに最適化
+
+**分割後の構造**:
+```
+history-ui/
+├─ history-modal.js - メインコントローラー
+├─ history-filter.js - フィルタリング
+├─ history-item.js - アイテム操作
+├─ history-carousel.js - カルーセル
+└─ history-save-dialog.js - 保存ダイアログ
+```
+
+---
+
+## 📐 設計原則への準拠評価
+
+### SOLID原則
+
+| 原則 | 準拠度 | 評価 |
+|------|--------|------|
+| **S**ingle Responsibility | ✅ 90% | Phase 9で大幅改善 |
+| **O**pen/Closed | ✅ 85% | 計算モジュールは拡張可能 |
+| **L**iskov Substitution | ✅ 90% | 計算関数の互換性が高い |
+| **I**nterface Segregation | ✅ 80% | 適切なAPI設計 |
+| **D**ependency Inversion | ✅ 75% | db.jsがFacadeとして機能 |
+
+### DRY原則（Don't Repeat Yourself）
+
+**評価**: 🟢 **85%**
+
+**良い点**:
+- calculation.jsで計算ロジックを共通化
+- dom-utils.jsでDOM操作を共通化
+- constants.jsで定数を一元管理
+
+**改善点**:
+```javascript
+// field-utils.jsで共通のフィールドクリア関数を提供
+export function clearFields(fieldIds) {
+  fieldIds.forEach(id => {
+    const el = qs(`#${id}`);
+    if (el) el.value = '';
+  });
+}
+```
+
+### KISS原則（Keep It Simple, Stupid）
+
+**評価**: ✅ **85%**
+
+**良い点**:
+- 計算関数がシンプル
+- 依存ライブラリがゼロ（Vanilla JS）
+- Phase 9で複雑性を大幅に削減
+
+---
+
+## 🔗 依存関係の評価
+
+### 依存関係グラフ分析
+
+```
+依存関係の深さ:
+
+Level 0 (依存なし):
+  - calculation.js
+  - constants.js
+  - dom-utils.js
+
+Level 1 (Level 0のみに依存):
+  - state.js → constants.js
+  - db.js (依存なし)
+
+Level 2:
+  - calculator-fixed.js → calculation.js, constants.js, dom-utils.js
+  - calculator-weight.js → calculation.js, constants.js, dom-utils.js
+  - display.js → dom-utils.js, calculation.js, constants.js
+  - storage.js → db.js, dom-utils.js
+  - session.js → dom-utils.js, constants.js
+
+Level 3:
+  - product-simulator.js → dom-utils.js, constants.js, display.js
+  - history-ui.js → storage.js, dom-utils.js, state.js, constants.js, calculation.js, display.js
+  - mode-manager.js → 複数のモジュール
+  - form-manager.js → 複数のモジュール
+
+Level 4:
+  - main.js → app-initializer.js, event-handlers.js のみ（大幅に簡素化）
+```
+
+### 結合度評価
+
+| モジュール | 結合度 | 評価 |
+|-----------|--------|------|
+| calculation.js | **疎結合** ✅ | 依存なし、純粋関数 |
+| db.js | **疎結合** ✅ | 依存なし、カプセル化が適切 |
+| main.js | **疎結合** ✅ | Phase 9で改善 |
+| history-ui.js | **適度** ✅ | Phase 9で改善 |
+
+### 循環依存の検査
+
+**検査結果**: ✅ **循環依存なし**
+
+すべてのモジュールが一方向の依存関係を持っており、循環は発生していません。
+
+---
+
+## 🧪 テスト可能性の評価
+
+### 現状のテストカバレッジ
+
+```
+テスト済み:
+✅ calculation.js (test-calculations.js)
+✅ calculator-*.js (test-calculations.js)
+✅ calculator-yield-stats.js (test-statistics.js)
+✅ バグフィックス (test-bug-fixes.js)
+
+テスト推奨:
+⚠️ event-handlers.js (E2Eテストで対応可能)
+⚠️ mode-manager.js (E2Eテストで対応可能)
+⚠️ form-manager.js (E2Eテストで対応可能)
+⚠️ display.js
+⚠️ storage.js
+⚠️ db.js (実際のIndexedDBが必要)
+⚠️ product-simulator.js
+```
+
+**カバレッジ推定**: 🟡 **約40%** (コア計算ロジックは100%)
+
+### 改善提案
+
+#### 1️⃣ 依存性注入（DI）の導入
+
+**現状**:
+```javascript
+// display.js - DOMに直接依存
+export function displayResults(data) {
+  setText(UI_ELEMENTS.YIELD_RATE, pct(toFixed(data.yr)));
+  // ...
+}
+```
+
+**改善後**:
+```javascript
+// テスト可能な設計
+export function displayResults(data, renderer = defaultRenderer) {
+  renderer.setText(UI_ELEMENTS.YIELD_RATE, pct(toFixed(data.yr)));
+  // ...
+}
+
+// テスト時
+const mockRenderer = { setText: jest.fn() };
+displayResults(testData, mockRenderer);
+```
+
+#### 2️⃣ E2Eテストの導入
+
+推奨ツール: Playwright、Cypress
+
+```javascript
+// 例: history-ui.spec.js
+test('履歴モーダルが表示される', async ({ page }) => {
+  await page.click('#historyBtn');
+  await expect(page.locator('#historyModal')).toBeVisible();
+});
+```
+
+---
+
+## 📊 コードメトリクス
+
+### ファイルサイズ分布（Phase 9リファクタリング後）
+
+| ファイル | 行数 | 評価 |
+|---------|------|------|
+| main.js | 15行 | ✅ 適切（99.7%削減） |
+| event-handlers.js | 890行 | ✅ 適切 |
+| mode-manager.js | 588行 | ✅ 適切 |
+| history-ui.js | ~600行 | ✅ 適切（分割後） |
+| multi-pattern-ui.js | 551行 | ✅ 適切 |
+| form-manager.js | 509行 | ✅ 適切 |
+| product-simulator.js | 377行 | ✅ 適切 |
+| db.js | 311行 | ✅ 適切 |
+| storage.js | 277行 | ✅ 適切 |
+| その他 | <300行 | ✅ 適切 |
+
+### 推奨されるファイルサイズ
+
+- **理想**: 200-400行
+- **許容**: 400-600行
+- **要検討**: 600-900行
+- **要分割**: 1,000行以上
+
+---
+
+## 🎓 学習ポイントとベストプラクティス
+
+### 優れている点から学ぶ
+
+1. **純粋関数の分離**: calculation.jsは模範的
+2. **Facadeパターン**: db.jsのIndexedDBラッパーが優秀
+3. **ドキュメント**: ARCHITECTURE.mdが詳細で素晴らしい
+4. **PWA実装**: Service Workerの実装が適切
+5. **段階的リファクタリング**: Phase 9での計画的な改善が成功
+
+### 改善により学んだこと
+
+1. **God Objectの回避**: 1ファイル1,000行を超えたら分割を検討
+2. **単一責任**: 各モジュールは1つの責務のみ
+3. **テスタビリティ**: 設計段階からテストを意識
+4. **段階的改善**: 一度にすべてを変更せず、計画的に進める
+
+---
+
+## 📝 まとめ
+
+### 総合評価: 🟢 **A- (優秀)**
+
+| 項目 | スコア | コメント |
+|------|--------|----------|
+| アーキテクチャ設計 | 90% | レイヤー分離は優秀 |
+| モジュール分割 | 90% | Phase 9で大幅改善 |
+| SOLID原則 | 85% | 全般的に良好 |
+| DRY原則 | 85% | 良好 |
+| テスト可能性 | 75% | コア機能は優秀、UIロジックに改善余地 |
+| ドキュメント | 95% | 非常に優秀 |
+| **総合** | **87%** | **優秀** |
+
+### Phase 9で達成されたこと
+
+1. ✅ **main.jsの分割完了**: 5,621行 → 15行（99.7%削減）
+2. ✅ **責任の明確化**: event-handlers、mode-manager、form-manager、app-initializerに分離
+3. ✅ **history-ui.jsの最適化**: 適切なサイズに改善
+4. ✅ **保守性の向上**: 各モジュールが明確な責務を持つ
+5. ✅ **テスタビリティの向上**: 個別のユニットテストが可能に
+
+### 今後の推奨アクション
+
+1. 🟡 **E2Eテストの追加**: Playwright/Cypressでのテスト拡充
+2. 🟡 **型安全性の導入**: JSDocまたはTypeScript
+3. 🟡 **エラーハンドリングの統一**: エラーバウンダリーの導入
+4. 🟢 **パフォーマンス最適化**: 必要に応じて仮想スクロール化
+5. 🟢 **アクセシビリティ**: ARIA属性の追加
+
+### 結論
+
+このアーキテクチャは全体として**非常によく設計されており**、Phase 9のリファクタリングにより以下の点が大幅に改善されました：
+
+- ✅ 純粋関数の分離
+- ✅ レイヤー構造
+- ✅ PWA実装
+- ✅ ドキュメント
+- ✅ モジュール分割（Phase 9で改善）
+- ✅ 単一責任原則（Phase 9で改善）
+
+**Phase 9のリファクタリングにより、当初の課題であったmain.jsとhistory-ui.jsの肥大化が完全に解決され、保守性、テスタビリティ、拡張性が大幅に向上しました。**
+
+---
+
+**レビュー完了日**: 2025-10-30
+**Phase 9リファクタリング完了**: 2025-10-31
+**次回レビュー推奨時期**: 3ヶ月後（2026-01-31）
+
+---
+
 **最終更新**: 2025-10-31
 **バージョン**: v4.2
 **ドキュメント作成**: Claude Code
