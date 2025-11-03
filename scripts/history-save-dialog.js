@@ -396,7 +396,8 @@ export async function handleOverwriteSave(showToastCallback) {
     await updateProductNamePresets();
   } catch (error) {
     console.error('Overwrite save error:', error);
-    showToastCallback('❌ 上書き保存に失敗しました', 'error');
+    const errorMessage = error.message || '上書き保存に失敗しました';
+    showToastCallback(`❌ ${errorMessage}`, 'error');
   }
 }
 
@@ -475,7 +476,8 @@ export async function handleNewSave(showToastCallback) {
     await updateProductNamePresets();
   } catch (error) {
     console.error('New save error:', error);
-    showToastCallback('❌ 新規保存に失敗しました', 'error');
+    const errorMessage = error.message || '新規保存に失敗しました';
+    showToastCallback(`❌ ${errorMessage}`, 'error');
   }
 }
 
@@ -577,6 +579,7 @@ export async function handleSaveCalculation(showToastCallback) {
     await updateProductNamePresets();
   } catch (error) {
     console.error('Save error:', error);
-    showToastCallback('❌ 保存に失敗しました', 'error');
+    const errorMessage = error.message || '保存に失敗しました';
+    showToastCallback(`❌ ${errorMessage}`, 'error');
   }
 }

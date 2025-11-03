@@ -111,7 +111,13 @@ export async function searchHistory(query) {
 
 /**
  * 履歴を削除（オンライン時のみ）
- * Firestoreから物理削除 → ローカルからも物理削除
+ * ローカルから物理削除 → Firestoreからも物理削除
+ *
+ * 削除順序の理由：
+ * 1. ローカル削除を先に実行することで、クラウド削除が失敗しても
+ *    次回アップロード時にデータが復活することを防ぐ
+ * 2. ローカル削除が失敗した場合は、クラウド削除を実行しない（整合性維持）
+ *
  * @param {number} id - レコードID
  * @returns {Promise<void>}
  */
@@ -122,13 +128,14 @@ export async function deleteHistory(id) {
   }
 
   try {
-    // 1. クラウド（Firestore）から物理削除
+    // 1. ローカル（IndexedDB）から物理削除
+    await db.delete(id);
+    console.log(`✅ ローカルから削除しました (ID: ${id})`);
+
+    // 2. クラウド（Firestore）からも物理削除
     await deleteFromCloud(id);
 
-    // 2. ローカル（IndexedDB）からも物理削除
-    await db.delete(id);
-
-    console.log(`✅ データを削除しました (ID: ${id})`);
+    console.log(`✅ データを完全に削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
     throw error;

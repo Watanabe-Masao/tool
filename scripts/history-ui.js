@@ -434,7 +434,10 @@ async function handleDeleteCalculation(id) {
     await renderHistoryList();
     showToast('✅ 削除しました');
   } catch (error) {
-    showToast('❌ 削除に失敗しました', 'error');
+    // エラーメッセージを表示（オンラインチェックのエラーを含む）
+    const errorMessage = error.message || '削除に失敗しました';
+    showToast(`❌ ${errorMessage}`, 'error');
+    console.error('Delete error:', error);
   }
 }
 

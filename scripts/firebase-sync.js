@@ -115,8 +115,8 @@ export async function uploadToCloud() {
     let localHistory;
     if (lastSyncTime && !isNaN(lastSyncTime.getTime())) {
       localHistory = allHistory.filter(item => {
-        // updatedAtまたはdeletedAtフィールドを確認
-        const checkTime = item.deletedAt || item.updatedAt;
+        // updatedAtフィールドを確認
+        const checkTime = item.updatedAt;
         if (!checkTime) {
           // タイムスタンプがない場合は常にアップロード
           return true;
