@@ -638,6 +638,7 @@ function updateUIForAuthState(user) {
   const downloadFileBtn = document.getElementById('download-file-btn');
   const uploadFileBtn = document.getElementById('upload-file-btn');
   const cleanupFirestoreBtn = document.getElementById('cleanup-firestore-button');
+  const deletedDataBtn = document.getElementById('deleted-data-button');
 
   if (user) {
     // ログイン中
@@ -652,6 +653,7 @@ function updateUIForAuthState(user) {
     if (downloadFileBtn) downloadFileBtn.disabled = false;
     if (uploadFileBtn) uploadFileBtn.disabled = false;
     if (cleanupFirestoreBtn) cleanupFirestoreBtn.disabled = false;
+    if (deletedDataBtn) deletedDataBtn.disabled = false;
   } else {
     // 未ログイン
     if (authStatus) {
@@ -665,6 +667,7 @@ function updateUIForAuthState(user) {
     if (downloadFileBtn) downloadFileBtn.disabled = true;
     if (uploadFileBtn) uploadFileBtn.disabled = true;
     if (cleanupFirestoreBtn) cleanupFirestoreBtn.disabled = true;
+    if (deletedDataBtn) deletedDataBtn.disabled = true;
   }
 }
 
