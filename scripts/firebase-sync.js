@@ -144,51 +144,30 @@ export async function uploadToCloud() {
     let batchCount = 0;
     let totalUploaded = 0;
     const errors = [];
-    const itemsNeedingFirestoreIdUpdate = []; // firestoreIdを更新する必要があるアイテム
 
     for (const item of localHistory) {
       try {
-        let firestoreId;
-        let docRef;
+        // UUIDをFirestoreドキュメントIDとして使用
+        if (!item.uuid) {
+          console.error(`❌ UUID未設定のアイテムをスキップ (IndexedDB ID: ${item.id})`);
+          errors.push({ itemId: item.id, error: 'UUID not found' });
+          continue;
+        }
 
-        // 既存のfirestoreIdがあればそれを使用、なければ新規作成
-        if (item.firestoreId) {
-          firestoreId = item.firestoreId;
-          docRef = firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .doc(firestoreId);
+        const docRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('history')
+          .doc(item.uuid); // UUIDをドキュメントIDとして使用
 
-          if (totalUploaded === 0) {
-            console.log('📤 既存firestoreIdを使用:', firestoreId);
-          }
-        } else {
-          // firestoreIdがない場合は、Firestoreの自動生成IDを使用
-          docRef = firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .doc(); // 自動生成
-
-          firestoreId = docRef.id;
-
-          if (totalUploaded === 0) {
-            console.log('📤 新規firestoreId生成:', firestoreId);
-          }
-
-          // ローカルに後で更新するためにリストに追加
-          itemsNeedingFirestoreIdUpdate.push({
-            localId: item.id,
-            firestoreId: firestoreId
-          });
+        if (totalUploaded === 0) {
+          console.log('📤 UUID方式でアップロード:', item.uuid);
         }
 
         // タイムスタンプを追加（idフィールドは除外）
-        const { id, ...itemData } = item;
+        const { id, firestoreId, ...itemData } = item; // firestoreIdも除外（互換性のため）
         const dataToUpload = {
           ...itemData,
-          firestoreId: firestoreId,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
           deviceId: getDeviceId(),
         };
@@ -215,19 +194,6 @@ export async function uploadToCloud() {
     if (batchCount > 0) {
       await batch.commit();
       console.log(`✅ 最終バッチコミット成功: ${totalUploaded}件`);
-    }
-
-    // ローカルデータベースにfirestoreIdを保存
-    if (itemsNeedingFirestoreIdUpdate.length > 0) {
-      console.log(`📝 ${itemsNeedingFirestoreIdUpdate.length}件のfirestoreIdをローカルに保存中...`);
-      for (const { localId, firestoreId } of itemsNeedingFirestoreIdUpdate) {
-        try {
-          await dbInstance.update(localId, { firestoreId });
-        } catch (updateError) {
-          console.warn(`⚠️ firestoreId更新失敗 (ID: ${localId}):`, updateError);
-        }
-      }
-      console.log('✅ firestoreId保存完了');
     }
 
     // エラーがあった場合は警告を表示
@@ -493,33 +459,48 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
   const RETRY_DELAY = 200; // 基本遅延を100ms→200msに増加
 
   try {
-    // firestoreIdで照合（新しい方式）
-    const firestoreId = cloudItem.firestoreId;
+    // UUIDで照合（新しい方式）
+    const uuid = cloudItem.uuid;
     let localItem = null;
 
-    if (firestoreId) {
-      // firestoreIdがある場合はそれで検索
-      localItem = await dbInstance.getByFirestoreId(firestoreId);
+    if (uuid) {
+      // UUIDがある場合はそれで検索
+      localItem = await dbInstance.getByUuid(uuid);
     } else {
-      // 互換性レイヤー: 古いデータ（数値IDベース）の対応
-      // FirestoreドキュメントIDが数値文字列の場合は、旧方式として処理
-      const numericId = !isNaN(Number(cloudItem.id)) ? Number(cloudItem.id) : null;
-      if (numericId) {
-        localItem = await dbInstance.getById(numericId);
-        // 見つかった場合、firestoreIdを設定して今後の照合に備える
-        if (localItem && !localItem.firestoreId) {
-          console.log(`🔄 旧データ移行: IndexedDB ID:${numericId} に firestoreId を設定`);
-          await dbInstance.update(numericId, { firestoreId: cloudItem.id });
-          localItem.firestoreId = cloudItem.id;
+      // 互換性レイヤー: 古いデータ（firestoreIdまたは数値IDベース）の対応
+      if (cloudItem.firestoreId) {
+        // firestoreIdベースの旧データ
+        localItem = await dbInstance.getByFirestoreId(cloudItem.firestoreId);
+        // 見つかった場合、UUIDを生成して設定
+        if (localItem && !localItem.uuid) {
+          const newUuid = cloudItem.id; // FirestoreドキュメントID自体がUUIDの可能性
+          console.log(`🔄 旧データ移行: firestoreId "${cloudItem.firestoreId}" に UUID "${newUuid}" を設定`);
+          await dbInstance.update(localItem.id, { uuid: newUuid });
+          localItem.uuid = newUuid;
+        }
+      } else {
+        // 数値IDベースの最も古いデータ
+        const numericId = !isNaN(Number(cloudItem.id)) ? Number(cloudItem.id) : null;
+        if (numericId) {
+          localItem = await dbInstance.getById(numericId);
+          // 見つかった場合、UUIDを生成して設定
+          if (localItem && !localItem.uuid) {
+            const newUuid = generateUUID();
+            console.log(`🔄 旧データ移行: IndexedDB ID:${numericId} に新しいUUID "${newUuid}" を生成`);
+            await dbInstance.update(numericId, { uuid: newUuid });
+            localItem.uuid = newUuid;
+            // Firestoreにも反映するためにcloudItemを更新
+            cloudItem.uuid = newUuid;
+          }
         }
       }
     }
 
     if (!localItem) {
       // 新規アイテム: IndexedDBが自動的に新しいIDを割り当てるため、idフィールドを除外
-      const { id, ...itemWithoutId } = cloudItem;
+      const { id, firestoreId, ...itemWithoutId } = cloudItem;
       const newId = await dbInstance.save(itemWithoutId);
-      console.log(`📥 新規インポート (firestoreId: ${firestoreId || cloudItem.id} → IndexedDB ID: ${newId})`);
+      console.log(`📥 新規インポート (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
@@ -528,13 +509,13 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
-        const { id, ...itemWithoutId } = cloudItem;
+        const { id, firestoreId, ...itemWithoutId } = cloudItem;
         await dbInstance.update(localItem.id, itemWithoutId);
-        console.log(`🔄 更新 (firestoreId: ${firestoreId || cloudItem.id} → IndexedDB ID: ${localItem.id})`);
+        console.log(`🔄 更新 (UUID: ${uuid || cloudItem.id} → IndexedDB ID: ${localItem.id})`);
         return 'updated';
       } else {
         // ローカルの方が新しい→スキップ
-        console.log(`⏭️ スキップ (firestoreId: ${firestoreId || cloudItem.id})`);
+        console.log(`⏭️ スキップ (UUID: ${uuid || cloudItem.id})`);
         return 'skipped';
       }
     }
@@ -578,7 +559,26 @@ function getDeviceId() {
 }
 
 /**
- * IDを生成
+ * UUID v4を生成
+ * @returns {string} UUID (例: "550e8400-e29b-41d4-a916-446655440000")
+ */
+function generateUUID() {
+  // 最新ブラウザではcrypto.randomUUID()を使用
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // フォールバック: UUID v4の形式で生成
+  // xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
+ * IDを生成（後方互換性のため残す）
  */
 function generateId() {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
