@@ -5,6 +5,7 @@
 
 import { setupEventHandlers } from './event-handlers-setup.js';
 import { initializeFirebaseUI } from './firebase-ui.js';
+import { initializeSimpleHeader } from './simple-header.js';
 
 // グローバルエラーハンドラ - "Script error."を防ぐ
 window.addEventListener('error', (event) => {
@@ -36,6 +37,9 @@ async function initializeApp() {
 
     // Firebase初期化（設定で有効になっている場合のみ）
     await initializeFirebaseUI();
+
+    // シンプルヘッダー初期化
+    initializeSimpleHeader();
   } catch (error) {
     console.error('[App Initialization Error]', error);
     // ユーザーにエラーを表示
