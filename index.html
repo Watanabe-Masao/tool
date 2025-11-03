@@ -13,31 +13,52 @@
   <link rel="stylesheet" href="styles/main.css" />
   <link rel="stylesheet" href="styles/history.css" />
   <link rel="stylesheet" href="styles/firebase.css" />
+  <link rel="stylesheet" href="styles/settings.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
 <body>
   <main class="container">
-    <h1 class="app-title">🧮 歩留まり計算ツール</h1>
-
-    <!-- クラウド同期ステータス -->
-    <div id="cloud-sync-header" class="cloud-sync-header">
-      <div class="sync-status-container">
-        <span id="auth-status" class="auth-status">☁️ 未ログイン</span>
-        <span id="sync-status" class="sync-status-text"></span>
-      </div>
-      <div class="sync-buttons">
-        <button type="button" id="signin-button" class="btn btn-secondary btn-sm">ログイン</button>
-        <button type="button" id="signout-button" class="btn btn-secondary btn-sm" style="display: none;">ログアウト</button>
-        <button type="button" id="sync-button" class="btn btn-primary btn-sm" disabled>🔄 同期</button>
-        <button type="button" id="download-file-btn" class="btn btn-secondary btn-sm" disabled title="クラウドからJSONファイルをダウンロード">📥 ダウンロード</button>
-        <button type="button" id="upload-file-btn" class="btn btn-secondary btn-sm" disabled title="JSONファイルをクラウドにアップロード">📤 アップロード</button>
-        <button type="button" id="reset-db-button" class="btn btn-secondary btn-sm" style="display: none;" title="データベースをリセット（VersionError対策）">🔧 DBリセット</button>
-        <button type="button" id="cleanup-firestore-button" class="btn btn-secondary btn-sm" disabled title="Firestore上の重複データを削除">🧹 重複削除</button>
-        <button type="button" id="check-sync-status-button" class="btn btn-secondary btn-sm" title="同期状態を確認（iOS Safari対応）">📊 状態確認</button>
-        <input type="file" id="upload-file-input" accept=".json" style="display: none;" />
+    <!-- ヘッダー -->
+    <div class="app-header">
+      <h1 class="app-title">🧮 歩留まり計算ツール</h1>
+      <div class="header-actions">
+        <button type="button" id="refresh-button" class="icon-btn" title="同期" aria-label="同期">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+        <button type="button" id="settings-button" class="icon-btn" title="設定" aria-label="設定">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v10M3.93 3.93l4.24 4.24m5.66 5.66l4.24 4.24M1 12h6m6 0h10M3.93 20.07l4.24-4.24m5.66-5.66l4.24-4.24"/>
+          </svg>
+        </button>
       </div>
     </div>
+
+    <!-- ステータスバー -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span id="auth-status-icon" class="status-icon">☁️</span>
+        <span id="auth-status-text" class="status-text">未ログイン</span>
+      </div>
+      <div class="status-item">
+        <span id="sync-status-icon" class="status-icon sync-indicator"></span>
+        <span id="sync-status-text" class="status-text"></span>
+      </div>
+    </div>
+
+    <!-- 隠しボタン・入力（既存機能維持） -->
+    <button type="button" id="signin-button" style="display: none;"></button>
+    <button type="button" id="signout-button" style="display: none;"></button>
+    <button type="button" id="sync-button" style="display: none;"></button>
+    <button type="button" id="download-file-btn" style="display: none;"></button>
+    <button type="button" id="upload-file-btn" style="display: none;"></button>
+    <button type="button" id="reset-db-button" style="display: none;"></button>
+    <button type="button" id="cleanup-firestore-button" style="display: none;"></button>
+    <button type="button" id="check-sync-status-button" style="display: none;"></button>
+    <input type="file" id="upload-file-input" accept=".json" style="display: none;" />
 
     <!-- モード切替 -->
     <section class="card section" aria-labelledby="modeHeading">
@@ -1625,6 +1646,78 @@
               <a href="#" onclick="showSignInSection(); return false;">ログインに戻る</a>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定モーダル -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content settings-modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">⚙️ 設定</h2>
+        <button type="button" id="close-settings-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- ユーザー情報 -->
+        <section class="settings-section">
+          <h3 class="settings-section-title">👤 ユーザー情報</h3>
+          <div class="user-info">
+            <div class="info-row">
+              <span class="info-label">ステータス</span>
+              <span id="settings-auth-status" class="info-value">未ログイン</span>
+            </div>
+            <div id="settings-user-email-row" class="info-row" style="display: none;">
+              <span class="info-label">メールアドレス</span>
+              <span id="settings-user-email" class="info-value">-</span>
+            </div>
+            <div id="settings-user-id-row" class="info-row" style="display: none;">
+              <span class="info-label">ユーザーID</span>
+              <span id="settings-user-id" class="info-value mono">-</span>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button type="button" id="settings-signin-btn" class="btn btn-primary btn-block">
+              ログイン
+            </button>
+            <button type="button" id="settings-signout-btn" class="btn btn-secondary btn-block" style="display: none;">
+              ログアウト
+            </button>
+          </div>
+        </section>
+
+        <!-- データ管理 -->
+        <section class="settings-section">
+          <h3 class="settings-section-title">💾 データ管理</h3>
+          <div class="settings-actions">
+            <button type="button" id="settings-download-btn" class="btn btn-secondary btn-block" disabled>
+              📥 クラウドからダウンロード
+            </button>
+            <button type="button" id="settings-upload-btn" class="btn btn-secondary btn-block" disabled>
+              📤 クラウドへアップロード
+            </button>
+            <button type="button" id="settings-cleanup-btn" class="btn btn-secondary btn-block" disabled>
+              🧹 重複データを削除
+            </button>
+          </div>
+        </section>
+
+        <!-- システム -->
+        <section class="settings-section">
+          <h3 class="settings-section-title">🔧 システム</h3>
+          <div class="settings-actions">
+            <button type="button" id="settings-status-btn" class="btn btn-secondary btn-block">
+              📊 同期状態を確認
+            </button>
+            <button type="button" id="settings-reset-db-btn" class="btn btn-secondary btn-block" style="display: none;">
+              🔧 データベースリセット
+            </button>
+          </div>
+        </section>
+
+        <!-- 最終同期時刻 -->
+        <div class="last-sync-info">
+          <small id="settings-last-sync">最終同期: -</small>
         </div>
       </div>
     </div>
