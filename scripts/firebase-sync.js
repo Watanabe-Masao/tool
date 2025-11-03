@@ -493,6 +493,112 @@ export async function deleteFromCloud(id) {
 }
 
 /**
+ * Firestoreに直接保存（ベストプラクティス：Firestoreを真実の源泉とする）
+ * @param {Object} data - 保存するデータ
+ * @returns {Promise<{id: number, uuid: string}>} IndexedDB IDとFirestore UUID
+ */
+export async function saveToCloud(data) {
+  if (!isSignedIn()) {
+    throw new Error('保存はオンライン時のみ可能です。ログインしてください。');
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // UUIDを生成（FirestoreドキュメントIDとして使用）
+    const uuid = generateUUID();
+
+    // Firestoreに保存
+    const docRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .doc(uuid);
+
+    const dataToSave = {
+      ...data,
+      uuid: uuid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      deviceId: getDeviceId()
+    };
+
+    await docRef.set(dataToSave);
+    console.log(`✅ Firestoreに保存しました (UUID: ${uuid})`);
+
+    // IndexedDBにもキャッシュとして保存
+    const localData = {
+      ...data,
+      uuid: uuid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const localId = await dbInstance.save(localData);
+    console.log(`✅ IndexedDBにキャッシュしました (ID: ${localId})`);
+
+    return { id: localId, uuid: uuid };
+  } catch (error) {
+    console.error('クラウド保存エラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * Firestoreを直接更新（ベストプラクティス：Firestoreを真実の源泉とする）
+ * @param {number} id - IndexedDB ID
+ * @param {Object} updates - 更新するデータ
+ * @returns {Promise<void>}
+ */
+export async function updateInCloud(id, updates) {
+  if (!isSignedIn()) {
+    throw new Error('更新はオンライン時のみ可能です。ログインしてください。');
+  }
+
+  try {
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+
+    // IndexedDBからUUIDを取得
+    const localItem = await dbInstance.getById(id);
+    if (!localItem) {
+      throw new Error(`IndexedDB ID:${id} が見つかりません`);
+    }
+
+    const uuid = localItem.uuid;
+    if (!uuid) {
+      throw new Error(`IndexedDB ID:${id} にUUIDが設定されていません`);
+    }
+
+    // Firestoreを更新
+    const docRef = firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('history')
+      .doc(uuid);
+
+    const dataToUpdate = {
+      ...updates,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await docRef.update(dataToUpdate);
+    console.log(`✅ Firestoreを更新しました (UUID: ${uuid})`);
+
+    // IndexedDBキャッシュも更新
+    const localUpdates = {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    await dbInstance.update(id, localUpdates);
+    console.log(`✅ IndexedDBキャッシュを更新しました (ID: ${id})`);
+  } catch (error) {
+    console.error('クラウド更新エラー:', error);
+    throw error;
+  }
+}
+
+/**
  * クラウドから全データを削除
  * @returns {Promise<boolean>}
  */

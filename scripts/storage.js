@@ -4,11 +4,12 @@
 
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
-import { deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
+import { saveToCloud, updateInCloud, deleteFromCloud, clearAllFromCloud } from './firebase-sync.js';
 import { isSignedIn } from './firebase-auth.js';
 
 /**
  * 現在の計算データを保存（オンライン時のみ）
+ * ベストプラクティス：Firestoreに直接保存 → IndexedDBにキャッシュ
  * @param {string} name - 商品名
  * @param {string} mode - 計算モード (fixed/weight)
  * @param {Object} inputData - 入力データ
@@ -18,11 +19,6 @@ import { isSignedIn } from './firebase-auth.js';
  * @returns {Promise<number>} 保存されたレコードのID
  */
 export async function saveCalculation(name, mode, inputData, resultData, category = null, productData = null) {
-  // オンラインチェック
-  if (!isSignedIn()) {
-    throw new Error('保存はオンライン時のみ可能です。ログインしてください。');
-  }
-
   const data = {
     name,
     mode,
@@ -34,8 +30,9 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
   };
 
   try {
-    const id = await db.save(data);
-    return id;
+    // Firestoreに直接保存（IndexedDBにもキャッシュ）
+    const result = await saveToCloud(data);
+    return result.id; // IndexedDB IDを返す
   } catch (error) {
     console.error('Failed to save calculation:', error);
     throw error;
@@ -111,12 +108,12 @@ export async function searchHistory(query) {
 
 /**
  * 履歴を削除（オンライン時のみ）
- * ローカルから物理削除 → Firestoreからも物理削除
+ * ベストプラクティス：Firestoreから物理削除 → IndexedDBキャッシュからも削除
  *
- * 削除順序の理由：
- * 1. ローカル削除を先に実行することで、クラウド削除が失敗しても
- *    次回アップロード時にデータが復活することを防ぐ
- * 2. ローカル削除が失敗した場合は、クラウド削除を実行しない（整合性維持）
+ * 削除順序の理由（Firestore-first）：
+ * 1. Firestoreを先に削除することで、真実の源泉（master）を即座にクリーン化
+ * 2. Firestore削除が失敗した場合、ローカルデータは保持され再試行可能
+ * 3. Firestore削除が成功してローカル削除が失敗しても、次回同期で整合性が回復
  *
  * @param {number} id - レコードID
  * @returns {Promise<void>}
@@ -128,12 +125,13 @@ export async function deleteHistory(id) {
   }
 
   try {
-    // 1. ローカル（IndexedDB）から物理削除
-    await db.delete(id);
-    console.log(`✅ ローカルから削除しました (ID: ${id})`);
-
-    // 2. クラウド（Firestore）からも物理削除
+    // 1. Firestoreから物理削除（UUIDを読み取るためにdeleteFromCloudに渡す）
     await deleteFromCloud(id);
+    console.log(`✅ Firestoreから削除しました (ID: ${id})`);
+
+    // 2. ローカル（IndexedDB）キャッシュからも物理削除
+    await db.delete(id);
+    console.log(`✅ ローカルキャッシュからも削除しました (ID: ${id})`);
 
     console.log(`✅ データを完全に削除しました (ID: ${id})`);
   } catch (error) {
@@ -144,6 +142,7 @@ export async function deleteHistory(id) {
 
 /**
  * 既存の計算データを更新（上書き保存）（オンライン時のみ）
+ * ベストプラクティス：Firestoreを直接更新 → IndexedDBキャッシュも更新
  * @param {number} id - 更新するレコードのID
  * @param {string} name - 商品名
  * @param {string} mode - 計算モード (fixed/weight)
@@ -154,11 +153,6 @@ export async function deleteHistory(id) {
  * @returns {Promise<void>}
  */
 export async function updateCalculation(id, name, mode, inputData, resultData, category = null, productData = null) {
-  // オンラインチェック
-  if (!isSignedIn()) {
-    throw new Error('更新はオンライン時のみ可能です。ログインしてください。');
-  }
-
   const updates = {
     name,
     mode,
@@ -166,12 +160,12 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     input: inputData,
     result: resultData,
     product: productData,
-    // データ整合性: timestampは履歴のソート用、updatedAtはdb.update()で自動設定される
     timestamp: Date.now()
   };
 
   try {
-    await db.update(id, updates);
+    // Firestoreを直接更新（IndexedDBキャッシュも更新）
+    await updateInCloud(id, updates);
   } catch (error) {
     console.error('Failed to update calculation:', error);
     throw error;
@@ -180,23 +174,21 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
 
 /**
  * 商品名を更新（オンライン時のみ）
+ * ベストプラクティス：Firestoreを直接更新 → IndexedDBキャッシュも更新
  * @param {number} id - レコードID
  * @param {string} name - 新しい商品名
  * @param {string} category - 新しいカテゴリ（オプション）
  * @returns {Promise<void>}
  */
 export async function updateCalculationName(id, name, category = null) {
-  // オンラインチェック
-  if (!isSignedIn()) {
-    throw new Error('商品名の更新はオンライン時のみ可能です。ログインしてください。');
-  }
   try {
     const updates = { name };
     // データ整合性: null と undefined を区別（!= で両方をチェック）
     if (category != null) {
       updates.category = category;
     }
-    await db.update(id, updates);
+    // Firestoreを直接更新（IndexedDBキャッシュも更新）
+    await updateInCloud(id, updates);
   } catch (error) {
     console.error('Failed to update calculation name:', error);
     throw error;
