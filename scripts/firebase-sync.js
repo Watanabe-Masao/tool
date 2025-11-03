@@ -435,7 +435,7 @@ export async function downloadFromCloud() {
 }
 
 /**
- * クラウドで論理削除（削除フラグを設定）
+ * クラウドから物理削除
  * @param {number} id - IndexedDBのID
  * @returns {Promise<boolean>}
  */
@@ -463,20 +463,15 @@ export async function deleteFromCloud(id) {
       return true;
     }
 
-    // Firestoreに削除フラグを設定（論理削除）
+    // Firestoreから物理削除
     const docRef = firestore
       .collection('users')
       .doc(user.uid)
       .collection('history')
       .doc(uuid);
 
-    await docRef.set({
-      deleted: true,
-      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uuid: uuid
-    }, { merge: true });
-
-    console.log(`🗑️ Firestoreに削除フラグを設定しました (UUID: ${uuid})`);
+    await docRef.delete();
+    console.log(`✅ Firestoreから物理削除しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -594,12 +589,11 @@ export async function syncData() {
 }
 
 /**
- * IndexedDBから全履歴を取得（削除済みも含む）
- * アップロード時は削除フラグも同期する必要があるため
+ * IndexedDBから全履歴を取得
  */
 async function getAllHistoryFromIndexedDB() {
   try {
-    return await dbInstance.getAll({ includeDeleted: true });
+    return await dbInstance.getAll();
   } catch (error) {
     console.error('履歴取得エラー:', error);
     throw error;
@@ -672,26 +666,13 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
         itemWithoutId.uuid = uuid || cloudItem.id || generateUUID();
       }
 
-      // サーバーに削除フラグがある場合でもインポート（削除フラグ付きで）
       const newId = await dbInstance.save(itemWithoutId);
-      if (itemWithoutId.deleted) {
-        console.log(`📥 新規インポート（削除済み） (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
-      } else {
-        console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
-      }
+      console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
-      // ローカルに削除フラグがある場合、サーバーのデータで更新しない（ローカルの削除意思を尊重）
-      if (localItem.deleted) {
-        console.log(`⏭️ スキップ（ローカルで削除済み） (UUID: ${localItem.uuid})`);
-        return 'skipped';
-      }
-
       // 競合解決：タイムスタンプで判定
-      const cloudTime = cloudItem.updatedAt?.toDate?.() ||
-                        (cloudItem.deletedAt?.toDate?.() || new Date(cloudItem.timestamp));
-      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) :
-                        (localItem.deletedAt ? new Date(localItem.deletedAt) : new Date(localItem.timestamp));
+      const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
+      const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) : new Date(localItem.timestamp);
 
       if (cloudTime > localTime) {
         // クラウドの方が新しい→更新
@@ -707,13 +688,6 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
           // UUID不一致の場合はローカルのUUIDを保持（データ整合性優先）
           console.warn('⚠️ ローカルのUUIDを保持します');
           delete itemWithoutId.uuid; // updateメソッドで上書きされないように削除
-        }
-
-        // サーバーに削除フラグがある場合、ローカルにも削除フラグを設定
-        if (itemWithoutId.deleted) {
-          await dbInstance.softDelete(localItem.id);
-          console.log(`🗑️ 削除フラグを同期 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
-          return 'updated';
         }
 
         await dbInstance.update(localItem.id, itemWithoutId);
