@@ -222,6 +222,12 @@ export function clearYieldStatsInputs(addYieldStatsRowCallback) {
   if (yieldStatsResults) {
     yieldStatsResults.classList.add('is-hidden');
   }
+
+  // 複数パターン分析で使用する統計データのグローバル変数もクリア
+  if (typeof window !== 'undefined') {
+    window.statsDataByType = null;
+    window.lastCalculatedStats = null;
+  }
 }
 
 /**
@@ -310,6 +316,9 @@ export function switchMode(newMode, callbacks = {}) {
     // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
     const data = appState.getYieldStatsData();
     appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData(data);
+  } else if (currentMode === MODE.YIELD_STATS && (newMode === MODE.FIXED || newMode === MODE.WEIGHT)) {
+    // 歩留まり統計から定額/計量に切り替えた場合はフラグをリセット
+    appState.showYieldStatsWithMultiPattern = false;
   } else if (newMode === MODE.MULTI_PATTERN && currentMode !== MODE.YIELD_STATS) {
     // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示
     appState.showYieldStatsWithMultiPattern = false;
