@@ -521,13 +521,13 @@ body.modal-open {
 .history-item-stats {
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: 0.3em;
   margin-bottom: 0.5em;
 }
 
 .history-stats-row {
   display: flex;
-  gap: 0.75em;
+  gap: 0.5em;
   flex-wrap: wrap;
   align-items: center;
 }
