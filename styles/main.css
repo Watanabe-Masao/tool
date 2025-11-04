@@ -17,16 +17,18 @@
   --brand-dark: #1a7f37;
 
   --text-primary: #1f2328;
-  --text-secondary: #656d76;
+  --text-secondary: #636c76;
   --text-muted: #8c959f;
   --text-inverse: #ffffff;
 
   --surface: #ffffff;
   --surface-light: #f6f8fa;
-  --surface-dark: #eaeef2;
+  --surface-hover: #eaeef2;
+  --surface-dark: #d0d7de;
 
   --border: #d1d9e0;
-  --border-light: #e7ecf0;
+  --border-light: #e1e4e8;
+  --border-subtle: #eaeef2;
 
   --success: #1a7f37;
   --success-light: #2da44e;

@@ -37,20 +37,20 @@
 
 .btn-simple {
   padding: 0.5rem 1rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 6px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .btn-simple:hover:not(:disabled) {
-  background: var(--surface-light);
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand-dark);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -62,7 +62,8 @@
 .btn-simple:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  background: var(--surface-dark);
 }
 
 .sync-status-text {
