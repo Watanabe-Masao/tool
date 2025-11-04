@@ -186,38 +186,23 @@ export function createHistoryItemHTML(item, isFirst = true) {
  * @returns {Object} - {icon: string, tooltip: string}
  */
 function getSyncStatus(item) {
-  // Firestoreにデータが保存されているか確認
-  const hasFirestoreId = !!item.firestoreId;
+  // UUIDの存在をチェック（新しいデータはUUIDベース）
   const hasUuid = !!item.uuid;
 
-  // 更新時刻をチェック
-  const updatedAt = item.updatedAt;
-  const now = Date.now();
-  const isRecent = updatedAt && (now - updatedAt < 5000); // 5秒以内の更新
+  // 後方互換性: 古いデータはfirestoreIdをチェック
+  const hasFirestoreId = !!item.firestoreId;
 
-  if (hasFirestoreId && hasUuid) {
-    // Firestoreと同期済み
+  if (hasUuid || hasFirestoreId) {
+    // UUIDまたはFirestoreIDがある = クラウドと同期済み
     return {
       icon: '🟢',
       tooltip: '同期済み'
     };
-  } else if (isRecent) {
-    // 最近更新されたが、まだ同期されていない
-    return {
-      icon: '🟡',
-      tooltip: '更新確認中'
-    };
-  } else if (!hasFirestoreId) {
-    // Firestoreに保存されていない（ローカルのみ）
-    return {
-      icon: '🔴',
-      tooltip: '未同期'
-    };
   } else {
-    // その他のエラー状態
+    // UUIDもFirestoreIDもない = ローカルのみ
     return {
       icon: '🔴',
-      tooltip: 'エラー'
+      tooltip: '未同期（ローカルのみ）'
     };
   }
 }
