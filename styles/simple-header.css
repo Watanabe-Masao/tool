@@ -42,14 +42,15 @@
   background: var(--surface);
   border-radius: 6px;
   cursor: pointer;
-  color: var(--brand);
+  color: var(--text-secondary);
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .btn-simple:hover:not(:disabled) {
   background: var(--surface-light);
-  border-color: var(--brand);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
