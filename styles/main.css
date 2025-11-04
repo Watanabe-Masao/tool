@@ -2345,13 +2345,13 @@ input[type="range"]::-moz-range-thumb:hover {
   font-weight: 500;
   color: #333;
   width: 30%;
-  text-align: left;
+  text-align: right;
 }
 
 .stats-load-table .stats-value {
   font-weight: 700;
   color: var(--brand-dark);
-  text-align: left;
+  text-align: right;
   width: 35%;
   font-family: 'Courier New', monospace;
 }
