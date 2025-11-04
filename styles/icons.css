@@ -1,34 +1,28 @@
 /* ================================================
-   アイコンシステム - SVGアイコン用スタイル
+   アイコンシステム - Font Awesome用スタイル
    ================================================ */
 
-.icon {
+/* Font Awesomeアイコンの基本スタイル */
+i[class*="fa-"] {
   display: inline-block;
-  width: 1em;
-  height: 1em;
   vertical-align: middle;
-  fill: currentColor;
-  flex-shrink: 0;
 }
 
+/* アイコンサイズ */
 .icon-sm {
-  width: 0.875em;
-  height: 0.875em;
+  font-size: 0.875em;
 }
 
 .icon-md {
-  width: 1.25em;
-  height: 1.25em;
+  font-size: 1.25em;
 }
 
 .icon-lg {
-  width: 1.5em;
-  height: 1.5em;
+  font-size: 1.5em;
 }
 
 .icon-xl {
-  width: 2em;
-  height: 2em;
+  font-size: 2em;
 }
 
 /* アイコンとテキストの組み合わせ */
@@ -39,13 +33,13 @@
 }
 
 /* ボタン内のアイコン */
-button .icon,
-a .icon {
+button i[class*="fa-"],
+a i[class*="fa-"] {
   margin-right: 0.25em;
 }
 
 /* アイコンのみのボタン */
-.btn-icon .icon {
+.btn-icon i[class*="fa-"] {
   margin: 0;
 }
 
@@ -72,4 +66,18 @@ a .icon {
 
 .icon-muted {
   color: var(--text-muted);
+}
+
+/* アイコンの回転アニメーション（同期ボタンなど） */
+.icon-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
