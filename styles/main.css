@@ -232,11 +232,12 @@ body {
 
 input[type="number"] {
   padding: var(--space-3);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-family: var(--font-family);
   min-height: 44px;
+  max-width: 300px;
   width: 100%;
   color: var(--text-primary);
   background: var(--surface);
@@ -422,9 +423,10 @@ button:disabled:hover,
 
 .notice-warn {
   display: none;
-  background: #fff3cd;
+  background: #fff8e6;
+  border: 1px solid var(--warning);
   border-left: 4px solid var(--warning);
-  color: #856404;
+  color: #7d6608;
 }
 
 /***** 結果表示 *****/
@@ -790,18 +792,19 @@ input[type="range"] {
 }
 
 .yield-stats-table thead {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: var(--text-inverse);
+  background: var(--surface-dark);
+  color: var(--text-primary);
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 2px solid var(--border);
 }
 
 .yield-stats-table th {
   padding: var(--space-2) var(--space-2);
   text-align: left;
   font-weight: var(--font-weight-semibold);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border);
   line-height: var(--line-height-tight);
   font-size: var(--font-size-sm);
 }
@@ -822,7 +825,7 @@ input[type="range"] {
 }
 
 .yield-stats-table tbody tr:last-child {
-  background-color: #f0f4ff;
+  background-color: var(--surface-light);
 }
 
 .yield-stats-table td {
@@ -966,9 +969,10 @@ input[type="range"] {
 .stats-results {
   margin-top: 24px;
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  border: 2px solid var(--brand);
+  background: var(--surface);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 /* 統計グラフエリア */
@@ -3920,12 +3924,12 @@ input[type="range"] {
 }
 
 .toast-success {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: var(--success);
   color: white;
 }
 
 .toast-warning {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: var(--warning);
   color: white;
 }
 

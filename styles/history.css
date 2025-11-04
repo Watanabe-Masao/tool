@@ -462,8 +462,9 @@ body.modal-open {
 }
 
 .history-item-mode-label {
-  background: #5c6bc0;
-  color: #fff;
+  background: var(--brand-light);
+  color: var(--brand);
+  border: 1px solid var(--brand);
   padding: 0.25em 0.75em;
   border-radius: 16px;
   font-size: 0.85em;
@@ -476,8 +477,9 @@ body.modal-open {
 }
 
 .history-item-mode {
-  background: #5c6bc0;
-  color: #fff;
+  background: var(--brand-light);
+  color: var(--brand);
+  border: 1px solid var(--brand);
   padding: 0.25em 0.75em;
   border-radius: 16px;
   font-size: 0.85em;
@@ -565,16 +567,16 @@ body.modal-open {
 }
 
 .btn-load {
-  background: #5c6bc0;
+  background: var(--brand);
   color: #fff;
-  border-color: #5c6bc0;
+  border: 1px solid var(--brand-dark);
   padding: 0.4em 0.8em;
   font-size: 0.85em;
 }
 
 .btn-load:hover {
-  background: #4a5bb8;
-  border-color: #4a5bb8;
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
 }
 
 .btn-edit,
@@ -584,27 +586,27 @@ body.modal-open {
 }
 
 .btn-edit {
-  background: #ffa726;
-  color: #fff;
-  border-color: #ffa726;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .btn-edit:hover {
-  background: #fb8c00;
-  border-color: #fb8c00;
+  background: var(--surface-light);
+  border-color: var(--brand);
 }
 
 .btn-delete,
 .btn-danger {
-  background: #ef5350;
-  color: #fff;
-  border-color: #ef5350;
+  background: var(--surface);
+  color: var(--error);
+  border: 1px solid var(--border);
 }
 
 .btn-delete:hover,
 .btn-danger:hover {
-  background: #e53935;
-  border-color: #e53935;
+  background: #ffebee;
+  border-color: var(--error);
 }
 
 /* ============================================
