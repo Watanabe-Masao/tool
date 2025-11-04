@@ -826,6 +826,10 @@ input[type="range"] {
   font-size: 0.7rem;
 }
 
+#multiPatternInputs .section-description {
+  font-size: 0.7rem;
+}
+
 /* 品名入力欄 */
 .product-name-section {
   margin-bottom: 20px;
@@ -1911,13 +1915,14 @@ input[type="range"] {
   background-color: rgba(118, 75, 162, 0.05);
   font-weight: 600;
   color: #000;
+  font-size: 0.85rem;
 }
 
 /* 増減列の強調 */
 .multi-pattern-results-table td.result-positive,
 .multi-pattern-results-table td.result-negative {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 /* No.列のスタイル */
@@ -2303,8 +2308,8 @@ input[type="range"] {
 
 .stats-load-table .stats-value {
   font-weight: 700;
-  color: #1976d2;
-  text-align: right;
+  color: var(--brand-dark);
+  text-align: left;
   width: 35%;
   font-family: 'Courier New', monospace;
 }

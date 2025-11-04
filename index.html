@@ -915,10 +915,8 @@
 
       <!-- 歩留まり統計から読み込み（両モード共通） -->
       <div id="loadFromYieldStats" class="load-from-stats-section">
+        <h3 class="section-subtitle"><i class="fa-solid fa-chart-column"></i> 歩留まり統計から読み込む</h3>
         <div class="info-box" style="background: #f8f9fa; padding: 0.6em 0.8em;">
-          <p style="font-size: 0.85em; margin-bottom: 0.5em; color: #666;">
-            <strong><i class="fa-solid fa-chart-column"></i> 歩留まり統計から読み込む</strong>
-          </p>
 
           <!-- 統計タイプ選択 -->
           <div style="margin-bottom: 0.6em;">
@@ -945,21 +943,21 @@
                   <td class="stats-label">平均値</td>
                   <td class="stats-value" id="loadMeanValueDisplay">-</td>
                   <td class="stats-action">
-                    <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm">読み込む</button>
+                    <button type="button" id="loadStatsMeanBtn" class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> 読み込む</button>
                   </td>
                 </tr>
                 <tr>
                   <td class="stats-label">中央値</td>
                   <td class="stats-value" id="loadMedianValueDisplay">-</td>
                   <td class="stats-action">
-                    <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm">読み込む</button>
+                    <button type="button" id="loadStatsMedianBtn" class="btn btn-secondary btn-sm"><i class="fa-solid fa-download"></i> 読み込む</button>
                   </td>
                 </tr>
                 <tr class="recommended-row">
-                  <td class="stats-label">📌 推奨値</td>
+                  <td class="stats-label"><i class="fa-solid fa-star"></i> 推奨値</td>
                   <td class="stats-value" id="loadRecommendedValueDisplay">-</td>
                   <td class="stats-action">
-                    <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm">読み込む</button>
+                    <button type="button" id="loadStatsRecommendedBtn" class="btn btn-recommended btn-sm"><i class="fa-solid fa-download"></i> 読み込む</button>
                   </td>
                 </tr>
               </tbody>
@@ -980,12 +978,12 @@
           </div>
 
           <!-- データがない場合のボタン -->
-          <div id="loadStatsNoData" class="is-hidden" style="padding: 0.6em; background: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107; text-align: center;">
-            <p style="margin: 0 0 0.6em 0; font-size: 0.85em; color: #856404;">
-              歩留まり統計のデータがありません
+          <div id="loadStatsNoData" class="is-hidden" style="padding: 0.8em; background: rgba(45, 164, 78, 0.08); border-radius: 8px; border: 2px solid var(--brand); text-align: center;">
+            <p style="margin: 0 0 0.6em 0; font-size: 0.85em; color: var(--brand-dark); font-weight: 600;">
+              <i class="fa-solid fa-circle-info"></i> 歩留まり統計のデータがありません
             </p>
-            <button type="button" id="loadYieldStatsDataBtn" class="btn btn-primary btn-sm" style="font-size: 0.9em; padding: 0.5em 1.2em;">
-              <i class="fa-solid fa-chart-column"></i> 歩留まり統計データを読み込む
+            <button type="button" id="loadYieldStatsDataBtn" class="btn btn-primary btn-sm" style="font-size: 0.9em; padding: 0.6em 1.4em; font-weight: 600;">
+              <i class="fa-solid fa-file-import"></i> 歩留まり統計から取り込む
             </button>
           </div>
         </div>
