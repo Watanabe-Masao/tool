@@ -625,6 +625,15 @@ function init() {
   window.showTransferNotification = showTransferNotification;
   window.focusFirstPatternInput = focusFirstPatternInput;
 
+  // 歩留まり統計の商品名が変更されたら複数パターン分析にも動的に反映
+  qs('#yieldStatsProductName')?.addEventListener('input', (e) => {
+    const multiPatternProductName = qs('#multiPatternProductName');
+    // 複数パターン分析の商品名が読み取り専用の場合のみ同期
+    if (multiPatternProductName && multiPatternProductName.hasAttribute('readonly')) {
+      multiPatternProductName.value = e.target.value;
+    }
+  });
+
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
     // 歩留まり統計の商品名を複数パターン分析に引き継ぐ
