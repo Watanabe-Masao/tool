@@ -27,10 +27,10 @@
  * すべてのデータを削除
  */
 window.cleanupAll = async function() {
-  console.log('⚠️ すべてのデータを削除します...');
+  console.log('[警告] ️ すべてのデータを削除します...');
 
   const confirmed = confirm(
-    '⚠️ 本当にすべてのデータを削除しますか？\n\n' +
+    '[警告] ️ 本当にすべてのデータを削除しますか？\n\n' +
     'この操作は取り消せません！\n\n' +
     '削除されるデータ:\n' +
     '- Firestore（クラウド）\n' +
@@ -39,7 +39,7 @@ window.cleanupAll = async function() {
   );
 
   if (!confirmed) {
-    console.log('❌ キャンセルされました');
+    console.log('[エラー]  キャンセルされました');
     return;
   }
 
@@ -47,13 +47,13 @@ window.cleanupAll = async function() {
     // 動的にモジュールをインポート
     const { clearAllHistory } = await import('./storage.js');
 
-    console.log('🗑️ Firestore & IndexedDB を削除中...');
+    console.log('[削除]  Firestore & IndexedDB を削除中...');
     await clearAllHistory();
-    console.log('✅ Firestore & IndexedDB 削除完了');
+    console.log('[成功]  Firestore & IndexedDB 削除完了');
 
-    console.log('🗑️ LocalStorage を削除中...');
+    console.log('[削除]  LocalStorage を削除中...');
     localStorage.clear();
-    console.log('✅ LocalStorage 削除完了');
+    console.log('[成功]  LocalStorage 削除完了');
 
     console.log('🎉 すべてのデータを削除しました！');
 
@@ -61,7 +61,7 @@ window.cleanupAll = async function() {
     await checkDataStatus();
 
   } catch (error) {
-    console.error('❌ エラー:', error);
+    console.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -70,7 +70,7 @@ window.cleanupAll = async function() {
  * IndexedDBのみ削除
  */
 window.cleanupIndexedDB = async function() {
-  console.log('⚠️ IndexedDBを削除します...');
+  console.log('[警告] ️ IndexedDBを削除します...');
 
   try {
     const { db } = await import('./db.js');
@@ -78,13 +78,13 @@ window.cleanupIndexedDB = async function() {
     await db.open();
     await db.clear();
 
-    console.log('✅ IndexedDB削除完了');
+    console.log('[成功]  IndexedDB削除完了');
 
     // 状態確認
     await checkDataStatus();
 
   } catch (error) {
-    console.error('❌ エラー:', error);
+    console.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -93,26 +93,26 @@ window.cleanupIndexedDB = async function() {
  * Firestoreのみ削除
  */
 window.cleanupFirestore = async function() {
-  console.log('⚠️ Firestoreを削除します...');
+  console.log('[警告] ️ Firestoreを削除します...');
 
   try {
     const { clearAllFromCloud } = await import('./firebase-sync.js');
     const { isSignedIn } = await import('./firebase-auth.js');
 
     if (!isSignedIn()) {
-      console.warn('⚠️ ログインしていません。Firestoreの削除にはログインが必要です。');
+      console.warn('[警告] ️ ログインしていません。Firestoreの削除にはログインが必要です。');
       return;
     }
 
     await clearAllFromCloud();
 
-    console.log('✅ Firestore削除完了');
+    console.log('[成功]  Firestore削除完了');
 
     // 状態確認
     await checkDataStatus();
 
   } catch (error) {
-    console.error('❌ エラー:', error);
+    console.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -121,7 +121,7 @@ window.cleanupFirestore = async function() {
  * LocalStorageのみ削除
  */
 window.cleanupLocalStorage = function() {
-  console.log('⚠️ LocalStorageを削除します...');
+  console.log('[警告] ️ LocalStorageを削除します...');
 
   try {
     const keys = Object.keys(localStorage);
@@ -130,11 +130,11 @@ window.cleanupLocalStorage = function() {
 
     localStorage.clear();
 
-    console.log('✅ LocalStorage削除完了');
+    console.log('[成功]  LocalStorage削除完了');
     console.log(`削除後: ${Object.keys(localStorage).length} 件`);
 
   } catch (error) {
-    console.error('❌ エラー:', error);
+    console.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -143,7 +143,7 @@ window.cleanupLocalStorage = function() {
  * データ状態を確認
  */
 window.checkDataStatus = async function() {
-  console.log('📊 データ状態を確認中...');
+  console.log(' データ状態を確認中...');
   console.log('─'.repeat(50));
 
   try {
@@ -151,18 +151,18 @@ window.checkDataStatus = async function() {
     const { isSignedIn, getCurrentUser } = await import('./firebase-auth.js');
     if (isSignedIn()) {
       const user = getCurrentUser();
-      console.log('✅ ログイン状態: ログイン中');
+      console.log('[成功]  ログイン状態: ログイン中');
       console.log('   ユーザー:', user.email);
       console.log('   UID:', user.uid);
     } else {
-      console.log('❌ ログイン状態: ログアウト');
+      console.log('[エラー]  ログイン状態: ログアウト');
     }
 
     // IndexedDB
     const { db } = await import('./db.js');
     await db.open();
     const localData = await db.getAll();
-    console.log(`📦 IndexedDB: ${localData.length} 件`);
+    console.log(` IndexedDB: ${localData.length} 件`);
     if (localData.length > 0) {
       console.log('   最初の3件:', localData.slice(0, 3).map(item => ({
         id: item.id,
@@ -180,7 +180,7 @@ window.checkDataStatus = async function() {
         .doc(user.uid)
         .collection('history')
         .get();
-      console.log(`☁️ Firestore: ${snapshot.size} 件`);
+      console.log(` Firestore: ${snapshot.size} 件`);
       if (snapshot.size > 0) {
         console.log('   最初の3件:', snapshot.docs.slice(0, 3).map(doc => ({
           id: doc.id,
@@ -189,12 +189,12 @@ window.checkDataStatus = async function() {
         })));
       }
     } else {
-      console.log('☁️ Firestore: ログインが必要');
+      console.log(' Firestore: ログインが必要');
     }
 
     // LocalStorage
     const keys = Object.keys(localStorage);
-    console.log(`💾 LocalStorage: ${keys.length} 件`);
+    console.log(` LocalStorage: ${keys.length} 件`);
     if (keys.length > 0) {
       console.log('   キー:', keys);
       keys.forEach(key => {
@@ -204,10 +204,10 @@ window.checkDataStatus = async function() {
     }
 
     console.log('─'.repeat(50));
-    console.log('✅ 状態確認完了');
+    console.log('[成功]  状態確認完了');
 
   } catch (error) {
-    console.error('❌ エラー:', error);
+    console.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -220,16 +220,16 @@ console.log(`
 
 以下のコマンドが使用可能です:
 
-📊 状態確認:
+ 状態確認:
   await checkDataStatus()
 
-🗑️ 削除コマンド:
+[削除]  削除コマンド:
   await cleanupAll()          // すべて削除
   await cleanupIndexedDB()    // IndexedDBのみ
   await cleanupFirestore()    // Firestoreのみ
   cleanupLocalStorage()       // LocalStorageのみ
 
-📝 使用例:
+ 使用例:
   // 1. まず状態確認
   await checkDataStatus()
 
@@ -239,7 +239,7 @@ console.log(`
   // 3. もう一度確認
   await checkDataStatus()
 
-⚠️ 注意: すべての削除操作は取り消せません！
+[警告] ️ 注意: すべての削除操作は取り消せません！
 
 🌐 GUIで削除したい場合は:
   cleanup.html を開いてください

@@ -34,7 +34,7 @@ export async function showDeletedDataModal() {
     await renderDeletedDataList();
   } catch (error) {
     console.error('論理削除データ管理モーダルを開く際にエラーが発生しました:', error);
-    showToast('❌ 論理削除データを読み込めませんでした', 'error');
+    showToast('[エラー]  論理削除データを読み込めませんでした', 'error');
   }
 }
 
@@ -80,7 +80,7 @@ async function renderDeletedDataList() {
     });
   } catch (error) {
     console.error('論理削除データの描画エラー:', error);
-    listContainer.innerHTML = '<div class="error-message">❌ データの読み込みに失敗しました</div>';
+    listContainer.innerHTML = '<div class="error-message">[エラー]  データの読み込みに失敗しました</div>';
   }
 }
 
@@ -111,7 +111,7 @@ function createDeletedDataItemHTML(item) {
       </div>
       <div class="item-actions">
         <button type="button" class="btn btn-danger btn-hard-delete" data-id="${item.id}">
-          🗑️ 完全削除
+          [削除]  完全削除
         </button>
       </div>
     </li>
@@ -128,13 +128,13 @@ async function handleHardDelete(id) {
 
   try {
     await hardDeleteHistory(id);
-    showToast('✅ 完全削除しました', 'success');
+    showToast('[成功]  完全削除しました', 'success');
 
     // リストを再描画
     await renderDeletedDataList();
   } catch (error) {
     console.error('完全削除エラー:', error);
-    showToast('❌ 完全削除に失敗しました', 'error');
+    showToast('[エラー]  完全削除に失敗しました', 'error');
   }
 }
 

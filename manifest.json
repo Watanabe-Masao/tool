@@ -4,8 +4,8 @@
   "description": "食品加工業向けの歩留まり率・原価・売価・値入率を計算するWebアプリケーション",
   "start_url": "/tool/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#5c6bc0",
+  "background_color": "#F5FFF6",
+  "theme_color": "#F5FFF6",
   "orientation": "portrait-primary",
   "icons": [
     {

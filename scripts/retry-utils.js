@@ -56,7 +56,7 @@ export async function retryWithBackoff(fn, options = {}) {
       const delay = Math.floor(exponentialDelay + jitter);
 
       console.warn(
-        `⚠️ リトライ ${attempt}/${maxRetries}: ${delay}ms後に再試行`,
+        `[警告] ️ リトライ ${attempt}/${maxRetries}: ${delay}ms後に再試行`,
         { error: error.message, code: error.code, name: error.name }
       );
 

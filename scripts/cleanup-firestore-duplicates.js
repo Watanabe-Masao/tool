@@ -13,11 +13,11 @@
  */
 
 async function cleanupFirestoreDuplicates() {
-  console.log('🧹 Firestoreクリーンアップを開始します...');
+  console.log('[クリーンアップ]  Firestoreクリーンアップを開始します...');
 
   // 認証チェック
   if (!firebase.auth().currentUser) {
-    console.error('❌ ログインしてください');
+    console.error('[エラー]  ログインしてください');
     return;
   }
 
@@ -32,10 +32,10 @@ async function cleanupFirestoreDuplicates() {
       .collection('history')
       .get();
 
-    console.log(`📦 取得したデータ: ${snapshot.size}件`);
+    console.log(` 取得したデータ: ${snapshot.size}件`);
 
     if (snapshot.empty) {
-      console.log('✅ クリーンアップするデータがありません');
+      console.log('[成功]  クリーンアップするデータがありません');
       return;
     }
 
@@ -59,7 +59,7 @@ async function cleanupFirestoreDuplicates() {
       });
     });
 
-    console.log(`📊 ユニークなデータグループ: ${dataMap.size}個`);
+    console.log(` ユニークなデータグループ: ${dataMap.size}個`);
 
     // 重複を検出して削除リストを作成
     const toDelete = [];
@@ -69,10 +69,10 @@ async function cleanupFirestoreDuplicates() {
       if (items.length === 1) {
         // 重複なし
         toKeep.push(items[0]);
-        console.log(`✅ [${key}] 重複なし`);
+        console.log(`[成功]  [${key}] 重複なし`);
       } else {
         // 重複あり: 最適なデータを選択
-        console.log(`⚠️ [${key}] ${items.length}件の重複を検出`);
+        console.log(`[警告] ️ [${key}] ${items.length}件の重複を検出`);
 
         // ソート優先順位:
         // 1. UUID形式のデータを優先
@@ -92,21 +92,21 @@ async function cleanupFirestoreDuplicates() {
 
         // 最初の1件を保持、残りを削除
         toKeep.push(items[0]);
-        console.log(`  ✅ 保持: ${items[0].docId} (uuid: ${items[0].hasUuid}, updated: ${items[0].updatedAt.toISOString()})`);
+        console.log(`  [成功]  保持: ${items[0].docId} (uuid: ${items[0].hasUuid}, updated: ${items[0].updatedAt.toISOString()})`);
 
         for (let i = 1; i < items.length; i++) {
           toDelete.push(items[i]);
-          console.log(`  🗑️ 削除予定: ${items[i].docId} (uuid: ${items[i].hasUuid}, updated: ${items[i].updatedAt.toISOString()})`);
+          console.log(`  [削除]  削除予定: ${items[i].docId} (uuid: ${items[i].hasUuid}, updated: ${items[i].updatedAt.toISOString()})`);
         }
       }
     });
 
-    console.log('\n📊 クリーンアップサマリー:');
+    console.log('\n クリーンアップサマリー:');
     console.log(`  保持: ${toKeep.length}件`);
     console.log(`  削除: ${toDelete.length}件`);
 
     if (toDelete.length === 0) {
-      console.log('✅ 削除するデータがありません');
+      console.log('[成功]  削除するデータがありません');
       return;
     }
 
@@ -119,7 +119,7 @@ async function cleanupFirestoreDuplicates() {
     );
 
     if (!confirmed) {
-      console.log('❌ クリーンアップをキャンセルしました');
+      console.log('[エラー]  クリーンアップをキャンセルしました');
       return;
     }
 
@@ -142,10 +142,10 @@ async function cleanupFirestoreDuplicates() {
 
       await batch.commit();
       deletedCount += chunk.length;
-      console.log(`🗑️ 削除完了: ${deletedCount}/${toDelete.length}件`);
+      console.log(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
     }
 
-    console.log('\n✅ クリーンアップ完了!');
+    console.log('\n[成功]  クリーンアップ完了!');
     console.log(`  元のデータ: ${snapshot.size}件`);
     console.log(`  削除: ${deletedCount}件`);
     console.log(`  残り: ${toKeep.length}件`);
@@ -154,10 +154,10 @@ async function cleanupFirestoreDuplicates() {
     alert(`クリーンアップ完了!\n\n削除: ${deletedCount}件\n残り: ${toKeep.length}件\n\nダウンロードボタンを押してデータを再同期してください。`);
 
   } catch (error) {
-    console.error('❌ クリーンアップエラー:', error);
+    console.error('[エラー]  クリーンアップエラー:', error);
     alert(`エラーが発生しました: ${error.message}`);
   }
 }
 
 // 実行方法をコンソールに表示
-console.log('💡 使い方: cleanupFirestoreDuplicates() を実行してください');
+console.log('[ヒント]  使い方: cleanupFirestoreDuplicates() を実行してください');

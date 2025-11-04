@@ -106,10 +106,10 @@ export function createHistoryItemHTML(item, isFirst = true) {
         </div>
         <div class="history-item-date">${dateStr}</div>
         <div class="history-item-actions">
-          <button type="button" class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
+          <button type="button" class="btn-small btn-load" data-id="${item.id}"> 読込</button>
           <div class="history-item-actions-secondary">
             <button type="button" class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
-            <button type="button" class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+            <button type="button" class="btn-small btn-delete" data-id="${item.id}">[削除]  削除</button>
           </div>
         </div>
       </div>
@@ -170,10 +170,10 @@ export function createHistoryItemHTML(item, isFirst = true) {
       </div>
       <div class="history-item-date">${dateStr}</div>
       <div class="history-item-actions">
-        <button class="btn-small btn-load" data-id="${item.id}">📂 読込</button>
+        <button class="btn-small btn-load" data-id="${item.id}"> 読込</button>
         <div class="history-item-actions-secondary">
           <button class="btn-small btn-edit" data-id="${item.id}">✏️ 編集</button>
-          <button class="btn-small btn-delete" data-id="${item.id}">🗑️ 削除</button>
+          <button class="btn-small btn-delete" data-id="${item.id}">[削除]  削除</button>
         </div>
       </div>
     </div>

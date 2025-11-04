@@ -23,7 +23,7 @@ export function displayMatrixEvaluation(stats) {
     // ビジュアル改善：アイコンとカラーコーディング
     const icon = evaluation.className === 'excellent' ? '🌟' :
                  evaluation.className === 'good' ? '✓' :
-                 evaluation.className === 'fair' ? '⚡' : '⚠';
+                 evaluation.className === 'fair' ? '⚡' : '[警告] ';
 
     matrixDiv.innerHTML = `
       <div class="matrix-badge ${evaluation.className}">
@@ -65,7 +65,7 @@ export function getRecommendedValue(stats) {
       value: median,
       label: '中央値',
       description: '外れ値や歪みに強い代表値。変動が大きい場合に推奨。',
-      icon: '📊',
+      icon: '',
       reason: isHighVariation ? 'CV > 15%のため' : '歪度が大きいため'
     };
   } else {
@@ -74,7 +74,7 @@ export function getRecommendedValue(stats) {
       value: mean,
       label: '平均値',
       description: 'データ全体の傾向を反映。安定したデータに最適。',
-      icon: '📈',
+      icon: '',
       reason: 'データが安定しているため'
     };
   }
@@ -146,7 +146,7 @@ export function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'y
   if (!isSampleSizeValid) {
     recommendedValueDiv.innerHTML = `
       <div class="recommended-warning">
-        <span class="warning-icon">⚠</span>
+        <span class="warning-icon">[警告] </span>
         <div class="warning-content">
           <strong>サンプルサイズが不十分です</strong>
           <p>より多くのデータを収集してから推奨値を参照してください。</p>

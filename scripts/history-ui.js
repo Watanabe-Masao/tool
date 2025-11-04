@@ -68,14 +68,14 @@ export async function showHistoryModal() {
     // フィルタリングUIのイベントリスナーを設定（初回のみ）
     setupHistoryFilterListeners(renderHistoryList);
 
-    // 🔄 重要: 表示前にFirestoreから最新データを取得（キャッシュ整合性保証）
+    //  重要: 表示前にFirestoreから最新データを取得（キャッシュ整合性保証）
     // 他の端末での削除・更新を反映するため
     await ensureFreshDataBeforeDisplay();
 
     await renderHistoryList(null, currentMode, currentYieldMethod);
   } catch (error) {
     console.error('履歴モーダルを開く際にエラーが発生しました:', error);
-    showToast('❌ 履歴を読み込めませんでした', 'error');
+    showToast('[エラー]  履歴を読み込めませんでした', 'error');
   }
 }
 
@@ -91,17 +91,17 @@ async function ensureFreshDataBeforeDisplay() {
   }
 
   try {
-    console.log('🔄 履歴表示前にFirestoreと同期中...');
+    console.log(' 履歴表示前にFirestoreと同期中...');
     const success = await downloadFromCloud();
 
     if (success) {
-      console.log('✅ 最新データの取得完了');
+      console.log('[成功]  最新データの取得完了');
     } else {
-      console.warn('⚠️ 同期に失敗しましたが、ローカルキャッシュを表示します');
+      console.warn('[警告] ️ 同期に失敗しましたが、ローカルキャッシュを表示します');
     }
   } catch (error) {
-    console.error('❌ 同期エラー:', error);
-    console.warn('⚠️ ローカルキャッシュを表示します');
+    console.error('[エラー]  同期エラー:', error);
+    console.warn('[警告] ️ ローカルキャッシュを表示します');
     // エラーが発生してもローカルデータは表示
   }
 }
@@ -240,7 +240,7 @@ function updateProductNameSuggestions(history) {
   const uniqueNames = [...new Set(history.map(item => item.name).filter(Boolean))];
 
   // selectの選択肢を更新（最初のプレースホルダーオプションは保持）
-  selectElement.innerHTML = '<option value="">🔍 商品名で絞り込み...</option>' +
+  selectElement.innerHTML = '<option value=""> 商品名で絞り込み...</option>' +
     uniqueNames
       .sort((a, b) => a.localeCompare(b, 'ja'))
       .map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`)
@@ -319,7 +319,7 @@ function bindHistoryItemEvents() {
  */
 async function handleLoadCalculation(id) {
   try {
-    // 🔄 重要: 読み込み前にFirestoreと同期して最新データを取得
+    //  重要: 読み込み前にFirestoreと同期して最新データを取得
     // モーダルを開いてから時間が経過している可能性があるため、
     // 他の端末での変更を確実に反映する
     await ensureFreshDataBeforeDisplay();
@@ -398,12 +398,12 @@ async function handleLoadCalculation(id) {
         }
       }
 
-      showToast('✅ データを読み込みました');
+      showToast('[成功]  データを読み込みました');
     }, 100);
 
   } catch (error) {
     console.error('Load error:', error);
-    showToast('❌ データの読み込みに失敗しました', 'error');
+    showToast('[エラー]  データの読み込みに失敗しました', 'error');
   }
 }
 
@@ -419,7 +419,7 @@ async function handleEditCalculation(id) {
 
     if (newName === null) return; // キャンセル
     if (newName.trim() === '') {
-      showToast('❌ 商品名は必須です', 'error');
+      showToast('[エラー]  商品名は必須です', 'error');
       return;
     }
 
@@ -448,9 +448,9 @@ async function handleEditCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('✅ 更新しました');
+    showToast('[成功]  更新しました');
   } catch (error) {
-    showToast('❌ 更新に失敗しました', 'error');
+    showToast('[エラー]  更新に失敗しました', 'error');
   }
 }
 
@@ -471,11 +471,11 @@ async function handleDeleteCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('✅ 削除しました');
+    showToast('[成功]  削除しました');
   } catch (error) {
     // エラーメッセージを表示（オンラインチェックのエラーを含む）
     const errorMessage = error.message || '削除に失敗しました';
-    showToast(`❌ ${errorMessage}`, 'error');
+    showToast(`[エラー]  ${errorMessage}`, 'error');
     console.error('Delete error:', error);
   }
 }
@@ -545,9 +545,9 @@ export async function handleSearch() {
 export async function handleExport() {
   try {
     await exportData();
-    showToast('✅ エクスポートしました');
+    showToast('[成功]  エクスポートしました');
   } catch (error) {
-    showToast('❌ エクスポートに失敗しました', 'error');
+    showToast('[エラー]  エクスポートに失敗しました', 'error');
   }
 }
 
@@ -566,9 +566,9 @@ export async function handleImport() {
     try {
       const count = await importData(file);
       await renderHistoryList();
-      showToast(`✅ ${count}件のデータをインポートしました`);
+      showToast(`[成功]  ${count}件のデータをインポートしました`);
     } catch (error) {
-      showToast('❌ インポートに失敗しました', 'error');
+      showToast('[エラー]  インポートに失敗しました', 'error');
     }
   };
 
@@ -584,9 +584,9 @@ export async function handleClearAll() {
   try {
     await clearAllHistory();
     await renderHistoryList();
-    showToast('✅ すべての履歴を削除しました');
+    showToast('[成功]  すべての履歴を削除しました');
   } catch (error) {
-    showToast('❌ 削除に失敗しました', 'error');
+    showToast('[エラー]  削除に失敗しました', 'error');
   }
 }
 
@@ -785,14 +785,14 @@ export function initHistoryUI() {
     clearAllBtn.addEventListener('touchend', (e) => { e.preventDefault(); clearAllHandler(); }, { passive: false });
   }
 
-  // 🔄 historyUpdatedイベントリスナー: Firestore同期後にUI自動更新
+  //  historyUpdatedイベントリスナー: Firestore同期後にUI自動更新
   window.addEventListener('historyUpdated', async () => {
     console.log('📢 historyUpdatedイベントを受信: UIを更新します');
 
     // モーダルが開いている場合のみ再描画
     const modal = qs('#historyModal');
     if (modal && modal.open) {
-      console.log('✅ 履歴モーダルが開いているため、リストを再描画します');
+      console.log('[成功]  履歴モーダルが開いているため、リストを再描画します');
 
       // 現在のフィルタ条件を維持して再描画
       const activeBtn = qs('.btn-mode.is-active[data-mode]');

@@ -459,8 +459,8 @@ function checkDuplicates() {
       unitPriceInput.style.borderColor = '#e74c3c';
       unitCostInput.style.borderWidth = '2px';
       unitPriceInput.style.borderWidth = '2px';
-      unitCostInput.title = '⚠️ 重複しています';
-      unitPriceInput.title = '⚠️ 重複しています';
+      unitCostInput.title = '[警告] ️ 重複しています';
+      unitPriceInput.title = '[警告] ️ 重複しています';
     }
   });
 }
@@ -621,7 +621,7 @@ function calculateBreakEvenPrices() {
       showWarning('加工前重量と加工後重量を入力してください。');
       if (btn) {
         btn.disabled = false;
-        btn.textContent = '🎯 値入率分岐点を一括挿入';
+        btn.textContent = ' 値入率分岐点を一括挿入';
       }
       return;
     }
@@ -637,7 +637,7 @@ function calculateBreakEvenPrices() {
     showWarning('歩留まり率と加工前重量を入力してください。');
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🎯 値入率分岐点を一括挿入';
+      btn.textContent = ' 値入率分岐点を一括挿入';
     }
     return;
   }
@@ -649,7 +649,7 @@ function calculateBreakEvenPrices() {
     showWarning('パターンがありません。');
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🎯 値入率分岐点を一括挿入';
+      btn.textContent = ' 値入率分岐点を一括挿入';
     }
     return;
   }
@@ -707,15 +707,15 @@ function calculateBreakEvenPrices() {
   // ボタンを元に戻す
   if (btn) {
     btn.disabled = false;
-    btn.textContent = '🎯 値入率分岐点を一括挿入';
+    btn.textContent = ' 値入率分岐点を一括挿入';
   }
 
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = '✅ 挿入完了！';
+      btn.textContent = '[成功]  挿入完了！';
       setTimeout(() => {
-        btn.textContent = '🎯 値入率分岐点を一括挿入';
+        btn.textContent = ' 値入率分岐点を一括挿入';
       }, 2000);
     }
 
@@ -852,7 +852,7 @@ function applyTargetMarkupPrices() {
     showWarning('目標値入率を0〜99の範囲で入力してください。');
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '✨ 売価を挿入';
+      btn.textContent = ' 売価を挿入';
     }
     return;
   }
@@ -868,14 +868,14 @@ function applyTargetMarkupPrices() {
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = `✅ 挿入完了！（${toFixed(targetMarkup, 1)}%）`;
+      btn.textContent = `[成功]  挿入完了！（${toFixed(targetMarkup, 1)}%）`;
       setTimeout(() => {
-        btn.textContent = '✨ 売価を挿入';
+        btn.textContent = ' 売価を挿入';
       }, 2000);
     }
   } else {
     if (btn) {
-      btn.textContent = '✨ 売価を挿入';
+      btn.textContent = ' 売価を挿入';
     }
     showWarning('1個原価が入力されているパターンがありません。');
   }

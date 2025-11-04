@@ -1,0 +1,75 @@
+/* ================================================
+   アイコンシステム - SVGアイコン用スタイル
+   ================================================ */
+
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.icon-sm {
+  width: 0.875em;
+  height: 0.875em;
+}
+
+.icon-md {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.icon-lg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.icon-xl {
+  width: 2em;
+  height: 2em;
+}
+
+/* アイコンとテキストの組み合わせ */
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+/* ボタン内のアイコン */
+button .icon,
+a .icon {
+  margin-right: 0.25em;
+}
+
+/* アイコンのみのボタン */
+.btn-icon .icon {
+  margin: 0;
+}
+
+/* アイコンの色 */
+.icon-primary {
+  color: var(--brand);
+}
+
+.icon-secondary {
+  color: var(--text-secondary);
+}
+
+.icon-success {
+  color: var(--success);
+}
+
+.icon-warning {
+  color: var(--warning);
+}
+
+.icon-error {
+  color: var(--error);
+}
+
+.icon-muted {
+  color: var(--text-muted);
+}
