@@ -48,7 +48,8 @@ body.modal-open {
   justify-content: space-between;
   align-items: center;
   padding: 1.5em;
-  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(to bottom, var(--bg1), var(--surface));
+  border-bottom: 2px solid var(--brand-light);
   position: relative; /* メニュー配置の基準点 */
 }
 
@@ -56,7 +57,7 @@ body.modal-open {
   margin: 0;
   font-size: 1.25em;
   font-weight: 700;
-  color: #333;
+  color: var(--brand-dark);
 }
 
 .dialog-header-actions {
@@ -121,44 +122,48 @@ body.modal-open {
 
 .history-filter-section {
   display: flex;
-  flex-direction: column;
-  gap: 0.5em;
+  align-items: center;
+  gap: 1em;
+  flex-wrap: wrap;
 }
 
 .history-filter-label {
   font-size: 0.9em;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
 }
 
 /* 履歴モーダル内のフィルタリングボタンのスタイル */
 .history-filter-section .btn-mode {
-  border: 2px solid #5c6bc0;
-  background: #fff;
-  color: #5c6bc0;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
 .history-filter-section .btn-mode:hover {
-  background: #f5f7ff;
-  border-color: #3f51b5;
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand-dark);
 }
 
 .history-filter-section .btn-mode.is-active {
-  background: linear-gradient(135deg, #5c6bc0, #3f51b5);
-  color: #fff;
-  border-color: #3f51b5;
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand-dark);
+  box-shadow: 0 2px 4px var(--brand-light);
 }
 
 .history-filter-section .btn-mode:active {
   transform: scale(0.98);
-  background: linear-gradient(135deg, #3f51b5, #303f9f);
-  border-color: #303f9f;
 }
 
 .history-filter-section .btn-mode.is-active:active {
-  background: linear-gradient(135deg, #303f9f, #283593);
+  background: var(--brand-dark);
 }
 
 .history-filter-section .btn-small {
@@ -167,8 +172,15 @@ body.modal-open {
   white-space: nowrap;
 }
 
+.history-filter-section .btn-all {
+  padding: 0.3em 0.6em;
+  font-size: 0.75em;
+  margin-left: auto;
+}
+
 .history-filter-section .btn-row {
   gap: 0.4em;
+  flex: 1;
 }
 
 /* TOP画面と同じデザインにするため、fieldsetとradioクラスを使用 */
@@ -201,7 +213,7 @@ body.modal-open {
 
 .history-toolbar select:focus {
   outline: none;
-  border-color: #5c6bc0;
+  border-color: var(--brand);
 }
 
 .btn-clear-search {
@@ -368,13 +380,13 @@ body.modal-open {
 }
 
 .carousel-indicator.active {
-  background: #5c6bc0;
+  background: var(--brand);
   width: 24px;
   border-radius: 4px;
 }
 
 .carousel-indicator:hover {
-  background: #9fa8da;
+  background: var(--brand-light);
 }
 
 /* カルーセルカウント */
@@ -410,8 +422,8 @@ body.modal-open {
 }
 
 .history-carousel:hover {
-  border-color: #5c6bc0;
-  box-shadow: 0 2px 8px rgba(92, 107, 192, 0.1);
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px var(--brand-light);
 }
 
 .history-item-header {
@@ -506,6 +518,9 @@ body.modal-open {
   white-space: nowrap;
   flex: 0 1 auto;
   min-width: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--border-light);
+  text-underline-offset: 2px;
 }
 
 .history-stat strong {
