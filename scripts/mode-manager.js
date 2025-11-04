@@ -254,26 +254,27 @@ export function handleModeSwitch(newMode, callbacks = {}) {
 export function switchMode(newMode, callbacks = {}) {
   const currentMode = appState.getMode();
 
+  // 歩留まり統計⇔複数パターン分析の切り替えかどうかを判定
+  const isYieldStatsToMultiPattern = currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN;
+  const isMultiPatternToYieldStats = currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS;
+  const isYieldStatsMultiPatternSwitch = isYieldStatsToMultiPattern || isMultiPatternToYieldStats;
+
   // 現在のモードの入力値をクリア
-  // 歩留まり統計⇔複数パターン分析の切り替えではデータをクリアしない
-  const isYieldStatsMultiPatternSwitch =
-    (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) ||
-    (currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS);
+  if (currentMode === MODE.FIXED) {
+    clearFixedInputs();
+  } else if (currentMode === MODE.WEIGHT) {
+    clearWeightInputs();
+  } else if (currentMode === MODE.YIELD_STATS) {
+    // 歩留まり統計から複数パターン分析に切り替える場合も入力値はクリア
+    clearYieldStatsInputs(callbacks.addYieldStatsRow);
 
-  if (!isYieldStatsMultiPatternSwitch) {
-    if (currentMode === MODE.FIXED) {
-      clearFixedInputs();
-    } else if (currentMode === MODE.WEIGHT) {
-      clearWeightInputs();
-    } else if (currentMode === MODE.YIELD_STATS) {
-      clearYieldStatsInputs(callbacks.addYieldStatsRow);
-
-      // 統計データをクリア（複数パターン分析へ直接遷移する場合は除く）
-      if (newMode !== MODE.MULTI_PATTERN) {
-        appState.setYieldStatsData(null);
-      }
-    } else if (currentMode === MODE.MULTI_PATTERN) {
-      // 複数パターン分析モードのクリア処理
+    // 統計データ（キャッシュ）は複数パターン分析へ遷移する場合のみ保持
+    if (newMode !== MODE.MULTI_PATTERN) {
+      appState.setYieldStatsData(null);
+    }
+  } else if (currentMode === MODE.MULTI_PATTERN) {
+    // 複数パターン分析から歩留まり統計に戻る場合は入力値をクリアしない
+    if (!isMultiPatternToYieldStats) {
       resetMultiPatternUI();
     }
   }
