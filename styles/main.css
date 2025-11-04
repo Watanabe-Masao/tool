@@ -759,6 +759,10 @@ input[type="range"] {
   line-height: 1.5;
 }
 
+#yieldStatsInputs .section-description {
+  font-size: 0.7rem;
+}
+
 /* 品名入力欄 */
 .product-name-section {
   margin-bottom: 20px;
@@ -808,12 +812,12 @@ input[type="range"] {
 }
 
 .yield-stats-table thead {
-  background: var(--surface-dark);
-  color: var(--text-primary);
+  background: var(--brand);
+  color: white;
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid var(--brand-dark);
 }
 
 .yield-stats-table th {
@@ -2194,8 +2198,9 @@ input[type="range"] {
 }
 
 .stats-load-table thead {
-  background: #f0f0f0;
-  border-bottom: 2px solid #a0a0a0;
+  background: var(--brand);
+  color: white;
+  border-bottom: 2px solid var(--brand-dark);
 }
 
 .stats-load-table th {
@@ -2644,7 +2649,8 @@ input[type="range"] {
 .preset-pairs-table thead {
   position: sticky;
   top: 0;
-  background: #f5f5f5;
+  background: var(--brand);
+  color: white;
   z-index: 1;
 }
 
