@@ -2345,6 +2345,7 @@ input[type="range"]::-moz-range-thumb:hover {
   font-weight: 500;
   color: #333;
   width: 30%;
+  text-align: left;
 }
 
 .stats-load-table .stats-value {
