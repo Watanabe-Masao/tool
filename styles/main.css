@@ -3512,11 +3512,19 @@ input[type="range"]::-moz-range-thumb:hover {
 .radio-inline input[type="radio"] {
   cursor: pointer;
   accent-color: var(--brand);
+  transition: all 0.2s ease;
 }
 
 .radio-inline input[type="radio"]:checked + span {
   color: var(--brand);
   font-weight: 600;
+  animation: radioSelect 0.3s ease;
+}
+
+@keyframes radioSelect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .round-buttons-inline {
