@@ -275,13 +275,27 @@ function init() {
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
-      // 複数パターン分析ボタンから直接遷移した場合は商品名を編集可能にする
+      // 現在のモードを取得
+      const currentMode = appState.getMode();
+
+      // 複数パターン分析の商品名フィールドを取得
       const multiPatternProductName = qs('#multiPatternProductName');
+
       if (multiPatternProductName) {
-        multiPatternProductName.removeAttribute('readonly');
-        multiPatternProductName.style.backgroundColor = '';
-        multiPatternProductName.style.cursor = '';
+        // 歩留まり統計モード以外から遷移する場合は商品名をクリアして編集可能にする
+        if (currentMode !== MODE.YIELD_STATS) {
+          multiPatternProductName.value = '';
+          multiPatternProductName.removeAttribute('readonly');
+          multiPatternProductName.style.backgroundColor = '';
+          multiPatternProductName.style.cursor = '';
+        } else {
+          // 歩留まり統計モードから直接遷移する場合は編集可能のまま維持
+          multiPatternProductName.removeAttribute('readonly');
+          multiPatternProductName.style.backgroundColor = '';
+          multiPatternProductName.style.cursor = '';
+        }
       }
+
       handleModeSwitch(MODE.MULTI_PATTERN, {
         resetSteps,
         resetWeightSteps,
