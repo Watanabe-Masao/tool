@@ -643,7 +643,7 @@ function updateUIForAuthState(user) {
   if (user) {
     // ログイン中
     if (authStatus) {
-      authStatus.textContent = ' ログイン済み';
+      authStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> ログイン済み';
       authStatus.className = 'status-badge logged-in';
     }
 
@@ -657,7 +657,7 @@ function updateUIForAuthState(user) {
   } else {
     // 未ログイン
     if (authStatus) {
-      authStatus.textContent = ' 未ログイン';
+      authStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> 未ログイン';
       authStatus.className = 'status-badge logged-out';
     }
 
@@ -682,35 +682,35 @@ function updateSyncStatusUI(status, lastSyncTime) {
 
   switch (status) {
     case 'uploading':
-      syncButton.textContent = '[アップロード] ';
+      syncButton.innerHTML = '<i class="fa-solid fa-upload"></i>';
       syncButton.disabled = true;
       syncButton.title = 'アップロード中...';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'downloading':
-      syncButton.textContent = '📩';
+      syncButton.innerHTML = '<i class="fa-solid fa-download"></i>';
       syncButton.disabled = true;
       syncButton.title = 'ダウンロード中...';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'success':
-      syncButton.textContent = '';
+      syncButton.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>';
       syncButton.disabled = false;
       syncButton.title = '同期';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'error':
-      syncButton.textContent = '';
+      syncButton.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
       syncButton.disabled = false;
       syncButton.title = '同期（エラー）';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     default:
-      syncButton.textContent = '';
+      syncButton.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>';
       syncButton.disabled = !isSignedIn();
       syncButton.title = '同期';
       if (syncStatus) syncStatus.textContent = '';
