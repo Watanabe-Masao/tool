@@ -411,9 +411,9 @@
               <th>歩留まり率<br><span class="th-unit">（%）</span></th>
               <th>
                 z-score<br><span class="th-unit">（標準偏差）</span>
-                <span class="help-icon" title="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" data-tooltip="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性"><i class="fa-solid fa-circle-question"></i></span>
               </th>
-              <th>判定 <span class="help-icon" title="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)"><i class="fa-solid fa-circle-question"></i></span></th>
+              <th>判定 <span class="help-icon" data-tooltip="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)"><i class="fa-solid fa-circle-question"></i></span></th>
             </tr>
           </thead>
           <tbody id="yieldStatsTableBody">
@@ -466,49 +466,49 @@
           <div class="stat-item">
             <div class="stat-label">
               最大値
-              <span class="help-icon" title="データの中で最も大きい値"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データの中で最も大きい値"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMax" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               最小値
-              <span class="help-icon" title="データの中で最も小さい値"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データの中で最も小さい値"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMin" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               範囲
-              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="最大値と最小値の差。データのばらつきの広さを示します"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsRange" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               平均値
-              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="全データの合計をデータ数で割った値。データの中心的な傾向を表します"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsAvg" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               中央値
-              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMedian" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               標準偏差
-              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsStdDev" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               RSD / CV（相対標準偏差）
-              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -527,21 +527,21 @@
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
-              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ1" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               第3四分位数（Q3）
-              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ3" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               四分位範囲（IQR）
-              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
@@ -560,14 +560,14 @@
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
-              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSkewness" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               尖度（Kurtosis）
-              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
