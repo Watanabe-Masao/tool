@@ -398,7 +398,7 @@ async function handleLoadCalculation(id) {
         }
       }
 
-      showToast('✅  データを読み込みました');
+      showToast('データを読み込みました', 'success');
     }, 100);
 
   } catch (error) {
@@ -448,7 +448,7 @@ async function handleEditCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('✅  更新しました');
+    showToast('更新しました', 'success');
   } catch (error) {
     showToast('[エラー]  更新に失敗しました', 'error');
   }
@@ -471,7 +471,7 @@ async function handleDeleteCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('✅  削除しました');
+    showToast('削除しました', 'success');
   } catch (error) {
     // エラーメッセージを表示（オンラインチェックのエラーを含む）
     const errorMessage = error.message || '削除に失敗しました';
@@ -545,7 +545,7 @@ export async function handleSearch() {
 export async function handleExport() {
   try {
     await exportData();
-    showToast('✅  エクスポートしました');
+    showToast('エクスポートしました', 'success');
   } catch (error) {
     showToast('[エラー]  エクスポートに失敗しました', 'error');
   }
@@ -566,7 +566,7 @@ export async function handleImport() {
     try {
       const count = await importData(file);
       await renderHistoryList();
-      showToast(`✅  ${count}件のデータをインポートしました`);
+      showToast(`${count}件のデータをインポートしました`, 'success');
     } catch (error) {
       showToast('[エラー]  インポートに失敗しました', 'error');
     }
@@ -584,7 +584,7 @@ export async function handleClearAll() {
   try {
     await clearAllHistory();
     await renderHistoryList();
-    showToast('✅  すべての履歴を削除しました');
+    showToast('すべての履歴を削除しました', 'success');
   } catch (error) {
     showToast('[エラー]  削除に失敗しました', 'error');
   }

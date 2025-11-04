@@ -128,7 +128,7 @@ async function handleHardDelete(id) {
 
   try {
     await hardDeleteHistory(id);
-    showToast('✅  完全削除しました', 'success');
+    showToast('完全削除しました', 'success');
 
     // リストを再描画
     await renderDeletedDataList();
