@@ -12,6 +12,15 @@ export function initializeHelpModal() {
     return;
   }
 
+  // すべてのhelp-iconのtitle属性をdata-help-textに移動してツールチップを無効化
+  document.querySelectorAll('.help-icon[title]').forEach(helpIcon => {
+    const title = helpIcon.getAttribute('title');
+    if (title) {
+      helpIcon.setAttribute('data-help-text', title);
+      helpIcon.removeAttribute('title');
+    }
+  });
+
   // すべてのhelp-iconにクリックイベントを追加
   document.addEventListener('click', (e) => {
     const helpIcon = e.target.closest('.help-icon');
@@ -19,11 +28,11 @@ export function initializeHelpModal() {
       e.preventDefault();
       e.stopPropagation();
 
-      // titleアトリビュートから内容を取得
-      const title = helpIcon.getAttribute('title');
-      if (title) {
+      // data-help-textから内容を取得
+      const helpText = helpIcon.getAttribute('data-help-text');
+      if (helpText) {
         // パイプ記号で改行に変換
-        const formattedContent = title.replace(/\|/g, '<br>');
+        const formattedContent = helpText.replace(/\|/g, '<br>');
         helpModalContent.innerHTML = formattedContent;
 
         // モーダルを表示

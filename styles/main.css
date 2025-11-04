@@ -1055,15 +1055,6 @@ input[type="range"] {
   box-shadow: 0 2px 8px var(--brand-light);
 }
 
-/* PCでのホバー時のツールチップはブラウザネイティブのtitle属性を使用 */
-/* モバイルデバイスではツールチップを表示しない */
-@media (hover: none) and (pointer: coarse) {
-  .help-icon[title] {
-    /* モバイルではtitle属性のツールチップを無効化 */
-    pointer-events: auto;
-  }
-}
-
 /* サンプルサイズ妥当性判断 */
 .sample-size-validation {
   margin-top: 16px;
