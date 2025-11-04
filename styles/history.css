@@ -426,12 +426,6 @@ body.modal-open {
   margin-bottom: 0.75em;
 }
 
-.sync-status {
-  font-size: 0.9em;
-  cursor: help;
-  flex-shrink: 0;
-}
-
 .history-item-title {
   display: flex;
   align-items: center;
@@ -440,6 +434,31 @@ body.modal-open {
   font-size: 1.1em;
   color: #333;
   flex: 1;
+}
+
+/* 同期ステータスドット */
+.sync-status {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: help;
+  margin-left: 0.3em;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.sync-status:hover {
+  opacity: 1;
+}
+
+.sync-status--synced {
+  background-color: #4caf50;
+}
+
+.sync-status--local {
+  background-color: #ef5350;
 }
 
 .history-item-icon {
