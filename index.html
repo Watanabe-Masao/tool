@@ -27,8 +27,8 @@
       <span id="auth-status" class="status-badge">☁️ 未ログイン</span>
       <div class="header-buttons">
         <button type="button" id="signin-button" class="btn-simple">ログイン</button>
-        <button type="button" id="sync-button" class="btn-simple" disabled>同期</button>
-        <button type="button" id="menu-button" class="btn-simple">メニュー ▾</button>
+        <button type="button" id="sync-button" class="btn-simple" disabled title="同期">🔄</button>
+        <button type="button" id="menu-button" class="btn-simple" title="メニュー">📝</button>
       </div>
       <span id="sync-status" class="sync-status-text"></span>
     </div>
@@ -1275,17 +1275,11 @@
 
         <!-- 計算方法選択（定額・計量モードの場合のみ表示） -->
         <div id="historyFilterMethodSection" class="history-filter-section">
-          <label class="history-filter-label">歩留まり率の入力方法</label>
-          <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" name="historyFilterMethod" value="calculate" checked>
-              <span>重量から計算</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="historyFilterMethod" value="direct">
-              <span>歩留まり率を直接入力</span>
-            </label>
-          </div>
+          <fieldset class="fieldset">
+            <legend class="legend">歩留まり率の入力方法</legend>
+            <label class="radio"><input type="radio" name="historyFilterMethod" value="calculate" checked /> 重量から計算</label>
+            <label class="radio"><input type="radio" name="historyFilterMethod" value="direct" /> 歩留まり率を直接入力</label>
+          </fieldset>
         </div>
 
         <div class="search-container">

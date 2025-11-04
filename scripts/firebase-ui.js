@@ -682,34 +682,38 @@ function updateSyncStatusUI(status, lastSyncTime) {
 
   switch (status) {
     case 'uploading':
-      syncButton.textContent = '📤 アップロード中...';
+      syncButton.textContent = '📤';
       syncButton.disabled = true;
-      if (syncStatus) syncStatus.textContent = 'アップロード中...';
+      syncButton.title = 'アップロード中...';
+      if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'downloading':
-      syncButton.textContent = '📥 ダウンロード中...';
+      syncButton.textContent = '📩';
       syncButton.disabled = true;
-      if (syncStatus) syncStatus.textContent = 'ダウンロード中...';
+      syncButton.title = 'ダウンロード中...';
+      if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'success':
-      syncButton.textContent = '🔄 同期';
+      syncButton.textContent = '🔄';
       syncButton.disabled = false;
-      if (syncStatus && lastSyncTime) {
-        syncStatus.textContent = `最終同期: ${formatTime(lastSyncTime)}`;
-      }
+      syncButton.title = '同期';
+      if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'error':
-      syncButton.textContent = '🔄 同期';
+      syncButton.textContent = '🔄';
       syncButton.disabled = false;
-      if (syncStatus) syncStatus.textContent = '同期エラー';
+      syncButton.title = '同期（エラー）';
+      if (syncStatus) syncStatus.textContent = '';
       break;
 
     default:
-      syncButton.textContent = '🔄 同期';
+      syncButton.textContent = '🔄';
       syncButton.disabled = !isSignedIn();
+      syncButton.title = '同期';
+      if (syncStatus) syncStatus.textContent = '';
       break;
   }
 }
