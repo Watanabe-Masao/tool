@@ -439,13 +439,13 @@ body.modal-open {
 /* 同期ステータスドット */
 .sync-status {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   flex-shrink: 0;
   cursor: help;
   margin-left: 0.3em;
-  opacity: 0.7;
+  opacity: 0.6;
   transition: opacity 0.2s;
 }
 
