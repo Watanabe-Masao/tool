@@ -165,6 +165,10 @@ export function clearFixedInputs() {
     FIXED_FIELDS.DIRECT.YIELD_RATE,
     FIXED_FIELDS.DIRECT.AFTER_PRICE_100
   ]);
+
+  // 内部キャッシュ（計算結果のスナップショット、プロダクトデータ）をクリア
+  appState.snapshot.reset();
+  appState.productData.reset();
 }
 
 /**
@@ -190,6 +194,10 @@ export function clearWeightInputs() {
 
   setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
   setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
+
+  // 内部キャッシュ（計算結果のスナップショット、プロダクトデータ）をクリア
+  appState.snapshot.reset();
+  appState.productData.reset();
 }
 
 /**
