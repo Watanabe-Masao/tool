@@ -173,9 +173,28 @@ body.modal-open {
 }
 
 .history-filter-section .btn-all {
-  padding: 0.3em 0.6em;
-  font-size: 0.75em;
+  padding: 0.25em 0.5em;
+  font-size: 0.7em;
   margin-left: auto;
+  border-width: 1px;
+  border-radius: 4px;
+  font-weight: 500;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.history-filter-section .btn-all i {
+  font-size: 0.9em;
+}
+
+.history-filter-section .btn-all:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.history-filter-section .btn-all.is-active {
+  opacity: 1;
+  font-weight: 600;
 }
 
 .history-filter-section .btn-row {
