@@ -232,13 +232,13 @@ body {
 }
 
 input[type="number"] {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 2px solid transparent;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-family: var(--font-family);
-  min-height: 32px;
-  max-width: 300px;
+  min-height: 26px;
+  max-width: 240px;
   width: 100%;
   color: var(--text-primary);
   background: #f4f6f0;
@@ -764,13 +764,13 @@ input[type="range"] {
 
 .product-name-input {
   width: 100%;
-  max-width: 400px;
-  padding: 10px 12px;
+  max-width: 320px;
+  padding: 8px 10px;
   border: 2px solid transparent;
   border-radius: var(--radius-md);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  min-height: 40px;
+  min-height: 32px;
   background: #f4f6f0;
   color: var(--text-primary);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -860,10 +860,10 @@ input[type="range"] {
 
 .yield-stats-table .table-input {
   width: 100%;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border: 2px solid transparent;
   background: #f4f6f0;
-  font-size: 13px;
+  font-size: 12px;
   font-family: var(--font-family);
   color: var(--text-primary);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
