@@ -1,4 +1,36 @@
 /**
+ * ヘルプテキストをフォーマット
+ * @param {string} text - フォーマットするテキスト
+ * @returns {string} - フォーマット済みHTML
+ */
+function formatHelpText(text) {
+  // パイプ記号で分割
+  const lines = text.split('|');
+
+  return lines.map(line => {
+    line = line.trim();
+
+    // リストアイテム（◎、○、△、×で始まる行）
+    if (/^[◎○△×]/.test(line)) {
+      return `<div class="help-list-item">${line}</div>`;
+    }
+
+    // コロンを含む行（キー: 値の形式）
+    if (line.includes(':')) {
+      const parts = line.split(':');
+      if (parts.length === 2) {
+        const key = parts[0].trim();
+        const value = parts[1].trim();
+        return `<div><strong>${key}:</strong> ${value}</div>`;
+      }
+    }
+
+    // 通常の行
+    return `<div>${line}</div>`;
+  }).join('');
+}
+
+/**
  * ヘルプモーダルの初期化
  */
 
@@ -45,8 +77,8 @@ export function initializeHelpModal() {
         // 現在のスクロール位置を保存
         savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 
-        // パイプ記号で改行に変換
-        const formattedContent = helpText.replace(/\|/g, '<br>');
+        // テキストをフォーマット
+        const formattedContent = formatHelpText(helpText);
         helpModalContent.innerHTML = formattedContent;
 
         // モーダルを表示
