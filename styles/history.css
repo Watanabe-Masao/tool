@@ -180,7 +180,8 @@ body.modal-open {
 
 .history-filter-section .btn-row {
   gap: 0.4em;
-  flex: 1;
+  width: 100%;
+  display: flex;
 }
 
 /* TOP画面と同じデザインにするため、fieldsetとradioクラスを使用 */
