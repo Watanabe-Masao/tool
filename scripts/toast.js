@@ -52,14 +52,14 @@ export function showToast(message, type = 'info', duration = 3000) {
 /**
  * トーストタイプに応じたアイコンを取得
  * @param {string} type - トーストタイプ
- * @returns {string} アイコン文字列
+ * @returns {string} アイコンHTML文字列
  */
 function getToastIcon(type) {
   const icons = {
-    info: 'ℹ️',
-    success: '✅ ',
-    warning: '[警告] ️',
-    error: '[エラー] '
+    info: '<i class="fa-solid fa-circle-info"></i>',
+    success: '<i class="fa-regular fa-circle-check"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+    error: '<i class="fa-solid fa-circle-xmark"></i>'
   };
   return icons[type] || icons.info;
 }
