@@ -230,12 +230,12 @@ body {
 }
 
 input[type="number"] {
-  padding: var(--space-2) var(--space-3);
+  padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
+  font-size: 14px;
   font-family: var(--font-family);
-  min-height: 36px;
+  min-height: 32px;
   max-width: 300px;
   width: 100%;
   color: var(--text-primary);
@@ -800,12 +800,13 @@ input[type="range"] {
 }
 
 .yield-stats-table th {
-  padding: var(--space-2) var(--space-2);
+  padding: 6px 8px;
   text-align: left;
   font-weight: var(--font-weight-semibold);
   border: 1px solid var(--border);
-  line-height: var(--line-height-tight);
-  font-size: var(--font-size-sm);
+  line-height: 1.3;
+  font-size: 13px;
+  vertical-align: middle;
 }
 
 .yield-stats-table th .th-unit {
@@ -828,7 +829,7 @@ input[type="range"] {
 }
 
 .yield-stats-table td {
-  padding: var(--space-2);
+  padding: 6px 8px;
   border: 1px solid var(--border);
   vertical-align: middle;
 }
@@ -844,10 +845,10 @@ input[type="range"] {
 
 .yield-stats-table .table-input {
   width: 100%;
-  padding: var(--space-2);
+  padding: 4px 6px;
   border: 1px solid transparent;
   background: transparent;
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   font-family: var(--font-family);
   color: var(--text-primary);
   transition: all var(--transition-fast);
