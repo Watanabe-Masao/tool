@@ -3270,7 +3270,7 @@ input[type="range"] {
   height: 0;
 }
 
-.radio-label {
+.adjustment-card .radio-label {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3286,17 +3286,17 @@ input[type="range"] {
   color: #6c757d;
 }
 
-.radio-icon {
+.adjustment-card .radio-icon {
   font-size: 1.1em;
   line-height: 1;
   font-weight: 700;
 }
 
-.radio-text {
+.adjustment-card .radio-text {
   font-size: 0.85em;
 }
 
-.round-mode-radio input[type="radio"]:checked + .radio-label {
+.adjustment-card .round-mode-radio input[type="radio"]:checked + .radio-label {
   background: var(--brand);
   border-color: var(--brand);
   color: white;
@@ -3304,7 +3304,7 @@ input[type="range"] {
   transform: translateY(-1px);
 }
 
-.round-mode-radio:not(:has(input:checked)) .radio-label:hover {
+.adjustment-card .round-mode-radio:not(:has(input:checked)) .radio-label:hover {
   background: #e9ecef;
   border-color: #adb5bd;
   color: #495057;
