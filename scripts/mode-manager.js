@@ -286,6 +286,9 @@ export function switchMode(newMode, callbacks = {}) {
 
       // 統計データ（キャッシュ）もクリア
       appState.setYieldStatsData(null);
+
+      // 複数パターン分析のUIもクリア
+      resetMultiPatternUI();
     } else if (currentMode === MODE.MULTI_PATTERN) {
       // 複数パターン分析から他のモードに切り替える場合
       resetMultiPatternUI();
