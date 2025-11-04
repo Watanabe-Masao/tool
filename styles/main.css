@@ -496,9 +496,15 @@ button:disabled:hover,
   color: var(--brand-dark);
 }
 
-.stat--success .stat-label,
+.stat--success .stat-label {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
 .stat--success .stat-value {
   color: var(--brand-dark);
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
 .stat--info {
@@ -507,9 +513,15 @@ button:disabled:hover,
   color: var(--brand-dark);
 }
 
-.stat--info .stat-label,
+.stat--info .stat-label {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
 .stat--info .stat-value {
   color: var(--brand-dark);
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
 .stat--warn {
@@ -518,22 +530,39 @@ button:disabled:hover,
   color: var(--brand-dark);
 }
 
-.stat--warn .stat-label,
+.stat--warn .stat-label {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
 .stat--warn .stat-value {
   color: var(--brand-dark);
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
 .stat--brand {
   background: linear-gradient(135deg, var(--brand), var(--brand-dark));
   color: white;
-  border: 2px solid var(--brand-dark);
-  box-shadow: 0 4px 12px rgba(45, 164, 78, 0.3);
+  border: 3px solid var(--brand-dark);
+  box-shadow: 0 6px 20px rgba(45, 164, 78, 0.4);
+  position: relative;
+  overflow: visible;
 }
 
-.stat--brand .stat-label,
+.stat--brand .stat-label {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .stat--brand .stat-value {
   color: white;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stat--note {
@@ -542,9 +571,15 @@ button:disabled:hover,
   color: var(--brand-dark);
 }
 
-.stat--note .stat-label,
+.stat--note .stat-label {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
 .stat--note .stat-value {
   color: var(--brand-dark);
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
 .stat--ok {
@@ -553,9 +588,15 @@ button:disabled:hover,
   color: var(--brand-dark);
 }
 
-.stat--ok .stat-label,
+.stat--ok .stat-label {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
 .stat--ok .stat-value {
   color: var(--brand-dark);
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 .stat--clickable {
   cursor: pointer;
