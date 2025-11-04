@@ -208,6 +208,12 @@ export function clearYieldStatsInputs(addYieldStatsRowCallback) {
       addYieldStatsRowCallback();
     }
   }
+
+  // 統計結果表示を非表示にする
+  const yieldStatsResults = qs('#yieldStatsResults');
+  if (yieldStatsResults) {
+    yieldStatsResults.classList.add('is-hidden');
+  }
 }
 
 /**
