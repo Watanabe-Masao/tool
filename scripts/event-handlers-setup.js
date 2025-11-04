@@ -275,6 +275,13 @@ function init() {
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
+      // 複数パターン分析ボタンから直接遷移した場合は商品名を編集可能にする
+      const multiPatternProductName = qs('#multiPatternProductName');
+      if (multiPatternProductName) {
+        multiPatternProductName.removeAttribute('readonly');
+        multiPatternProductName.style.backgroundColor = '';
+        multiPatternProductName.style.cursor = '';
+      }
       handleModeSwitch(MODE.MULTI_PATTERN, {
         resetSteps,
         resetWeightSteps,
@@ -620,6 +627,16 @@ function init() {
 
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    // 歩留まり統計の商品名を複数パターン分析に引き継ぐ
+    const yieldStatsProductName = qs('#yieldStatsProductName')?.value || '';
+    const multiPatternProductName = qs('#multiPatternProductName');
+    if (multiPatternProductName && yieldStatsProductName) {
+      multiPatternProductName.value = yieldStatsProductName;
+      // 歩留まり統計から遷移した場合は商品名を読み取り専用にする
+      multiPatternProductName.setAttribute('readonly', 'readonly');
+      multiPatternProductName.style.backgroundColor = '#f0f0f0';
+      multiPatternProductName.style.cursor = 'not-allowed';
+    }
     handleModeSwitch(MODE.MULTI_PATTERN);
   });
 
