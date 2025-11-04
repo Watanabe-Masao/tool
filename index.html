@@ -403,11 +403,7 @@
               <th>歩留まり率<br><span class="th-unit">（%）</span></th>
               <th>
                 z-score<br><span class="th-unit">（標準偏差）</span>
-                <span class="help-icon"
-                      data-formula-name="z-score（標準偏差）の判定基準"
-                      data-formula="z = (個別値 - 平均) / 標準偏差"
-                      data-formula-desc="<strong>z-scoreとは？</strong><br>個別の測定値が平均からどれだけ離れているかを、標準偏差を単位として表した値です。データのばらつき（標準偏差）を考慮した統計的に正しい判定が可能になります。<br><br><strong>判定基準：</strong><br>• |z| ≤ 1 → <span style='color:#1b5e20;font-weight:bold'><i class="fa-solid fa-check icon-success"></i> 非常に良好</span> (68.3%範囲内、正常な値)<br>• |z| ≤ 2 → <span style='color:#388e3c;font-weight:bold'>○ 良好</span> (95.4%範囲内、問題ない値)<br>• |z| ≤ 3 → <span style='color:#f57c00;font-weight:bold'>△ 注意</span> (99.7%範囲内、やや外れた値)<br>• |z| > 3 → <span style='color:#c62828;font-weight:bold'>× 外れ値の可能性</span> (0.3%未満、測定ミスの可能性)<br><br><strong><i class="fa-regular fa-lightbulb"></i> なぜz-scoreを使うのか？</strong><br>以前の「相対偏差率」では、データのばらつき（標準偏差）が考慮されていませんでした。z-scoreを使うことで、ばらつきが大きいデータでも小さいデータでも、統計的に公平な判定が可能になります。"
-                      data-formula-example="平均50%、標準偏差2%の場合：<br>• 48% → z = (48-50)/2 = -1.0σ → <i class="fa-solid fa-check icon-success"></i> 非常に良好<br>• 46% → z = (46-50)/2 = -2.0σ → ○ 良好<br>• 44% → z = (44-50)/2 = -3.0σ → △ 注意<br>• 42% → z = (42-50)/2 = -4.0σ → × 外れ値の可能性">?</span>
+                <span class="help-icon" title="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性">?</span>
               </th>
               <th title="z-scoreに基づく統計的判定&#10;<i class="fa-solid fa-check icon-success"></i><i class="fa-solid fa-check icon-success"></i>: 非常に良好 (±1σ以内)&#10;○: 良好 (±2σ以内)&#10;△: 注意 (±3σ以内)&#10;×: 外れ値の可能性 (3σ外)">判定</th>
             </tr>
@@ -462,49 +458,49 @@
           <div class="stat-item">
             <div class="stat-label">
               最大値
-              <span class="help-icon" title="データの中で最も大きい値" data-formula-name="最大値" data-formula="max(x₁, x₂, ..., xₙ)" data-formula-desc="データセットの中で最も大きい値を選択します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、最大値 = 52">?</span>
+              <span class="help-icon" title="データの中で最も大きい値">?</span>
             </div>
             <div id="statsMax" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               最小値
-              <span class="help-icon" title="データの中で最も小さい値" data-formula-name="最小値" data-formula="min(x₁, x₂, ..., xₙ)" data-formula-desc="データセットの中で最も小さい値を選択します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、最小値 = 47">?</span>
+              <span class="help-icon" title="データの中で最も小さい値">?</span>
             </div>
             <div id="statsMin" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               範囲
-              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します" data-formula-name="範囲（レンジ）" data-formula="範囲 = 最大値 - 最小値" data-formula-desc="データの広がりを示す最も単純な指標です。" data-formula-example="最大値が52、最小値が47の場合、範囲 = 52 - 47 = 5">?</span>
+              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します">?</span>
             </div>
             <div id="statsRange" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               平均値
-              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します" data-formula-name="平均値（算術平均）" data-formula="x̄ = (x₁ + x₂ + ... + xₙ) / n" data-formula-desc="全てのデータの合計をデータ数で割った値です。データの中心位置を表します。" data-formula-example="データが [50, 48, 52, 47, 51] の場合、平均値 = (50+48+52+47+51) / 5 = 49.6">?</span>
+              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します">?</span>
             </div>
             <div id="statsAvg" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               中央値
-              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です" data-formula-name="中央値（メディアン）" data-formula="データを昇順に並べ、nが奇数なら中央の値、偶数なら中央2つの平均" data-formula-desc="データを小さい順に並べたときの中央の値です。極端な値の影響を受けにくい特徴があります。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、中央値 = 50（3番目の値）">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です">?</span>
             </div>
             <div id="statsMedian" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               標準偏差
-              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています" data-formula-name="標準偏差" data-formula="σ = √(Σ(xᵢ - x̄)² / n)" data-formula-desc="各データが平均値からどれだけ離れているかを示す指標です。値が大きいほどデータのばらつきが大きくなります。" data-formula-example="データが [50, 48, 52, 47, 51]、平均49.6の場合、σ = √((0.4²+1.6²+2.4²+2.6²+1.4²)/5) ≈ 1.85">?</span>
+              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています">?</span>
             </div>
             <div id="statsStdDev" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               RSD / CV（相対標準偏差）
-              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます" data-formula-name="RSD / CV" data-formula="RSD = CV = (σ / x̄) × 100 (%)" data-formula-desc="標準偏差を平均値で割ったもので、異なる単位や規模のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます。" data-formula-example="標準偏差が1.85、平均が49.6の場合、RSD = (1.85 / 49.6) × 100 ≈ 3.73%">?</span>
+              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます">?</span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -523,21 +519,21 @@
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
-              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です" data-formula-name="第1四分位数（Q1）" data-formula="ソート後のデータでn×0.25の位置の値" data-formula-desc="データを小さい順に並べたとき、25%の位置にある値です。下位25%のデータの境界を示します。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、Q1 ≈ 48（25%の位置）">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です">?</span>
             </div>
             <div id="statsQ1" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               第3四分位数（Q3）
-              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です" data-formula-name="第3四分位数（Q3）" data-formula="ソート後のデータでn×0.75の位置の値" data-formula-desc="データを小さい順に並べたとき、75%の位置にある値です。上位25%のデータの境界を示します。" data-formula-example="データが [47, 48, 50, 51, 52] の場合、Q3 ≈ 51（75%の位置）">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です">?</span>
             </div>
             <div id="statsQ3" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               四分位範囲（IQR）
-              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です" data-formula-name="四分位範囲（IQR）" data-formula="IQR = Q3 - Q1" data-formula-desc="第3四分位数と第1四分位数の差です。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です。" data-formula-example="Q3が51、Q1が48の場合、IQR = 51 - 48 = 3">?</span>
+              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です">?</span>
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
@@ -556,14 +552,14 @@
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
-              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です" data-formula-name="歪度（わいど）" data-formula="Skewness = Σ((xᵢ - x̄) / σ)³ / n" data-formula-desc="分布の左右対称性を示す指標です。0に近いほど左右対称、正なら右に裾が長い（右に偏っている）、負なら左に裾が長い（左に偏っている）分布です。" data-formula-example="正規分布の場合は0、右に長い裾がある分布（高所得者が少数いる）は正の値になります">?</span>
+              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です">?</span>
             </div>
             <div id="statsSkewness" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               尖度（Kurtosis）
-              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです" data-formula-name="尖度（せんど）" data-formula="Kurtosis = Σ((xᵢ - x̄) / σ)⁴ / n - 3" data-formula-desc="分布の尖り具合を示す指標です。0なら正規分布と同じ尖り具合、正なら正規分布より尖っている（外れ値が多い）、負ならなだらか（データが均一）です。" data-formula-example="正規分布の場合は0、外れ値が多い分布は正の値、均一な分布は負の値になります">?</span>
+              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです">?</span>
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
@@ -576,7 +572,7 @@
           <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range">
             <span>
               正規分布における信頼区間
-              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" data-formula-name="正規分布における信頼区間" data-formula="σk範囲 = [x̄ - k×σ, x̄ + k×σ]" data-formula-desc="データが正規分布に従うと仮定した場合、平均値から標準偏差の何倍の範囲にデータが含まれるかを示します。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]、σ2範囲 = [46, 54]、σ3範囲 = [44, 56]">?</span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します">?</span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -585,21 +581,21 @@
           <div class="stat-item">
             <div class="stat-label">
               σ1範囲（68.3%）
-              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます" data-formula-name="σ1範囲" data-formula="[x̄ - σ, x̄ + σ]" data-formula-desc="平均値±1標準偏差の範囲です。正規分布に従う場合、約68.3%のデータがこの範囲に含まれます。" data-formula-example="平均が50、標準偏差が2の場合、σ1範囲 = [48, 52]">?</span>
+              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます">?</span>
             </div>
             <div id="statsSigma1" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ2範囲（95.4%）
-              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます" data-formula-name="σ2範囲" data-formula="[x̄ - 2σ, x̄ + 2σ]" data-formula-desc="平均値±2標準偏差の範囲です。正規分布に従う場合、約95.4%のデータがこの範囲に含まれます。" data-formula-example="平均が50、標準偏差が2の場合、σ2範囲 = [46, 54]">?</span>
+              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます">?</span>
             </div>
             <div id="statsSigma2" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ3範囲（99.7%）
-              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます" data-formula-name="σ3範囲" data-formula="[x̄ - 3σ, x̄ + 3σ]" data-formula-desc="平均値±3標準偏差の範囲です。正規分布に従う場合、約99.7%のデータがこの範囲に含まれます。この範囲外はほぼ外れ値と見なせます。" data-formula-example="平均が50、標準偏差が2の場合、σ3範囲 = [44, 56]">?</span>
+              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます">?</span>
             </div>
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
@@ -638,7 +634,7 @@
           <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">
             <span>
               サンプルサイズの妥当性判断
-              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" data-formula-name="必要サンプルサイズ" data-formula="n = (Z × σ / E)²" data-formula-desc="必要なサンプルサイズを計算します。Zは信頼水準に対応するZ値、σは標準偏差、Eは許容誤差です。" data-formula-example="Z=1.96（95%信頼水準）、σ=2、E=0.5の場合、n = (1.96 × 2 / 0.5)² ≈ 61.47 → 62サンプル必要">?</span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます">?</span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -648,7 +644,7 @@
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
                 許容誤差（E）
-                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です" data-formula-name="許容誤差（E）" data-formula="E = 許容される誤差の範囲" data-formula-desc="推定値と真の値の間で許容できる誤差の大きさです。例えば許容誤差を2.0%とした場合、真の値±2.0%の範囲内で推定したいということを意味します。小さいほど精度が高くなりますが、その分より多くのサンプル数が必要になります。" data-formula-example="歩留まり率を推定する際、許容誤差2.0%なら、真の歩留まり率が50%の場合、48%～52%の範囲で推定できれば良いということです。">?</span>
+                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です">?</span>
               </label>
               <div class="input-with-unit">
                 <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" value="3.0" placeholder="例: 2.0" />
@@ -659,7 +655,7 @@
             <div class="validation-input-group">
               <label for="confidenceLevel" class="validation-label">
                 信頼水準
-                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます" data-formula-name="信頼水準（Confidence Level）" data-formula="信頼水準 = 1 - α（有意水準）" data-formula-desc="推定値が正しい範囲に含まれる確率です。95%の信頼水準なら、同じ方法で100回サンプリングと推定を繰り返した場合、約95回は真の値が推定範囲内に含まれることを意味します。一般的には90%、95%、99%が使われ、95%が最も標準的です。" data-formula-example="信頼水準95%で歩留まり率を48%～52%と推定した場合、真の歩留まり率がこの範囲内にある確率が95%ということです。残りの5%は推定が外れる可能性があります。">?</span>
+                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます">?</span>
               </label>
               <select id="confidenceLevel" class="validation-select">
                 <option value="90">90%（Z=1.645）</option>
@@ -692,7 +688,7 @@
             <div id="outlierInfo" class="outlier-info is-hidden">
               <div class="outlier-info-header">
                 <strong><i class="fa-solid fa-triangle-exclamation icon-warning"></i> 外れ値の検出</strong>
-                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します" data-formula-name="外れ値検出（IQR法）" data-formula="外れ値 = データ < Q1 - 1.5×IQR または データ > Q3 + 1.5×IQR" data-formula-desc="四分位範囲法により外れ値を検出します。Q1から1.5×IQR下、またはQ3から1.5×IQR上のデータを外れ値とします。" data-formula-example="Q1=48、Q3=51、IQR=3の場合、外れ値は 43.5未満 または 55.5超のデータです">?</span>
+                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します">?</span>
               </div>
               <div class="outlier-info-content">
                 <div class="outlier-details">
@@ -734,7 +730,7 @@
             <div id="recommendedValue" class="recommended-value is-hidden">
               <div class="recommended-value-header">
                 <strong>📌 推奨代表値</strong>
-                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します" data-formula-name="推奨代表値の判定" data-formula="歪度の絶対値 ≤ 0.5 なら平均値、> 0.5 なら中央値を推奨" data-formula-desc="データの分布形状（歪度）に基づいて、適切な代表値を推奨します。分布が対称的なら平均値、歪んでいれば中央値を推奨します。" data-formula-example="歪度が0.3の場合は平均値を推奨、歪度が1.2の場合は中央値を推奨します">?</span>
+                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します">?</span>
               </div>
               <div class="recommended-value-content">
                 <div class="recommended-badge-wrapper">
@@ -1183,10 +1179,10 @@
                 <th rowspan="2" class="header-sensitivity">
                   感度<br>(%/1%)
                   <span class="help-icon"
-                    data-formula-name="感度分析（Sensitivity Analysis）"
-                    data-formula="感度 = (歩留まり率+1%時の値入率) - (現在の値入率)"
-                    data-formula-desc="<strong>感度とは？</strong><br>歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標です。<br><br><strong>数値の意味：</strong><br>• プラス（+）：歩留まり率が上がると値入率も上がる<br>• 値が大きいほど：歩留まり改善の効果が大きい<br>• ゼロに近い：歩留まり変動の影響が小さい"
-                    data-formula-example="<strong>例1：</strong>感度が+0.5の場合<br>→ 歩留まり率が1%向上すると、値入率が0.5%向上<br><br><strong>例2：</strong>感度が+1.2の場合<br>→ 歩留まり率が1%向上すると、値入率が1.2%向上<br><br><strong>活用方法：</strong><br>感度が大きい商品ほど、歩留まり改善による利益向上効果が高いため、優先的に改善対策を実施すべきです。">?</span>
+                   
+                   
+                   
+                   >?</span>
                 </th>
               </tr>
               <tr>
