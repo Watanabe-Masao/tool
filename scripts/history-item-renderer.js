@@ -79,16 +79,16 @@ export function createHistoryItemHTML(item, isFirst = true) {
     const minYieldRate = item.result?.minYieldRate;
     const maxYieldRate = item.result?.maxYieldRate;
 
-    // 同期ステータスを取得（仮実装）
+    // 同期ステータスを取得
     const syncStatus = getSyncStatus(item);
 
     return `
       <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
         <div class="history-item-header">
-          <span class="sync-status" title="${syncStatus.tooltip}">${syncStatus.icon}</span>
           <div class="history-item-title">
             <span class="history-item-mode-label">${modeIcon}</span>
             <span class="history-item-name">${escapeHTML(productName)}</span>
+            <span class="sync-status sync-status--${syncStatus.status}" title="${syncStatus.tooltip}"></span>
           </div>
         </div>
         <div class="history-item-stats">
@@ -150,10 +150,10 @@ export function createHistoryItemHTML(item, isFirst = true) {
   return `
     <div class="history-item ${isFirst ? 'active' : ''}" data-id="${item.id}">
       <div class="history-item-header">
-        <span class="sync-status" title="${syncStatus.tooltip}">${syncStatus.icon}</span>
         <div class="history-item-title">
           <span class="history-item-mode-label">${modeIcon}</span>
           <span class="history-item-name">${escapeHTML(item.name || '無題')}</span>
+          <span class="sync-status sync-status--${syncStatus.status}" title="${syncStatus.tooltip}"></span>
         </div>
       </div>
       <div class="history-item-stats">
@@ -183,7 +183,7 @@ export function createHistoryItemHTML(item, isFirst = true) {
 /**
  * 同期ステータスを取得
  * @param {Object} item - 履歴データ
- * @returns {Object} - {icon: string, tooltip: string}
+ * @returns {Object} - {status: string, tooltip: string}
  */
 function getSyncStatus(item) {
   // UUIDの存在をチェック（新しいデータはUUIDベース）
@@ -195,13 +195,13 @@ function getSyncStatus(item) {
   if (hasUuid || hasFirestoreId) {
     // UUIDまたはFirestoreIDがある = クラウドと同期済み
     return {
-      icon: '🟢',
+      status: 'synced',
       tooltip: '同期済み'
     };
   } else {
     // UUIDもFirestoreIDもない = ローカルのみ
     return {
-      icon: '🔴',
+      status: 'local',
       tooltip: '未同期（ローカルのみ）'
     };
   }
