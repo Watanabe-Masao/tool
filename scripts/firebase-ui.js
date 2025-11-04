@@ -688,7 +688,7 @@ function updateSyncStatusUI(status, lastSyncTime) {
       break;
 
     case 'downloading':
-      syncButton.textContent = '📥 ダウンロード中...';
+      syncButton.textContent = '📩 ダウンロード中...';
       syncButton.disabled = true;
       if (syncStatus) syncStatus.textContent = 'ダウンロード中...';
       break;
