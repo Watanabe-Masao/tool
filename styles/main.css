@@ -645,10 +645,51 @@ button:disabled:hover,
 }
 
 input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  height: 8px;
-  border-radius: var(--radius-sm);
-  background: var(--border);
+  height: 6px;
+  border-radius: 10px;
+  background: #e9ecef;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(45, 164, 78, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(45, 164, 78, 0.5);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(45, 164, 78, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(45, 164, 78, 0.5);
 }
 
 .unit {
@@ -3077,56 +3118,56 @@ input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 8px;
+  height: 6px;
   border-radius: 10px;
   background: linear-gradient(to right,
-    #667eea 0%,
-    #667eea var(--slider-percent, 30%),
+    var(--brand) 0%,
+    var(--brand) var(--slider-percent, 30%),
     #e9ecef var(--slider-percent, 30%),
     #e9ecef 100%);
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .target-markup-slider-group input[type="range"]:hover {
-  transform: scaleY(1.2);
+  transform: scaleY(1.15);
 }
 
 .target-markup-slider-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--brand);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 6px rgba(45, 164, 78, 0.4);
   transition: all 0.2s ease;
 }
 
 .target-markup-slider-group input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(45, 164, 78, 0.5);
 }
 
 .target-markup-slider-group input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .target-markup-slider-group input[type="range"]::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--brand);
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 6px rgba(45, 164, 78, 0.4);
   transition: all 0.2s ease;
 }
 
 .target-markup-slider-group input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(45, 164, 78, 0.5);
 }
 
 /* ボタングループ */
@@ -3137,26 +3178,29 @@ input[type="range"] {
 }
 
 .target-markup-apply-btn {
-  padding: 0.7em 1.5em;
-  background: var(--brand);
+  padding: 0.8em 1.8em;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
   color: white;
-  border: none;
+  border: 2px solid var(--brand-dark);
   border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.95em;
+  font-weight: 700;
+  font-size: 1em;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(45, 164, 78, 0.3);
+  transition: all 0.2s ease;
   white-space: nowrap;
+  width: 100%;
 }
 
 .target-markup-apply-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(45, 164, 78, 0.4);
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
 }
 
 .target-markup-apply-btn:active {
   transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(45, 164, 78, 0.3);
 }
 
 .target-markup-apply-btn:disabled {
