@@ -403,9 +403,9 @@
               <th>歩留まり率<br><span class="th-unit">（%）</span></th>
               <th>
                 z-score<br><span class="th-unit">（標準偏差）</span>
-                <span class="help-icon" title="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性">?</span>
+                <span class="help-icon" title="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性"><i class="fa-solid fa-circle-question"></i></span>
               </th>
-              <th>判定 <span class="help-icon" title="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)">?</span></th>
+              <th>判定 <span class="help-icon" title="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)"><i class="fa-solid fa-circle-question"></i></span></th>
             </tr>
           </thead>
           <tbody id="yieldStatsTableBody">
@@ -458,49 +458,49 @@
           <div class="stat-item">
             <div class="stat-label">
               最大値
-              <span class="help-icon" title="データの中で最も大きい値">?</span>
+              <span class="help-icon" title="データの中で最も大きい値"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMax" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               最小値
-              <span class="help-icon" title="データの中で最も小さい値">?</span>
+              <span class="help-icon" title="データの中で最も小さい値"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMin" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               範囲
-              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します">?</span>
+              <span class="help-icon" title="最大値と最小値の差。データのばらつきの広さを示します"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsRange" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               平均値
-              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します">?</span>
+              <span class="help-icon" title="全データの合計をデータ数で割った値。データの中心的な傾向を表します"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsAvg" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               中央値
-              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMedian" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               標準偏差
-              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています">?</span>
+              <span class="help-icon" title="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsStdDev" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               RSD / CV（相対標準偏差）
-              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます">?</span>
+              <span class="help-icon" title="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -519,21 +519,21 @@
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
-              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ1" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               第3四分位数（Q3）
-              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です">?</span>
+              <span class="help-icon" title="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ3" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               四分位範囲（IQR）
-              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です">?</span>
+              <span class="help-icon" title="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
@@ -552,14 +552,14 @@
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
-              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です">?</span>
+              <span class="help-icon" title="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSkewness" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               尖度（Kurtosis）
-              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです">?</span>
+              <span class="help-icon" title="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
@@ -572,7 +572,7 @@
           <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range">
             <span>
               正規分布における信頼区間
-              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します">?</span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します"><i class="fa-solid fa-circle-question"></i></span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -581,21 +581,21 @@
           <div class="stat-item">
             <div class="stat-label">
               σ1範囲（68.3%）
-              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±1標準偏差の範囲。約68%のデータがこの範囲に含まれます"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSigma1" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ2範囲（95.4%）
-              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±2標準偏差の範囲。約95%のデータがこの範囲に含まれます"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSigma2" class="stat-value stat-value--small">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               σ3範囲（99.7%）
-              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます">?</span>
+              <span class="help-icon" title="平均値±3標準偏差の範囲。約99.7%のデータがこの範囲に含まれます"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSigma3" class="stat-value stat-value--small">-</div>
           </div>
@@ -634,7 +634,7 @@
           <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">
             <span>
               サンプルサイズの妥当性判断
-              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます">?</span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます"><i class="fa-solid fa-circle-question"></i></span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -644,7 +644,7 @@
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
                 許容誤差（E）
-                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です">?</span>
+                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です"><i class="fa-solid fa-circle-question"></i></span>
               </label>
               <div class="input-with-unit">
                 <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" value="3.0" placeholder="例: 2.0" />
@@ -655,7 +655,7 @@
             <div class="validation-input-group">
               <label for="confidenceLevel" class="validation-label">
                 信頼水準
-                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます">?</span>
+                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます"><i class="fa-solid fa-circle-question"></i></span>
               </label>
               <select id="confidenceLevel" class="validation-select">
                 <option value="90">90%（Z=1.645）</option>
@@ -688,7 +688,7 @@
             <div id="outlierInfo" class="outlier-info is-hidden">
               <div class="outlier-info-header">
                 <strong><i class="fa-solid fa-triangle-exclamation icon-warning"></i> 外れ値の検出</strong>
-                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します">?</span>
+                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します"><i class="fa-solid fa-circle-question"></i></span>
               </div>
               <div class="outlier-info-content">
                 <div class="outlier-details">
@@ -730,7 +730,7 @@
             <div id="recommendedValue" class="recommended-value is-hidden">
               <div class="recommended-value-header">
                 <strong>📌 推奨代表値</strong>
-                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します">?</span>
+                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します"><i class="fa-solid fa-circle-question"></i></span>
               </div>
               <div class="recommended-value-content">
                 <div class="recommended-badge-wrapper">
@@ -1182,7 +1182,7 @@
                    
                    
                    
-                   >?</span>
+                   ><i class="fa-solid fa-circle-question"></i></span>
                 </th>
               </tr>
               <tr>
