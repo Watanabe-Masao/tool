@@ -21,6 +21,14 @@ export function initializeHelpModal() {
     }
   });
 
+  // data-tooltip属性を持つhelp-iconもdata-help-textに統一
+  document.querySelectorAll('.help-icon[data-tooltip]').forEach(helpIcon => {
+    const tooltip = helpIcon.getAttribute('data-tooltip');
+    if (tooltip) {
+      helpIcon.setAttribute('data-help-text', tooltip);
+    }
+  });
+
   // すべてのhelp-iconにクリックイベントを追加
   document.addEventListener('click', (e) => {
     const helpIcon = e.target.closest('.help-icon');
@@ -28,8 +36,8 @@ export function initializeHelpModal() {
       e.preventDefault();
       e.stopPropagation();
 
-      // data-help-textから内容を取得
-      const helpText = helpIcon.getAttribute('data-help-text');
+      // data-help-textまたはdata-tooltipから内容を取得
+      const helpText = helpIcon.getAttribute('data-help-text') || helpIcon.getAttribute('data-tooltip');
       if (helpText) {
         // パイプ記号で改行に変換
         const formattedContent = helpText.replace(/\|/g, '<br>');

@@ -2014,62 +2014,11 @@ input[type="range"]::-moz-range-thumb:hover {
   margin-left: 2px;
 }
 
-/* ツールチップ本体 */
-.help-icon::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  padding: 14px 18px;
-  background: #1e3a5f;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.7;
-  border-radius: 10px;
-  white-space: pre-line;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  pointer-events: none;
-  z-index: 9999;
-  min-width: 240px;
-  max-width: 400px;
-  text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* ツールチップの矢印 */
+/* ツールチップを無効化（モーダルで表示するため） */
+.help-icon::before,
 .help-icon::after {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  border: 8px solid transparent;
-  border-top-color: #1e3a5f;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  z-index: 10000;
-}
-
-/* ホバー時にツールチップを表示 */
-.help-icon:hover::before,
-.help-icon:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* モバイル用: タップで表示/非表示 */
-.help-icon.active::before,
-.help-icon.active::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  content: none !important;
+  display: none !important;
 }
 
 /* 黄色背景のサブヘッダー内のヘルプアイコン */
