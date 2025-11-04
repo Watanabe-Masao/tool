@@ -95,7 +95,7 @@ async function ensureFreshDataBeforeDisplay() {
     const success = await downloadFromCloud();
 
     if (success) {
-      console.log('[成功]  最新データの取得完了');
+      console.log('✅  最新データの取得完了');
     } else {
       console.warn('[警告] ️ 同期に失敗しましたが、ローカルキャッシュを表示します');
     }
@@ -398,7 +398,7 @@ async function handleLoadCalculation(id) {
         }
       }
 
-      showToast('[成功]  データを読み込みました');
+      showToast('✅  データを読み込みました');
     }, 100);
 
   } catch (error) {
@@ -448,7 +448,7 @@ async function handleEditCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('[成功]  更新しました');
+    showToast('✅  更新しました');
   } catch (error) {
     showToast('[エラー]  更新に失敗しました', 'error');
   }
@@ -471,7 +471,7 @@ async function handleDeleteCalculation(id) {
     }
 
     await renderHistoryList();
-    showToast('[成功]  削除しました');
+    showToast('✅  削除しました');
   } catch (error) {
     // エラーメッセージを表示（オンラインチェックのエラーを含む）
     const errorMessage = error.message || '削除に失敗しました';
@@ -545,7 +545,7 @@ export async function handleSearch() {
 export async function handleExport() {
   try {
     await exportData();
-    showToast('[成功]  エクスポートしました');
+    showToast('✅  エクスポートしました');
   } catch (error) {
     showToast('[エラー]  エクスポートに失敗しました', 'error');
   }
@@ -566,7 +566,7 @@ export async function handleImport() {
     try {
       const count = await importData(file);
       await renderHistoryList();
-      showToast(`[成功]  ${count}件のデータをインポートしました`);
+      showToast(`✅  ${count}件のデータをインポートしました`);
     } catch (error) {
       showToast('[エラー]  インポートに失敗しました', 'error');
     }
@@ -584,7 +584,7 @@ export async function handleClearAll() {
   try {
     await clearAllHistory();
     await renderHistoryList();
-    showToast('[成功]  すべての履歴を削除しました');
+    showToast('✅  すべての履歴を削除しました');
   } catch (error) {
     showToast('[エラー]  削除に失敗しました', 'error');
   }
@@ -792,7 +792,7 @@ export function initHistoryUI() {
     // モーダルが開いている場合のみ再描画
     const modal = qs('#historyModal');
     if (modal && modal.open) {
-      console.log('[成功]  履歴モーダルが開いているため、リストを再描画します');
+      console.log('✅  履歴モーダルが開いているため、リストを再描画します');
 
       // 現在のフィルタ条件を維持して再描画
       const activeBtn = qs('.btn-mode.is-active[data-mode]');

@@ -302,7 +302,7 @@ export class YieldCalculatorDB {
           await this.sleep(300 * (retryCount + 1));
           try {
             const db = await this.open(retryCount + 1);
-            console.log(`[成功]  リトライ成功 (試行 ${retryCount + 1})`);
+            console.log(`✅  リトライ成功 (試行 ${retryCount + 1})`);
             resolve(db);
           } catch (retryError) {
             console.error(`[エラー]  リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
@@ -361,7 +361,7 @@ export class YieldCalculatorDB {
             store.createIndex('name', 'name', { unique: false });
             store.createIndex('mode', 'mode', { unique: false });
             store.createIndex('category', 'category', { unique: false });
-            console.log('[成功]  オブジェクトストアとインデックスを作成しました');
+            console.log('✅  オブジェクトストアとインデックスを作成しました');
           } else {
             // 既存のストアを取得
             store = transaction.objectStore(STORE_NAME);
@@ -371,7 +371,7 @@ export class YieldCalculatorDB {
           if (oldVersion < 2) {
             if (!store.indexNames.contains('firestoreId')) {
               store.createIndex('firestoreId', 'firestoreId', { unique: false });
-              console.log('[成功]  firestoreIdインデックスを追加しました');
+              console.log('✅  firestoreIdインデックスを追加しました');
             }
           }
 
@@ -381,7 +381,7 @@ export class YieldCalculatorDB {
               // 最初はunique: trueで作成していたが、これは失敗する可能性がある
               try {
                 store.createIndex('uuid', 'uuid', { unique: true });
-                console.log('[成功]  uuidインデックスを追加しました（v3）');
+                console.log('✅  uuidインデックスを追加しました（v3）');
               } catch (e) {
                 console.warn('[警告] ️ uuidインデックス作成失敗（想定内）:', e.message);
               }
@@ -410,7 +410,7 @@ export class YieldCalculatorDB {
 
             // unique: falseで再作成
             store.createIndex('uuid', 'uuid', { unique: false });
-            console.log('[成功]  uuidインデックスを再作成しました（unique: false）');
+            console.log('✅  uuidインデックスを再作成しました（unique: false）');
 
             // 既存データにUUIDを付与するマイグレーション
             const cursorRequest = store.openCursor();
@@ -429,7 +429,7 @@ export class YieldCalculatorDB {
                 cursor.continue();
               } else {
                 if (migratedCount > 0) {
-                  console.log(`[成功]  ${migratedCount}件のデータにUUIDを付与しました`);
+                  console.log(`✅  ${migratedCount}件のデータにUUIDを付与しました`);
                 }
               }
             };
@@ -1143,7 +1143,7 @@ if (typeof window !== 'undefined') {
     forceClose: () => {
       console.log('🔒 データベースを強制クローズします...');
       db.close();
-      console.log('[成功]  クローズ完了');
+      console.log('✅  クローズ完了');
     },
 
     /**
@@ -1154,7 +1154,7 @@ if (typeof window !== 'undefined') {
       db.close();
       try {
         await db.open();
-        console.log('[成功]  再接続成功');
+        console.log('✅  再接続成功');
       } catch (err) {
         console.error('[エラー]  再接続失敗:', err);
       }
@@ -1186,7 +1186,7 @@ if (typeof window !== 'undefined') {
         const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
 
         deleteRequest.onsuccess = () => {
-          console.log('[成功]  データベースを削除しました');
+          console.log('✅  データベースを削除しました');
           console.log('[ヒント]  ページを再読み込みしてください');
           alert('データベースを削除しました。ページを再読み込みしてください。');
         };

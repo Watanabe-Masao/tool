@@ -49,11 +49,11 @@ window.cleanupAll = async function() {
 
     console.log('[削除]  Firestore & IndexedDB を削除中...');
     await clearAllHistory();
-    console.log('[成功]  Firestore & IndexedDB 削除完了');
+    console.log('✅  Firestore & IndexedDB 削除完了');
 
     console.log('[削除]  LocalStorage を削除中...');
     localStorage.clear();
-    console.log('[成功]  LocalStorage 削除完了');
+    console.log('✅  LocalStorage 削除完了');
 
     console.log('🎉 すべてのデータを削除しました！');
 
@@ -78,7 +78,7 @@ window.cleanupIndexedDB = async function() {
     await db.open();
     await db.clear();
 
-    console.log('[成功]  IndexedDB削除完了');
+    console.log('✅  IndexedDB削除完了');
 
     // 状態確認
     await checkDataStatus();
@@ -106,7 +106,7 @@ window.cleanupFirestore = async function() {
 
     await clearAllFromCloud();
 
-    console.log('[成功]  Firestore削除完了');
+    console.log('✅  Firestore削除完了');
 
     // 状態確認
     await checkDataStatus();
@@ -130,7 +130,7 @@ window.cleanupLocalStorage = function() {
 
     localStorage.clear();
 
-    console.log('[成功]  LocalStorage削除完了');
+    console.log('✅  LocalStorage削除完了');
     console.log(`削除後: ${Object.keys(localStorage).length} 件`);
 
   } catch (error) {
@@ -151,7 +151,7 @@ window.checkDataStatus = async function() {
     const { isSignedIn, getCurrentUser } = await import('./firebase-auth.js');
     if (isSignedIn()) {
       const user = getCurrentUser();
-      console.log('[成功]  ログイン状態: ログイン中');
+      console.log('✅  ログイン状態: ログイン中');
       console.log('   ユーザー:', user.email);
       console.log('   UID:', user.uid);
     } else {
@@ -204,7 +204,7 @@ window.checkDataStatus = async function() {
     }
 
     console.log('─'.repeat(50));
-    console.log('[成功]  状態確認完了');
+    console.log('✅  状態確認完了');
 
   } catch (error) {
     console.error('[エラー]  エラー:', error);

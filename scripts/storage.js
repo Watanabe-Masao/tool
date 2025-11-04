@@ -65,7 +65,7 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
     // Firestoreに直接保存（IndexedDBにもキャッシュ）
     const result = await saveToCloud(data);
 
-    console.log(`[成功]  保存完了 (ID: ${result.id}, UUID: ${result.uuid})`);
+    console.log(`✅  保存完了 (ID: ${result.id}, UUID: ${result.uuid})`);
     return result.id; // IndexedDB IDを返す
   } catch (error) {
     console.error('Failed to save calculation:', error);
@@ -106,7 +106,7 @@ export async function loadCalculation(id) {
     }
 
     // データが存在する場合は、最新データとして返す
-    console.log(`[成功]  データ読み込み成功 (ID: ${id}, UUID: ${data.uuid || 'N/A'})`);
+    console.log(`✅  データ読み込み成功 (ID: ${id}, UUID: ${data.uuid || 'N/A'})`);
 
     return {
       mode: data.mode,
@@ -210,20 +210,20 @@ export async function deleteHistory(id) {
     if (!cloudDeleteSuccess) {
       throw mapFirebaseError(new Error('クラウドでの削除に失敗しました'), 'delete');
     }
-    console.log(`[成功]  Firestoreで論理削除しました (ID: ${id})`);
+    console.log(`✅  Firestoreで論理削除しました (ID: ${id})`);
 
     // 2. ローカル（IndexedDB）キャッシュでも論理削除
     try {
       await db.delete(id);
       localDeleteSuccess = true;
-      console.log(`[成功]  ローカルキャッシュでも論理削除しました (ID: ${id})`);
+      console.log(`✅  ローカルキャッシュでも論理削除しました (ID: ${id})`);
     } catch (localError) {
       // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
       console.warn(`[警告] ️ ローカルキャッシュの削除に失敗しましたが、クラウドでは削除されています (ID: ${id})`, localError);
       console.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
     }
 
-    console.log(`[成功]  データを論理削除しました (ID: ${id})`);
+    console.log(`✅  データを論理削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to delete calculation:', error);
 
@@ -265,20 +265,20 @@ export async function hardDeleteHistory(id) {
     if (!cloudDeleteSuccess) {
       throw mapFirebaseError(new Error('クラウドからの完全削除に失敗しました'), 'delete');
     }
-    console.log(`[成功]  Firestoreから物理削除しました (ID: ${id})`);
+    console.log(`✅  Firestoreから物理削除しました (ID: ${id})`);
 
     // 2. ローカル（IndexedDB）キャッシュからも物理削除
     try {
       await db.hardDelete(id);
       localDeleteSuccess = true;
-      console.log(`[成功]  ローカルキャッシュからも物理削除しました (ID: ${id})`);
+      console.log(`✅  ローカルキャッシュからも物理削除しました (ID: ${id})`);
     } catch (localError) {
       // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
       console.warn(`[警告] ️ ローカルキャッシュの物理削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
       console.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
     }
 
-    console.log(`[成功]  データを完全に削除しました (ID: ${id})`);
+    console.log(`✅  データを完全に削除しました (ID: ${id})`);
   } catch (error) {
     console.error('Failed to hard delete calculation:', error);
     throw new Error(`完全削除に失敗しました: ${error.message || error}`);
@@ -383,7 +383,7 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     console.log(' データを更新中...');
     await updateInCloud(id, updates);
 
-    console.log(`[成功]  更新完了 (ID: ${id})`);
+    console.log(`✅  更新完了 (ID: ${id})`);
   } catch (error) {
     if (error instanceof NotFoundError || error instanceof ValidationError || error instanceof OfflineError) {
       throw error;
@@ -425,7 +425,7 @@ export async function updateCalculationName(id, name, category = null) {
     // Firestoreを直接更新（IndexedDBキャッシュも更新）
     await updateInCloud(id, updates);
 
-    console.log(`[成功]  商品名更新完了 (ID: ${id})`);
+    console.log(`✅  商品名更新完了 (ID: ${id})`);
   } catch (error) {
     console.error('Failed to update calculation name:', error);
     throw error;
@@ -499,7 +499,7 @@ export async function clearAllHistory() {
     // ローカル（IndexedDB）から全削除
     await db.clear();
 
-    console.log('[成功]  すべてのデータを削除しました');
+    console.log('✅  すべてのデータを削除しました');
   } catch (error) {
     console.error('Failed to clear history:', error);
     throw error;

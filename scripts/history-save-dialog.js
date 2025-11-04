@@ -391,7 +391,7 @@ export async function handleOverwriteSave(showToastCallback) {
     appState.markAsSaved();
     updateSaveButtonsVisibility();
 
-    showToastCallback('[成功]  上書き保存しました');
+    showToastCallback('✅  上書き保存しました');
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
@@ -467,9 +467,9 @@ export async function handleNewSave(showToastCallback) {
     // 保存した商品名を元のフィールドにも反映
     if (nameChanged) {
       updateProductNameField(mode, name);
-      showToastCallback('[成功]  新規保存しました（商品名も更新しました）');
+      showToastCallback('✅  新規保存しました（商品名も更新しました）');
     } else {
-      showToastCallback('[成功]  新規保存しました');
+      showToastCallback('✅  新規保存しました');
     }
 
     // 商品名プリセットを更新
@@ -552,9 +552,9 @@ export async function handleSaveCalculation(showToastCallback) {
       // 保存した商品名を元のフィールドにも反映
       if (nameChanged) {
         updateProductNameField(mode, name);
-        showToastCallback('[成功]  上書き保存しました（商品名も更新しました）');
+        showToastCallback('✅  上書き保存しました（商品名も更新しました）');
       } else {
-        showToastCallback('[成功]  上書き保存しました');
+        showToastCallback('✅  上書き保存しました');
       }
     } else {
       // 新規保存して、新しいIDを取得
@@ -569,9 +569,9 @@ export async function handleSaveCalculation(showToastCallback) {
       // 保存した商品名を元のフィールドにも反映
       if (nameChanged) {
         updateProductNameField(mode, name);
-        showToastCallback('[成功]  保存しました（商品名も更新しました）');
+        showToastCallback('✅  保存しました（商品名も更新しました）');
       } else {
-        showToastCallback('[成功]  保存しました');
+        showToastCallback('✅  保存しました');
       }
     }
     closeSaveDialog();

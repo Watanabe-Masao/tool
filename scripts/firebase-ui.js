@@ -378,7 +378,7 @@ async function handleCleanupFirestore() {
       console.log(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
     }
 
-    console.log('\n[成功]  クリーンアップ完了!');
+    console.log('\n✅  クリーンアップ完了!');
     showToast(`クリーンアップ完了! 削除: ${deletedCount}件、残り: ${toKeep.length}件`, 'success');
 
     // 完了後にダウンロードを促す
@@ -806,7 +806,7 @@ async function handleCheckSyncStatus() {
     // 認証状態
     statusMessage += '■ ログイン状態\n';
     if (signedIn) {
-      statusMessage += `[成功]  ログイン済み\n`;
+      statusMessage += `✅  ログイン済み\n`;
       statusMessage += `   種類: ${anonymous ? '匿名' : 'メールアドレス'}\n`;
       statusMessage += `   UID: ${user.uid.substring(0, 8)}...\n`;
     } else {
@@ -838,7 +838,7 @@ async function handleCheckSyncStatus() {
       statusMessage += 'ℹ️ 同期を実行してください\n';
       statusMessage += '   「 同期」ボタンを押してください\n';
     } else {
-      statusMessage += '[成功]  正常に動作しています\n';
+      statusMessage += '✅  正常に動作しています\n';
     }
 
     alert(statusMessage);

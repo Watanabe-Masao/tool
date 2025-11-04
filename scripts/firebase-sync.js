@@ -293,7 +293,7 @@ export async function uploadToCloud() {
         // 500件ごとにコミット
         if (batchCount >= 500) {
           await batch.commit();
-          console.log(`[成功]  バッチコミット成功: ${totalUploaded}件`);
+          console.log(`✅  バッチコミット成功: ${totalUploaded}件`);
           batch = firestore.batch(); // 新しいバッチを作成
           batchCount = 0;
         }
@@ -307,7 +307,7 @@ export async function uploadToCloud() {
     // 残りをコミット
     if (batchCount > 0) {
       await batch.commit();
-      console.log(`[成功]  最終バッチコミット成功: ${totalUploaded}件`);
+      console.log(`✅  最終バッチコミット成功: ${totalUploaded}件`);
     }
 
     // エラーがあった場合は警告を表示
@@ -322,7 +322,7 @@ export async function uploadToCloud() {
       saveLastSyncTime(new Date());
       updateSyncStatus('success');
       showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
-      console.log('[成功]  全て成功したため、同期時刻を更新しました');
+      console.log('✅  全て成功したため、同期時刻を更新しました');
     }
 
     return true;
@@ -413,7 +413,7 @@ export async function downloadFromCloud() {
       if (isFirstDownloadInSession) {
         console.log(' セッション初回: 全データを取得');
         snapshot = await query.get();
-        console.log(`[成功]  全件取得成功: ${snapshot.size}件`);
+        console.log(`✅  全件取得成功: ${snapshot.size}件`);
       }
       // 2回目以降は差分同期
       else if (lastSyncTime) {
@@ -423,7 +423,7 @@ export async function downloadFromCloud() {
           console.log('⚡ 差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
           snapshot = await query.get();
           usedDifferentialSync = true;
-          console.log(`[成功]  差分同期成功: ${snapshot.size}件取得`);
+          console.log(`✅  差分同期成功: ${snapshot.size}件取得`);
         } catch (differentialError) {
           console.warn('差分同期に失敗、全件取得にフォールバック:', differentialError);
           // 差分同期に失敗した場合は全件取得
@@ -432,7 +432,7 @@ export async function downloadFromCloud() {
             .doc(user.uid)
             .collection('history');
           snapshot = await query.get();
-          console.log('[成功]  全件取得成功:', snapshot.size);
+          console.log('✅  全件取得成功:', snapshot.size);
         }
       } else {
         console.log(' 初回同期: 全データを取得');
@@ -452,7 +452,7 @@ export async function downloadFromCloud() {
       // セッション初回ダウンロードが完了したらフラグを更新（データが空でも成功扱い）
       if (isFirstDownloadInSession) {
         isFirstDownloadInSession = false;
-        console.log('[成功]  セッション初回ダウンロード完了（データなし）。次回から差分同期を使用します');
+        console.log('✅  セッション初回ダウンロード完了（データなし）。次回から差分同期を使用します');
       }
 
       return true;
@@ -519,12 +519,12 @@ export async function downloadFromCloud() {
       saveLastSyncTime(new Date());
       updateSyncStatus('success');
       showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
-      console.log('[成功]  全て成功したため、同期時刻を更新しました');
+      console.log('✅  全て成功したため、同期時刻を更新しました');
 
       // セッション初回ダウンロードが成功したらフラグを更新
       if (isFirstDownloadInSession) {
         isFirstDownloadInSession = false;
-        console.log('[成功]  セッション初回ダウンロード完了。次回から差分同期を使用します');
+        console.log('✅  セッション初回ダウンロード完了。次回から差分同期を使用します');
       }
     }
 
@@ -596,7 +596,7 @@ export async function deleteFromCloud(id) {
         }
       }
     );
-    console.log(`[成功]  Firestoreで論理削除しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreで論理削除しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -664,7 +664,7 @@ export async function hardDeleteFromCloud(id) {
         }
       }
     );
-    console.log(`[成功]  Firestoreから物理削除しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreから物理削除しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -716,7 +716,7 @@ export async function getDeletedFromCloud() {
       id: doc.id,
     }));
 
-    console.log(`[成功]  ${deletedData.length}件の論理削除データを取得しました`);
+    console.log(`✅  ${deletedData.length}件の論理削除データを取得しました`);
     return deletedData;
   } catch (error) {
     console.error('クラウドからの論理削除データ取得エラー:', error);
@@ -777,7 +777,7 @@ export async function saveToCloud(data) {
         }
       }
     );
-    console.log(`[成功]  Firestoreに保存しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreに保存しました (UUID: ${uuid})`);
 
     // IndexedDBにもキャッシュとして保存
     const localData = {
@@ -787,7 +787,7 @@ export async function saveToCloud(data) {
       updatedAt: new Date().toISOString()
     };
     const localId = await dbInstance.save(localData);
-    console.log(`[成功]  IndexedDBにキャッシュしました (ID: ${localId})`);
+    console.log(`✅  IndexedDBにキャッシュしました (ID: ${localId})`);
 
     return { id: localId, uuid: uuid };
   } catch (error) {
@@ -854,7 +854,7 @@ export async function updateInCloud(id, updates) {
         }
       }
     );
-    console.log(`[成功]  Firestoreを更新しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreを更新しました (UUID: ${uuid})`);
 
     // IndexedDBキャッシュも更新
     const localUpdates = {
@@ -862,7 +862,7 @@ export async function updateInCloud(id, updates) {
       updatedAt: new Date().toISOString()
     };
     await dbInstance.update(id, localUpdates);
-    console.log(`[成功]  IndexedDBキャッシュを更新しました (ID: ${id})`);
+    console.log(`✅  IndexedDBキャッシュを更新しました (ID: ${id})`);
   } catch (error) {
     console.error('クラウド更新エラー:', error);
     throw error;
@@ -910,7 +910,7 @@ export async function clearAllFromCloud() {
       // 500件ごとにコミット
       if (batchCount >= 500) {
         await batch.commit();
-        console.log(`[成功]  バッチ削除完了: ${totalDeleted}件`);
+        console.log(`✅  バッチ削除完了: ${totalDeleted}件`);
         batch = firestore.batch(); // 新しいバッチを作成
         batchCount = 0;
       }
@@ -919,10 +919,10 @@ export async function clearAllFromCloud() {
     // 残りをコミット
     if (batchCount > 0) {
       await batch.commit();
-      console.log(`[成功]  最終バッチ削除完了: ${totalDeleted}件`);
+      console.log(`✅  最終バッチ削除完了: ${totalDeleted}件`);
     }
 
-    console.log(`[成功]  Firestoreから全${totalDeleted}件を削除しました`);
+    console.log(`✅  Firestoreから全${totalDeleted}件を削除しました`);
     return true;
   } catch (error) {
     console.error('クラウド全削除エラー:', error);
@@ -964,7 +964,7 @@ export async function syncData() {
     try {
       uploadSuccess = await uploadToCloud();
       if (uploadSuccess) {
-        console.log('[成功]  アップロード成功');
+        console.log('✅  アップロード成功');
       } else {
         console.warn('[警告] ️ アップロード失敗（ダウンロードは続行します）');
       }
@@ -977,7 +977,7 @@ export async function syncData() {
     try {
       downloadSuccess = await downloadFromCloud();
       if (downloadSuccess) {
-        console.log('[成功]  ダウンロード成功');
+        console.log('✅  ダウンロード成功');
       } else {
         console.warn('[警告] ️ ダウンロード失敗');
       }
@@ -989,7 +989,7 @@ export async function syncData() {
     const overallSuccess = uploadSuccess && downloadSuccess;
 
     if (overallSuccess) {
-      console.log('[成功]  双方向同期が完全に成功しました');
+      console.log('✅  双方向同期が完全に成功しました');
     } else if (uploadSuccess || downloadSuccess) {
       console.warn('[警告] ️ 部分的な同期成功:', {
         upload: uploadSuccess ? '成功' : '失敗',

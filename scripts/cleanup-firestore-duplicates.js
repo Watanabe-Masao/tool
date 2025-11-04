@@ -35,7 +35,7 @@ async function cleanupFirestoreDuplicates() {
     console.log(` 取得したデータ: ${snapshot.size}件`);
 
     if (snapshot.empty) {
-      console.log('[成功]  クリーンアップするデータがありません');
+      console.log('✅  クリーンアップするデータがありません');
       return;
     }
 
@@ -69,7 +69,7 @@ async function cleanupFirestoreDuplicates() {
       if (items.length === 1) {
         // 重複なし
         toKeep.push(items[0]);
-        console.log(`[成功]  [${key}] 重複なし`);
+        console.log(`✅  [${key}] 重複なし`);
       } else {
         // 重複あり: 最適なデータを選択
         console.log(`[警告] ️ [${key}] ${items.length}件の重複を検出`);
@@ -92,7 +92,7 @@ async function cleanupFirestoreDuplicates() {
 
         // 最初の1件を保持、残りを削除
         toKeep.push(items[0]);
-        console.log(`  [成功]  保持: ${items[0].docId} (uuid: ${items[0].hasUuid}, updated: ${items[0].updatedAt.toISOString()})`);
+        console.log(`  ✅  保持: ${items[0].docId} (uuid: ${items[0].hasUuid}, updated: ${items[0].updatedAt.toISOString()})`);
 
         for (let i = 1; i < items.length; i++) {
           toDelete.push(items[i]);
@@ -106,7 +106,7 @@ async function cleanupFirestoreDuplicates() {
     console.log(`  削除: ${toDelete.length}件`);
 
     if (toDelete.length === 0) {
-      console.log('[成功]  削除するデータがありません');
+      console.log('✅  削除するデータがありません');
       return;
     }
 
@@ -145,7 +145,7 @@ async function cleanupFirestoreDuplicates() {
       console.log(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
     }
 
-    console.log('\n[成功]  クリーンアップ完了!');
+    console.log('\n✅  クリーンアップ完了!');
     console.log(`  元のデータ: ${snapshot.size}件`);
     console.log(`  削除: ${deletedCount}件`);
     console.log(`  残り: ${toKeep.length}件`);

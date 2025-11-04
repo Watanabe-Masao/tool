@@ -713,7 +713,7 @@ function calculateBreakEvenPrices() {
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = '[成功]  挿入完了！';
+      btn.textContent = '✅  挿入完了！';
       setTimeout(() => {
         btn.textContent = ' 値入率分岐点を一括挿入';
       }, 2000);
@@ -868,7 +868,7 @@ function applyTargetMarkupPrices() {
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = `[成功]  挿入完了！（${toFixed(targetMarkup, 1)}%）`;
+      btn.textContent = `✅  挿入完了！（${toFixed(targetMarkup, 1)}%）`;
       setTimeout(() => {
         btn.textContent = ' 売価を挿入';
       }, 2000);
