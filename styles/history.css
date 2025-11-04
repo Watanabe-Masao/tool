@@ -173,7 +173,7 @@ body.modal-open {
 
 /* TOP画面と同じデザインにするため、fieldsetとradioクラスを使用 */
 .history-filter-section .fieldset {
-  margin-bottom: 0.8em;
+  margin-bottom: 0.3em;
   border: none;
   padding: 0;
 }
@@ -184,6 +184,7 @@ body.modal-open {
   display: flex;
   gap: 0.5em;
   align-items: center;
+  margin-top: 0.5em;
 }
 
 .history-toolbar select {
