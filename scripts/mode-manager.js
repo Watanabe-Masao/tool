@@ -268,7 +268,10 @@ export function switchMode(newMode, callbacks = {}) {
     } else if (currentMode === MODE.YIELD_STATS) {
       clearYieldStatsInputs(callbacks.addYieldStatsRow);
 
-      // 注意：統計データは複数パターン分析で使用するため、ここではクリアしない
+      // 統計データをクリア（複数パターン分析へ直接遷移する場合は除く）
+      if (newMode !== MODE.MULTI_PATTERN) {
+        appState.setYieldStatsData(null);
+      }
     } else if (currentMode === MODE.MULTI_PATTERN) {
       // 複数パターン分析モードのクリア処理
       resetMultiPatternUI();
