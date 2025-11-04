@@ -327,6 +327,26 @@ export function switchMode(newMode, callbacks = {}) {
     activeBtn.setAttribute('aria-selected', 'true');
   }
 
+  // モードボタンの表示/非表示を制御（歩留まり統計と複数パターン分析の2画面モード）
+  const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
+  const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
+  const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
+  const multiPatternBtnElement = qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`);
+
+  if (appState.showYieldStatsWithMultiPattern) {
+    // 歩留まり統計と複数パターン分析の2画面モード：他のボタンを非表示
+    if (fixedBtn) fixedBtn.style.display = 'none';
+    if (weightBtn) weightBtn.style.display = 'none';
+    if (yieldStatsBtn) yieldStatsBtn.style.display = '';
+    if (multiPatternBtnElement) multiPatternBtnElement.style.display = '';
+  } else {
+    // 通常モード：すべてのボタンを表示
+    if (fixedBtn) fixedBtn.style.display = '';
+    if (weightBtn) weightBtn.style.display = '';
+    if (yieldStatsBtn) yieldStatsBtn.style.display = '';
+    if (multiPatternBtnElement) multiPatternBtnElement.style.display = '';
+  }
+
   // セクションの表示/非表示を切り替え
   const fixedInputs = qs(`#${UI_ELEMENTS.FIXED_INPUTS}`);
   const weightInputs = qs(`#${UI_ELEMENTS.WEIGHT_INPUTS}`);
