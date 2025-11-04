@@ -5,17 +5,17 @@
  * 外れ値処理の一部は outlier-management.js に分離されています。
  *
  * Phase 9 UX改善完了:
- * ✅ displayMatrixEvaluation: アイコン付き、フェードイン/スライドアップアニメーション
- * ✅ displayStatistics: 全統計値に段階的フェードインアニメーション (17項目)
- * ✅ displaySampleSizeValidation: カラーコーディング付きプログレスバー、カウントアップアニメーション
- * ✅ displayRecommendedValue: スケールアニメーション、アイコン付きバッジ、スライドイン
- * ✅ 外れ値管理: highlightOutlierRows, isOutlierValue (outlier-management.jsから統合)
+ * ✅  displayMatrixEvaluation: アイコン付き、フェードイン/スライドアップアニメーション
+ * ✅  displayStatistics: 全統計値に段階的フェードインアニメーション (17項目)
+ * ✅  displaySampleSizeValidation: カラーコーディング付きプログレスバー、カウントアップアニメーション
+ * ✅  displayRecommendedValue: スケールアニメーション、アイコン付きバッジ、スライドイン
+ * ✅  外れ値管理: highlightOutlierRows, isOutlierValue (outlier-management.jsから統合)
  *
  * UX改善の特徴:
- * - 📊 アイコン: 視覚的なフィードバック（🌟✓⚡⚠️📊📈等）
+ * -  アイコン: 視覚的なフィードバック（🌟✓⚡[警告] ️等）
  * - 🎨 カラーコーディング: 緑（良好）、黄（警告）、赤（危険）
  * - 🎬 アニメーション: fadeInUp, scaleIn, カウントアップ
- * - 📈 プログレスバー: サンプル数充足度の視覚化
+ * -  プログレスバー: サンプル数充足度の視覚化
  * - ⏱️ タイミング制御: 段階的表示で認知負荷を軽減
  *
  * 新規モジュール（将来の拡張用）:
@@ -257,7 +257,7 @@ function displayMatrixEvaluation(stats) {
     'excellent': '🌟',
     'good': '✓',
     'fair': '⚡',
-    'poor': '⚠️'
+    'poor': '[警告] ️'
   };
   const icon = icons[evaluation.className] || '';
 
@@ -495,7 +495,7 @@ function displaySampleSizeValidation() {
       validityBadge.textContent = '✓ 妥当';
       validityBadge.className = 'validity-badge valid';
     } else {
-      validityBadge.textContent = '⚠ 不十分';
+      validityBadge.textContent = '[警告]  不十分';
       validityBadge.className = 'validity-badge invalid';
     }
 
@@ -997,7 +997,7 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   }
 
   // UX改善: アイコン付きでバッジを表示
-  const icon = recommendedType === '平均値' ? '📊' : '📈';
+  const icon = recommendedType === '平均値' ? '' : '';
   recommendedBadge.innerHTML = `<span style="margin-right: 0.3em;">${icon}</span>${recommendedType}`;
 
   // バッジをスケールアニメーションで表示
@@ -1231,7 +1231,7 @@ function updateLoadStatsButtons() {
     bulkImportBtn.id = 'bulkImportBtn';
     bulkImportBtn.className = 'btn btn-recommended btn-sm';
     bulkImportBtn.style.cssText = 'font-size: 0.9em; padding: 0.5em 1.2em;';
-    bulkImportBtn.textContent = '📥 推奨値を一括転記';
+    bulkImportBtn.textContent = ' 推奨値を一括転記';
 
     // イベントハンドラを設定
     attachButtonHandler(bulkImportBtn, () => {

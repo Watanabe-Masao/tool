@@ -168,7 +168,7 @@ export function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid, 
       outlierRecommendation.className = 'outlier-recommendation success';
     } else if (remainingDataCount >= 2) {
       outlierRecommendation.innerHTML = `
-        <span class="recommendation-icon">⚠</span>
+        <span class="recommendation-icon">[警告] </span>
         <strong>${outlierResult.outliers.length}件の外れ値が検出されました。</strong><br>
         チェックボックスで除外する外れ値を選択してください。<br>
         除外後のデータで統計分析を行うことを<strong>推奨</strong>します。
@@ -176,7 +176,7 @@ export function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid, 
       outlierRecommendation.className = 'outlier-recommendation warning';
     } else {
       outlierRecommendation.innerHTML = `
-        <span class="recommendation-icon">❌</span>
+        <span class="recommendation-icon">[エラー] </span>
         <strong>${outlierResult.outliers.length}件の外れ値が検出されました。</strong><br>
         除外後のデータが不足する可能性があります。<br>
         データの見直しをお勧めします。
@@ -290,7 +290,7 @@ export function highlightOutlierRows(statsType) {
           outlierCell.classList.add('outlier-cell');
 
           // 外れ値のセルにツールチップを追加
-          outlierCell.setAttribute('title', '⚠ この値は外れ値として検出されました');
+          outlierCell.setAttribute('title', '[警告]  この値は外れ値として検出されました');
         }
       }, index * 30);
     }
@@ -332,7 +332,7 @@ export function deleteOutlierRows(statsType, onComplete) {
   const statsTypeName = statsType === 'yieldRate' ? '歩留まり率' :
                        statsType === 'beforeWeight' ? '加工前重量' : '加工後重量';
 
-  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n\n⚠ 削除した行は元に戻せません。\n\n削除する外れ値の数: ${currentOutlierValues.length}件\n\n本当に削除しますか？`;
+  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n\n[警告]  削除した行は元に戻せません。\n\n削除する外れ値の数: ${currentOutlierValues.length}件\n\n本当に削除しますか？`;
 
   if (!confirm(confirmMessage)) {
     return;

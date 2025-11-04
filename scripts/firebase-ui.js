@@ -263,7 +263,7 @@ async function handleCleanupFirestore() {
   }
 
   try {
-    console.log('🧹 Firestoreクリーンアップを開始します...');
+    console.log('[クリーンアップ]  Firestoreクリーンアップを開始します...');
     const user = getCurrentUser();
     const firestore = firebase.firestore();
 
@@ -274,7 +274,7 @@ async function handleCleanupFirestore() {
       .collection('history')
       .get();
 
-    console.log(`📦 取得したデータ: ${snapshot.size}件`);
+    console.log(` 取得したデータ: ${snapshot.size}件`);
 
     if (snapshot.empty) {
       showToast('クリーンアップするデータがありません', 'info');
@@ -301,7 +301,7 @@ async function handleCleanupFirestore() {
       });
     });
 
-    console.log(`📊 ユニークなデータグループ: ${dataMap.size}個`);
+    console.log(` ユニークなデータグループ: ${dataMap.size}個`);
 
     // 重複を検出して削除リストを作成
     const toDelete = [];
@@ -313,7 +313,7 @@ async function handleCleanupFirestore() {
         toKeep.push(items[0]);
       } else {
         // 重複あり: 最適なデータを選択
-        console.log(`⚠️ [${key}] ${items.length}件の重複を検出`);
+        console.log(`[警告] ️ [${key}] ${items.length}件の重複を検出`);
 
         // ソート優先順位: UUID形式のデータを優先 → 最新のupdatedAtを優先
         items.sort((a, b) => {
@@ -332,7 +332,7 @@ async function handleCleanupFirestore() {
       }
     });
 
-    console.log('\n📊 クリーンアップサマリー:');
+    console.log('\n クリーンアップサマリー:');
     console.log(`  保持: ${toKeep.length}件`);
     console.log(`  削除: ${toDelete.length}件`);
 
@@ -350,7 +350,7 @@ async function handleCleanupFirestore() {
     );
 
     if (!confirmed) {
-      console.log('❌ クリーンアップをキャンセルしました');
+      console.log('[エラー]  クリーンアップをキャンセルしました');
       return;
     }
 
@@ -375,10 +375,10 @@ async function handleCleanupFirestore() {
 
       await batch.commit();
       deletedCount += chunk.length;
-      console.log(`🗑️ 削除完了: ${deletedCount}/${toDelete.length}件`);
+      console.log(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
     }
 
-    console.log('\n✅ クリーンアップ完了!');
+    console.log('\n✅  クリーンアップ完了!');
     showToast(`クリーンアップ完了! 削除: ${deletedCount}件、残り: ${toKeep.length}件`, 'success');
 
     // 完了後にダウンロードを促す
@@ -390,7 +390,7 @@ async function handleCleanupFirestore() {
       await downloadFromCloud();
     }
   } catch (error) {
-    console.error('❌ クリーンアップエラー:', error);
+    console.error('[エラー]  クリーンアップエラー:', error);
     showToast(`クリーンアップに失敗しました: ${error.message}`, 'error');
   }
 }
@@ -643,7 +643,7 @@ function updateUIForAuthState(user) {
   if (user) {
     // ログイン中
     if (authStatus) {
-      authStatus.textContent = '☁️ ログイン済み';
+      authStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> ログイン済み';
       authStatus.className = 'status-badge logged-in';
     }
 
@@ -657,7 +657,7 @@ function updateUIForAuthState(user) {
   } else {
     // 未ログイン
     if (authStatus) {
-      authStatus.textContent = '☁️ 未ログイン';
+      authStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> 未ログイン';
       authStatus.className = 'status-badge logged-out';
     }
 
@@ -682,35 +682,35 @@ function updateSyncStatusUI(status, lastSyncTime) {
 
   switch (status) {
     case 'uploading':
-      syncButton.textContent = '📤';
+      syncButton.innerHTML = '<i class="fa-solid fa-upload"></i>';
       syncButton.disabled = true;
       syncButton.title = 'アップロード中...';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'downloading':
-      syncButton.textContent = '📩';
+      syncButton.innerHTML = '<i class="fa-solid fa-download"></i>';
       syncButton.disabled = true;
       syncButton.title = 'ダウンロード中...';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'success':
-      syncButton.textContent = '🔄';
+      syncButton.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>';
       syncButton.disabled = false;
       syncButton.title = '同期';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     case 'error':
-      syncButton.textContent = '🔄';
+      syncButton.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
       syncButton.disabled = false;
       syncButton.title = '同期（エラー）';
       if (syncStatus) syncStatus.textContent = '';
       break;
 
     default:
-      syncButton.textContent = '🔄';
+      syncButton.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>';
       syncButton.disabled = !isSignedIn();
       syncButton.title = '同期';
       if (syncStatus) syncStatus.textContent = '';
@@ -806,11 +806,11 @@ async function handleCheckSyncStatus() {
     // 認証状態
     statusMessage += '■ ログイン状態\n';
     if (signedIn) {
-      statusMessage += `✅ ログイン済み\n`;
+      statusMessage += `✅  ログイン済み\n`;
       statusMessage += `   種類: ${anonymous ? '匿名' : 'メールアドレス'}\n`;
       statusMessage += `   UID: ${user.uid.substring(0, 8)}...\n`;
     } else {
-      statusMessage += `❌ 未ログイン\n`;
+      statusMessage += `[エラー]  未ログイン\n`;
     }
     statusMessage += '\n';
 
@@ -827,18 +827,18 @@ async function handleCheckSyncStatus() {
     // 推奨アクション
     statusMessage += '【推奨アクション】\n';
     if (!signedIn) {
-      statusMessage += '⚠️ ログインしてください\n';
+      statusMessage += '[警告] ️ ログインしてください\n';
     } else if (localCount === 0 && lastSync) {
-      statusMessage += '⚠️ ローカルにデータがありません\n';
-      statusMessage += '   「🔄 同期」ボタンを押して\n   クラウドからダウンロードしてください\n';
+      statusMessage += '[警告] ️ ローカルにデータがありません\n';
+      statusMessage += '   「 同期」ボタンを押して\n   クラウドからダウンロードしてください\n';
     } else if (localCount === 0 && !lastSync) {
       statusMessage += 'ℹ️ データがありません\n';
       statusMessage += '   新規計算を実行してください\n';
     } else if (!lastSync) {
       statusMessage += 'ℹ️ 同期を実行してください\n';
-      statusMessage += '   「🔄 同期」ボタンを押してください\n';
+      statusMessage += '   「 同期」ボタンを押してください\n';
     } else {
-      statusMessage += '✅ 正常に動作しています\n';
+      statusMessage += '✅  正常に動作しています\n';
     }
 
     alert(statusMessage);

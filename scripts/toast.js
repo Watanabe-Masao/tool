@@ -57,9 +57,9 @@ export function showToast(message, type = 'info', duration = 3000) {
 function getToastIcon(type) {
   const icons = {
     info: 'ℹ️',
-    success: '✅',
-    warning: '⚠️',
-    error: '❌'
+    success: '✅ ',
+    warning: '[警告] ️',
+    error: '[エラー] '
   };
   return icons[type] || icons.info;
 }

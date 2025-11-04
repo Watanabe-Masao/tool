@@ -259,7 +259,7 @@ export async function uploadToCloud() {
       try {
         // UUIDをFirestoreドキュメントIDとして使用
         if (!item.uuid) {
-          console.error(`❌ UUID未設定のアイテムをスキップ (IndexedDB ID: ${item.id})`);
+          console.error(`[エラー]  UUID未設定のアイテムをスキップ (IndexedDB ID: ${item.id})`);
           errors.push({ itemId: item.id, error: 'UUID not found' });
           continue;
         }
@@ -271,7 +271,7 @@ export async function uploadToCloud() {
           .doc(item.uuid); // UUIDをドキュメントIDとして使用
 
         if (totalUploaded === 0) {
-          console.log('📤 UUID方式でアップロード:', item.uuid);
+          console.log('[アップロード]  UUID方式でアップロード:', item.uuid);
         }
 
         // タイムスタンプを追加（idフィールドは除外）
@@ -293,12 +293,12 @@ export async function uploadToCloud() {
         // 500件ごとにコミット
         if (batchCount >= 500) {
           await batch.commit();
-          console.log(`✅ バッチコミット成功: ${totalUploaded}件`);
+          console.log(`✅  バッチコミット成功: ${totalUploaded}件`);
           batch = firestore.batch(); // 新しいバッチを作成
           batchCount = 0;
         }
       } catch (itemError) {
-        console.error(`❌ アイテムアップロードエラー (ID: ${item.id}):`, itemError);
+        console.error(`[エラー]  アイテムアップロードエラー (ID: ${item.id}):`, itemError);
         errors.push({ itemId: item.id, error: itemError.message });
         // エラーが発生してもバッチに追加せず、次のアイテムに進む
       }
@@ -307,22 +307,22 @@ export async function uploadToCloud() {
     // 残りをコミット
     if (batchCount > 0) {
       await batch.commit();
-      console.log(`✅ 最終バッチコミット成功: ${totalUploaded}件`);
+      console.log(`✅  最終バッチコミット成功: ${totalUploaded}件`);
     }
 
     // エラーがあった場合は警告を表示
     if (errors.length > 0) {
-      console.warn(`⚠️ ${errors.length}件のアイテムでエラーが発生しました:`, errors);
+      console.warn(`[警告] ️ ${errors.length}件のアイテムでエラーが発生しました:`, errors);
       updateSyncStatus('warning');
       showToast(`${totalUploaded}件アップロード完了（${errors.length}件スキップ）`, 'warning');
       // ★重要: エラーがある場合はlastSyncTimeを更新しない（次回再試行するため）
-      console.warn('⚠️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
+      console.warn('[警告] ️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
     } else {
       // 全て成功の場合のみlastSyncTimeを更新
       saveLastSyncTime(new Date());
       updateSyncStatus('success');
       showToast(`${totalUploaded}件のデータをアップロードしました`, 'success');
-      console.log('✅ 全て成功したため、同期時刻を更新しました');
+      console.log('✅  全て成功したため、同期時刻を更新しました');
     }
 
     return true;
@@ -344,7 +344,7 @@ export async function uploadToCloud() {
       errorMessage = 'ネットワーク接続を確認してください。';
     } else if (error.message && error.message.includes('indexOf')) {
       errorMessage = 'データ型エラーが発生しました。ページを再読み込みして再試行してください。';
-      console.error('💡 ヒント: IndexedDBとFirestoreのID型の不一致が原因の可能性があります');
+      console.error('[ヒント]  ヒント: IndexedDBとFirestoreのID型の不一致が原因の可能性があります');
     } else if (error.message) {
       errorMessage = `アップロードに失敗: ${error.message}`;
     }
@@ -411,9 +411,9 @@ export async function downloadFromCloud() {
 
       // セッション初回は強制的に全件取得
       if (isFirstDownloadInSession) {
-        console.log('📥 セッション初回: 全データを取得');
+        console.log(' セッション初回: 全データを取得');
         snapshot = await query.get();
-        console.log(`✅ 全件取得成功: ${snapshot.size}件`);
+        console.log(`✅  全件取得成功: ${snapshot.size}件`);
       }
       // 2回目以降は差分同期
       else if (lastSyncTime) {
@@ -423,7 +423,7 @@ export async function downloadFromCloud() {
           console.log('⚡ 差分同期を試行: 最終同期時刻以降のデータのみ取得', lastSyncTime);
           snapshot = await query.get();
           usedDifferentialSync = true;
-          console.log(`✅ 差分同期成功: ${snapshot.size}件取得`);
+          console.log(`✅  差分同期成功: ${snapshot.size}件取得`);
         } catch (differentialError) {
           console.warn('差分同期に失敗、全件取得にフォールバック:', differentialError);
           // 差分同期に失敗した場合は全件取得
@@ -432,16 +432,16 @@ export async function downloadFromCloud() {
             .doc(user.uid)
             .collection('history');
           snapshot = await query.get();
-          console.log('✅ 全件取得成功:', snapshot.size);
+          console.log('✅  全件取得成功:', snapshot.size);
         }
       } else {
-        console.log('📥 初回同期: 全データを取得');
+        console.log(' 初回同期: 全データを取得');
         snapshot = await query.get();
       }
     } catch (error) {
       console.error('Firestore取得エラー:', error);
       // エラー時はセッションフラグを維持（次回も全件取得を試行）
-      console.warn('⚠️ エラーが発生しました。次回も全件取得を試行します。');
+      console.warn('[警告] ️ エラーが発生しました。次回も全件取得を試行します。');
       throw error;
     }
 
@@ -452,7 +452,7 @@ export async function downloadFromCloud() {
       // セッション初回ダウンロードが完了したらフラグを更新（データが空でも成功扱い）
       if (isFirstDownloadInSession) {
         isFirstDownloadInSession = false;
-        console.log('✅ セッション初回ダウンロード完了（データなし）。次回から差分同期を使用します');
+        console.log('✅  セッション初回ダウンロード完了（データなし）。次回から差分同期を使用します');
       }
 
       return true;
@@ -486,7 +486,7 @@ export async function downloadFromCloud() {
         errors++;
         const errorMsg = `ID: ${cloudItem.id}, エラー: ${itemError.message || itemError.toString()}`;
         errorDetails.push(errorMsg);
-        console.error(`❌ アイテム保存エラー (${i + 1}/${cloudHistory.length}):`, errorMsg);
+        console.error(`[エラー]  アイテム保存エラー (${i + 1}/${cloudHistory.length}):`, errorMsg);
 
         // エラー内容をコンソールに詳細表示
         console.error('エラー詳細:', itemError);
@@ -506,25 +506,25 @@ export async function downloadFromCloud() {
       showToast(`ダウンロード失敗: ${errors}件のエラーが発生しました`, 'error');
       console.error('エラー詳細一覧:', errorDetails);
       // ★重要: エラー発生時はlastSyncTimeを更新しない（次回も全データを再取得するため）
-      console.warn('⚠️ エラーが発生したため、同期時刻は更新しません');
+      console.warn('[警告] ️ エラーが発生したため、同期時刻は更新しません');
     } else if (errors > 0) {
       // 一部エラーの場合
       updateSyncStatus('warning');
       showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件、エラー${errors}件`, 'warning');
       console.warn('エラー詳細一覧:', errorDetails);
       // ★重要: 一部エラーの場合もlastSyncTimeを更新しない（失敗したデータを次回再試行するため）
-      console.warn('⚠️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
+      console.warn('[警告] ️ 一部エラーが発生したため、同期時刻は更新しません（次回再試行します）');
     } else {
       // 全て成功の場合のみlastSyncTimeを更新
       saveLastSyncTime(new Date());
       updateSyncStatus('success');
       showToast(`ダウンロード完了: 新規${imported}件、更新${updated}件、スキップ${skipped}件`, 'success');
-      console.log('✅ 全て成功したため、同期時刻を更新しました');
+      console.log('✅  全て成功したため、同期時刻を更新しました');
 
       // セッション初回ダウンロードが成功したらフラグを更新
       if (isFirstDownloadInSession) {
         isFirstDownloadInSession = false;
-        console.log('✅ セッション初回ダウンロード完了。次回から差分同期を使用します');
+        console.log('✅  セッション初回ダウンロード完了。次回から差分同期を使用します');
       }
     }
 
@@ -592,11 +592,11 @@ export async function deleteFromCloud(id) {
         maxRetries: 3,
         baseDelay: 1000,
         onRetry: (attempt, error) => {
-          console.warn(`🔄 論理削除リトライ中 (${attempt}/3):`, error.message);
+          console.warn(` 論理削除リトライ中 (${attempt}/3):`, error.message);
         }
       }
     );
-    console.log(`✅ Firestoreで論理削除しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreで論理削除しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -660,11 +660,11 @@ export async function hardDeleteFromCloud(id) {
         maxRetries: 3,
         baseDelay: 1000,
         onRetry: (attempt, error) => {
-          console.warn(`🔄 物理削除リトライ中 (${attempt}/3):`, error.message);
+          console.warn(` 物理削除リトライ中 (${attempt}/3):`, error.message);
         }
       }
     );
-    console.log(`✅ Firestoreから物理削除しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreから物理削除しました (UUID: ${uuid})`);
 
     return true;
   } catch (error) {
@@ -716,7 +716,7 @@ export async function getDeletedFromCloud() {
       id: doc.id,
     }));
 
-    console.log(`✅ ${deletedData.length}件の論理削除データを取得しました`);
+    console.log(`✅  ${deletedData.length}件の論理削除データを取得しました`);
     return deletedData;
   } catch (error) {
     console.error('クラウドからの論理削除データ取得エラー:', error);
@@ -750,9 +750,9 @@ export async function saveToCloud(data) {
       .doc(uuid);
 
     // undefinedフィールドを削除（Firestoreはundefinedを許可しない）
-    console.log('📝 保存前のデータ:', JSON.parse(JSON.stringify(data)));
+    console.log(' 保存前のデータ:', JSON.parse(JSON.stringify(data)));
     const cleanedData = removeUndefinedFields(data);
-    console.log('🧹 クリーンアップ後のデータ:', JSON.parse(JSON.stringify(cleanedData)));
+    console.log('[クリーンアップ]  クリーンアップ後のデータ:', JSON.parse(JSON.stringify(cleanedData)));
 
     const dataToSave = {
       ...cleanedData,
@@ -762,9 +762,9 @@ export async function saveToCloud(data) {
       deviceId: getDeviceId()
     };
 
-    console.log('💾 Firestoreに送信するデータのキー:', Object.keys(dataToSave));
-    console.log('💾 createdAt type:', typeof dataToSave.createdAt, dataToSave.createdAt);
-    console.log('💾 updatedAt type:', typeof dataToSave.updatedAt, dataToSave.updatedAt);
+    console.log(' Firestoreに送信するデータのキー:', Object.keys(dataToSave));
+    console.log(' createdAt type:', typeof dataToSave.createdAt, dataToSave.createdAt);
+    console.log(' updatedAt type:', typeof dataToSave.updatedAt, dataToSave.updatedAt);
 
     // リトライロジックでFirestoreに保存
     await retryWithBackoff(
@@ -773,11 +773,11 @@ export async function saveToCloud(data) {
         maxRetries: 3,
         baseDelay: 1000,
         onRetry: (attempt, error) => {
-          console.warn(`🔄 保存リトライ中 (${attempt}/3):`, error.message);
+          console.warn(` 保存リトライ中 (${attempt}/3):`, error.message);
         }
       }
     );
-    console.log(`✅ Firestoreに保存しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreに保存しました (UUID: ${uuid})`);
 
     // IndexedDBにもキャッシュとして保存
     const localData = {
@@ -787,11 +787,11 @@ export async function saveToCloud(data) {
       updatedAt: new Date().toISOString()
     };
     const localId = await dbInstance.save(localData);
-    console.log(`✅ IndexedDBにキャッシュしました (ID: ${localId})`);
+    console.log(`✅  IndexedDBにキャッシュしました (ID: ${localId})`);
 
     return { id: localId, uuid: uuid };
   } catch (error) {
-    console.error('❌ クラウド保存エラー:', error);
+    console.error('[エラー]  クラウド保存エラー:', error);
     console.error('エラー詳細:', {
       code: error.code,
       message: error.message,
@@ -850,11 +850,11 @@ export async function updateInCloud(id, updates) {
         maxRetries: 3,
         baseDelay: 1000,
         onRetry: (attempt, error) => {
-          console.warn(`🔄 更新リトライ中 (${attempt}/3):`, error.message);
+          console.warn(` 更新リトライ中 (${attempt}/3):`, error.message);
         }
       }
     );
-    console.log(`✅ Firestoreを更新しました (UUID: ${uuid})`);
+    console.log(`✅  Firestoreを更新しました (UUID: ${uuid})`);
 
     // IndexedDBキャッシュも更新
     const localUpdates = {
@@ -862,7 +862,7 @@ export async function updateInCloud(id, updates) {
       updatedAt: new Date().toISOString()
     };
     await dbInstance.update(id, localUpdates);
-    console.log(`✅ IndexedDBキャッシュを更新しました (ID: ${id})`);
+    console.log(`✅  IndexedDBキャッシュを更新しました (ID: ${id})`);
   } catch (error) {
     console.error('クラウド更新エラー:', error);
     throw error;
@@ -895,7 +895,7 @@ export async function clearAllFromCloud() {
       return true;
     }
 
-    console.log(`🗑️ Firestoreから${snapshot.size}件のデータを削除中...`);
+    console.log(`[削除]  Firestoreから${snapshot.size}件のデータを削除中...`);
 
     // バッチ削除（最大500件ずつ）
     let batch = firestore.batch();
@@ -910,7 +910,7 @@ export async function clearAllFromCloud() {
       // 500件ごとにコミット
       if (batchCount >= 500) {
         await batch.commit();
-        console.log(`✅ バッチ削除完了: ${totalDeleted}件`);
+        console.log(`✅  バッチ削除完了: ${totalDeleted}件`);
         batch = firestore.batch(); // 新しいバッチを作成
         batchCount = 0;
       }
@@ -919,10 +919,10 @@ export async function clearAllFromCloud() {
     // 残りをコミット
     if (batchCount > 0) {
       await batch.commit();
-      console.log(`✅ 最終バッチ削除完了: ${totalDeleted}件`);
+      console.log(`✅  最終バッチ削除完了: ${totalDeleted}件`);
     }
 
-    console.log(`✅ Firestoreから全${totalDeleted}件を削除しました`);
+    console.log(`✅  Firestoreから全${totalDeleted}件を削除しました`);
     return true;
   } catch (error) {
     console.error('クラウド全削除エラー:', error);
@@ -964,39 +964,39 @@ export async function syncData() {
     try {
       uploadSuccess = await uploadToCloud();
       if (uploadSuccess) {
-        console.log('✅ アップロード成功');
+        console.log('✅  アップロード成功');
       } else {
-        console.warn('⚠️ アップロード失敗（ダウンロードは続行します）');
+        console.warn('[警告] ️ アップロード失敗（ダウンロードは続行します）');
       }
     } catch (uploadError) {
-      console.error('❌ アップロードエラー:', uploadError);
-      console.warn('⚠️ ダウンロードは続行します');
+      console.error('[エラー]  アップロードエラー:', uploadError);
+      console.warn('[警告] ️ ダウンロードは続行します');
     }
 
     // ダウンロードを試行
     try {
       downloadSuccess = await downloadFromCloud();
       if (downloadSuccess) {
-        console.log('✅ ダウンロード成功');
+        console.log('✅  ダウンロード成功');
       } else {
-        console.warn('⚠️ ダウンロード失敗');
+        console.warn('[警告] ️ ダウンロード失敗');
       }
     } catch (downloadError) {
-      console.error('❌ ダウンロードエラー:', downloadError);
+      console.error('[エラー]  ダウンロードエラー:', downloadError);
     }
 
     // 結果の評価
     const overallSuccess = uploadSuccess && downloadSuccess;
 
     if (overallSuccess) {
-      console.log('✅ 双方向同期が完全に成功しました');
+      console.log('✅  双方向同期が完全に成功しました');
     } else if (uploadSuccess || downloadSuccess) {
-      console.warn('⚠️ 部分的な同期成功:', {
+      console.warn('[警告] ️ 部分的な同期成功:', {
         upload: uploadSuccess ? '成功' : '失敗',
         download: downloadSuccess ? '成功' : '失敗'
       });
     } else {
-      console.error('❌ 同期が完全に失敗しました');
+      console.error('[エラー]  同期が完全に失敗しました');
     }
 
     return { uploadSuccess, downloadSuccess, overallSuccess };
@@ -1044,7 +1044,7 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
       localItem = await dbInstance.getByUuid(uuid);
     } else {
       // 互換性レイヤー: 古いデータ（firestoreIdまたは数値IDベース）の対応
-      console.warn('⚠️ UUID未設定のクラウドデータを検出:', cloudItem.id);
+      console.warn('[警告] ️ UUID未設定のクラウドデータを検出:', cloudItem.id);
 
       if (cloudItem.firestoreId) {
         // firestoreIdベースの旧データ
@@ -1052,7 +1052,7 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
         // 見つかった場合、UUIDを生成して設定
         if (localItem && !localItem.uuid) {
           const newUuid = cloudItem.id; // FirestoreドキュメントID自体がUUIDの可能性
-          console.log(`🔄 旧データ移行: firestoreId "${cloudItem.firestoreId}" に UUID "${newUuid}" を設定`);
+          console.log(` 旧データ移行: firestoreId "${cloudItem.firestoreId}" に UUID "${newUuid}" を設定`);
           await dbInstance.update(localItem.id, { uuid: newUuid });
           localItem.uuid = newUuid;
         }
@@ -1064,7 +1064,7 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
           // 見つかった場合、UUIDを生成して設定
           if (localItem && !localItem.uuid) {
             const newUuid = generateUUID();
-            console.log(`🔄 旧データ移行: IndexedDB ID:${numericId} に新しいUUID "${newUuid}" を生成`);
+            console.log(` 旧データ移行: IndexedDB ID:${numericId} に新しいUUID "${newUuid}" を生成`);
             await dbInstance.update(numericId, { uuid: newUuid });
             localItem.uuid = newUuid;
             // Firestoreにも反映するためにcloudItemを更新
@@ -1080,12 +1080,12 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
 
       // データ整合性チェック: 必須フィールドの検証
       if (!itemWithoutId.uuid) {
-        console.warn('⚠️ UUID未設定のため新規UUIDを生成します');
+        console.warn('[警告] ️ UUID未設定のため新規UUIDを生成します');
         itemWithoutId.uuid = uuid || cloudItem.id || generateUUID();
       }
 
       const newId = await dbInstance.save(itemWithoutId);
-      console.log(`📥 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
+      console.log(` 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
     } else {
       // 競合解決：タイムスタンプで判定
@@ -1098,24 +1098,24 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
 
         // データ整合性: UUIDの一致確認（Cloud-first戦略）
         if (itemWithoutId.uuid && localItem.uuid && itemWithoutId.uuid !== localItem.uuid) {
-          console.error('❌ UUID不一致を検出:', {
+          console.error('[エラー]  UUID不一致を検出:', {
             cloud: itemWithoutId.uuid,
             local: localItem.uuid,
             localId: localItem.id
           });
 
           // Cloud-first戦略: クラウドのUUIDを優先し、別アイテムとして新規追加
-          console.warn('⚠️ UUID不一致のため、クラウドのデータを新規アイテムとして追加します（Cloud-first戦略）');
+          console.warn('[警告] ️ UUID不一致のため、クラウドのデータを新規アイテムとして追加します（Cloud-first戦略）');
 
           // ローカルアイテムはそのまま保持し、クラウドアイテムを新規追加
           const newId = await dbInstance.save(itemWithoutId);
-          console.log(`📥 UUID不一致により新規インポート (Cloud UUID: ${itemWithoutId.uuid} → New IndexedDB ID: ${newId})`);
+          console.log(` UUID不一致により新規インポート (Cloud UUID: ${itemWithoutId.uuid} → New IndexedDB ID: ${newId})`);
           console.log(`   ローカルの既存データは保持されます (Local UUID: ${localItem.uuid}, Local ID: ${localItem.id})`);
           return 'imported';
         }
 
         await dbInstance.update(localItem.id, itemWithoutId);
-        console.log(`🔄 更新 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
+        console.log(` 更新 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
         return 'updated';
       } else {
         // ローカルの方が新しい→スキップ

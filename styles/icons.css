@@ -1,0 +1,83 @@
+/* ================================================
+   アイコンシステム - Font Awesome用スタイル
+   ================================================ */
+
+/* Font Awesomeアイコンの基本スタイル */
+i[class*="fa-"] {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* アイコンサイズ */
+.icon-sm {
+  font-size: 0.875em;
+}
+
+.icon-md {
+  font-size: 1.25em;
+}
+
+.icon-lg {
+  font-size: 1.5em;
+}
+
+.icon-xl {
+  font-size: 2em;
+}
+
+/* アイコンとテキストの組み合わせ */
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+/* ボタン内のアイコン */
+button i[class*="fa-"],
+a i[class*="fa-"] {
+  margin-right: 0.25em;
+}
+
+/* アイコンのみのボタン */
+.btn-icon i[class*="fa-"] {
+  margin: 0;
+}
+
+/* アイコンの色 */
+.icon-primary {
+  color: var(--brand);
+}
+
+.icon-secondary {
+  color: var(--text-secondary);
+}
+
+.icon-success {
+  color: var(--success);
+}
+
+.icon-warning {
+  color: var(--warning);
+}
+
+.icon-error {
+  color: var(--error);
+}
+
+.icon-muted {
+  color: var(--text-muted);
+}
+
+/* アイコンの回転アニメーション（同期ボタンなど） */
+.icon-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

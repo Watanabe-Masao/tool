@@ -103,7 +103,7 @@ export class YieldCalculatorDB {
     }
 
     if (this.activeTransactions > 2) {
-      console.warn(`⚠️ 複数トランザクション検出: ${this.activeTransactions}個同時実行中 (${operation})`);
+      console.warn(`[警告] ️ 複数トランザクション検出: ${this.activeTransactions}個同時実行中 (${operation})`);
     }
   }
 
@@ -161,13 +161,13 @@ export class YieldCalculatorDB {
           quota: estimate.quota,
           usagePercent: ((estimate.usage / estimate.quota) * 100).toFixed(2)
         };
-        console.log('💾 ストレージ使用状況:', checks.storageEstimate);
+        console.log(' ストレージ使用状況:', checks.storageEstimate);
       }).catch(err => {
         console.warn('ストレージ使用状況の取得に失敗:', err);
       });
     }
 
-    console.log('🔍 データベース環境チェック:', checks);
+    console.log(' データベース環境チェック:', checks);
     return checks;
   }
 
@@ -212,7 +212,7 @@ export class YieldCalculatorDB {
         const error = request.error;
 
         // エラーの詳細情報をログ出力（Safari デバッグ用）
-        console.error('❌ IndexedDB接続エラー詳細:', {
+        console.error('[エラー]  IndexedDB接続エラー詳細:', {
           name: error?.name || 'Unknown',
           message: error?.message || 'No message',
           code: error?.code || 'No code',
@@ -234,8 +234,8 @@ export class YieldCalculatorDB {
         if (isVersionError) {
           // VersionErrorは致命的なエラー - リトライ絶対不可
           console.error('⛔ VersionError: データベースバージョンの競合が発生しました');
-          console.error('⚠️ このエラーはリトライできません');
-          console.error('💡 対処方法:');
+          console.error('[警告] ️ このエラーはリトライできません');
+          console.error('[ヒント]  対処方法:');
           console.error('   1. すべてのタブを閉じる');
           console.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
           console.error('   3. それでも解決しない場合、ハードリロード (Cmd+Shift+R / Ctrl+Shift+R)');
@@ -245,7 +245,7 @@ export class YieldCalculatorDB {
           const resetButton = document.getElementById('reset-db-button');
           if (resetButton) {
             resetButton.style.display = 'inline-block';
-            console.log('💡 画面上部の「🔧 DBリセット」ボタンを押してデータベースをリセットしてください');
+            console.log('[ヒント]  画面上部の「 DBリセット」ボタンを押してデータベースをリセットしてください');
           }
 
           // 自動的にユーザーに確認ダイアログを表示
@@ -254,7 +254,7 @@ export class YieldCalculatorDB {
               'データベースバージョンの競合が発生しました。\n\n' +
               '【対処方法】\n' +
               '1. すべてのタブを閉じて再読み込み\n' +
-              '2. 「🔧 DBリセット」ボタンを押す（推奨）\n\n' +
+              '2. 「 DBリセット」ボタンを押す（推奨）\n\n' +
               '今すぐデータベースをリセットしますか？\n' +
               '（クラウド同期を使用している場合、データは再ダウンロードできます）'
             );
@@ -282,7 +282,7 @@ export class YieldCalculatorDB {
                 alert('データベースの削除に失敗しました。ページを再読み込みしてください。');
               }
             } else {
-              alert('画面上部の「🔧 DBリセット」ボタンを使用するか、ページを再読み込みしてください。');
+              alert('画面上部の「 DBリセット」ボタンを使用するか、ページを再読み込みしてください。');
             }
           }, 100);
 
@@ -297,15 +297,15 @@ export class YieldCalculatorDB {
         const isRetriableError = error && !isPrivateModeError && !isVersionError;
 
         if (isRetriableError && retryCount < this.maxRetries) {
-          console.warn(`🔄 データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
+          console.warn(` データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
           // Safari対応: 指数バックオフの遅延を強化 (300ms, 600ms, 900ms)
           await this.sleep(300 * (retryCount + 1));
           try {
             const db = await this.open(retryCount + 1);
-            console.log(`✅ リトライ成功 (試行 ${retryCount + 1})`);
+            console.log(`✅  リトライ成功 (試行 ${retryCount + 1})`);
             resolve(db);
           } catch (retryError) {
-            console.error(`❌ リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
+            console.error(`[エラー]  リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
             reject(retryError);
           }
         } else {
@@ -344,7 +344,7 @@ export class YieldCalculatorDB {
         const oldVersion = event.oldVersion;
         const newVersion = event.newVersion;
 
-        console.log(`📊 データベース更新: v${oldVersion} → v${newVersion}`);
+        console.log(` データベース更新: v${oldVersion} → v${newVersion}`);
 
         try {
           let store;
@@ -361,7 +361,7 @@ export class YieldCalculatorDB {
             store.createIndex('name', 'name', { unique: false });
             store.createIndex('mode', 'mode', { unique: false });
             store.createIndex('category', 'category', { unique: false });
-            console.log('✅ オブジェクトストアとインデックスを作成しました');
+            console.log('✅  オブジェクトストアとインデックスを作成しました');
           } else {
             // 既存のストアを取得
             store = transaction.objectStore(STORE_NAME);
@@ -371,7 +371,7 @@ export class YieldCalculatorDB {
           if (oldVersion < 2) {
             if (!store.indexNames.contains('firestoreId')) {
               store.createIndex('firestoreId', 'firestoreId', { unique: false });
-              console.log('✅ firestoreIdインデックスを追加しました');
+              console.log('✅  firestoreIdインデックスを追加しました');
             }
           }
 
@@ -381,9 +381,9 @@ export class YieldCalculatorDB {
               // 最初はunique: trueで作成していたが、これは失敗する可能性がある
               try {
                 store.createIndex('uuid', 'uuid', { unique: true });
-                console.log('✅ uuidインデックスを追加しました（v3）');
+                console.log('✅  uuidインデックスを追加しました（v3）');
               } catch (e) {
-                console.warn('⚠️ uuidインデックス作成失敗（想定内）:', e.message);
+                console.warn('[警告] ️ uuidインデックス作成失敗（想定内）:', e.message);
               }
             }
           }
@@ -405,12 +405,12 @@ export class YieldCalculatorDB {
             // 既存のuuidインデックスを削除（存在する場合）
             if (store.indexNames.contains('uuid')) {
               store.deleteIndex('uuid');
-              console.log('🗑️ 既存のuuidインデックスを削除しました');
+              console.log('[削除]  既存のuuidインデックスを削除しました');
             }
 
             // unique: falseで再作成
             store.createIndex('uuid', 'uuid', { unique: false });
-            console.log('✅ uuidインデックスを再作成しました（unique: false）');
+            console.log('✅  uuidインデックスを再作成しました（unique: false）');
 
             // 既存データにUUIDを付与するマイグレーション
             const cursorRequest = store.openCursor();
@@ -429,13 +429,13 @@ export class YieldCalculatorDB {
                 cursor.continue();
               } else {
                 if (migratedCount > 0) {
-                  console.log(`✅ ${migratedCount}件のデータにUUIDを付与しました`);
+                  console.log(`✅  ${migratedCount}件のデータにUUIDを付与しました`);
                 }
               }
             };
 
             cursorRequest.onerror = () => {
-              console.error('❌ UUIDマイグレーションエラー:', cursorRequest.error);
+              console.error('[エラー]  UUIDマイグレーションエラー:', cursorRequest.error);
             };
           }
         } catch (error) {
@@ -445,7 +445,7 @@ export class YieldCalculatorDB {
       };
 
       request.onblocked = async (event) => {
-        console.warn('⚠️ IndexedDB接続がブロックされました（他のタブでDBが開かれている可能性）');
+        console.warn('[警告] ️ IndexedDB接続がブロックされました（他のタブでDBが開かれている可能性）');
         console.log('ブロックイベント詳細:', {
           oldVersion: event.oldVersion,
           newVersion: event.newVersion,
@@ -1112,7 +1112,7 @@ if (typeof window !== 'undefined') {
      * データベース状態を表示
      */
     getStatus: () => {
-      console.log('📊 IndexedDB 状態:', {
+      console.log(' IndexedDB 状態:', {
         isOpen: !!db.db,
         activeTransactions: db.activeTransactions,
         openPromise: !!db.openPromise,
@@ -1143,20 +1143,20 @@ if (typeof window !== 'undefined') {
     forceClose: () => {
       console.log('🔒 データベースを強制クローズします...');
       db.close();
-      console.log('✅ クローズ完了');
+      console.log('✅  クローズ完了');
     },
 
     /**
      * データベースを強制的に再接続
      */
     forceReconnect: async () => {
-      console.log('🔄 データベースを再接続します...');
+      console.log(' データベースを再接続します...');
       db.close();
       try {
         await db.open();
-        console.log('✅ 再接続成功');
+        console.log('✅  再接続成功');
       } catch (err) {
-        console.error('❌ 再接続失敗:', err);
+        console.error('[エラー]  再接続失敗:', err);
       }
     },
 
@@ -1164,7 +1164,7 @@ if (typeof window !== 'undefined') {
      * データベースを完全に削除（VersionError対策）
      */
     deleteDatabase: async () => {
-      console.warn('⚠️ データベースを完全に削除します。すべてのデータが失われます！');
+      console.warn('[警告] ️ データベースを完全に削除します。すべてのデータが失われます！');
       const confirmed = confirm(
         'IndexedDBデータベースを削除しますか？\n\n' +
         'この操作により、すべてのローカルデータが削除されます。\n' +
@@ -1173,7 +1173,7 @@ if (typeof window !== 'undefined') {
       );
 
       if (!confirmed) {
-        console.log('❌ キャンセルされました');
+        console.log('[エラー]  キャンセルされました');
         return;
       }
 
@@ -1186,22 +1186,22 @@ if (typeof window !== 'undefined') {
         const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
 
         deleteRequest.onsuccess = () => {
-          console.log('✅ データベースを削除しました');
-          console.log('💡 ページを再読み込みしてください');
+          console.log('✅  データベースを削除しました');
+          console.log('[ヒント]  ページを再読み込みしてください');
           alert('データベースを削除しました。ページを再読み込みしてください。');
         };
 
         deleteRequest.onerror = (event) => {
-          console.error('❌ データベース削除エラー:', event.target.error);
+          console.error('[エラー]  データベース削除エラー:', event.target.error);
           alert('データベースの削除に失敗しました。');
         };
 
         deleteRequest.onblocked = () => {
-          console.warn('⚠️ データベース削除がブロックされました。すべてのタブを閉じてください。');
+          console.warn('[警告] ️ データベース削除がブロックされました。すべてのタブを閉じてください。');
           alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
         };
       } catch (err) {
-        console.error('❌ データベース削除に失敗:', err);
+        console.error('[エラー]  データベース削除に失敗:', err);
       }
     },
 

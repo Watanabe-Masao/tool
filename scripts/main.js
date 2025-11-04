@@ -7,6 +7,7 @@ import { setupEventHandlers } from './event-handlers-setup.js';
 import { initializeFirebaseUI } from './firebase-ui.js';
 import { initializeSimpleHeader } from './simple-header.js';
 import { initializeDeletedDataUI } from './deleted-data-ui.js';
+import { initializeHelpModal } from './help-modal.js';
 
 // グローバルエラーハンドラ - "Script error."を防ぐ
 window.addEventListener('error', (event) => {
@@ -44,6 +45,9 @@ async function initializeApp() {
 
     // 論理削除データ管理UI初期化
     initializeDeletedDataUI();
+
+    // ヘルプモーダル初期化
+    initializeHelpModal();
   } catch (error) {
     console.error('[App Initialization Error]', error);
     // ユーザーにエラーを表示

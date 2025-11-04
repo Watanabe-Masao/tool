@@ -48,7 +48,8 @@ body.modal-open {
   justify-content: space-between;
   align-items: center;
   padding: 1.5em;
-  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(to bottom, var(--bg1), var(--surface));
+  border-bottom: 2px solid var(--brand-light);
   position: relative; /* メニュー配置の基準点 */
 }
 
@@ -56,7 +57,7 @@ body.modal-open {
   margin: 0;
   font-size: 1.25em;
   font-weight: 700;
-  color: #333;
+  color: var(--brand-dark);
 }
 
 .dialog-header-actions {
@@ -113,52 +114,56 @@ body.modal-open {
    ============================================ */
 
 .history-toolbar {
-  margin-bottom: 1.5em;
+  margin-bottom: 1em;
   display: flex;
   flex-direction: column;
-  gap: 1em;
+  gap: 0.6em;
 }
 
 .history-filter-section {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5em;
+  flex-wrap: wrap;
 }
 
 .history-filter-label {
   font-size: 0.9em;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
 }
 
 /* 履歴モーダル内のフィルタリングボタンのスタイル */
 .history-filter-section .btn-mode {
-  border: 2px solid #5c6bc0;
-  background: #fff;
-  color: #5c6bc0;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
 .history-filter-section .btn-mode:hover {
-  background: #f5f7ff;
-  border-color: #3f51b5;
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand-dark);
 }
 
 .history-filter-section .btn-mode.is-active {
-  background: linear-gradient(135deg, #5c6bc0, #3f51b5);
-  color: #fff;
-  border-color: #3f51b5;
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand-dark);
+  box-shadow: 0 2px 4px var(--brand-light);
 }
 
 .history-filter-section .btn-mode:active {
   transform: scale(0.98);
-  background: linear-gradient(135deg, #3f51b5, #303f9f);
-  border-color: #303f9f;
 }
 
 .history-filter-section .btn-mode.is-active:active {
-  background: linear-gradient(135deg, #303f9f, #283593);
+  background: var(--brand-dark);
 }
 
 .history-filter-section .btn-small {
@@ -167,8 +172,35 @@ body.modal-open {
   white-space: nowrap;
 }
 
+.history-filter-section .btn-all {
+  padding: 0.25em 0.5em;
+  font-size: 0.7em;
+  margin-left: auto;
+  border-width: 1px;
+  border-radius: 4px;
+  font-weight: 500;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.history-filter-section .btn-all i {
+  font-size: 0.9em;
+}
+
+.history-filter-section .btn-all:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.history-filter-section .btn-all.is-active {
+  opacity: 1;
+  font-weight: 600;
+}
+
 .history-filter-section .btn-row {
   gap: 0.4em;
+  width: 100%;
+  display: flex;
 }
 
 /* TOP画面と同じデザインにするため、fieldsetとradioクラスを使用 */
@@ -201,7 +233,7 @@ body.modal-open {
 
 .history-toolbar select:focus {
   outline: none;
-  border-color: #5c6bc0;
+  border-color: var(--brand);
 }
 
 .btn-clear-search {
@@ -368,13 +400,13 @@ body.modal-open {
 }
 
 .carousel-indicator.active {
-  background: #5c6bc0;
+  background: var(--brand);
   width: 24px;
   border-radius: 4px;
 }
 
 .carousel-indicator:hover {
-  background: #9fa8da;
+  background: var(--brand-light);
 }
 
 /* カルーセルカウント */
@@ -394,7 +426,7 @@ body.modal-open {
   max-width: 100%;
   flex-shrink: 0;
   background: #fff;
-  padding: 0.75em;
+  padding: 0.65em;
   transition: opacity 0.3s;
   box-sizing: border-box;
   overflow: hidden;
@@ -410,8 +442,8 @@ body.modal-open {
 }
 
 .history-carousel:hover {
-  border-color: #5c6bc0;
-  box-shadow: 0 2px 8px rgba(92, 107, 192, 0.1);
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px var(--brand-light);
 }
 
 .history-item-header {
@@ -419,7 +451,7 @@ body.modal-open {
   justify-content: flex-start;
   align-items: center;
   gap: 0.5em;
-  margin-bottom: 0.75em;
+  margin-bottom: 0.5em;
 }
 
 .history-item-title {
@@ -462,8 +494,9 @@ body.modal-open {
 }
 
 .history-item-mode-label {
-  background: #5c6bc0;
-  color: #fff;
+  background: var(--brand-light);
+  color: var(--brand);
+  border: 1px solid var(--brand);
   padding: 0.25em 0.75em;
   border-radius: 16px;
   font-size: 0.85em;
@@ -476,8 +509,9 @@ body.modal-open {
 }
 
 .history-item-mode {
-  background: #5c6bc0;
-  color: #fff;
+  background: var(--brand-light);
+  color: var(--brand);
+  border: 1px solid var(--brand);
   padding: 0.25em 0.75em;
   border-radius: 16px;
   font-size: 0.85em;
@@ -487,13 +521,13 @@ body.modal-open {
 .history-item-stats {
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
-  margin-bottom: 0.5em;
+  gap: 0.3em;
+  margin-bottom: 0.4em;
 }
 
 .history-stats-row {
   display: flex;
-  gap: 0.75em;
+  gap: 0.5em;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -504,6 +538,9 @@ body.modal-open {
   white-space: nowrap;
   flex: 0 1 auto;
   min-width: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--border-light);
+  text-underline-offset: 2px;
 }
 
 .history-stat strong {
@@ -514,13 +551,13 @@ body.modal-open {
 .history-item-date {
   font-size: 0.85em;
   color: #999;
-  margin-bottom: 1em;
+  margin-bottom: 0.6em;
 }
 
 .history-item-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: 0.4em;
 }
 
 .history-item-actions-secondary {
@@ -565,16 +602,16 @@ body.modal-open {
 }
 
 .btn-load {
-  background: #5c6bc0;
+  background: var(--brand);
   color: #fff;
-  border-color: #5c6bc0;
+  border: 1px solid var(--brand-dark);
   padding: 0.4em 0.8em;
   font-size: 0.85em;
 }
 
 .btn-load:hover {
-  background: #4a5bb8;
-  border-color: #4a5bb8;
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
 }
 
 .btn-edit,
@@ -584,27 +621,27 @@ body.modal-open {
 }
 
 .btn-edit {
-  background: #ffa726;
-  color: #fff;
-  border-color: #ffa726;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .btn-edit:hover {
-  background: #fb8c00;
-  border-color: #fb8c00;
+  background: var(--surface-light);
+  border-color: var(--brand);
 }
 
 .btn-delete,
 .btn-danger {
-  background: #ef5350;
-  color: #fff;
-  border-color: #ef5350;
+  background: var(--surface);
+  color: var(--error);
+  border: 1px solid var(--border);
 }
 
 .btn-delete:hover,
 .btn-danger:hover {
-  background: #e53935;
-  border-color: #e53935;
+  background: #ffebee;
+  border-color: var(--error);
 }
 
 /* ============================================
@@ -723,4 +760,34 @@ body.modal-open {
 
 .dialog[open] {
   animation: slideIn 0.3s ease;
+}
+
+/* ============================================
+   ヘルプモーダル
+   ============================================ */
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.help-dialog {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.help-dialog .dialog-body {
+  padding: 1.5em;
+  overflow-y: auto;
+  max-height: 60vh;
 }
