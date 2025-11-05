@@ -215,9 +215,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
 
   // グループごとにHTMLを生成
   console.log('[renderHistoryList] Updating DOM with', groups.length, 'groups');
-  console.log('[renderHistoryList] Groups data:', groups.map(g => ({
-    productName: g.productName,
-    items: g.items.map(i => ({ id: i.id, name: i.name }))
+  console.log('[renderHistoryList] Groups data:', groups.map(group => ({
+    groupSize: group.length,
+    firstItem: { id: group[0]?.id, name: group[0]?.name }
   })));
 
   const html = groups.map(group => createHistoryGroupHTML(group)).join('');
