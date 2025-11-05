@@ -12,7 +12,7 @@
  * ✅  外れ値管理: highlightOutlierRows, isOutlierValue (outlier-management.jsから統合)
  *
  * UX改善の特徴:
- * -  アイコン: 視覚的なフィードバック（🌟✓⚡[警告] ️等）
+ * -  アイコン: 視覚的なフィードバック（🌟✓⚡⚠️等）
  * - 🎨 カラーコーディング: 緑（良好）、黄（警告）、赤（危険）
  * - 🎬 アニメーション: fadeInUp, scaleIn, カウントアップ
  * -  プログレスバー: サンプル数充足度の視覚化
@@ -245,7 +245,7 @@ function displayMatrixEvaluation(stats) {
     'excellent': '🌟',
     'good': '✓',
     'fair': '⚡',
-    'poor': '[警告] ️'
+    'poor': '⚠️'
   };
   const icon = icons[evaluation.className] || '';
 
@@ -486,7 +486,7 @@ function displaySampleSizeValidation() {
       validityBadge.textContent = '✓ 妥当';
       validityBadge.className = 'validity-badge valid';
     } else {
-      validityBadge.textContent = '[警告]  不十分';
+      validityBadge.textContent = '⚠️ 不十分';
       validityBadge.className = 'validity-badge invalid';
     }
 

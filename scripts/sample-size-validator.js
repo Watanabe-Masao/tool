@@ -132,7 +132,7 @@ export function displaySampleSizeValidation(
       validityBadge.textContent = '✓ 妥当';
       validityBadge.className = 'validity-badge valid';
     } else {
-      validityBadge.textContent = '[警告]  不十分';
+      validityBadge.textContent = '⚠️ 不十分';
       validityBadge.className = 'validity-badge invalid';
     }
     validityBadge.style.animation = 'pulse 0.5s ease-in-out';
@@ -152,7 +152,7 @@ export function displaySampleSizeValidation(
       const shortage = requiredSampleSize - actualSampleSize;
       const percentage = Math.round((actualSampleSize / requiredSampleSize) * 100);
       validityExplanation.innerHTML = `
-        <span class="warning-icon">[警告] </span>
+        <span class="warning-icon">⚠️</span>
         実際のサンプル数が必要数より<strong class="highlight">${shortage}個</strong>不足しています（${percentage}%達成）。<br>
         <strong>より多くのデータを収集</strong>することを推奨します。
       `;
@@ -165,7 +165,7 @@ export function displaySampleSizeValidation(
   if (confidenceMessageDiv) {
     const confidenceInfo = getConfidenceMessage(toleranceError);
     confidenceMessageDiv.innerHTML = `
-      <span class="confidence-icon">${confidenceInfo.className === 'excellent' ? '🌟' : confidenceInfo.className === 'good' ? '✓' : confidenceInfo.className === 'fair' ? '⚡' : '[警告] '}</span>
+      <span class="confidence-icon">${confidenceInfo.className === 'excellent' ? '🌟' : confidenceInfo.className === 'good' ? '✓' : confidenceInfo.className === 'fair' ? '⚡' : '⚠️'}</span>
       ${confidenceInfo.message}
     `;
     confidenceMessageDiv.className = `confidence-message ${confidenceInfo.className}`;

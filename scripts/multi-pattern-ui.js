@@ -459,8 +459,8 @@ function checkDuplicates() {
       unitPriceInput.style.borderColor = '#e74c3c';
       unitCostInput.style.borderWidth = '2px';
       unitPriceInput.style.borderWidth = '2px';
-      unitCostInput.title = '[警告] ️ 重複しています';
-      unitPriceInput.title = '[警告] ️ 重複しています';
+      unitCostInput.title = '⚠️ 重複しています';
+      unitPriceInput.title = '⚠️ 重複しています';
     }
   });
 }
