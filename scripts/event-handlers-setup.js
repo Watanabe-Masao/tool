@@ -337,6 +337,25 @@ function init() {
             window.statsDataByType = {};
             window.lastCalculatedStats = null;
 
+            // window.yieldStatsState を初期状態にリセット
+            if (window.yieldStatsState) {
+              window.yieldStatsState.currentDisplayType = 'yieldRate';
+              window.yieldStatsState.isFromHistory = false;
+              window.yieldStatsState.isCalculated = false;
+              window.yieldStatsState.hasYieldRateData = false;
+              window.yieldStatsState.hasBeforeWeightData = false;
+              window.yieldStatsState.hasAfterWeightData = false;
+              window.yieldStatsState.isOutlierExcluded = false;
+              window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+              window.yieldStatsState.currentOutlierValues = [];
+              window.yieldStatsState.sampleSizeValidation = {
+                yieldRate: null,
+                beforeWeight: null,
+                afterWeight: null
+              };
+              window.yieldStatsState.shouldShowMultiPatternLink = false;
+            }
+
             // 歩留まり統計のテーブルと結果をクリア
             clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
             hide('yieldStatsResults');
@@ -755,6 +774,25 @@ function init() {
       appState.setYieldStatsData(null);
       window.statsDataByType = {};
       window.lastCalculatedStats = null;
+
+      // window.yieldStatsState を初期状態にリセット
+      if (window.yieldStatsState) {
+        window.yieldStatsState.currentDisplayType = 'yieldRate';
+        window.yieldStatsState.isFromHistory = false;
+        window.yieldStatsState.isCalculated = false;
+        window.yieldStatsState.hasYieldRateData = false;
+        window.yieldStatsState.hasBeforeWeightData = false;
+        window.yieldStatsState.hasAfterWeightData = false;
+        window.yieldStatsState.isOutlierExcluded = false;
+        window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+        window.yieldStatsState.currentOutlierValues = [];
+        window.yieldStatsState.sampleSizeValidation = {
+          yieldRate: null,
+          beforeWeight: null,
+          afterWeight: null
+        };
+        window.yieldStatsState.shouldShowMultiPatternLink = false;
+      }
 
       // 歩留まり統計のテーブルと結果をクリア
       clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
