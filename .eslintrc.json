@@ -1,7 +1,8 @@
 {
   "env": {
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "node": true
   },
   "extends": "eslint:recommended",
   "parserOptions": {
@@ -9,12 +10,53 @@
     "sourceType": "module"
   },
   "rules": {
-    "no-console": [
-      "error",
-      {
-        "allow": []
-      }
-    ]
+    // ログ管理
+    "no-console": ["error", { "allow": [] }],
+
+    // コード品質
+    "no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+    "no-var": "error",
+    "prefer-const": "warn",
+    "prefer-arrow-callback": "warn",
+    "no-shadow": "warn",
+
+    // エラー防止
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-throw-literal": "error",
+    "no-implicit-coercion": "warn",
+    "no-return-await": "warn",
+    "require-await": "warn",
+
+    // ベストプラクティス
+    "curly": ["warn", "all"],
+    "default-case": "warn",
+    "no-else-return": "warn",
+    "no-lonely-if": "warn",
+    "no-useless-return": "warn",
+    "yoda": "warn",
+
+    // ES6+
+    "object-shorthand": "warn",
+    "prefer-destructuring": ["warn", {
+      "array": false,
+      "object": true
+    }],
+    "prefer-template": "warn",
+    "prefer-spread": "warn",
+
+    // 可読性
+    "max-depth": ["warn", 4],
+    "max-nested-callbacks": ["warn", 3],
+    "max-params": ["warn", 5],
+    "no-negated-condition": "warn",
+
+    // セキュリティ
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error"
   },
   "overrides": [
     {
@@ -24,6 +66,15 @@
       ],
       "rules": {
         "no-console": "off"
+      }
+    },
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "max-nested-callbacks": "off"
       }
     }
   ]
