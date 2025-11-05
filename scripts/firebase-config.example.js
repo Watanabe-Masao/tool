@@ -1,24 +1,26 @@
 /**
- * Firebase設定ファイル
- *
- * ⚠️ セキュリティ警告: このファイルは機密情報を含むため、Gitリポジトリから除外されています
+ * Firebase設定ファイル（テンプレート）
  *
  * セットアップ手順：
- * 1. firebase-config.example.js からこのファイルを作成
- * 2. Firebaseコンソールから取得した実際の設定値に置き換える
+ * 1. このファイルを firebase-config.js にコピー
+ *    $ cp scripts/firebase-config.example.js scripts/firebase-config.js
+ * 2. Firebaseコンソール (https://console.firebase.google.com/) でプロジェクトを作成
+ * 3. プロジェクト設定 > 全般 > マイアプリ > ウェブアプリを追加
+ * 4. 以下の設定値をFirebaseコンソールからコピーして貼り付け
+ * 5. Authentication > Sign-in method で「匿名」と「メール/パスワード」を有効化
+ * 6. Firestore Database を作成（テストモードで開始）
  *
- * 注意: このファイルを公開リポジトリにコミットしないでください
+ * 注意: firebase-config.js は .gitignore に追加されており、Git管理対象外です
  */
 
 // Firebase設定値（プロジェクト情報から取得）
-// 本番環境用の設定値（このファイルは .gitignore に含まれています）
 export const firebaseConfig = {
-  apiKey: "AIzaSyA7UMMKgnwweA8PJYQIL7zvhBexqyiCi0k",
-  authDomain: "yield-calculator-ffc3a.firebaseapp.com",
-  projectId: "yield-calculator-ffc3a",
-  storageBucket: "yield-calculator-ffc3a.appspot.com",
-  messagingSenderId: "31235016265",
-  appId: "1:31235016265:web:65b8f13d9e7408a9472198"
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 // Firebase機能の有効/無効切り替え
