@@ -85,12 +85,6 @@ function displayCurrentStatistics() {
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
     if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
       window.statsDataByType[type] = calculateStatistics(data[type]);
-
-      // サンプルサイズ妥当性情報がある場合、不十分なら統計データをnullに設定
-      const validation = window.yieldStatsState?.sampleSizeValidation?.[type];
-      if (validation && !validation.isValid) {
-        window.statsDataByType[type] = null;
-      }
     } else {
       window.statsDataByType[type] = null;
     }
@@ -557,28 +551,13 @@ function displaySampleSizeValidation() {
     };
   }
 
-  // サンプルサイズが不十分な場合、statsDataByTypeをnullに設定（推奨値として使用不可）
-  if (!isValid && window.statsDataByType) {
-    window.statsDataByType[statsType] = null;
-  }
-
-  // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
-  // 手動除外後のデータで計算
+  // 推奨代表値を表示
+  // サンプルサイズの妥当性に応じて表示内容を分岐
   if (finalValues.length >= 2) {
-    // サンプルサイズが妥当な場合のみグローバルに保存
-    if (isValid) {
-      window.lastCalculatedStats = finalStats;
-    } else {
-      window.lastCalculatedStats = null;
-    }
+    window.lastCalculatedStats = isValid ? finalStats : null;
     displayRecommendedValue(finalStats, isValid, statsType);
   } else {
-    // サンプルサイズが妥当な場合のみグローバルに保存
-    if (isValid) {
-      window.lastCalculatedStats = stats;
-    } else {
-      window.lastCalculatedStats = null;
-    }
+    window.lastCalculatedStats = isValid ? stats : null;
     displayRecommendedValue(stats, isValid, statsType);
   }
 
