@@ -107,7 +107,7 @@ jobs:
           echo "## ✅ Quality Gate: PASSED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ ESLint: Passed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Unit Tests: Passed (514 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit Tests: Passed (540 tests)" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Coverage: Above minimum thresholds" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Coverage uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

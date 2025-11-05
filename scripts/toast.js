@@ -24,7 +24,9 @@ export function showToast(message, type = 'info', duration = 3000) {
   toast.className = `toast toast-${type} toast-show`;
 
   // メッセージを設定（改行を<br>に変換）
-  const formattedMessage = message.replace(/\n/g, '<br>');
+  // null/undefinedの場合は空文字列に変換
+  const safeMessage = (message != null) ? String(message) : '';
+  const formattedMessage = safeMessage.replace(/\n/g, '<br>');
   toast.innerHTML = `
     <div class="toast-content">
       <span class="toast-icon">${getToastIcon(type)}</span>
@@ -85,17 +87,19 @@ export function showSuccess(message, duration) {
 /**
  * 警告通知を表示
  * @param {string} message - メッセージ
- * @param {number} duration - 表示時間（省略可）
+ * @param {number} duration - 表示時間（省略可、デフォルト4000ms）
  */
-export function showWarning(message, duration) {
+export function showWarning(message, duration = 4000) {
+  // 警告メッセージも重要なので、デフォルトで長めに表示
   showToast(message, 'warning', duration);
 }
 
 /**
  * エラー通知を表示
  * @param {string} message - メッセージ
- * @param {number} duration - 表示時間（省略可）
+ * @param {number} duration - 表示時間（省略可、デフォルト5000ms）
  */
-export function showError(message, duration) {
+export function showError(message, duration = 5000) {
+  // エラーメッセージは重要なので、デフォルトで長めに表示
   showToast(message, 'error', duration);
 }
