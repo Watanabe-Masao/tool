@@ -5,11 +5,12 @@
  * 箱単位での重量・価格計算（定額モードとは異なる計算方式）
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import {
   calculateFromWeightLogic,
   calculateFromDirectYieldLogic,
-  calculateWeightByMethod
+  calculateWeightByMethod,
+  calculateWeight
 } from '../scripts/calculator-weight.js';
 
 describe('calculateFromWeightLogic - サンプル重量から計算', () => {
@@ -507,6 +508,257 @@ describe('calculateWeightByMethod - メソッド選択による計算', () => {
       expect(result.yr).toBe(60);
       expect(result.finishedPrice).toBe(19200);
       expect(result.priceDiff).toBe(1200);
+    });
+  });
+});
+
+describe('calculateWeight - DOM統合関数', () => {
+  beforeEach(() => {
+    // DOMをクリア
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('calculateメソッド（サンプル重量から計算）', () => {
+    test('DOM要素から値を読み取って計算する', () => {
+      // DOM要素を作成
+      document.body.innerHTML = `
+        <input id="boxCost" value="1000" />
+        <input id="boxPrice" value="1500" />
+        <input id="boxWeight" value="1" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="85" />
+        <input id="afterPrice100W" value="200" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(1700); // 200 * (1000g * 0.85) / 100
+    });
+
+    test('DOM要素が空の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="" />
+        <input id="boxPrice" value="1500" />
+        <input id="boxWeight" value="1" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="85" />
+        <input id="afterPrice100W" value="200" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('DOM要素が無効な値の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="abc" />
+        <input id="boxPrice" value="1500" />
+        <input id="boxWeight" value="1" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="85" />
+        <input id="afterPrice100W" value="200" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('小数点を含む値でも正しく計算する', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="1250.5" />
+        <input id="boxPrice" value="1875.75" />
+        <input id="boxWeight" value="1.5" />
+        <input id="beforeSample" value="150" />
+        <input id="afterWeightW" value="127.5" />
+        <input id="afterPrice100W" value="250.5" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+    });
+
+    test('箱重量がkg単位で正しく処理される', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="3000" />
+        <input id="boxPrice" value="4500" />
+        <input id="boxWeight" value="2.5" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="85" />
+        <input id="afterPrice100W" value="200" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).not.toBeNull();
+      // 箱重量2.5kg = 2500g, 歩留まり85% → 2125g
+      expect(result.finishedPrice).toBe(4250); // 200 * 2125 / 100
+    });
+  });
+
+  describe('directメソッド（歩留まり率を直接入力）', () => {
+    test('DOM要素から値を読み取って計算する', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="1000" />
+        <input id="boxPriceDirect" value="1500" />
+        <input id="boxWeightDirect" value="1" />
+        <input id="yieldRateDirectW" value="85" />
+        <input id="afterPrice100WDirect" value="200" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(1700);
+    });
+
+    test('DOM要素が空の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="1000" />
+        <input id="boxPriceDirect" value="1500" />
+        <input id="boxWeightDirect" value="" />
+        <input id="yieldRateDirectW" value="85" />
+        <input id="afterPrice100WDirect" value="200" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      expect(result).toBeNull();
+    });
+
+    test('歩留まり率が正しく読み取られる', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="1000" />
+        <input id="boxPriceDirect" value="1500" />
+        <input id="boxWeightDirect" value="1" />
+        <input id="yieldRateDirectW" value="70.5" />
+        <input id="afterPrice100WDirect" value="200" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(70.5);
+      expect(result.finishedPrice).toBe(1410); // 200 * (1000g * 0.705) / 100
+    });
+
+    test('重い箱での計算（5kg）', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="8000" />
+        <input id="boxPriceDirect" value="12000" />
+        <input id="boxWeightDirect" value="5" />
+        <input id="yieldRateDirectW" value="75" />
+        <input id="afterPrice100WDirect" value="350" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(75);
+      // 5kg = 5000g, 75% → 3750g
+      expect(result.finishedPrice).toBe(13125); // 350 * 3750 / 100
+    });
+  });
+
+  describe('メソッドによるDOM要素の切り替え', () => {
+    test('calculateメソッドはサンプル重量と加工後重量を使用する', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="1000" />
+        <input id="boxPrice" value="1500" />
+        <input id="boxWeight" value="1" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="80" />
+        <input id="afterPrice100W" value="200" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      // beforeSample=100, afterWeightW=80 → 歩留まり率80%
+      expect(result.yr).toBe(80);
+    });
+
+    test('directメソッドは歩留まり率を使用する', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="1000" />
+        <input id="boxPriceDirect" value="1500" />
+        <input id="boxWeightDirect" value="1" />
+        <input id="yieldRateDirectW" value="90" />
+        <input id="afterPrice100WDirect" value="200" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      // yieldRateDirectW の90を使用
+      expect(result.yr).toBe(90);
+    });
+  });
+
+  describe('エラーハンドリング', () => {
+    test('DOM要素が存在しない場合はnullを返す', () => {
+      // DOM要素なし
+      document.body.innerHTML = '';
+
+      const result = calculateWeight('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('一部のDOM要素だけ存在する場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="1000" />
+        <input id="boxPrice" value="1500" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('実用的なシナリオ', () => {
+    test('野菜1箱（calculateメソッド）', () => {
+      document.body.innerHTML = `
+        <input id="boxCost" value="2000" />
+        <input id="boxPrice" value="3000" />
+        <input id="boxWeight" value="3" />
+        <input id="beforeSample" value="100" />
+        <input id="afterWeightW" value="85" />
+        <input id="afterPrice100W" value="150" />
+      `;
+
+      const result = calculateWeight('calculate');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      // 3kg = 3000g, 85% → 2550g
+      expect(result.finishedPrice).toBe(3825); // 150 * 2550 / 100
+    });
+
+    test('魚1箱（directメソッド）', () => {
+      document.body.innerHTML = `
+        <input id="boxCostDirect" value="12000" />
+        <input id="boxPriceDirect" value="18000" />
+        <input id="boxWeightDirect" value="4" />
+        <input id="yieldRateDirectW" value="60" />
+        <input id="afterPrice100WDirect" value="800" />
+      `;
+
+      const result = calculateWeight('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(60);
+      // 4kg = 4000g, 60% → 2400g
+      expect(result.finishedPrice).toBe(19200); // 800 * 2400 / 100
     });
   });
 });
