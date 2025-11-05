@@ -210,13 +210,15 @@ export class AppState {
     return this.hasUnsavedChanges;
   }
 
-  // 歩留まり統計データの管理
+  // 歩留まり統計データの管理（後方互換性のため残す）
   setYieldStatsData(data) {
-    this.yieldStatsData = data;
+    // 新しいメソッドに転送（後方互換性を保つため）
+    this.setYieldStatsRawData(data);
   }
 
   getYieldStatsData() {
-    return this.yieldStatsData;
+    // 新しいメソッドに転送（後方互換性を保つため）
+    return this.getYieldStatsRawData();
   }
 
   // 保存ダイアログモードの管理
