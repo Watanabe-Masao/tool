@@ -5,11 +5,12 @@
  * ユーザーが実際に使用する重要なビジネスロジック
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import {
   calculateFromWeightLogic,
   calculateFromDirectYieldLogic,
-  calculateFixedLogic
+  calculateFixedLogic,
+  calculateFixed
 } from '../scripts/calculator-fixed.js';
 
 describe('calculateFromWeightLogic - 重量から計算', () => {
@@ -443,6 +444,180 @@ describe('calculateFixedLogic - メソッド選択による計算', () => {
       const result = calculateFixedLogic('direct', 500, 700, 200, 70, 1000);
       expect(result.yr).toBe(70);
       expect(result.finishedPrice).toBe(1400);
+    });
+  });
+});
+
+describe('calculateFixed - DOM統合関数', () => {
+  beforeEach(() => {
+    // DOMをクリア
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('calculateメソッド（重量から計算）', () => {
+    test('DOM要素から値を読み取って計算する', () => {
+      // DOM要素を作成
+      document.body.innerHTML = `
+        <input id="unitCost" value="100" />
+        <input id="unitPrice" value="150" />
+        <input id="beforeWeight" value="100" />
+        <input id="afterWeight" value="85" />
+        <input id="afterPrice100" value="200" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(170);
+    });
+
+    test('DOM要素が空の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="unitCost" value="" />
+        <input id="unitPrice" value="150" />
+        <input id="beforeWeight" value="100" />
+        <input id="afterWeight" value="85" />
+        <input id="afterPrice100" value="200" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('DOM要素が無効な値の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="unitCost" value="abc" />
+        <input id="unitPrice" value="150" />
+        <input id="beforeWeight" value="100" />
+        <input id="afterWeight" value="85" />
+        <input id="afterPrice100" value="200" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('小数点を含む値でも正しく計算する', () => {
+      document.body.innerHTML = `
+        <input id="unitCost" value="100.5" />
+        <input id="unitPrice" value="150.75" />
+        <input id="beforeWeight" value="100.25" />
+        <input id="afterWeight" value="85.2" />
+        <input id="afterPrice100" value="200.5" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBeCloseTo(84.99, 2);
+    });
+  });
+
+  describe('directメソッド（歩留まり率を直接入力）', () => {
+    test('DOM要素から値を読み取って計算する', () => {
+      document.body.innerHTML = `
+        <input id="unitCostDirect" value="100" />
+        <input id="unitPriceDirect" value="150" />
+        <input id="beforeWeightDirect" value="100" />
+        <input id="yieldRateDirect" value="85" />
+        <input id="afterPrice100Direct" value="200" />
+      `;
+
+      const result = calculateFixed('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(170);
+    });
+
+    test('DOM要素が空の場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="unitCostDirect" value="100" />
+        <input id="unitPriceDirect" value="150" />
+        <input id="beforeWeightDirect" value="" />
+        <input id="yieldRateDirect" value="85" />
+        <input id="afterPrice100Direct" value="200" />
+      `;
+
+      const result = calculateFixed('direct');
+
+      expect(result).toBeNull();
+    });
+
+    test('歩留まり率が正しく読み取られる', () => {
+      document.body.innerHTML = `
+        <input id="unitCostDirect" value="100" />
+        <input id="unitPriceDirect" value="150" />
+        <input id="beforeWeightDirect" value="100" />
+        <input id="yieldRateDirect" value="70.5" />
+        <input id="afterPrice100Direct" value="200" />
+      `;
+
+      const result = calculateFixed('direct');
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(70.5);
+    });
+  });
+
+  describe('メソッドによるDOM要素の切り替え', () => {
+    test('calculateメソッドは加工後重量を使用する', () => {
+      document.body.innerHTML = `
+        <input id="unitCost" value="100" />
+        <input id="unitPrice" value="150" />
+        <input id="beforeWeight" value="100" />
+        <input id="afterWeight" value="80" />
+        <input id="afterPrice100" value="200" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      // afterWeightの80を使用（歩留まり率80%として計算）
+      expect(result.yr).toBe(80);
+    });
+
+    test('directメソッドは歩留まり率を使用する', () => {
+      document.body.innerHTML = `
+        <input id="unitCostDirect" value="100" />
+        <input id="unitPriceDirect" value="150" />
+        <input id="beforeWeightDirect" value="100" />
+        <input id="yieldRateDirect" value="90" />
+        <input id="afterPrice100Direct" value="200" />
+      `;
+
+      const result = calculateFixed('direct');
+
+      // yieldRateDirect の90を使用
+      expect(result.yr).toBe(90);
+    });
+  });
+
+  describe('エラーハンドリング', () => {
+    test('DOM要素が存在しない場合はnullを返す', () => {
+      // DOM要素なし
+      document.body.innerHTML = '';
+
+      const result = calculateFixed('calculate');
+
+      expect(result).toBeNull();
+    });
+
+    test('一部のDOM要素だけ存在する場合はnullを返す', () => {
+      document.body.innerHTML = `
+        <input id="unitCost" value="100" />
+        <input id="unitPrice" value="150" />
+      `;
+
+      const result = calculateFixed('calculate');
+
+      expect(result).toBeNull();
     });
   });
 });

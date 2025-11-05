@@ -3,6 +3,7 @@
  * モーダル表示時のエラーメッセージ表示を含む
  */
 
+import { jest } from '@jest/globals';
 import { showToast, showInfo, showSuccess, showWarning, showError } from '../scripts/toast.js';
 
 // DOMモックをセットアップ
@@ -293,6 +294,72 @@ describe('トースト通知システム', () => {
       showToast('テスト2', 'info', 3000);
       toast = document.getElementById('app-toast');
       expect(toast.parentElement).toBe(document.body);
+    });
+  });
+
+  describe('タイマーによる自動非表示', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('指定時間後にtoast-showクラスが削除される', () => {
+      showToast('テスト', 'info', 1000);
+      const toast = document.getElementById('app-toast');
+
+      expect(toast.classList.contains('toast-show')).toBe(true);
+
+      // 1000ms経過
+      jest.advanceTimersByTime(1000);
+
+      expect(toast.classList.contains('toast-show')).toBe(false);
+      expect(toast.classList.contains('toast-hide')).toBe(true);
+    });
+
+    it('アニメーション完了後にtoast-hideクラスが削除される', () => {
+      showToast('テスト', 'info', 1000);
+      const toast = document.getElementById('app-toast');
+
+      // 1000ms経過（メインのタイマー）
+      jest.advanceTimersByTime(1000);
+      expect(toast.classList.contains('toast-hide')).toBe(true);
+
+      // さらに300ms経過（アニメーションタイマー）
+      jest.advanceTimersByTime(300);
+      expect(toast.classList.contains('toast-hide')).toBe(false);
+    });
+
+    it('複数回表示した場合、既存のタイマーがクリアされる', () => {
+      showToast('テスト1', 'info', 1000);
+      const toast = document.getElementById('app-toast');
+
+      // 500ms経過
+      jest.advanceTimersByTime(500);
+      expect(toast.classList.contains('toast-show')).toBe(true);
+
+      // 新しいトーストを表示（既存のタイマーをクリア）
+      showToast('テスト2', 'info', 1000);
+      expect(toast.classList.contains('toast-show')).toBe(true);
+
+      // 500ms経過（最初のタイマーは1000msだったはずだが、クリアされた）
+      jest.advanceTimersByTime(500);
+      expect(toast.classList.contains('toast-show')).toBe(true);
+
+      // さらに500ms経過（新しいタイマーの1000ms）
+      jest.advanceTimersByTime(500);
+      expect(toast.classList.contains('toast-show')).toBe(false);
+    });
+  });
+
+  describe('getToastIcon関数のデフォルトケース', () => {
+    it('未知のタイプの場合、infoアイコンがデフォルトで使用される', () => {
+      showToast('テスト', 'unknown-type', 3000);
+
+      const toast = document.getElementById('app-toast');
+      expect(toast.innerHTML).toContain('fa-circle-info'); // デフォルトのinfoアイコン
     });
   });
 });
