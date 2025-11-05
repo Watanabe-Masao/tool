@@ -157,9 +157,11 @@ export function mapIndexedDBError(error, operation = 'operation') {
   const message = error.message || error.toString();
 
   switch (name) {
-    case 'QuotaExceededError':
-      return new DatabaseError(operation, error).message =
-        'ストレージ容量が不足しています。不要なデータを削除してください。';
+    case 'QuotaExceededError': {
+      const dbError = new DatabaseError(operation, error);
+      dbError.message = 'ストレージ容量が不足しています。不要なデータを削除してください。';
+      return dbError;
+    }
 
     case 'InvalidStateError':
     case 'TransactionInactiveError':

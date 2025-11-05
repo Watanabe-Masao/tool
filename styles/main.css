@@ -3977,7 +3977,9 @@ input[type="range"]::-moz-range-thumb:hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   font-size: 0.95em;
   font-weight: 500;
-  z-index: 10000;
+  /* 最大z-index: <dialog>要素のtop-layerより上に表示 */
+  /* dialog::backdropを超えるために最大値を使用 */
+  z-index: 2147483647;
   opacity: 0;
   transform: translateX(400px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4008,6 +4010,15 @@ input[type="range"]::-moz-range-thumb:hover {
 
 .toast-message {
   line-height: 1.5;
+}
+
+/* モーダル内のトーストは絶対配置 */
+.modal .toast {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  /* モーダル内ではz-indexは不要（既にモーダルのスタッキングコンテキスト内） */
+  z-index: 1;
 }
 
 /* トーストタイプ別スタイル */

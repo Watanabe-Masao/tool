@@ -66,6 +66,28 @@ describe('AppState', () => {
       state.setStep(3);
       expect(state.getCurrentStep()).toBe(3);
     });
+
+    it('nextStep()でステップを進められる', () => {
+      expect(state.getCurrentStep()).toBe(1);
+
+      state.nextStep();
+      expect(state.getCurrentStep()).toBe(2);
+
+      state.nextStep();
+      expect(state.getCurrentStep()).toBe(3);
+    });
+
+    it('nextStep()はステップ3を超えない', () => {
+      state.setStep(3);
+      state.nextStep();
+      expect(state.getCurrentStep()).toBe(3); // 3のまま
+    });
+
+    it('resetStep()でステップを1に戻せる', () => {
+      state.setStep(3);
+      state.resetStep();
+      expect(state.getCurrentStep()).toBe(1);
+    });
   });
 
   describe('履歴ID管理', () => {
@@ -103,6 +125,20 @@ describe('AppState', () => {
       expect(state.snapshot.isValid()).toBe(true);
     });
 
+    it('updateSnapshot()でスナップショットを更新できる', () => {
+      state.updateSnapshot({ ac: 200, ap: 300 });
+      expect(state.snapshot.afterCost).toBe(200);
+      expect(state.snapshot.afterPrice).toBe(300);
+    });
+
+    it('getSnapshot()でスナップショットオブジェクトを取得できる', () => {
+      const snapshot = state.getSnapshot();
+      expect(snapshot).toBe(state.snapshot);
+      expect(snapshot.update).toBeDefined();
+      expect(snapshot.reset).toBeDefined();
+      expect(snapshot.isValid).toBeDefined();
+    });
+
     it('reset()で計算結果をクリアできる', () => {
       state.snapshot.update({ ac: 100, ap: 150 });
       state.snapshot.reset();
@@ -133,6 +169,21 @@ describe('AppState', () => {
       expect(state.productData.markup).toBe(0.6);
       expect(state.productData.cost).toBe(125);
       expect(state.productData.isValid()).toBe(true);
+    });
+
+    it('updateProductData()で商品データを更新できる', () => {
+      state.updateProductData({ price: 300, markup: 0.7, cost: 180 });
+      expect(state.productData.price).toBe(300);
+      expect(state.productData.markup).toBe(0.7);
+      expect(state.productData.cost).toBe(180);
+    });
+
+    it('getProductData()で商品データオブジェクトを取得できる', () => {
+      const productData = state.getProductData();
+      expect(productData).toBe(state.productData);
+      expect(productData.update).toBeDefined();
+      expect(productData.reset).toBeDefined();
+      expect(productData.isValid).toBeDefined();
     });
 
     it('reset()で商品データをクリアできる', () => {
@@ -174,6 +225,46 @@ describe('AppState', () => {
       state.saveDialogMode = 'new';
       expect(state.saveDialogMode).toBe('new');
     });
+
+    it('markAsFromHistory()で履歴読込状態にできる', () => {
+      state.hasUnsavedChanges = true;
+      state.markAsFromHistory();
+
+      expect(state.isFromHistoryRecord()).toBe(true);
+      expect(state.hasChanges()).toBe(false);
+    });
+
+    it('markAsNewCalculation()で新規計算状態にできる', () => {
+      state.isFromHistory = true;
+      state.hasUnsavedChanges = true;
+      state.markAsNewCalculation();
+
+      expect(state.isFromHistoryRecord()).toBe(false);
+      expect(state.hasChanges()).toBe(false);
+    });
+
+    it('markAsChanged()で変更ありフラグを立てられる', () => {
+      expect(state.hasChanges()).toBe(false);
+      state.markAsChanged();
+      expect(state.hasChanges()).toBe(true);
+    });
+
+    it('markAsSaved()で保存済み状態にできる', () => {
+      state.markAsChanged();
+      expect(state.hasChanges()).toBe(true);
+
+      state.markAsSaved();
+      expect(state.hasChanges()).toBe(false);
+      expect(state.isFromHistoryRecord()).toBe(true); // 保存後は履歴扱い
+    });
+
+    it('setSaveDialogMode()とgetSaveDialogMode()が連動する', () => {
+      state.setSaveDialogMode('update');
+      expect(state.getSaveDialogMode()).toBe('update');
+
+      state.setSaveDialogMode('new');
+      expect(state.getSaveDialogMode()).toBe('new');
+    });
   });
 
   describe('YieldStatsState との統合', () => {
@@ -189,6 +280,18 @@ describe('AppState', () => {
       state.yieldStats.setRawData(testData);
 
       expect(state.yieldStats.getRawData()).toEqual(testData);
+    });
+
+    it('setLastCalculatedStats()で最後の計算結果を設定できる', () => {
+      const stats = {
+        mean: 85,
+        median: 85,
+        stdDev: 5
+      };
+      state.setLastCalculatedStats(stats);
+
+      // YieldStatsState経由で設定されることを確認
+      expect(state.yieldStats.getLastCalculatedStats()).toEqual(stats);
     });
 
     it('_yieldStatsState と yieldStats は同じインスタンス', () => {
