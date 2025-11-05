@@ -125,6 +125,7 @@ export function closeHistoryModal() {
  * @param {string} filterYieldMethod - フィルタする歩留まり率入力方法（オプション）
  */
 export async function renderHistoryList(items = null, filterMode = null, filterYieldMethod = null) {
+  console.log('[renderHistoryList] Start rendering');
   const listContainer = qs('#historyList');
   if (!listContainer) return;
 
@@ -142,7 +143,12 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   }
 
   // データを取得
+  console.log('[renderHistoryList] Fetching history data...');
   let history = items || await getHistory();
+  console.log('[renderHistoryList] History data:', history.length, 'items');
+  if (history.length > 0) {
+    console.log('[renderHistoryList] First 3 items:', history.slice(0, 3).map(item => ({ id: item.id, name: item.name })));
+  }
 
   // モードと計算方法でフィルタリング
   if (filterMode) {
@@ -206,7 +212,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   const groups = groupHistoryByProduct(history);
 
   // グループごとにHTMLを生成
+  console.log('[renderHistoryList] Updating DOM with', groups.length, 'groups');
   listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
+  console.log('[renderHistoryList] DOM updated');
 
   // 商品名候補を更新（現在のフィルタ条件の履歴から生成）
   const filteredHistory = filterMode ? allHistory.filter(item => {
@@ -223,6 +231,7 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   // イベントリスナーをバインド
   bindHistoryItemEvents();
   initializeCarousels();
+  console.log('[renderHistoryList] Rendering complete');
 }
 
 /**
@@ -414,7 +423,9 @@ async function handleLoadCalculation(id) {
  */
 async function handleEditCalculation(id) {
   try {
+    console.log('[handleEditCalculation] Start editing:', id);
     const data = await loadCalculation(id);
+    console.log('[handleEditCalculation] Current name:', data.name);
     const newName = prompt('商品名を入力してください', data.name);
 
     if (newName === null) return; // キャンセル
@@ -423,7 +434,9 @@ async function handleEditCalculation(id) {
       return;
     }
 
+    console.log('[handleEditCalculation] New name:', newName.trim());
     await updateCalculationName(id, newName.trim());
+    console.log('[handleEditCalculation] Database updated');
 
     // 編集した履歴が現在読み込まれているものと同じ場合、商品名フィールドも更新
     const loadedHistoryId = appState.getLoadedHistoryId();
@@ -447,9 +460,12 @@ async function handleEditCalculation(id) {
       searchInput.value = '';
     }
 
+    console.log('[handleEditCalculation] Calling renderHistoryList...');
     await renderHistoryList();
+    console.log('[handleEditCalculation] renderHistoryList completed');
     showToast('更新しました', 'success');
   } catch (error) {
+    console.error('[handleEditCalculation] Error:', error);
     showToast('[エラー]  更新に失敗しました', 'error');
   }
 }
