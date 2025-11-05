@@ -229,6 +229,34 @@ export function restoreAllInputFields(mode, input, productName = '') {
 }
 
 /**
+ * 計算結果が有効かどうかをチェック
+ * @param {Object} result - 結果データ
+ * @returns {boolean} 有効ならtrue、無効ならfalse
+ */
+function isValidResultData(result) {
+  if (!result || typeof result !== 'object') {
+    return false;
+  }
+
+  // 必須フィールドが存在し、有効な数値であることを確認
+  const requiredFields = ['afterCost', 'afterPrice', 'yieldRate', 'beforeCost', 'beforePrice'];
+
+  for (const field of requiredFields) {
+    const value = result[field];
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(num) || !isFinite(num)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * 保存された計算結果を復元してappStateを更新
  * @param {string} mode
  * @param {string} yieldMethod
@@ -236,6 +264,17 @@ export function restoreAllInputFields(mode, input, productName = '') {
  * @param {Object} input
  */
 export function restoreCalculationResults(mode, yieldMethod, result, input) {
+  // 結果データが有効かチェック
+  const hasValidResult = isValidResultData(result);
+
+  if (!hasValidResult) {
+    // ステップ1の値が入っていない場合、ステップ1に戻す
+    appState.setStep(1);
+    // 結果セクションを非表示
+    hide(UI_ELEMENTS.RESULTS);
+    return;
+  }
+
   // appStateのsnapshotを更新
   appState.updateSnapshot({
     ac: result.afterCost,

@@ -51,6 +51,27 @@ function validateObject(value, fieldName) {
 }
 
 /**
+ * 数値フィールドを検証（正の数値であることを確認）
+ */
+function validatePositiveNumber(value, fieldName) {
+  if (value === null || value === undefined || value === '') {
+    return [`${fieldName}は必須です`];
+  }
+
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+
+  if (isNaN(num) || !isFinite(num)) {
+    return [`${fieldName}は有効な数値である必要があります`];
+  }
+
+  if (num <= 0) {
+    return [`${fieldName}は正の数値である必要があります`];
+  }
+
+  return [];
+}
+
+/**
  * 計算データ名を検証
  */
 export function validateName(name) {
@@ -139,6 +160,24 @@ function validateFixedModeInput(inputData) {
     }
   }
 
+  // ステップ1の必須フィールドを検証
+  const yieldMethod = inputData.yieldMethod || 'calculate';
+
+  // 共通の必須フィールド
+  errors.push(...validatePositiveNumber(inputData.unitCost, '単価コスト'));
+  errors.push(...validatePositiveNumber(inputData.unitPrice, '単価売価'));
+  errors.push(...validatePositiveNumber(inputData.beforeWeight, '加工前重量'));
+  errors.push(...validatePositiveNumber(inputData.afterPrice100, '加工後売価(100g)'));
+
+  // yieldMethodに応じた必須フィールド
+  if (yieldMethod === 'calculate') {
+    // 重量から計算モード: 加工後重量が必須
+    errors.push(...validatePositiveNumber(inputData.afterWeight, '加工後重量'));
+  } else {
+    // 歩留まり率直接入力モード: 歩留まり率が必須
+    errors.push(...validatePositiveNumber(inputData.yieldRate, '歩留まり率'));
+  }
+
   return errors;
 }
 
@@ -154,6 +193,25 @@ function validateWeightModeInput(inputData) {
     if (!validMethods.includes(inputData.yieldMethod)) {
       errors.push(`歩留まり計算方法は次のいずれかである必要があります: ${validMethods.join(', ')}`);
     }
+  }
+
+  // ステップ1の必須フィールドを検証
+  const yieldMethod = inputData.yieldMethod || 'calculate';
+
+  // 共通の必須フィールド
+  errors.push(...validatePositiveNumber(inputData.boxCost, '箱コスト'));
+  errors.push(...validatePositiveNumber(inputData.boxPrice, '箱売価'));
+  errors.push(...validatePositiveNumber(inputData.boxWeight, '箱重量'));
+  errors.push(...validatePositiveNumber(inputData.afterPrice100, '加工後売価(100g)'));
+
+  // yieldMethodに応じた必須フィールド
+  if (yieldMethod === 'calculate') {
+    // 重量から計算モード: サンプル重量と加工後重量が必須
+    errors.push(...validatePositiveNumber(inputData.beforeSample, 'サンプル重量'));
+    errors.push(...validatePositiveNumber(inputData.afterWeight, '加工後重量'));
+  } else {
+    // 歩留まり率直接入力モード: 歩留まり率が必須
+    errors.push(...validatePositiveNumber(inputData.yieldRate, '歩留まり率'));
   }
 
   return errors;
