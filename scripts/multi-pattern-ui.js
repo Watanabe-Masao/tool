@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 複数パターン分析モードのUI制御
  */
 
@@ -76,7 +77,7 @@ export function initMultiPatternUI() {
 
   // 要素が存在しない場合は初期化しない
   if (!elements.beforeWeightCalc || !elements.beforeWeightDirect) {
-    console.warn('[MultiPattern] Required elements not found');
+    logger.warn('[MultiPattern] Required elements not found');
     return;
   }
 
@@ -1166,7 +1167,7 @@ export function setStatValue(value, statType, productName = '') {
  */
 export function replaceAllPatterns(newPatterns) {
   if (!Array.isArray(newPatterns) || newPatterns.length === 0) {
-    console.warn('[MultiPattern] 有効なパターンが指定されていません');
+    logger.warn('[MultiPattern] 有効なパターンが指定されていません');
     return;
   }
 

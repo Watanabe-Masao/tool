@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * イベントハンドラーのセットアップ
  * アプリケーションの全イベントリスナーを初期化
  */
@@ -604,7 +605,7 @@ function init() {
           }, TIME.ONE_HOUR);
         })
         .catch((error) => {
-          console.error('[PWA] Service Worker registration failed:', error);
+          logger.error('[PWA] Service Worker registration failed:', error);
         });
     });
 
@@ -742,7 +743,7 @@ function init() {
     if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
     } else {
-      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
+      logger.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
       showError('パターン生成機能の初期化に失敗しました。');
     }
   }

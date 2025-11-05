@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 歩留まり統計: 表示管理モジュール（Phase 9: UX改善完了版）
  *
  * 統計値の表示、読み込みボタン管理などを担当します。
@@ -51,14 +52,14 @@ function displayCurrentStatistics() {
   const selectedType = selectElement?.value || 'yieldRate';
   const data = appState.getYieldStatsRawData();
 
-  console.log('[displayCurrentStatistics] data:', data);
+  logger.info('[displayCurrentStatistics] data:', data);
 
   // 状態を更新：現在の表示タイプ（setCurrentDisplayType内で外れ値リセット処理あり）
   appState.setCurrentDisplayType(selectedType);
 
   if (!data) {
     hide('yieldStatsResults');
-    console.log('[displayCurrentStatistics] No data, hiding results');
+    logger.info('[displayCurrentStatistics] No data, hiding results');
     return;
   }
 
@@ -66,7 +67,7 @@ function displayCurrentStatistics() {
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
     if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
       const stats = calculateStatistics(data[type]);
-      console.log(`[displayCurrentStatistics] Setting ${type} stats:`, stats);
+      logger.info(`[displayCurrentStatistics] Setting ${type} stats:`, stats);
       appState.setCalculatedStats(type, stats);
     } else {
       appState.setCalculatedStats(type, null);
@@ -166,17 +167,17 @@ function displayCurrentStatistics() {
   }
 
   // 除外後のデータで統計を表示
-  console.log('[displayCurrentStatistics] Displaying statistics for:', actualSelectedType, 'finalStats:', finalStats);
+  logger.info('[displayCurrentStatistics] Displaying statistics for:', actualSelectedType, 'finalStats:', finalStats);
   displayStatistics(finalStats, unit);
-  console.log('[displayCurrentStatistics] displayStatistics done');
+  logger.info('[displayCurrentStatistics] displayStatistics done');
   displayMatrixEvaluation(finalStats);
-  console.log('[displayCurrentStatistics] displayMatrixEvaluation done');
+  logger.info('[displayCurrentStatistics] displayMatrixEvaluation done');
   renderStatsChart(finalValues, finalStats, typeName, unit);
-  console.log('[displayCurrentStatistics] renderStatsChart done');
+  logger.info('[displayCurrentStatistics] renderStatsChart done');
 
   // 統計結果を表示
   show('yieldStatsResults');
-  console.log('[displayCurrentStatistics] yieldStatsResults shown');
+  logger.info('[displayCurrentStatistics] yieldStatsResults shown');
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
@@ -1238,7 +1239,7 @@ function updateLoadStatsButtons() {
       if (window.loadAllStatsToMultiPattern) {
         window.loadAllStatsToMultiPattern();
       } else {
-        console.error('[ERROR] loadAllStatsToMultiPattern関数が見つかりません');
+        logger.error('[ERROR] loadAllStatsToMultiPattern関数が見つかりません');
       }
     });
 

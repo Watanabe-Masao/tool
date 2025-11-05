@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 保存ダイアログの管理
  */
 
@@ -15,7 +16,7 @@ import { escapeHTML } from './history-item-renderer.js';
 export async function showSaveDialog(showToastCallback) {
   const dialog = qs('#saveDialog');
   if (!dialog) {
-    console.error('[showSaveDialog] エラー: dialog要素が見つかりません!');
+    logger.error('[showSaveDialog] エラー: dialog要素が見つかりません!');
     return;
   }
 
@@ -38,7 +39,7 @@ export async function showSaveDialog(showToastCallback) {
   try {
     dialog.showModal();
   } catch (error) {
-    console.error('[showSaveDialog] ダイアログ表示エラー:', error);
+    logger.error('[showSaveDialog] ダイアログ表示エラー:', error);
   }
 
   // 履歴から読み込んだ場合は、そのカテゴリーと商品名を設定
@@ -60,7 +61,7 @@ export async function showSaveDialog(showToastCallback) {
       // カテゴリーに応じた商品名プリセットを更新
       await updateProductNamePresets(historyData.category);
     } catch (error) {
-      console.error('Failed to load history data for dialog:', error);
+      logger.error('Failed to load history data for dialog:', error);
     }
   } else {
     // 新規保存または履歴IDがない場合
@@ -281,7 +282,7 @@ export async function updateProductNamePresets(category = null) {
       }
     }
   } catch (error) {
-    console.error('Failed to update product name presets:', error);
+    logger.error('Failed to update product name presets:', error);
   }
 }
 
@@ -347,7 +348,7 @@ export async function handleOverwriteSave(showToastCallback) {
   const loadedHistoryId = appState.getLoadedHistoryId();
 
   if (!loadedHistoryId || (typeof loadedHistoryId !== 'number' && typeof loadedHistoryId !== 'string')) {
-    console.error('[エラー]  無効な履歴ID:', loadedHistoryId);
+    logger.error('[エラー]  無効な履歴ID:', loadedHistoryId);
     showToastCallback('[エラー]  履歴IDが無効です', 'error');
     return;
   }
@@ -395,7 +396,7 @@ export async function handleOverwriteSave(showToastCallback) {
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
-    console.error('Overwrite save error:', error);
+    logger.error('Overwrite save error:', error);
     const errorMessage = error.message || '上書き保存に失敗しました';
     showToastCallback(`[エラー]  ${errorMessage}`, 'error');
   }
@@ -475,7 +476,7 @@ export async function handleNewSave(showToastCallback) {
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
-    console.error('New save error:', error);
+    logger.error('New save error:', error);
     const errorMessage = error.message || '新規保存に失敗しました';
     showToastCallback(`[エラー]  ${errorMessage}`, 'error');
   }
@@ -539,7 +540,7 @@ export async function handleSaveCalculation(showToastCallback) {
       const loadedHistoryId = appState.getLoadedHistoryId();
 
       if (!loadedHistoryId || (typeof loadedHistoryId !== 'number' && typeof loadedHistoryId !== 'string')) {
-        console.error('[エラー]  無効な履歴ID:', loadedHistoryId);
+        logger.error('[エラー]  無効な履歴ID:', loadedHistoryId);
         throw new Error('履歴IDが無効です');
       }
 
@@ -578,7 +579,7 @@ export async function handleSaveCalculation(showToastCallback) {
     // 商品名プリセットを更新
     await updateProductNamePresets();
   } catch (error) {
-    console.error('Save error:', error);
+    logger.error('Save error:', error);
     const errorMessage = error.message || '保存に失敗しました';
     showToastCallback(`[エラー]  ${errorMessage}`, 'error');
   }

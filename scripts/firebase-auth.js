@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * Firebase認証モジュール
  * 匿名認証とメール/パスワード認証をサポート
  */
@@ -14,14 +15,14 @@ let currentUser = null;
  */
 export async function initializeFirebase() {
   if (!firebaseFeatures.enabled) {
-    console.log('Firebase機能は無効です');
+    logger.info('Firebase機能は無効です');
     return false;
   }
 
   try {
     // Firebase SDKの読み込み確認
     if (typeof firebase === 'undefined') {
-      console.error('Firebase SDKが読み込まれていません');
+      logger.error('Firebase SDKが読み込まれていません');
       return false;
     }
 
@@ -40,9 +41,9 @@ export async function initializeFirebase() {
     // firebase.firestore().enablePersistence({ synchronizeTabs: true })
     //   .catch((err) => {
     //     if (err.code === 'failed-precondition') {
-    //       console.warn('複数のタブが開いています。永続化は1つのタブでのみ有効です。');
+    //       logger.warn('複数のタブが開いています。永続化は1つのタブでのみ有効です。');
     //     } else if (err.code === 'unimplemented') {
-    //       console.warn('このブラウザは永続化をサポートしていません。');
+    //       logger.warn('このブラウザは永続化をサポートしていません。');
     //     }
     //   });
 
@@ -52,21 +53,21 @@ export async function initializeFirebase() {
       updateAuthUI(user);
 
       if (user) {
-        console.log('ログイン中:', user.isAnonymous ? '匿名' : user.email);
+        logger.info('ログイン中:', user.isAnonymous ? '匿名' : user.email);
 
         // 自動同期が有効な場合、同期を開始
         if (firebaseFeatures.autoSync) {
           startAutoSync();
         }
       } else {
-        console.log('未ログイン');
+        logger.info('未ログイン');
         stopAutoSync();
       }
     });
 
     return true;
   } catch (error) {
-    console.error('Firebase初期化エラー:', error);
+    logger.error('Firebase初期化エラー:', error);
     showToast('Firebase初期化に失敗しました', 'error');
     return false;
   }
@@ -81,7 +82,7 @@ export async function signInAnonymously() {
     showToast('匿名ログインしました', 'success');
     return result.user;
   } catch (error) {
-    console.error('匿名ログインエラー:', error);
+    logger.error('匿名ログインエラー:', error);
     showToast(`匿名ログインに失敗: ${error.message}`, 'error');
     throw error;
   }
@@ -96,7 +97,7 @@ export async function signUpWithEmail(email, password) {
     showToast('アカウントを作成しました', 'success');
     return result.user;
   } catch (error) {
-    console.error('サインアップエラー:', error);
+    logger.error('サインアップエラー:', error);
     let message = 'アカウント作成に失敗しました';
 
     if (error.code === 'auth/email-already-in-use') {
@@ -121,7 +122,7 @@ export async function signInWithEmail(email, password) {
     showToast('ログインしました', 'success');
     return result.user;
   } catch (error) {
-    console.error('ログインエラー:', error);
+    logger.error('ログインエラー:', error);
     let message = 'ログインに失敗しました';
 
     if (error.code === 'auth/user-not-found') {
@@ -151,7 +152,7 @@ export async function upgradeAnonymousAccount(email, password) {
     showToast('アカウントをアップグレードしました', 'success');
     return result.user;
   } catch (error) {
-    console.error('アカウントアップグレードエラー:', error);
+    logger.error('アカウントアップグレードエラー:', error);
     let message = 'アカウントのアップグレードに失敗しました';
 
     if (error.code === 'auth/email-already-in-use') {
@@ -175,7 +176,7 @@ export async function signOut() {
     await auth.signOut();
     showToast('ログアウトしました', 'success');
   } catch (error) {
-    console.error('ログアウトエラー:', error);
+    logger.error('ログアウトエラー:', error);
     showToast('ログアウトに失敗しました', 'error');
     throw error;
   }
@@ -233,7 +234,7 @@ function startAutoSync() {
     syncData();
   }, firebaseFeatures.syncInterval);
 
-  console.log(`自動同期を開始しました（${firebaseFeatures.syncInterval / 1000}秒ごと）`);
+  logger.info(`自動同期を開始しました（${firebaseFeatures.syncInterval / 1000}秒ごと）`);
 }
 
 /**
@@ -243,7 +244,7 @@ function stopAutoSync() {
   if (autoSyncTimer) {
     clearInterval(autoSyncTimer);
     autoSyncTimer = null;
-    console.log('自動同期を停止しました');
+    logger.info('自動同期を停止しました');
   }
 }
 
@@ -264,7 +265,7 @@ export async function sendPasswordResetEmail(email) {
     await auth.sendPasswordResetEmail(email);
     showToast('パスワードリセットメールを送信しました', 'success');
   } catch (error) {
-    console.error('パスワードリセットエラー:', error);
+    logger.error('パスワードリセットエラー:', error);
     let message = 'パスワードリセットメールの送信に失敗しました';
 
     if (error.code === 'auth/user-not-found') {

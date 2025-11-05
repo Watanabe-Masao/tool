@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 歩留まり統計: チャート描画モジュール
  *
  * このモジュールはEChartsを使用した統計グラフの描画を担当します。
@@ -28,7 +29,7 @@ export function renderStatsChart(values, stats, typeName, unit) {
 
   // EChartsが読み込まれていない場合は何もしない
   if (typeof echarts === 'undefined') {
-    console.warn('ECharts is not loaded');
+    logger.warn('ECharts is not loaded');
     return;
   }
 

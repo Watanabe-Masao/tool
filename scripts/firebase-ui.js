@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * Firebase同期UI
  * 認証画面、同期ボタン、ステータス表示
  */
@@ -35,7 +36,7 @@ let realtimeUnsubscribe = null;
  */
 export async function initializeFirebaseUI() {
   if (!firebaseFeatures.enabled) {
-    console.log('Firebase機能は無効です');
+    logger.info('Firebase機能は無効です');
     hideFirebaseUI();
     return;
   }
@@ -195,10 +196,10 @@ async function handleSyncClick() {
   try {
     const success = await syncData();
     if (success) {
-      console.log('同期完了');
+      logger.info('同期完了');
     }
   } catch (error) {
-    console.error('同期エラー:', error);
+    logger.error('同期エラー:', error);
     showToast('同期に失敗しました。詳細はコンソールを確認してください。', 'error');
   }
 }
@@ -215,7 +216,7 @@ async function handleDownloadFile() {
   try {
     await downloadToFile();
   } catch (error) {
-    console.error('ファイルダウンロードエラー:', error);
+    logger.error('ファイルダウンロードエラー:', error);
     showToast('ファイルのダウンロードに失敗しました。', 'error');
   }
 }
@@ -245,7 +246,7 @@ async function handleUploadFileChange(event) {
   try {
     await uploadFromFile(file);
   } catch (error) {
-    console.error('ファイルアップロードエラー:', error);
+    logger.error('ファイルアップロードエラー:', error);
     showToast('ファイルのアップロードに失敗しました。', 'error');
   } finally {
     // ファイル入力をリセット
@@ -263,7 +264,7 @@ async function handleCleanupFirestore() {
   }
 
   try {
-    console.log('[クリーンアップ]  Firestoreクリーンアップを開始します...');
+    logger.info('[クリーンアップ]  Firestoreクリーンアップを開始します...');
     const user = getCurrentUser();
     const firestore = firebase.firestore();
 
@@ -274,7 +275,7 @@ async function handleCleanupFirestore() {
       .collection('history')
       .get();
 
-    console.log(` 取得したデータ: ${snapshot.size}件`);
+    logger.info(` 取得したデータ: ${snapshot.size}件`);
 
     if (snapshot.empty) {
       showToast('クリーンアップするデータがありません', 'info');
@@ -301,7 +302,7 @@ async function handleCleanupFirestore() {
       });
     });
 
-    console.log(` ユニークなデータグループ: ${dataMap.size}個`);
+    logger.info(` ユニークなデータグループ: ${dataMap.size}個`);
 
     // 重複を検出して削除リストを作成
     const toDelete = [];
@@ -313,7 +314,7 @@ async function handleCleanupFirestore() {
         toKeep.push(items[0]);
       } else {
         // 重複あり: 最適なデータを選択
-        console.log(`[警告] ️ [${key}] ${items.length}件の重複を検出`);
+        logger.info(`[警告] ️ [${key}] ${items.length}件の重複を検出`);
 
         // ソート優先順位: UUID形式のデータを優先 → 最新のupdatedAtを優先
         items.sort((a, b) => {
@@ -332,9 +333,9 @@ async function handleCleanupFirestore() {
       }
     });
 
-    console.log('\n クリーンアップサマリー:');
-    console.log(`  保持: ${toKeep.length}件`);
-    console.log(`  削除: ${toDelete.length}件`);
+    logger.info('\n クリーンアップサマリー:');
+    logger.info(`  保持: ${toKeep.length}件`);
+    logger.info(`  削除: ${toDelete.length}件`);
 
     if (toDelete.length === 0) {
       showToast('削除する重複データがありません', 'info');
@@ -350,7 +351,7 @@ async function handleCleanupFirestore() {
     );
 
     if (!confirmed) {
-      console.log('[エラー]  クリーンアップをキャンセルしました');
+      logger.info('[エラー]  クリーンアップをキャンセルしました');
       return;
     }
 
@@ -375,10 +376,10 @@ async function handleCleanupFirestore() {
 
       await batch.commit();
       deletedCount += chunk.length;
-      console.log(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
+      logger.info(`[削除]  削除完了: ${deletedCount}/${toDelete.length}件`);
     }
 
-    console.log('\n✅  クリーンアップ完了!');
+    logger.info('\n✅  クリーンアップ完了!');
     showToast(`クリーンアップ完了! 削除: ${deletedCount}件、残り: ${toKeep.length}件`, 'success');
 
     // 完了後にダウンロードを促す
@@ -390,7 +391,7 @@ async function handleCleanupFirestore() {
       await downloadFromCloud();
     }
   } catch (error) {
-    console.error('[エラー]  クリーンアップエラー:', error);
+    logger.error('[エラー]  クリーンアップエラー:', error);
     showToast(`クリーンアップに失敗しました: ${error.message}`, 'error');
   }
 }
@@ -406,7 +407,7 @@ async function handleAnonymousSignIn() {
     // リアルタイムリスナーを設定
     realtimeUnsubscribe = setupRealtimeListener();
   } catch (error) {
-    console.error('匿名サインインエラー:', error);
+    logger.error('匿名サインインエラー:', error);
   }
 }
 
@@ -429,7 +430,7 @@ async function handleEmailSignIn() {
     // リアルタイムリスナーを設定
     realtimeUnsubscribe = setupRealtimeListener();
   } catch (error) {
-    console.error('メールサインインエラー:', error);
+    logger.error('メールサインインエラー:', error);
   }
 }
 
@@ -463,7 +464,7 @@ async function handleEmailSignUp() {
     // リアルタイムリスナーを設定
     realtimeUnsubscribe = setupRealtimeListener();
   } catch (error) {
-    console.error('メールサインアップエラー:', error);
+    logger.error('メールサインアップエラー:', error);
   }
 }
 
@@ -494,7 +495,7 @@ async function handleUpgradeAccount() {
     await upgradeAnonymousAccount(email, password);
     closeAuthModal();
   } catch (error) {
-    console.error('アカウントアップグレードエラー:', error);
+    logger.error('アカウントアップグレードエラー:', error);
   }
 }
 
@@ -512,7 +513,7 @@ async function handleResetPassword() {
   try {
     await sendPasswordResetEmail(email);
   } catch (error) {
-    console.error('パスワードリセットエラー:', error);
+    logger.error('パスワードリセットエラー:', error);
   }
 }
 
@@ -529,7 +530,7 @@ async function handleSignOut() {
 
     await signOut();
   } catch (error) {
-    console.error('サインアウトエラー:', error);
+    logger.error('サインアウトエラー:', error);
   }
 }
 
@@ -540,7 +541,7 @@ function showAuthModal() {
   const modal = document.getElementById('auth-modal');
 
   if (!modal) {
-    console.error('auth-modal が見つかりません');
+    logger.error('auth-modal が見つかりません');
     return;
   }
 
@@ -763,7 +764,7 @@ async function handleResetDatabase() {
     };
 
     deleteRequest.onerror = (event) => {
-      console.error('データベース削除エラー:', event.target.error);
+      logger.error('データベース削除エラー:', event.target.error);
       showToast('データベースの削除に失敗しました', 'error');
     };
 
@@ -771,7 +772,7 @@ async function handleResetDatabase() {
       showToast('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください', 'warning');
     };
   } catch (err) {
-    console.error('データベース削除に失敗:', err);
+    logger.error('データベース削除に失敗:', err);
     showToast('データベースの削除に失敗しました', 'error');
   }
 }
@@ -844,7 +845,7 @@ async function handleCheckSyncStatus() {
     alert(statusMessage);
 
   } catch (err) {
-    console.error('状態確認エラー:', err);
+    logger.error('状態確認エラー:', err);
     alert(
       '状態確認に失敗しました。\n\n' +
       `エラー: ${err.message}\n\n` +

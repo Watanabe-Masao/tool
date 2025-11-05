@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * ブラウザコンソールから実行するデータクリーンアップスクリプト
  *
  * 使用方法:
@@ -27,7 +28,7 @@
  * すべてのデータを削除
  */
 window.cleanupAll = async function() {
-  console.log('[警告] ️ すべてのデータを削除します...');
+  logger.info('[警告] ️ すべてのデータを削除します...');
 
   const confirmed = confirm(
     '[警告] ️ 本当にすべてのデータを削除しますか？\n\n' +
@@ -39,7 +40,7 @@ window.cleanupAll = async function() {
   );
 
   if (!confirmed) {
-    console.log('[エラー]  キャンセルされました');
+    logger.info('[エラー]  キャンセルされました');
     return;
   }
 
@@ -47,21 +48,21 @@ window.cleanupAll = async function() {
     // 動的にモジュールをインポート
     const { clearAllHistory } = await import('./storage.js');
 
-    console.log('[削除]  Firestore & IndexedDB を削除中...');
+    logger.info('[削除]  Firestore & IndexedDB を削除中...');
     await clearAllHistory();
-    console.log('✅  Firestore & IndexedDB 削除完了');
+    logger.info('✅  Firestore & IndexedDB 削除完了');
 
-    console.log('[削除]  LocalStorage を削除中...');
+    logger.info('[削除]  LocalStorage を削除中...');
     localStorage.clear();
-    console.log('✅  LocalStorage 削除完了');
+    logger.info('✅  LocalStorage 削除完了');
 
-    console.log('🎉 すべてのデータを削除しました！');
+    logger.info('🎉 すべてのデータを削除しました！');
 
     // 状態確認
     await checkDataStatus();
 
   } catch (error) {
-    console.error('[エラー]  エラー:', error);
+    logger.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -70,7 +71,7 @@ window.cleanupAll = async function() {
  * IndexedDBのみ削除
  */
 window.cleanupIndexedDB = async function() {
-  console.log('[警告] ️ IndexedDBを削除します...');
+  logger.info('[警告] ️ IndexedDBを削除します...');
 
   try {
     const { db } = await import('./db.js');
@@ -78,13 +79,13 @@ window.cleanupIndexedDB = async function() {
     await db.open();
     await db.clear();
 
-    console.log('✅  IndexedDB削除完了');
+    logger.info('✅  IndexedDB削除完了');
 
     // 状態確認
     await checkDataStatus();
 
   } catch (error) {
-    console.error('[エラー]  エラー:', error);
+    logger.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -93,26 +94,26 @@ window.cleanupIndexedDB = async function() {
  * Firestoreのみ削除
  */
 window.cleanupFirestore = async function() {
-  console.log('[警告] ️ Firestoreを削除します...');
+  logger.info('[警告] ️ Firestoreを削除します...');
 
   try {
     const { clearAllFromCloud } = await import('./firebase-sync.js');
     const { isSignedIn } = await import('./firebase-auth.js');
 
     if (!isSignedIn()) {
-      console.warn('[警告] ️ ログインしていません。Firestoreの削除にはログインが必要です。');
+      logger.warn('[警告] ️ ログインしていません。Firestoreの削除にはログインが必要です。');
       return;
     }
 
     await clearAllFromCloud();
 
-    console.log('✅  Firestore削除完了');
+    logger.info('✅  Firestore削除完了');
 
     // 状態確認
     await checkDataStatus();
 
   } catch (error) {
-    console.error('[エラー]  エラー:', error);
+    logger.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -121,20 +122,20 @@ window.cleanupFirestore = async function() {
  * LocalStorageのみ削除
  */
 window.cleanupLocalStorage = function() {
-  console.log('[警告] ️ LocalStorageを削除します...');
+  logger.info('[警告] ️ LocalStorageを削除します...');
 
   try {
     const keys = Object.keys(localStorage);
-    console.log(`削除前: ${keys.length} 件`);
-    console.log('キー:', keys);
+    logger.info(`削除前: ${keys.length} 件`);
+    logger.info('キー:', keys);
 
     localStorage.clear();
 
-    console.log('✅  LocalStorage削除完了');
-    console.log(`削除後: ${Object.keys(localStorage).length} 件`);
+    logger.info('✅  LocalStorage削除完了');
+    logger.info(`削除後: ${Object.keys(localStorage).length} 件`);
 
   } catch (error) {
-    console.error('[エラー]  エラー:', error);
+    logger.error('[エラー]  エラー:', error);
     throw error;
   }
 };
@@ -143,28 +144,28 @@ window.cleanupLocalStorage = function() {
  * データ状態を確認
  */
 window.checkDataStatus = async function() {
-  console.log(' データ状態を確認中...');
-  console.log('─'.repeat(50));
+  logger.info(' データ状態を確認中...');
+  logger.info('─'.repeat(50));
 
   try {
     // ログイン状態
     const { isSignedIn, getCurrentUser } = await import('./firebase-auth.js');
     if (isSignedIn()) {
       const user = getCurrentUser();
-      console.log('✅  ログイン状態: ログイン中');
-      console.log('   ユーザー:', user.email);
-      console.log('   UID:', user.uid);
+      logger.info('✅  ログイン状態: ログイン中');
+      logger.info('   ユーザー:', user.email);
+      logger.info('   UID:', user.uid);
     } else {
-      console.log('[エラー]  ログイン状態: ログアウト');
+      logger.info('[エラー]  ログイン状態: ログアウト');
     }
 
     // IndexedDB
     const { db } = await import('./db.js');
     await db.open();
     const localData = await db.getAll();
-    console.log(` IndexedDB: ${localData.length} 件`);
+    logger.info(` IndexedDB: ${localData.length} 件`);
     if (localData.length > 0) {
-      console.log('   最初の3件:', localData.slice(0, 3).map(item => ({
+      logger.info('   最初の3件:', localData.slice(0, 3).map(item => ({
         id: item.id,
         name: item.name,
         uuid: item.uuid
@@ -180,40 +181,40 @@ window.checkDataStatus = async function() {
         .doc(user.uid)
         .collection('history')
         .get();
-      console.log(` Firestore: ${snapshot.size} 件`);
+      logger.info(` Firestore: ${snapshot.size} 件`);
       if (snapshot.size > 0) {
-        console.log('   最初の3件:', snapshot.docs.slice(0, 3).map(doc => ({
+        logger.info('   最初の3件:', snapshot.docs.slice(0, 3).map(doc => ({
           id: doc.id,
           name: doc.data().name,
           uuid: doc.data().uuid
         })));
       }
     } else {
-      console.log(' Firestore: ログインが必要');
+      logger.info(' Firestore: ログインが必要');
     }
 
     // LocalStorage
     const keys = Object.keys(localStorage);
-    console.log(` LocalStorage: ${keys.length} 件`);
+    logger.info(` LocalStorage: ${keys.length} 件`);
     if (keys.length > 0) {
-      console.log('   キー:', keys);
+      logger.info('   キー:', keys);
       keys.forEach(key => {
         const value = localStorage.getItem(key);
-        console.log(`   - ${key}: ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`);
+        logger.info(`   - ${key}: ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`);
       });
     }
 
-    console.log('─'.repeat(50));
-    console.log('✅  状態確認完了');
+    logger.info('─'.repeat(50));
+    logger.info('✅  状態確認完了');
 
   } catch (error) {
-    console.error('[エラー]  エラー:', error);
+    logger.error('[エラー]  エラー:', error);
     throw error;
   }
 };
 
 // 初回実行時にヘルプを表示
-console.log(`
+logger.info(`
 ╔════════════════════════════════════════════════════════════╗
 ║           データクリーンアップコマンド                      ║
 ╚════════════════════════════════════════════════════════════╝
@@ -250,6 +251,6 @@ console.log(`
   try {
     await checkDataStatus();
   } catch (error) {
-    console.warn('初回状態確認をスキップしました:', error.message);
+    logger.warn('初回状態確認をスキップしました:', error.message);
   }
 })();

@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * Service Worker更新チェック
  * 新しいバージョンを検出し、ユーザーに通知
  */
@@ -13,7 +14,7 @@ export function registerServiceWorkerWithUpdate() {
     // Service Workerを登録
     navigator.serviceWorker.register('/tool/sw.js')
       .then((registration) => {
-        console.log('✅ Service Worker registered:', registration.scope);
+        logger.info('✅ Service Worker registered:', registration.scope);
 
         // 🔥 定期的に更新をチェック（1時間ごと）
         setInterval(() => {
@@ -23,12 +24,12 @@ export function registerServiceWorkerWithUpdate() {
         // 新しいService Workerが待機中の場合
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
-          console.log('🔄 New Service Worker found, installing...');
+          logger.info('🔄 New Service Worker found, installing...');
 
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // 新しいバージョンが利用可能
-              console.log('✅ New Service Worker installed');
+              logger.info('✅ New Service Worker installed');
 
               // ユーザーに通知
               showUpdateNotification();
@@ -37,12 +38,12 @@ export function registerServiceWorkerWithUpdate() {
         });
       })
       .catch((error) => {
-        console.error('❌ Service Worker registration failed:', error);
+        logger.error('❌ Service Worker registration failed:', error);
       });
 
     // 制御が変更された時（新しいService Workerがアクティブになった時）
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('🔄 Service Worker controller changed, reloading...');
+      logger.info('🔄 Service Worker controller changed, reloading...');
       // 自動リロード（オプション：ユーザーに確認することも可能）
       window.location.reload();
     });
@@ -83,7 +84,7 @@ export async function unregisterServiceWorker() {
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (const registration of registrations) {
       await registration.unregister();
-      console.log('✅ Service Worker unregistered');
+      logger.info('✅ Service Worker unregistered');
     }
   }
 }
@@ -95,7 +96,7 @@ export async function clearAllCaches() {
   if ('caches' in window) {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map(name => caches.delete(name)));
-    console.log('✅ All caches cleared:', cacheNames);
+    logger.info('✅ All caches cleared:', cacheNames);
   }
 }
 
@@ -105,7 +106,7 @@ if (typeof window !== 'undefined') {
     unregister: unregisterServiceWorker,
     clearCaches: clearAllCaches
   };
-  console.log('🛠️ Service Worker debug helpers available:');
-  console.log('  - window.swDebug.unregister() - Unregister Service Worker');
-  console.log('  - window.swDebug.clearCaches() - Clear all caches');
+  logger.info('🛠️ Service Worker debug helpers available:');
+  logger.info('  - window.swDebug.unregister() - Unregister Service Worker');
+  logger.info('  - window.swDebug.clearCaches() - Clear all caches');
 }

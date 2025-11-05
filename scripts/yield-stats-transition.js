@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 歩留まり統計遷移ユーティリティ
  *
  * 歩留まり統計から複数パターン分析への遷移に関する
@@ -50,7 +51,7 @@ export async function waitForStatsDataReady(isFromHistory) {
   }
 
   // タイムアウト：最大待機時間を超えた
-  console.warn('[waitForStatsDataReady] タイムアウト: 統計データの準備が完了しませんでした');
+  logger.warn('[waitForStatsDataReady] タイムアウト: 統計データの準備が完了しませんでした');
 }
 
 /**
@@ -170,7 +171,7 @@ export function handleYieldStatsTransition(
         loadAllStatsToMultiPattern(true);
       })
       .catch(error => {
-        console.error('[handleYieldStatsTransition] データ待機エラー:', error);
+        logger.error('[handleYieldStatsTransition] データ待機エラー:', error);
         // エラーが発生しても読み込みは試行する
         loadAllStatsToMultiPattern(true);
       });

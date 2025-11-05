@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * ヘルプテキストをフォーマット
  * @param {string} text - フォーマットするテキスト
  * @returns {string} - フォーマット済みHTML
@@ -40,7 +41,7 @@ export function initializeHelpModal() {
   const closeHelpModal = document.getElementById('closeHelpModal');
 
   if (!helpModal || !helpModalContent || !closeHelpModal) {
-    console.warn('ヘルプモーダル要素が見つかりません');
+    logger.warn('ヘルプモーダル要素が見つかりません');
     return;
   }
 

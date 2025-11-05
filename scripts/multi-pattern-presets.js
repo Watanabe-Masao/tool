@@ -1,4 +1,5 @@
 /**
+import { logger } from './core/logger.js';
  * 複数パターン分析: プリセット管理モジュール
  *
  * プリセットの作成、編集、削除、適用を管理します。
@@ -28,7 +29,7 @@ export function loadPresets() {
       patterns: Array.isArray(preset.patterns) ? preset.patterns : []
     }));
   } catch (error) {
-    console.error('Failed to parse presets from localStorage:', error);
+    logger.error('Failed to parse presets from localStorage:', error);
     // 破損したデータをクリア
     localStorage.removeItem(PRESET_STORAGE_KEY);
     return [];
@@ -176,7 +177,7 @@ function removeTempPair(index) {
 
   // 境界チェックを追加
   if (index < 0 || index >= sorted.length) {
-    console.error('Invalid index:', index);
+    logger.error('Invalid index:', index);
     return;
   }
 
