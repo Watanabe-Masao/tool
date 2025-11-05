@@ -74,7 +74,7 @@ class Logger {
    */
   error(message, ...args) {
     if (this.level >= LOG_LEVELS.ERROR) {
-      logger.error(this.formatMessage('ERROR', message), ...args);
+      console.error(this.formatMessage('ERROR', message), ...args);
     }
   }
 
@@ -85,7 +85,7 @@ class Logger {
    */
   warn(message, ...args) {
     if (this.level >= LOG_LEVELS.WARN) {
-      logger.warn(this.formatMessage('WARN', message), ...args);
+      console.warn(this.formatMessage('WARN', message), ...args);
     }
   }
 
@@ -107,7 +107,7 @@ class Logger {
    */
   debug(message, ...args) {
     if (this.level >= LOG_LEVELS.DEBUG) {
-      logger.info(this.formatMessage('DEBUG', message), ...args);
+      console.log(this.formatMessage('DEBUG', message), ...args);
     }
   }
 
