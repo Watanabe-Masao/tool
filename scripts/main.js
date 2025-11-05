@@ -8,6 +8,7 @@ import { initializeFirebaseUI } from './firebase-ui.js';
 import { initializeSimpleHeader } from './simple-header.js';
 import { initializeDeletedDataUI } from './deleted-data-ui.js';
 import { initializeHelpModal } from './help-modal.js';
+import { registerServiceWorkerWithUpdate } from './sw-update-check.js';
 
 // グローバルエラーハンドラ - "Script error."を防ぐ
 window.addEventListener('error', (event) => {
@@ -35,6 +36,9 @@ window.addEventListener('unhandledrejection', (event) => {
 // DOMの準備が完了してからイベントハンドラーを初期化
 async function initializeApp() {
   try {
+    // Service Worker登録（最初に実行）
+    registerServiceWorkerWithUpdate();
+
     setupEventHandlers();
 
     // Firebase初期化（設定で有効になっている場合のみ）

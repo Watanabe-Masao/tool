@@ -39,11 +39,8 @@ export function resetYieldStatsEntries(addYieldStatsRowCallback) {
   hide('yieldStatsResults');
 
   // 外れ値の除外状態をリセット
-  if (window.yieldStatsState) {
-    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
-    window.yieldStatsState.currentOutlierValues = [];
-    window.yieldStatsState.currentDisplayType = '';
-  }
+  appState.clearExcludedOutliers();
+  appState.setCurrentDisplayType('yieldRate');
 
   // テーブルが空の場合のみ初期行を追加
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
@@ -333,10 +330,8 @@ export function restoreYieldStatsTable(tableData, callbacks = {}) {
   }
 
   // 状態を更新：履歴から読み込まれた
-  if (window.yieldStatsState) {
-    window.yieldStatsState.isFromHistory = true;
-    window.yieldStatsState.isCalculated = true;
-  }
+  appState.setYieldStatsFromHistory(true);
+  appState.setYieldStatsCalculated(true);
 
   // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
   setTimeout(() => {

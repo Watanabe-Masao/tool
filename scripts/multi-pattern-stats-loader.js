@@ -5,7 +5,7 @@
 
 import { qs, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE } from './constants.js';
+import { MODE, TIME } from './constants.js';
 import { showError, showWarning } from './toast.js';
 import { switchMode } from './mode-manager.js';
 import {
@@ -27,8 +27,8 @@ import { getRecommendedValue } from './yield-stats-helpers.js';
  * @param {string} statsType - 統計タイプ（指定がない場合は現在の表示タイプを使用）
  */
 export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, statsType = null) {
-  const selectedStatsType = statsType || window.yieldStatsState?.currentDisplayType || 'yieldRate';
-  const statsData = window.statsDataByType?.[selectedStatsType];
+  const selectedStatsType = statsType || appState.getCurrentDisplayType() || 'yieldRate';
+  const statsData = appState.getCalculatedStats(selectedStatsType);
 
   if (!statsData) {
     console.warn('[MultiPattern] 統計データが見つかりません');
@@ -36,7 +36,7 @@ export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, sta
   }
 
   // サンプルサイズの妥当性をチェック
-  const validation = window.yieldStatsState?.sampleSizeValidation?.[selectedStatsType];
+  const validation = appState.getSampleSizeValidation(selectedStatsType);
   if (validation && !validation.isValid) {
     alert(`サンプルサイズが不十分です。\n\n実際のサンプル数: ${validation.actualSize}\n必要なサンプル数: ${validation.requiredSize}\n\nより多くのデータを収集してから推奨値を使用してください。`);
     console.warn('[MultiPattern] サンプルサイズが不十分なため、推奨値を読み込めません');
@@ -91,9 +91,9 @@ export function loadStatsValueToMultiPattern(value, displayType, shouldSwitchMod
  */
 export function loadAllStatsToMultiPattern(skipConfirm = false) {
   try {
-    const yieldRateStats = window.statsDataByType?.yieldRate;
-    const beforeWeightStats = window.statsDataByType?.beforeWeight;
-    const afterWeightStats = window.statsDataByType?.afterWeight;
+    const yieldRateStats = appState.getCalculatedStats('yieldRate');
+    const beforeWeightStats = appState.getCalculatedStats('beforeWeight');
+    const afterWeightStats = appState.getCalculatedStats('afterWeight');
 
     if (!yieldRateStats || yieldRateStats.count < 2) {
       showWarning('歩留まり率の統計データがありません。先に歩留まり統計で計算を実行してください。');
@@ -105,7 +105,7 @@ export function loadAllStatsToMultiPattern(skipConfirm = false) {
     const productName = productNameEl?.value?.trim() || '';
 
     // サンプルサイズの妥当性をチェック
-    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+    const yieldRateValidation = appState.getSampleSizeValidation('yieldRate');
     if (yieldRateValidation && !yieldRateValidation.isValid) {
       alert(`歩留まり率のサンプルサイズが不十分です。\n\n実際のサンプル数: ${yieldRateValidation.actualSize}\n必要なサンプル数: ${yieldRateValidation.requiredSize}\n\nより多くのデータを収集してから推奨値を使用してください。`);
       return;
@@ -119,14 +119,14 @@ export function loadAllStatsToMultiPattern(skipConfirm = false) {
     }
 
     // 加工前重量の推奨値を取得（存在する場合、かつサンプルサイズが妥当な場合）
-    const beforeWeightValidation = window.yieldStatsState?.sampleSizeValidation?.beforeWeight;
+    const beforeWeightValidation = appState.getSampleSizeValidation('beforeWeight');
     const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
       && (!beforeWeightValidation || beforeWeightValidation.isValid)
       ? getRecommendedValue(beforeWeightStats)
       : null;
 
     // 加工後重量の推奨値を取得（存在する場合、かつサンプルサイズが妥当な場合）
-    const afterWeightValidation = window.yieldStatsState?.sampleSizeValidation?.afterWeight;
+    const afterWeightValidation = appState.getSampleSizeValidation('afterWeight');
     const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
       && (!afterWeightValidation || afterWeightValidation.isValid)
       ? getRecommendedValue(afterWeightStats)
@@ -232,5 +232,5 @@ export function focusFirstPatternInput() {
       firstInput.focus();
       firstInput.select();
     }
-  }, 100);
+  }, TIME.UI_TRANSITION_DELAY);
 }

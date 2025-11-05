@@ -23,7 +23,7 @@ export function displayMatrixEvaluation(stats) {
     // ビジュアル改善：アイコンとカラーコーディング
     const icon = evaluation.className === 'excellent' ? '🌟' :
                  evaluation.className === 'good' ? '✓' :
-                 evaluation.className === 'fair' ? '⚡' : '[警告] ';
+                 evaluation.className === 'fair' ? '⚡' : '⚠️';
 
     matrixDiv.innerHTML = `
       <div class="matrix-badge ${evaluation.className}">
@@ -146,7 +146,7 @@ export function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'y
   if (!isSampleSizeValid) {
     recommendedValueDiv.innerHTML = `
       <div class="recommended-warning">
-        <span class="warning-icon">[警告] </span>
+        <span class="warning-icon">⚠️</span>
         <div class="warning-content">
           <strong>サンプルサイズが不十分です</strong>
           <p>より多くのデータを収集してから推奨値を参照してください。</p>

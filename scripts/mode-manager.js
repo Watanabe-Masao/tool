@@ -223,19 +223,9 @@ export function clearYieldStatsInputs(addYieldStatsRowCallback) {
     yieldStatsResults.classList.add('is-hidden');
   }
 
-  // 複数パターン分析で使用する統計データのグローバル変数もクリア
-  if (typeof window !== 'undefined') {
-    window.statsDataByType = null;
-    window.lastCalculatedStats = null;
-    // サンプルサイズ妥当性情報もクリア
-    if (window.yieldStatsState) {
-      window.yieldStatsState.sampleSizeValidation = {
-        yieldRate: null,
-        beforeWeight: null,
-        afterWeight: null
-      };
-    }
-  }
+  // 複数パターン分析で使用する統計データもクリア
+  // 注：appState.clearAllYieldStats()で一括クリアされます
+  appState.clearAllYieldStats();
 }
 
 /**

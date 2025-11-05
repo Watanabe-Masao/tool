@@ -69,7 +69,8 @@ export function createHistoryItemHTML(item, isFirst = true) {
 
   // 歩留まり統計モードの場合は異なる表示
   if (item.mode === MODE.YIELD_STATS) {
-    const productName = item.input?.productName || '商品名なし';
+    // 商品名は常にitem.nameを使用（単一の情報源）
+    const productName = item.name || '商品名なし';
     const tableDataCount = item.input?.tableData?.length || 0;
 
     // 統計データを取得

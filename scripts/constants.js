@@ -11,7 +11,16 @@ export const PERCENT_MULTIPLIER = 100;
 export const TIME = {
   ONE_HOUR: 60 * 60 * 1000,        // 1時間
   ONE_DAY: 24 * 60 * 60 * 1000,    // 24時間
-  DEBOUNCE_DELAY: 300              // デバウンス遅延（300ms）
+  DEBOUNCE_DELAY: 300,             // デバウンス遅延（300ms）
+
+  // データ読み込み待機時間
+  UI_TRANSITION_DELAY: 100,        // UI遷移後の待機時間
+  HISTORY_LOAD_DELAY: 400,         // 履歴読み込み後の統計計算待機時間
+  SESSION_RESTORE_DELAY: 100,      // セッション復元時の待機時間
+
+  // ポーリング設定
+  STATS_POLL_INTERVAL: 50,         // 統計データポーリング間隔
+  STATS_POLL_MAX_WAIT: 1000        // 統計データ最大待機時間（1秒）
 };
 
 // 計算モード

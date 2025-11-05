@@ -219,11 +219,7 @@ export function restoreAllInputFields(mode, input, productName = '') {
       // inputイベントを発火させない（restoreCalculationResultsで結果を直接表示）
     }
   } else if (mode === MODE.YIELD_STATS) {
-    // 歩留まり統計モード
-    const productNameEl = qs(`#${UI_ELEMENTS.YIELD_STATS_PRODUCT_NAME}`);
-    if (productNameEl && input.productName != null) {
-      productNameEl.value = input.productName;
-    }
+    // 歩留まり統計モード（商品名は116-130行目で既に設定済み）
 
     // テーブルデータを復元（window.restoreYieldStatsTable関数を使用）
     if (input.tableData && window.restoreYieldStatsTable) {

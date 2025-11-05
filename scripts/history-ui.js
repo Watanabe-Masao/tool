@@ -425,6 +425,12 @@ async function handleEditCalculation(id) {
 
     await updateCalculationName(id, newName.trim());
 
+    // 🔥 重要: Firestoreと同期して最新データを取得
+    await ensureFreshDataBeforeDisplay();
+
+    // 短い遅延を入れてFirestore同期を完全に終わらせる
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // 編集した履歴が現在読み込まれているものと同じ場合、商品名フィールドも更新
     const loadedHistoryId = appState.getLoadedHistoryId();
     if (loadedHistoryId === id) {
@@ -450,6 +456,7 @@ async function handleEditCalculation(id) {
     await renderHistoryList();
     showToast('更新しました', 'success');
   } catch (error) {
+    console.error('[handleEditCalculation] Error:', error);
     showToast('[エラー]  更新に失敗しました', 'error');
   }
 }
