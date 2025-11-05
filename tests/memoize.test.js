@@ -119,6 +119,12 @@ describe('memoize', () => {
       expect(key1).not.toBe(key3);
     });
 
+    test('arrayKeyGeneratorで複数引数の場合はJSON.stringifyにフォールバック', () => {
+      const key = arrayKeyGenerator([1, 2, 3]);
+      // 配列以外の複数引数の場合はJSON.stringifyを使う
+      expect(key).toBe(JSON.stringify([1, 2, 3]));
+    });
+
     test('大きな配列でも高速にキー生成', () => {
       const largeArray = Array(1000).fill(0).map((_, i) => i);
       const key = arrayKeyGenerator([largeArray]);
@@ -142,6 +148,27 @@ describe('memoize', () => {
       expect(key1).toBe(key2);
       // 値が異なれば異なるキー
       expect(key1).not.toBe(key3);
+    });
+
+    test('objectKeyGeneratorで引数が0個の場合は空文字列を返す', () => {
+      const key = objectKeyGenerator([]);
+      expect(key).toBe('');
+    });
+
+    test('objectKeyGeneratorで複数引数の場合はJSON.stringifyにフォールバック', () => {
+      const key = objectKeyGenerator([{ a: 1 }, { b: 2 }]);
+      expect(key).toBe(JSON.stringify([{ a: 1 }, { b: 2 }]));
+    });
+
+    test('objectKeyGeneratorで非オブジェクト引数の場合はJSON.stringifyにフォールバック', () => {
+      const key1 = objectKeyGenerator([123]);
+      expect(key1).toBe(JSON.stringify([123]));
+
+      const key2 = objectKeyGenerator(['string']);
+      expect(key2).toBe(JSON.stringify(['string']));
+
+      const key3 = objectKeyGenerator([null]);
+      expect(key3).toBe(JSON.stringify([null]));
     });
   });
 
