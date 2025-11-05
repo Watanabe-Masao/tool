@@ -420,6 +420,14 @@ export async function updateCalculationName(id, name, category = null) {
       updates.category = category;
     }
 
+    // 🔥 重要: item.input.productNameも更新（表示用）
+    if (currentData.input) {
+      updates.input = {
+        ...currentData.input,
+        productName: name
+      };
+    }
+
     console.log(` 商品名を更新中... (ID: ${id})`);
 
     // Firestoreを直接更新（IndexedDBキャッシュも更新）
