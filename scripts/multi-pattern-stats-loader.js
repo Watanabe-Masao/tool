@@ -5,7 +5,7 @@
 
 import { qs, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE } from './constants.js';
+import { MODE, TIME } from './constants.js';
 import { showError, showWarning } from './toast.js';
 import { switchMode } from './mode-manager.js';
 import {
@@ -232,5 +232,5 @@ export function focusFirstPatternInput() {
       firstInput.focus();
       firstInput.select();
     }
-  }, 100);
+  }, TIME.UI_TRANSITION_DELAY);
 }

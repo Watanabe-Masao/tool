@@ -72,7 +72,7 @@ import { initHistoryUI } from './history-ui.js';
 import { initMultiPatternUI } from './multi-pattern-ui.js';
 import { setupPresetEventListeners, openPresetModal, closePresetModal } from './multi-pattern-presets.js';
 import { updateDiscountSimulation } from './product-simulator.js';
-import { handleYieldStatsTransition } from './yield-stats-transition.js';
+import { handleYieldStatsTransition, waitForStatsDataReady } from './yield-stats-transition.js';
 
 // yield-stats-table.js の関数呼び出しに使うコールバックオブジェクト
 const yieldStatsCallbacks = {
@@ -228,7 +228,7 @@ function restoreSession() {
   // 少し待ってから入力値を復元（UIの切り替えが完了するまで）
   setTimeout(() => {
     applySessionState(sessionData);
-  }, 100);
+  }, TIME.SESSION_RESTORE_DELAY);
 }
 
 function init() {

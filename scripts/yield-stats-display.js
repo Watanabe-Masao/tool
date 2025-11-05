@@ -46,11 +46,6 @@ import {
   isOutlierValue
 } from './outlier-management.js';
 
-// 外れ値の状態管理（互換性のため残す）
-let currentStatsType = '';
-let manuallyExcludedOutlierIndices = new Set();
-let currentOutlierValues = [];
-
 function displayCurrentStatistics() {
   const selectElement = qs('#statsTypeSelect');
   const selectedType = selectElement?.value || 'yieldRate';
@@ -61,14 +56,10 @@ function displayCurrentStatistics() {
 
   // 統計タイプが変更されたら外れ値の除外状態をリセット
   // 注：この時点ではまだ自動切り替え前なので selectedType を使用
-  if (currentStatsType !== selectedType) {
+  if (window.yieldStatsState.currentDisplayType !== selectedType) {
     window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
     window.yieldStatsState.currentOutlierValues = [];
     window.yieldStatsState.isOutlierExcluded = false;
-
-    // 後方互換性のため既存変数も更新
-    manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
-    currentOutlierValues = window.yieldStatsState.currentOutlierValues;
   }
 
   if (!data) {
@@ -132,28 +123,22 @@ function displayCurrentStatistics() {
         selectElement.value = foundType;
         window.yieldStatsState.currentDisplayType = foundType;
       }
-
-      // currentStatsTypeも更新
-      currentStatsType = foundType;
     } else {
       // 全てのタイプでデータが不足している場合は非表示
       hide('yieldStatsResults');
       return;
     }
-  } else {
-    // データがある場合、currentStatsTypeを更新
-    currentStatsType = actualSelectedType;
   }
 
   // 手動除外が設定されている場合、データをフィルタリング
   let finalValues = values;
   let finalStats = null;
 
-  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
+  if (window.yieldStatsState.manuallyExcludedOutlierIndices.size > 0 && window.yieldStatsState.currentOutlierValues.length > 0) {
     const excludedValues = new Set();
-    manuallyExcludedOutlierIndices.forEach(index => {
-      if (index < currentOutlierValues.length) {
-        excludedValues.add(currentOutlierValues[index]);
+    window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
+      if (index < window.yieldStatsState.currentOutlierValues.length) {
+        excludedValues.add(window.yieldStatsState.currentOutlierValues[index]);
       }
     });
 
@@ -380,12 +365,12 @@ function displaySampleSizeValidation() {
   let finalValues = values;
   let finalStats = stats;
 
-  if (manuallyExcludedOutlierIndices.size > 0 && currentOutlierValues.length > 0) {
+  if (window.yieldStatsState.manuallyExcludedOutlierIndices.size > 0 && window.yieldStatsState.currentOutlierValues.length > 0) {
     // 手動除外する外れ値のセットを作成
     const excludedValues = new Set();
-    manuallyExcludedOutlierIndices.forEach(index => {
-      if (index < currentOutlierValues.length) {
-        excludedValues.add(currentOutlierValues[index]);
+    window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
+      if (index < window.yieldStatsState.currentOutlierValues.length) {
+        excludedValues.add(window.yieldStatsState.currentOutlierValues[index]);
       }
     });
 
@@ -601,11 +586,6 @@ window.yieldStatsState = {
   shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか
 };
 
-// 後方互換性のため、グローバル変数も残す（徐々に置き換え）
-manuallyExcludedOutlierIndices = window.yieldStatsState.manuallyExcludedOutlierIndices;
-currentOutlierValues = window.yieldStatsState.currentOutlierValues;
-currentStatsType = window.yieldStatsState.currentDisplayType;
-
 /**
  * 外れ値情報を表示
  * @param {Object} outlierResult - 外れ値検出結果
@@ -626,24 +606,24 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   // 外れ値がない場合は非表示
   if (outlierResult.outliers.length === 0) {
     outlierInfoDiv.classList.add('is-hidden');
-    manuallyExcludedOutlierIndices.clear();
-    currentOutlierValues = [];
+    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+    window.yieldStatsState.currentOutlierValues = [];
     // ハイライトをクリア
     highlightOutlierRows(statsType);
     return;
   }
 
   // 現在の外れ値リストを更新
-  currentOutlierValues = [...outlierResult.outliers];
+  window.yieldStatsState.currentOutlierValues = [...outlierResult.outliers];
 
   // 前回の除外状態をクリア（新しい検出結果に合わせる）
   const validIndices = new Set();
-  manuallyExcludedOutlierIndices.forEach(index => {
-    if (index < currentOutlierValues.length) {
+  window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
+    if (index < window.yieldStatsState.currentOutlierValues.length) {
       validIndices.add(index);
     }
   });
-  manuallyExcludedOutlierIndices = validIndices;
+  window.yieldStatsState.manuallyExcludedOutlierIndices = validIndices;
 
   // 統計タイプに応じた単位を取得
   const unit = statsType === 'yieldRate' ? '%' : 'g';
@@ -680,7 +660,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
       checkbox.type = 'checkbox';
       checkbox.id = `outlier-${index}`;
       checkbox.dataset.index = index;
-      checkbox.checked = manuallyExcludedOutlierIndices.has(index);
+      checkbox.checked = window.yieldStatsState.manuallyExcludedOutlierIndices.has(index);
       checkbox.addEventListener('change', () => handleOutlierCheckboxChange());
 
       const label = document.createElement('label');
@@ -695,7 +675,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   }
 
   // 手動除外数を計算
-  const manuallyExcludedCount = manuallyExcludedOutlierIndices.size;
+  const manuallyExcludedCount = window.yieldStatsState.manuallyExcludedOutlierIndices.size;
   const remainingOutliersCount = outlierResult.outliers.length - manuallyExcludedCount;
   const remainingDataCount = outlierResult.cleanedValues.length + remainingOutliersCount;
 
@@ -724,13 +704,13 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
  */
 function handleOutlierCheckboxChange() {
   // チェックボックスの状態を読み取り
-  manuallyExcludedOutlierIndices.clear();
+  window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
 
   const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]:checked');
   checkboxes.forEach(checkbox => {
     const index = parseInt(checkbox.dataset.index, 10);
     if (!isNaN(index)) {
-      manuallyExcludedOutlierIndices.add(index);
+      window.yieldStatsState.manuallyExcludedOutlierIndices.add(index);
     }
   });
 
@@ -747,7 +727,7 @@ function deleteOutlierRows() {
   if (!tbody) return;
 
   // 外れ値が検出されていない場合は何もしない
-  if (!currentOutlierValues || currentOutlierValues.length === 0) {
+  if (!window.yieldStatsState.currentOutlierValues || window.yieldStatsState.currentOutlierValues.length === 0) {
     showWarning('削除する外れ値がありません。');
     return;
   }
@@ -758,7 +738,7 @@ function deleteOutlierRows() {
   const statsTypeName = statsType === 'yieldRate' ? '歩留まり率' :
                        statsType === 'beforeWeight' ? '加工前重量' : '加工後重量';
 
-  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n削除した行は元に戻せません。\n\n削除する外れ値の数: ${currentOutlierValues.length}件\n\n本当に削除しますか？`;
+  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n削除した行は元に戻せません。\n\n削除する外れ値の数: ${window.yieldStatsState.currentOutlierValues.length}件\n\n本当に削除しますか？`;
 
   if (!confirm(confirmMessage)) {
     return;

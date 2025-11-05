@@ -12,10 +12,46 @@
 
 import { qs, hide } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS } from './constants.js';
+import { MODE, UI_ELEMENTS, TIME } from './constants.js';
 import { clearYieldStatsInputs } from './mode-manager.js';
 import { addYieldStatsRow } from './yield-stats-table.js';
 import { updateLoadStatsButtons } from './yield-stats-display.js';
+
+/**
+ * 統計データの準備完了を待つ（Promiseベース）
+ *
+ * この関数は、履歴読み込み後に統計計算が完了するまでポーリングで待機します。
+ * setTimeoutのマジックナンバーを置き換えるために作成されました。
+ *
+ * @param {boolean} isFromHistory - 履歴から読み込まれたデータか
+ * @returns {Promise<void>}
+ */
+export async function waitForStatsDataReady(isFromHistory) {
+  // 履歴からの読み込みでない場合は、UI遷移のみ待つ
+  if (!isFromHistory) {
+    return new Promise(resolve => {
+      setTimeout(resolve, TIME.UI_TRANSITION_DELAY);
+    });
+  }
+
+  // 履歴から読み込まれた場合は、統計データの準備完了を待つ
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < TIME.STATS_POLL_MAX_WAIT) {
+    // 統計データが準備できているかチェック
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    if (yieldRateStats && yieldRateStats.count >= 2) {
+      // データが準備できた
+      return;
+    }
+
+    // 少し待ってから再チェック
+    await new Promise(resolve => setTimeout(resolve, TIME.STATS_POLL_INTERVAL));
+  }
+
+  // タイムアウト：最大待機時間を超えた
+  console.warn('[waitForStatsDataReady] タイムアウト: 統計データの準備が完了しませんでした');
+}
 
 /**
  * 統計データの存在をチェック
@@ -152,12 +188,17 @@ export function handleYieldStatsTransition(
 
   // 「はい」を選択した場合、推奨値を取り込む
   if (useStats) {
-    // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
-    // 履歴から読み込まれた場合は、統計計算の完了を待つために少し長めに待つ
-    const delay = isFromHistory ? 400 : 100;
-    setTimeout(() => {
-      loadAllStatsToMultiPattern(true);
-    }, delay);
+    // 画面遷移後、統計データの準備完了を待ってから値を取り込む
+    // Promiseベースのポーリングで確実にデータが準備できるまで待つ
+    waitForStatsDataReady(isFromHistory)
+      .then(() => {
+        loadAllStatsToMultiPattern(true);
+      })
+      .catch(error => {
+        console.error('[handleYieldStatsTransition] データ待機エラー:', error);
+        // エラーが発生しても読み込みは試行する
+        loadAllStatsToMultiPattern(true);
+      });
   } else {
     // 「いいえ」を選択した場合、歩留まり統計をクリアして非表示にする
     clearAllYieldStatsData(yieldStatsCallbacks);
