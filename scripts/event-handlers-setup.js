@@ -365,6 +365,9 @@ function init() {
             if (yieldStatsInputs) {
               yieldStatsInputs.classList.add('is-hidden');
             }
+
+            // データクリア後、updateLoadStatsButtons を呼び出してメッセージをクリア
+            updateLoadStatsButtons();
           }
 
           return;
@@ -803,6 +806,9 @@ function init() {
       if (yieldStatsInputs) {
         yieldStatsInputs.classList.add('is-hidden');
       }
+
+      // データクリア後、updateLoadStatsButtons を呼び出してメッセージをクリア
+      updateLoadStatsButtons();
     }
   });
 
