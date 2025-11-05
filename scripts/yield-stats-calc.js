@@ -5,8 +5,10 @@
  * 外部依存がなく、テスト可能な設計です。
  */
 
+import { memoizeWithClear, arrayKeyGenerator } from './memoize.js';
+
 /**
- * 統計値を計算
+ * 統計値を計算（内部実装）
  *
  * @param {number[]} values - 計算対象の数値配列
  * @returns {Object} 統計値を含むオブジェクト
@@ -29,7 +31,7 @@
  * @returns {Object} return.sigma3 - 3σ範囲 {lower, upper}
  * @returns {number[]} return.sorted - ソート済みデータ
  */
-export function calculateStatistics(values) {
+function calculateStatisticsImpl(values) {
   const n = values.length;
   const sorted = [...values].sort((a, b) => a - b);
 
@@ -108,7 +110,19 @@ export function calculateStatistics(values) {
 }
 
 /**
- * 外れ値を検出（IQR法）
+ * 統計値を計算（メモ化版）
+ * 同じデータでの重複計算を避けてパフォーマンスを向上
+ *
+ * @param {number[]} values - 計算対象の数値配列
+ * @returns {Object} 統計値を含むオブジェクト
+ */
+export const calculateStatistics = memoizeWithClear(calculateStatisticsImpl, {
+  maxSize: 50,  // 最大50件の計算結果をキャッシュ
+  keyGenerator: arrayKeyGenerator  // 配列専用の高速キー生成
+});
+
+/**
+ * 外れ値を検出（IQR法・内部実装）
  *
  * @param {number[]} values - 検査対象の数値配列
  * @param {Object} stats - calculateStatistics()の戻り値
@@ -118,7 +132,7 @@ export function calculateStatistics(values) {
  * @returns {number} return.lowerBound - 下限値
  * @returns {number} return.upperBound - 上限値
  */
-export function detectOutliers(values, stats) {
+function detectOutliersImpl(values, stats) {
   // IQR法: Q1 - 1.5*IQR より小さい、またはQ3 + 1.5*IQR より大きい値を外れ値とする
   const lowerBound = stats.q1 - 1.5 * stats.iqr;
   const upperBound = stats.q3 + 1.5 * stats.iqr;
@@ -141,3 +155,20 @@ export function detectOutliers(values, stats) {
     upperBound
   };
 }
+
+/**
+ * 外れ値を検出（メモ化版）
+ * 同じデータでの重複計算を避けてパフォーマンスを向上
+ *
+ * @param {number[]} values - 検査対象の数値配列
+ * @param {Object} stats - calculateStatistics()の戻り値
+ * @returns {Object} 外れ値と正常値の情報
+ */
+export const detectOutliers = memoizeWithClear(detectOutliersImpl, {
+  maxSize: 50,
+  keyGenerator: (args) => {
+    // values配列 + stats の主要プロパティでキーを生成
+    const [values, stats] = args;
+    return `${arrayKeyGenerator([values])}_${stats.q1}_${stats.q3}_${stats.iqr}`;
+  }
+});

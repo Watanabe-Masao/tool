@@ -6,6 +6,7 @@
 
 import { qs, pct, toFixed } from './dom-utils.js';
 import { getMatrixEvaluation } from './yield-stats-helpers.js';
+import { memoizeWithClear, objectKeyGenerator } from './memoize.js';
 
 /**
  * サンプル数×CV評価マトリックスを表示（UX改善版）
@@ -40,11 +41,11 @@ export function displayMatrixEvaluation(stats) {
 }
 
 /**
- * 推奨代表値を計算（改善版）
+ * 推奨代表値を計算（改善版・内部実装）
  * @param {Object} stats - 統計データ
  * @returns {Object|null} {value, label, description}
  */
-export function getRecommendedValue(stats) {
+function getRecommendedValueImpl(stats) {
   if (!stats || stats.count < 2) {
     return null;
   }
@@ -81,12 +82,27 @@ export function getRecommendedValue(stats) {
 }
 
 /**
- * σパターンを生成（改善版）
+ * 推奨代表値を計算（メモ化版）
+ * @param {Object} stats - 統計データ
+ * @returns {Object|null} {value, label, description}
+ */
+export const getRecommendedValue = memoizeWithClear(getRecommendedValueImpl, {
+  maxSize: 20,
+  keyGenerator: (args) => {
+    const [stats] = args;
+    if (!stats) return 'null';
+    // 推奨値の決定に必要なプロパティのみでキーを生成
+    return `${stats.count}_${stats.mean}_${stats.median}_${stats.cv}_${stats.skewness}`;
+  }
+});
+
+/**
+ * σパターンを生成（改善版・内部実装）
  * @param {Object} stats - 統計データ
  * @param {number} sigmaRange - σの範囲（デフォルト2）
  * @returns {Array} パターンの配列
  */
-export function generateSigmaPatterns(stats, sigmaRange = 2) {
+function generateSigmaPatternsImpl(stats, sigmaRange = 2) {
   if (!stats || stats.count < 2) {
     return [];
   }
@@ -111,6 +127,22 @@ export function generateSigmaPatterns(stats, sigmaRange = 2) {
 
   return patterns;
 }
+
+/**
+ * σパターンを生成（メモ化版）
+ * @param {Object} stats - 統計データ
+ * @param {number} sigmaRange - σの範囲（デフォルト2）
+ * @returns {Array} パターンの配列
+ */
+export const generateSigmaPatterns = memoizeWithClear(generateSigmaPatternsImpl, {
+  maxSize: 20,
+  keyGenerator: (args) => {
+    const [stats, sigmaRange = 2] = args;
+    if (!stats) return 'null';
+    // mean, stdDev, count, sigmaRange でキーを生成
+    return `${stats.count}_${stats.mean}_${stats.stdDev}_${sigmaRange}`;
+  }
+});
 
 /**
  * σに応じた説明文を取得
