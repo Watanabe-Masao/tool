@@ -561,6 +561,9 @@ function displaySampleSizeValidation() {
     displayRecommendedValue(stats, isValid, statsType);
   }
 
+  // 複数パターン分析の読み込みボタンの状態を更新（サンプルサイズ妥当性が変更されたため）
+  updateLoadStatsButtons();
+
   // 結果を表示
   resultDiv.classList.remove('is-hidden');
 }
