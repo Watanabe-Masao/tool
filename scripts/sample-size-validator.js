@@ -48,7 +48,7 @@ export function displaySampleSizeValidation(
   const statsTypeSelect = qs('#statsTypeSelect');
   const statsType = statsTypeSelect?.value || 'yieldRate';
 
-  const data = appState.getYieldStatsData();
+  const data = appState.getYieldStatsRawData();
   if (!data) {
     resultDiv.classList.add('is-hidden');
     return null;

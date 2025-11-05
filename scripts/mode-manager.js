@@ -289,7 +289,7 @@ export function switchMode(newMode, callbacks = {}) {
       clearYieldStatsInputs(callbacks.addYieldStatsRow);
 
       // 統計データ（キャッシュ）もクリア
-      appState.setYieldStatsData(null);
+      appState.setYieldStatsRawData(null);
 
       // 複数パターン分析のUIもクリア
       resetMultiPatternUI();
@@ -312,7 +312,7 @@ export function switchMode(newMode, callbacks = {}) {
   // 歩留まり統計表示フラグの管理
   if (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) {
     // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
-    const data = appState.getYieldStatsData();
+    const data = appState.getYieldStatsRawData();
     appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData(data);
   } else if (currentMode === MODE.YIELD_STATS && (newMode === MODE.FIXED || newMode === MODE.WEIGHT)) {
     // 歩留まり統計から定額/計量に切り替えた場合はフラグをリセット
@@ -399,7 +399,7 @@ export function switchMode(newMode, callbacks = {}) {
     if (currentMode === MODE.MULTI_PATTERN) {
       // 統計データがあれば表示
       if (callbacks.displayCurrentStatistics) {
-        const data = appState.getYieldStatsData();
+        const data = appState.getYieldStatsRawData();
         if (data && (data.yieldRate?.length >= 2 || data.beforeWeight?.length >= 2 || data.afterWeight?.length >= 2)) {
           // 少し待ってからdisplayCurrentStatisticsを呼び出す（UIの切り替えが完了するまで）
           setTimeout(() => {

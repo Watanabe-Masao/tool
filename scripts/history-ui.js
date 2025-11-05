@@ -380,7 +380,7 @@ async function handleLoadCalculation(id) {
         // タイミングの問題で表示されない場合があるため、明示的に呼び出す
         if (window.displayCurrentStatistics) {
           setTimeout(() => {
-            const yieldStatsData = appState.getYieldStatsData();
+            const yieldStatsData = appState.getYieldStatsRawData();
             if (yieldStatsData && (
               (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
               (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||

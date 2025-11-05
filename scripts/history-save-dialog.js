@@ -371,7 +371,7 @@ export async function handleOverwriteSave(showToastCallback) {
     // 歩留まり統計モードの場合は統計データを保存、それ以外はsnapshotを使用
     let resultData;
     if (mode === MODE.YIELD_STATS) {
-      resultData = appState.getYieldStatsData() || {};
+      resultData = appState.getYieldStatsRawData() || {};
     } else {
       resultData = appState.getSnapshot(); // 計算結果
     }

@@ -505,7 +505,7 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
   }
 
   // AppStateに保存
-  appState.setYieldStatsData(yieldStatsData);
+  appState.setYieldStatsRawData(yieldStatsData);
 
   // データが2つ以上ある場合のみ統計を表示
   const hasEnoughData = yieldRates.length >= 2 || beforeWeights.length >= 2 || afterWeights.length >= 2;

@@ -80,7 +80,6 @@ export class AppState {
     this.showYieldStatsWithMultiPattern = false; // 複数パターン分析モード時に歩留まり統計を表示するか
 
     // 一元化された状態管理
-    this.yieldStatsData = null;     // 歩留まり統計データ（旧 window.yieldStatsData）【非推奨：yieldStats.rawDataを使用】
     this.saveDialogMode = 'normal'; // 保存ダイアログのモード（'normal' or 'new'）
 
     // 歩留まり統計の一元管理（新規）
@@ -210,16 +209,6 @@ export class AppState {
     return this.hasUnsavedChanges;
   }
 
-  // 歩留まり統計データの管理（後方互換性のため残す）
-  setYieldStatsData(data) {
-    // 新しいメソッドに転送（後方互換性を保つため）
-    this.setYieldStatsRawData(data);
-  }
-
-  getYieldStatsData() {
-    // 新しいメソッドに転送（後方互換性を保つため）
-    return this.getYieldStatsRawData();
-  }
 
   // 保存ダイアログモードの管理
   setSaveDialogMode(mode) {
@@ -259,9 +248,6 @@ export class AppState {
       this.yieldStats.ui.hasBeforeWeightData = false;
       this.yieldStats.ui.hasAfterWeightData = false;
     }
-
-    // 後方互換性のため、旧プロパティも更新
-    this.yieldStatsData = data;
   }
 
   /**
@@ -499,9 +485,6 @@ export class AppState {
       afterWeight: null
     };
     this.yieldStats.lastCalculated = null;
-
-    // 後方互換性のため、旧プロパティもクリア
-    this.yieldStatsData = null;
   }
 
   resetAll() {
@@ -511,7 +494,6 @@ export class AppState {
     this.loadedHistoryId = null;  // 履歴IDもリセット
     this.isFromHistory = false;
     this.hasUnsavedChanges = false;
-    this.yieldStatsData = null;     // 歩留まり統計データもリセット（後方互換）
     this.saveDialogMode = 'normal'; // ダイアログモードもリセット
     this.showYieldStatsWithMultiPattern = false; // 歩留まり統計表示フラグもリセット
 
