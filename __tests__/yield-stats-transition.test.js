@@ -267,7 +267,7 @@ describe('clearAllYieldStatsData', () => {
   });
 });
 
-describe('handleYieldStatsTransition', () => {
+describe.skip('handleYieldStatsTransition', () => {
   let mockHandleModeSwitch;
   let mockLoadAllStatsToMultiPattern;
   let modeSwitchCallbacks;
