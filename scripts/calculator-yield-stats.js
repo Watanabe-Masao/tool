@@ -27,7 +27,7 @@ export function calculateYieldRate(beforeWeight, afterWeight) {
  * @returns {boolean} 有効なエントリかどうか
  */
 export function validateEntry(entry) {
-  return (
+  return !!(
     entry.productName &&
     entry.productName.trim() !== '' &&
     entry.beforeWeight > 0 &&
