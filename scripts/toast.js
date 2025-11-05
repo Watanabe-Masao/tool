@@ -17,7 +17,16 @@ export function showToast(message, type = 'info', duration = 3000) {
     toast = document.createElement('div');
     toast.id = 'app-toast';
     toast.className = 'toast';
-    document.body.appendChild(toast);
+  }
+
+  // モーダルが開いている場合は、モーダルの内側に配置
+  // これにより、モーダルのbackdropフィルターの上に確実に表示される
+  const openModal = document.querySelector('.modal.is-open, .modal.is-active');
+  const toastParent = openModal || document.body;
+
+  // トーストが別の親要素にある場合は移動
+  if (toast.parentElement !== toastParent) {
+    toastParent.appendChild(toast);
   }
 
   // トーストのタイプに応じたクラスを設定

@@ -4012,6 +4012,15 @@ input[type="range"]::-moz-range-thumb:hover {
   line-height: 1.5;
 }
 
+/* モーダル内のトーストは絶対配置 */
+.modal .toast {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  /* モーダル内ではz-indexは不要（既にモーダルのスタッキングコンテキスト内） */
+  z-index: 1;
+}
+
 /* トーストタイプ別スタイル */
 .toast-info {
   background: var(--brand);

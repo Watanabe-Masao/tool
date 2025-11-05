@@ -225,4 +225,74 @@ describe('トースト通知システム', () => {
       expect(toast.innerHTML).toContain('メッセージ2');
     });
   });
+
+  describe('モーダル内でのトースト表示（バグ修正）', () => {
+    it('モーダルが開いていない場合、bodyに追加される', () => {
+      showToast('テスト', 'info', 3000);
+
+      const toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(document.body);
+    });
+
+    it('モーダル（is-open）が開いている場合、モーダル内に追加される', () => {
+      // モーダルを作成
+      const modal = document.createElement('div');
+      modal.className = 'modal is-open';
+      document.body.appendChild(modal);
+
+      showToast('テスト', 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(modal);
+    });
+
+    it('モーダル（is-active）が開いている場合、モーダル内に追加される', () => {
+      // モーダルを作成
+      const modal = document.createElement('div');
+      modal.className = 'modal is-active';
+      document.body.appendChild(modal);
+
+      showToast('テスト', 'warning', 3000);
+
+      const toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(modal);
+    });
+
+    it('トーストが既にbodyにある場合、モーダルが開くとモーダル内に移動する', () => {
+      // 最初にbodyにトーストを作成
+      showToast('テスト1', 'info', 3000);
+      let toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(document.body);
+
+      // モーダルを開く
+      const modal = document.createElement('div');
+      modal.className = 'modal is-open';
+      document.body.appendChild(modal);
+
+      // 再度トーストを表示
+      showToast('テスト2', 'error', 3000);
+      toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(modal);
+    });
+
+    it('モーダルが閉じると、次のトーストはbodyに追加される', () => {
+      // モーダルを作成
+      const modal = document.createElement('div');
+      modal.className = 'modal is-open';
+      document.body.appendChild(modal);
+
+      // モーダル内にトーストを表示
+      showToast('テスト1', 'info', 3000);
+      let toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(modal);
+
+      // モーダルを閉じる
+      modal.classList.remove('is-open');
+
+      // 再度トーストを表示
+      showToast('テスト2', 'info', 3000);
+      toast = document.getElementById('app-toast');
+      expect(toast.parentElement).toBe(document.body);
+    });
+  });
 });
