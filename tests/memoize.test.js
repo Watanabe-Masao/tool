@@ -213,6 +213,65 @@ describe('memoize', () => {
       memoized.clearCache();
       expect(memoized.getCacheSize()).toBe(0);
     });
+
+    test('maxSizeを超えると古いエントリが削除される', () => {
+      let callCount = 0;
+      const fn = (x) => {
+        callCount++;
+        return x * 2;
+      };
+
+      const memoized = memoizeWithClear(fn, { maxSize: 2 });
+
+      // 3つの値をキャッシュに追加（maxSize=2なので最古が削除される）
+      const result1 = memoized(1); // callCount: 1
+      const result2 = memoized(2); // callCount: 2
+      const result3 = memoized(3); // callCount: 3
+
+      expect(result1).toBe(2);
+      expect(result2).toBe(4);
+      expect(result3).toBe(6);
+      expect(callCount).toBe(3);
+      expect(memoized.getCacheSize()).toBe(2); // maxSize制限
+
+      // キャッシュサイズが2に制限されることを確認
+      // 1は削除されているはず
+      callCount = 0;
+      memoized(1); // 再計算される
+      expect(callCount).toBe(1);
+    });
+
+    test('memoizeWithClearのLRU動作: アクセスされたエントリが優先される', () => {
+      let callCount = 0;
+      const fn = (x) => {
+        callCount++;
+        return x * 2;
+      };
+
+      const memoized = memoizeWithClear(fn, { maxSize: 2 });
+
+      memoized(1);
+      memoized(2);
+      expect(memoized.getCacheSize()).toBe(2);
+
+      // 1を再度アクセス（LRUで最新になる）
+      callCount = 0;
+      memoized(1);
+      expect(callCount).toBe(0); // キャッシュヒット
+
+      // 3を追加すると、最も古い2が削除されるはず
+      memoized(3);
+      expect(memoized.getCacheSize()).toBe(2);
+
+      // 1はまだキャッシュにある
+      callCount = 0;
+      memoized(1);
+      expect(callCount).toBe(0); // キャッシュヒット
+
+      // 2は削除されているので再計算
+      memoized(2);
+      expect(callCount).toBe(1);
+    });
   });
 
   describe('エッジケース', () => {
