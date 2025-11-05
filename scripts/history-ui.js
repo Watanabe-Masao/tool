@@ -147,7 +147,9 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   let history = items || await getHistory();
   console.log('[renderHistoryList] History data:', history.length, 'items');
   if (history.length > 0) {
-    console.log('[renderHistoryList] First 3 items:', history.slice(0, 3).map(item => ({ id: item.id, name: item.name })));
+    const first3 = history.slice(0, 3).map(item => ({ id: item.id, name: item.name }));
+    console.log('[renderHistoryList] First 3 items:', first3);
+    console.table(first3);
   }
 
   // モードと計算方法でフィルタリング
@@ -438,6 +440,10 @@ async function handleEditCalculation(id) {
     await updateCalculationName(id, newName.trim());
     console.log('[handleEditCalculation] Database updated');
 
+    // 更新後のデータを確認
+    const updatedData = await loadCalculation(id);
+    console.log('[handleEditCalculation] Updated data from DB:', { id: updatedData.id, name: updatedData.name });
+
     // 編集した履歴が現在読み込まれているものと同じ場合、商品名フィールドも更新
     const loadedHistoryId = appState.getLoadedHistoryId();
     if (loadedHistoryId === id) {
@@ -463,6 +469,11 @@ async function handleEditCalculation(id) {
     console.log('[handleEditCalculation] Calling renderHistoryList...');
     await renderHistoryList();
     console.log('[handleEditCalculation] renderHistoryList completed');
+
+    // renderHistoryList後に再度データを確認
+    const allHistory = await getHistory();
+    const editedItem = allHistory.find(item => item.id === id);
+    console.log('[handleEditCalculation] Item in history list after render:', editedItem ? { id: editedItem.id, name: editedItem.name } : 'NOT FOUND');
     showToast('更新しました', 'success');
   } catch (error) {
     console.error('[handleEditCalculation] Error:', error);
