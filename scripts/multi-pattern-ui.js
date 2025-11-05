@@ -1123,6 +1123,10 @@ export function setStatValue(value, statType, productName = '') {
   const productNameEl = document.getElementById('multiPatternProductName');
   if (productNameEl && productName) {
     productNameEl.value = productName;
+    // 歩留まり統計から読み込んだ場合は読み取り専用にして動的連動を有効化
+    productNameEl.setAttribute('readonly', 'readonly');
+    productNameEl.style.backgroundColor = '#f0f0f0';
+    productNameEl.style.cursor = 'not-allowed';
   }
 
   // 現在のモードを取得（モードは変更しない）

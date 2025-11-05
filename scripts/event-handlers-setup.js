@@ -288,12 +288,8 @@ function init() {
           multiPatternProductName.removeAttribute('readonly');
           multiPatternProductName.style.backgroundColor = '';
           multiPatternProductName.style.cursor = '';
-        } else {
-          // 歩留まり統計モードから直接遷移する場合は編集可能のまま維持
-          multiPatternProductName.removeAttribute('readonly');
-          multiPatternProductName.style.backgroundColor = '';
-          multiPatternProductName.style.cursor = '';
         }
+        // 歩留まり統計モードから遷移する場合はreadonly属性を保持（動的連動を継続）
       }
 
       handleModeSwitch(MODE.MULTI_PATTERN, {
