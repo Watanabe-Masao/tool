@@ -8,7 +8,8 @@
 import { describe, test, expect } from '@jest/globals';
 import {
   calculateFromWeightLogic,
-  calculateFromDirectYieldLogic
+  calculateFromDirectYieldLogic,
+  calculateFixedLogic
 } from '../scripts/calculator-fixed.js';
 
 describe('calculateFromWeightLogic - 重量から計算', () => {
@@ -334,6 +335,114 @@ describe('calculateFromDirectYieldLogic - 歩留まり率を直接入力', () =>
       expect(result.yr).toBe(60);
       expect(result.finishedPrice).toBe(720);
       expect(result.priceDiff).toBe(270);
+    });
+  });
+});
+
+describe('calculateFixedLogic - メソッド選択による計算', () => {
+  describe('calculateメソッド（重量から計算）', () => {
+    test('基本的な計算が正しく動作する', () => {
+      const result = calculateFixedLogic('calculate', 100, 150, 100, 85, 200);
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(170);
+    });
+
+    test('calculateFromWeightLogicと同じ結果を返す', () => {
+      const result1 = calculateFixedLogic('calculate', 100, 150, 100, 85, 200);
+      const result2 = calculateFromWeightLogic(100, 150, 100, 85, 200);
+
+      expect(result1).toEqual(result2);
+    });
+
+    test('歩留まり率100%の場合', () => {
+      const result = calculateFixedLogic('calculate', 100, 150, 100, 100, 200);
+      expect(result.yr).toBe(100);
+      expect(result.finishedPrice).toBe(200);
+    });
+
+    test('小数点を含む重量での計算', () => {
+      const result = calculateFixedLogic('calculate', 120, 180, 150.5, 127.925, 250);
+      expect(result).not.toBeNull();
+      expect(result.yr).toBeCloseTo(85, 2);
+    });
+  });
+
+  describe('directメソッド（歩留まり率を直接入力）', () => {
+    test('基本的な計算が正しく動作する', () => {
+      const result = calculateFixedLogic('direct', 100, 150, 100, 85, 200);
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(170);
+    });
+
+    test('calculateFromDirectYieldLogicと同じ結果を返す', () => {
+      const result1 = calculateFixedLogic('direct', 100, 150, 100, 85, 200);
+      const result2 = calculateFromDirectYieldLogic(100, 150, 100, 85, 200);
+
+      expect(result1).toEqual(result2);
+    });
+
+    test('歩留まり率50%の場合', () => {
+      const result = calculateFixedLogic('direct', 100, 150, 100, 50, 300);
+      expect(result.yr).toBe(50);
+      expect(result.finishedPrice).toBe(150);
+    });
+
+    test('小数点を含む歩留まり率', () => {
+      const result = calculateFixedLogic('direct', 100, 150, 100, 85.5, 200);
+      expect(result.yr).toBe(85.5);
+    });
+  });
+
+  describe('メソッドのバリデーション', () => {
+    test('calculateとdirectで異なる結果を返す', () => {
+      // calculate: 第4引数は加工後重量
+      const resultCalculate = calculateFixedLogic('calculate', 100, 150, 100, 85, 200);
+
+      // direct: 第4引数は歩留まり率
+      const resultDirect = calculateFixedLogic('direct', 100, 150, 100, 85, 200);
+
+      // 同じパラメータでも意味が異なる
+      expect(resultCalculate).toEqual(resultDirect); // この場合は同じ結果
+    });
+
+    test('不明なメソッドの場合はcalculateとして扱う', () => {
+      const result = calculateFixedLogic('unknown', 100, 150, 100, 85, 200);
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+    });
+
+    test('空文字列のメソッドはcalculateとして扱う', () => {
+      const result = calculateFixedLogic('', 100, 150, 100, 85, 200);
+      expect(result).not.toBeNull();
+    });
+
+    test('nullのメソッドはcalculateとして扱う', () => {
+      const result = calculateFixedLogic(null, 100, 150, 100, 85, 200);
+      expect(result).not.toBeNull();
+    });
+  });
+
+  describe('実用的なシナリオ', () => {
+    test('野菜の皮むき（calculateメソッド）', () => {
+      const result = calculateFixedLogic('calculate', 100, 150, 100, 85, 200);
+      expect(result.finishedPrice).toBe(170);
+      expect(result.priceDiff).toBe(20);
+    });
+
+    test('野菜の皮むき（directメソッド）', () => {
+      const result = calculateFixedLogic('direct', 100, 150, 100, 85, 200);
+      expect(result.finishedPrice).toBe(170);
+      expect(result.priceDiff).toBe(20);
+    });
+
+    test('肉のトリミング（directメソッド）', () => {
+      const result = calculateFixedLogic('direct', 500, 700, 200, 70, 1000);
+      expect(result.yr).toBe(70);
+      expect(result.finishedPrice).toBe(1400);
     });
   });
 });

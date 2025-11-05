@@ -8,7 +8,8 @@
 import { describe, test, expect } from '@jest/globals';
 import {
   calculateFromWeightLogic,
-  calculateFromDirectYieldLogic
+  calculateFromDirectYieldLogic,
+  calculateWeightByMethod
 } from '../scripts/calculator-weight.js';
 
 describe('calculateFromWeightLogic - サンプル重量から計算', () => {
@@ -382,6 +383,128 @@ describe('calculateFromDirectYieldLogic - 歩留まり率を直接入力', () =>
       expect(result.yr).toBe(60);
       // finishedWeight = 4000g * 0.6 = 2400g
       // finishedPrice = 800 * (2400 / 100) = 19200
+      expect(result.finishedPrice).toBe(19200);
+      expect(result.priceDiff).toBe(1200);
+    });
+  });
+});
+
+describe('calculateWeightByMethod - メソッド選択による計算', () => {
+  describe('calculateメソッド（サンプル重量から計算）', () => {
+    test('基本的な計算が正しく動作する', () => {
+      // bc, bp, bwKg, bs(サンプル), aw(加工後重量), ap
+      const result = calculateWeightByMethod('calculate', 1000, 1500, 1, 100, 85, 200);
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(1700);
+    });
+
+    test('calculateFromWeightLogicと同じ結果を返す', () => {
+      const result1 = calculateWeightByMethod('calculate', 1000, 1500, 1, 100, 85, 200);
+      const result2 = calculateFromWeightLogic(1000, 1500, 1, 100, 85, 200);
+
+      expect(result1).toEqual(result2);
+    });
+
+    test('2kgの箱での計算', () => {
+      const result = calculateWeightByMethod('calculate', 2000, 3000, 2, 100, 80, 180);
+      expect(result.yr).toBe(80);
+      expect(result.finishedPrice).toBe(2880);
+    });
+
+    test('歩留まり率100%の場合', () => {
+      const result = calculateWeightByMethod('calculate', 1000, 1500, 1, 100, 100, 200);
+      expect(result.yr).toBe(100);
+      expect(result.finishedPrice).toBe(2000);
+    });
+  });
+
+  describe('directメソッド（歩留まり率を直接入力）', () => {
+    test('基本的な計算が正しく動作する', () => {
+      // bc, bp, bwKg, yr(歩留まり率), ap
+      const result = calculateWeightByMethod('direct', 1000, 1500, 1, 85, 200);
+
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+      expect(result.finishedPrice).toBe(1700);
+    });
+
+    test('calculateFromDirectYieldLogicと同じ結果を返す', () => {
+      const result1 = calculateWeightByMethod('direct', 1000, 1500, 1, 85, 200);
+      const result2 = calculateFromDirectYieldLogic(1000, 1500, 1, 85, 200);
+
+      expect(result1).toEqual(result2);
+    });
+
+    test('歩留まり率50%の場合', () => {
+      const result = calculateWeightByMethod('direct', 1000, 1500, 1, 50, 300);
+      expect(result.yr).toBe(50);
+      expect(result.finishedPrice).toBe(1500);
+    });
+
+    test('小数点を含む歩留まり率', () => {
+      const result = calculateWeightByMethod('direct', 1000, 1500, 1, 85.5, 200);
+      expect(result.yr).toBe(85.5);
+      expect(result.finishedPrice).toBeCloseTo(1710, 10);
+    });
+  });
+
+  describe('メソッドのバリデーション', () => {
+    test('calculateとdirectで異なるパラメータ意味を持つ', () => {
+      // calculate: 第5引数は加工後重量、第6引数は加工後100g単価
+      const resultCalculate = calculateWeightByMethod('calculate', 1000, 1500, 1, 100, 85, 200);
+
+      // direct: 第5引数は歩留まり率、第6引数は加工後100g単価
+      const resultDirect = calculateWeightByMethod('direct', 1000, 1500, 1, 85, 200);
+
+      // calculateの場合、歩留まり率は100gのうち85g（85%）
+      expect(resultCalculate.yr).toBe(85);
+      // directの場合、歩留まり率は直接85%
+      expect(resultDirect.yr).toBe(85);
+      // 結果は同じ
+      expect(resultCalculate.finishedPrice).toBe(resultDirect.finishedPrice);
+    });
+
+    test('不明なメソッドの場合はcalculateとして扱う', () => {
+      const result = calculateWeightByMethod('unknown', 1000, 1500, 1, 100, 85, 200);
+      expect(result).not.toBeNull();
+      expect(result.yr).toBe(85);
+    });
+
+    test('空文字列のメソッドはcalculateとして扱う', () => {
+      const result = calculateWeightByMethod('', 1000, 1500, 1, 100, 85, 200);
+      expect(result).not.toBeNull();
+    });
+
+    test('nullのメソッドはcalculateとして扱う', () => {
+      const result = calculateWeightByMethod(null, 1000, 1500, 1, 100, 85, 200);
+      expect(result).not.toBeNull();
+    });
+  });
+
+  describe('実用的なシナリオ', () => {
+    test('野菜1箱（calculateメソッド）', () => {
+      const result = calculateWeightByMethod('calculate', 5000, 7500, 5, 100, 85, 180);
+      expect(result.finishedPrice).toBe(7650);
+      expect(result.priceDiff).toBe(150);
+    });
+
+    test('野菜1箱（directメソッド）', () => {
+      const result = calculateWeightByMethod('direct', 5000, 7500, 5, 85, 180);
+      expect(result.finishedPrice).toBe(7650);
+      expect(result.priceDiff).toBe(150);
+    });
+
+    test('肉1箱（directメソッド）', () => {
+      const result = calculateWeightByMethod('direct', 15000, 21000, 3, 70, 1000);
+      expect(result.yr).toBe(70);
+      expect(result.finishedPrice).toBe(21000);
+    });
+
+    test('魚1箱（directメソッド）', () => {
+      const result = calculateWeightByMethod('direct', 12000, 18000, 4, 60, 800);
+      expect(result.yr).toBe(60);
       expect(result.finishedPrice).toBe(19200);
       expect(result.priceDiff).toBe(1200);
     });

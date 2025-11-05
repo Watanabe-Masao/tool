@@ -122,7 +122,27 @@ function calculateFromDirectYield() {
 }
 
 /**
- * 計量モードの計算を実行
+ * 計量モードの計算を実行（純粋関数）
+ * @param {string} method - 'calculate' or 'direct'
+ * @param {number} bc - 箱コスト
+ * @param {number} bp - 箱売価
+ * @param {number} bwKg - 箱重量（kg）
+ * @param {number} bsOrYr - 加工前サンプル重量（calculate）または歩留まり率（direct）
+ * @param {number} awOrAp - 加工後重量（calculate）または加工後100g単価（direct）
+ * @param {number} ap - 加工後100g単価（calculateのみ）
+ * @returns {Object|null} 計算結果またはnull
+ */
+export function calculateWeightByMethod(method, bc, bp, bwKg, bsOrYr, awOrAp, ap) {
+  if (method === 'direct') {
+    // direct: bsOrYr=歩留まり率, awOrAp=加工後100g単価
+    return calculateFromDirectYieldLogic(bc, bp, bwKg, bsOrYr, awOrAp);
+  }
+  // calculate: bsOrYr=加工前サンプル, awOrAp=加工後重量, ap=加工後100g単価
+  return calculateFromWeightLogic(bc, bp, bwKg, bsOrYr, awOrAp, ap);
+}
+
+/**
+ * 計量モードの計算を実行（DOM統合）
  * @param {string} method - 'calculate' or 'direct'
  * @returns {Object|null} 計算結果またはnull
  */

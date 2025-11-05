@@ -120,13 +120,34 @@ function calculateFromDirectYield() {
 }
 
 /**
- * 定額モードの計算を実行
+ * 定額モードの計算を実行（純粋関数）
+ * @param {string} method - 'calculate' or 'direct'
+ * @param {number} uc - 単価コスト
+ * @param {number} up - 単価売価
+ * @param {number} bw - 加工前重量
+ * @param {number} awOrYr - 加工後重量（calculate）または歩留まり率（direct）
+ * @param {number} ap - 加工後100g単価
+ * @returns {Object|null} 計算結果またはnull
+ */
+export function calculateFixedLogic(method, uc, up, bw, awOrYr, ap) {
+  if (method === 'direct') {
+    return calculateFromDirectYieldLogic(uc, up, bw, awOrYr, ap);
+  }
+  return calculateFromWeightLogic(uc, up, bw, awOrYr, ap);
+}
+
+/**
+ * 定額モードの計算を実行（DOM統合）
  * @param {string} method - 'calculate' or 'direct'
  * @returns {Object|null} 計算結果またはnull
  */
 export function calculateFixed(method) {
-  if (method === 'direct') {
-    return calculateFromDirectYield();
-  }
-  return calculateFromWeight();
+  const fields = method === 'direct' ? FIXED_FIELDS.DIRECT : FIXED_FIELDS.CALCULATE;
+  const uc = num(fields.UNIT_COST);
+  const up = num(fields.UNIT_PRICE);
+  const bw = num(fields.BEFORE_WEIGHT);
+  const awOrYr = num(method === 'direct' ? fields.YIELD_RATE : fields.AFTER_WEIGHT);
+  const ap = num(fields.AFTER_PRICE_100);
+
+  return calculateFixedLogic(method, uc, up, bw, awOrYr, ap);
 }
