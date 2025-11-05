@@ -3,75 +3,97 @@
  *
  * このモジュールはEChartsを使用した統計グラフの描画を担当します。
  * 箱ひげ図、ヒストグラム、散布図、Q-Qプロット、正規分布曲線などをサポートします。
+ * EChartsは必要な時にのみ動的にロードされます（遅延ロード）。
  */
 
 import { logger } from './core/logger.js';
-
+import { loadECharts, toggleLoadingIndicator } from './lazy-loader.js';
 import { qs } from './dom-utils.js';
 import { toFixed } from './calculation.js';
 
 // EChartsインスタンス（モジュール内で管理）
 let statsChartInstance = null;
+let echartsLib = null; // EChartsライブラリの参照
 
 /**
- * 統計チャートを描画
+ * 統計チャートを描画（遅延ロード対応版）
  *
  * @param {number[]} values - データ値の配列
  * @param {Object} stats - calculateStatistics()の戻り値
  * @param {string} typeName - データタイプ名（表示用）
  * @param {string} unit - 単位（'%', 'g' など）
  */
-export function renderStatsChart(values, stats, typeName, unit) {
+export async function renderStatsChart(values, stats, typeName, unit) {
   const chartTypeSelect = qs('#chartTypeSelect');
   const chartType = chartTypeSelect?.value || 'boxplot';
 
   const chartDom = qs('#statsChart');
   if (!chartDom) return;
 
-  // EChartsが読み込まれていない場合は何もしない
-  if (typeof echarts === 'undefined') {
-    logger.warn('ECharts is not loaded');
-    return;
-  }
+  try {
+    // ローディング表示
+    toggleLoadingIndicator(chartDom, true);
 
-  // 既存のインスタンスがあれば破棄
-  if (statsChartInstance) {
-    statsChartInstance.dispose();
-  }
-
-  // EChartsインスタンスを初期化
-  statsChartInstance = echarts.init(chartDom);
-
-  // グラフタイプに応じた描画
-  let option;
-  switch (chartType) {
-    case 'boxplot':
-      option = createBoxplotOption(values, stats, typeName, unit);
-      break;
-    case 'histogram':
-      option = createHistogramOption(values, stats, typeName, unit);
-      break;
-    case 'scatter':
-      option = createScatterOption(values, stats, typeName, unit);
-      break;
-    case 'normal':
-      option = createNormalDistOption(values, stats, typeName, unit);
-      break;
-    case 'qqplot':
-      option = createQQPlotOption(values, stats, typeName, unit);
-      break;
-    default:
-      option = createBoxplotOption(values, stats, typeName, unit);
-  }
-
-  statsChartInstance.setOption(option);
-
-  // ウィンドウリサイズ時にチャートもリサイズ
-  window.addEventListener('resize', () => {
-    if (statsChartInstance) {
-      statsChartInstance.resize();
+    // EChartsを遅延ロード（初回のみロード、2回目以降はキャッシュ使用）
+    if (!echartsLib) {
+      echartsLib = await loadECharts();
     }
-  });
+
+    // ローディング非表示
+    toggleLoadingIndicator(chartDom, false);
+
+    // 既存のインスタンスがあれば破棄
+    if (statsChartInstance) {
+      statsChartInstance.dispose();
+    }
+
+    // EChartsインスタンスを初期化
+    statsChartInstance = echartsLib.init(chartDom);
+
+    // グラフタイプに応じた描画
+    let option;
+    switch (chartType) {
+      case 'boxplot':
+        option = createBoxplotOption(values, stats, typeName, unit);
+        break;
+      case 'histogram':
+        option = createHistogramOption(values, stats, typeName, unit);
+        break;
+      case 'scatter':
+        option = createScatterOption(values, stats, typeName, unit);
+        break;
+      case 'normal':
+        option = createNormalDistOption(values, stats, typeName, unit);
+        break;
+      case 'qqplot':
+        option = createQQPlotOption(values, stats, typeName, unit);
+        break;
+      default:
+        option = createBoxplotOption(values, stats, typeName, unit);
+    }
+
+    statsChartInstance.setOption(option);
+
+    // ウィンドウリサイズ時にチャートもリサイズ（一度だけリスナーを登録）
+    if (!window.__statsChartResizeListener) {
+      window.__statsChartResizeListener = () => {
+        if (statsChartInstance) {
+          statsChartInstance.resize();
+        }
+      };
+      window.addEventListener('resize', window.__statsChartResizeListener);
+    }
+  } catch (error) {
+    // エラーハンドリング
+    toggleLoadingIndicator(chartDom, false);
+    logger.error('Failed to render chart:', error);
+    chartDom.innerHTML = `
+      <div class="chart-error">
+        <p>⚠️ チャートの読み込みに失敗しました</p>
+        <p class="error-detail">${error.message}</p>
+      </div>
+    `;
+  }
 }
 
 /**

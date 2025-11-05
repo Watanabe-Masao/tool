@@ -48,7 +48,7 @@ import {
   isOutlierValue
 } from './outlier-management.js';
 
-function displayCurrentStatistics() {
+async function displayCurrentStatistics() {
   const selectElement = qs('#statsTypeSelect');
   const selectedType = selectElement?.value || 'yieldRate';
   const data = appState.getYieldStatsRawData();
@@ -173,7 +173,7 @@ function displayCurrentStatistics() {
   logger.info('[displayCurrentStatistics] displayStatistics done');
   displayMatrixEvaluation(finalStats);
   logger.info('[displayCurrentStatistics] displayMatrixEvaluation done');
-  renderStatsChart(finalValues, finalStats, typeName, unit);
+  await renderStatsChart(finalValues, finalStats, typeName, unit);
   logger.info('[displayCurrentStatistics] renderStatsChart done');
 
   // 統計結果を表示
