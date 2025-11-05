@@ -2,6 +2,7 @@
  * データ保存・履歴管理ロジック
  */
 
+import { logger } from './core/logger.js';
 import { db } from './db.js';
 import { qs } from './dom-utils.js';
 import { saveToCloud, updateInCloud, deleteFromCloud, hardDeleteFromCloud, clearAllFromCloud, downloadFromCloud } from './firebase-sync.js';
@@ -38,7 +39,7 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
     });
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('[エラー]  バリデーションエラー:', error.getUserMessage());
+      logger.error('[エラー]  バリデーションエラー:', error.getUserMessage());
       throw error;
     }
     throw error;
@@ -60,15 +61,15 @@ export async function saveCalculation(name, mode, inputData, resultData, categor
   };
 
   try {
-    console.log(' 新規データを保存中...');
+    logger.info(' 新規データを保存中...');
 
     // Firestoreに直接保存（IndexedDBにもキャッシュ）
     const result = await saveToCloud(data);
 
-    console.log(`✅  保存完了 (ID: ${result.id}, UUID: ${result.uuid})`);
+    logger.info(`✅  保存完了 (ID: ${result.id}, UUID: ${result.uuid})`);
     return result.id; // IndexedDB IDを返す
   } catch (error) {
-    console.error('Failed to save calculation:', error);
+    logger.error('Failed to save calculation:', error);
     throw mapFirebaseError(error, 'save');
   }
 }
@@ -90,7 +91,7 @@ export async function loadCalculation(id) {
     validateId(id);
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('[エラー]  バリデーションエラー:', error.getUserMessage());
+      logger.error('[エラー]  バリデーションエラー:', error.getUserMessage());
       throw error;
     }
     throw error;
@@ -100,13 +101,13 @@ export async function loadCalculation(id) {
     const data = await db.getById(id);
     if (!data) {
       // データが見つからない場合は、他のデバイスで削除された可能性がある
-      console.error(`[エラー]  レコードが見つかりません (ID: ${id})`);
-      console.error('[ヒント]  他のデバイスで削除された可能性があります');
+      logger.error(`[エラー]  レコードが見つかりません (ID: ${id})`);
+      logger.error('[ヒント]  他のデバイスで削除された可能性があります');
       throw new NotFoundError('Record', id, 'It may have been deleted on another device');
     }
 
     // データが存在する場合は、最新データとして返す
-    console.log(`✅  データ読み込み成功 (ID: ${id}, UUID: ${data.uuid || 'N/A'})`);
+    logger.info(`✅  データ読み込み成功 (ID: ${id}, UUID: ${data.uuid || 'N/A'})`);
 
     return {
       mode: data.mode,
@@ -119,7 +120,7 @@ export async function loadCalculation(id) {
     if (error instanceof NotFoundError || error instanceof ValidationError) {
       throw error;
     }
-    console.error('Failed to load calculation:', error);
+    logger.error('Failed to load calculation:', error);
     throw mapIndexedDBError(error, 'load');
   }
 }
@@ -148,7 +149,7 @@ export async function getHistory(options = { sortBy: 'timestamp', order: 'desc' 
   try {
     return await db.getAll(options);
   } catch (error) {
-    console.error('Failed to get history:', error);
+    logger.error('Failed to get history:', error);
     return [];
   }
 }
@@ -162,7 +163,7 @@ export async function searchHistory(query) {
   try {
     return await db.search(query);
   } catch (error) {
-    console.error('Failed to search history:', error);
+    logger.error('Failed to search history:', error);
     return [];
   }
 }
@@ -189,7 +190,7 @@ export async function deleteHistory(id) {
     validateId(id);
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('[エラー]  バリデーションエラー:', error.getUserMessage());
+      logger.error('[エラー]  バリデーションエラー:', error.getUserMessage());
       throw error;
     }
     throw error;
@@ -210,22 +211,22 @@ export async function deleteHistory(id) {
     if (!cloudDeleteSuccess) {
       throw mapFirebaseError(new Error('クラウドでの削除に失敗しました'), 'delete');
     }
-    console.log(`✅  Firestoreで論理削除しました (ID: ${id})`);
+    logger.info(`✅  Firestoreで論理削除しました (ID: ${id})`);
 
     // 2. ローカル（IndexedDB）キャッシュでも論理削除
     try {
       await db.delete(id);
       localDeleteSuccess = true;
-      console.log(`✅  ローカルキャッシュでも論理削除しました (ID: ${id})`);
+      logger.info(`✅  ローカルキャッシュでも論理削除しました (ID: ${id})`);
     } catch (localError) {
       // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
-      console.warn(`[警告] ️ ローカルキャッシュの削除に失敗しましたが、クラウドでは削除されています (ID: ${id})`, localError);
-      console.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
+      logger.warn(`[警告] ️ ローカルキャッシュの削除に失敗しましたが、クラウドでは削除されています (ID: ${id})`, localError);
+      logger.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
     }
 
-    console.log(`✅  データを論理削除しました (ID: ${id})`);
+    logger.info(`✅  データを論理削除しました (ID: ${id})`);
   } catch (error) {
-    console.error('Failed to delete calculation:', error);
+    logger.error('Failed to delete calculation:', error);
 
     // クラウド削除が失敗した場合は致命的エラー
     // （ローカル削除のエラーは内部try-catchで処理済み）
@@ -244,7 +245,7 @@ export async function hardDeleteHistory(id) {
     validateId(id);
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('[エラー]  バリデーションエラー:', error.getUserMessage());
+      logger.error('[エラー]  バリデーションエラー:', error.getUserMessage());
       throw error;
     }
     throw error;
@@ -265,22 +266,22 @@ export async function hardDeleteHistory(id) {
     if (!cloudDeleteSuccess) {
       throw mapFirebaseError(new Error('クラウドからの完全削除に失敗しました'), 'delete');
     }
-    console.log(`✅  Firestoreから物理削除しました (ID: ${id})`);
+    logger.info(`✅  Firestoreから物理削除しました (ID: ${id})`);
 
     // 2. ローカル（IndexedDB）キャッシュからも物理削除
     try {
       await db.hardDelete(id);
       localDeleteSuccess = true;
-      console.log(`✅  ローカルキャッシュからも物理削除しました (ID: ${id})`);
+      logger.info(`✅  ローカルキャッシュからも物理削除しました (ID: ${id})`);
     } catch (localError) {
       // ローカル削除が失敗しても、クラウドは削除済みなので処理は継続
-      console.warn(`[警告] ️ ローカルキャッシュの物理削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
-      console.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
+      logger.warn(`[警告] ️ ローカルキャッシュの物理削除に失敗しましたが、クラウドからは削除されています (ID: ${id})`, localError);
+      logger.warn('[警告] ️ 次回の同期時に整合性が自動的に回復されます');
     }
 
-    console.log(`✅  データを完全に削除しました (ID: ${id})`);
+    logger.info(`✅  データを完全に削除しました (ID: ${id})`);
   } catch (error) {
-    console.error('Failed to hard delete calculation:', error);
+    logger.error('Failed to hard delete calculation:', error);
     throw new Error(`完全削除に失敗しました: ${error.message || error}`);
   }
 }
@@ -293,7 +294,7 @@ export async function getDeletedHistory() {
   try {
     return await db.getDeleted({ sortBy: 'timestamp', order: 'desc' });
   } catch (error) {
-    console.error('Failed to get deleted history:', error);
+    logger.error('Failed to get deleted history:', error);
     return [];
   }
 }
@@ -322,7 +323,7 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
     validateUpdateData(id, name, mode, inputData, resultData, category, productData);
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('[エラー]  バリデーションエラー:', error.getUserMessage());
+      logger.error('[エラー]  バリデーションエラー:', error.getUserMessage());
       throw error;
     }
     throw error;
@@ -344,7 +345,7 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
   };
 
   try {
-    console.log(' データ更新前に最新データを確認中...');
+    logger.info(' データ更新前に最新データを確認中...');
 
     // 1. 更新前に現在のローカルデータを取得
     const currentLocal = await db.getById(id);
@@ -369,26 +370,26 @@ export async function updateCalculation(id, name, mode, inputData, resultData, c
         const syncedUpdatedAt = currentLocalAfterSync.updatedAt ? new Date(currentLocalAfterSync.updatedAt) : null;
 
         if (localUpdatedAt && syncedUpdatedAt && syncedUpdatedAt > localUpdatedAt) {
-          console.warn('[警告] ️ 他のデバイスで更新されたデータを上書きします (Last Write Wins)');
-          console.warn(`   ローカル: ${localUpdatedAt.toISOString()}`);
-          console.warn(`   最新: ${syncedUpdatedAt.toISOString()}`);
+          logger.warn('[警告] ️ 他のデバイスで更新されたデータを上書きします (Last Write Wins)');
+          logger.warn(`   ローカル: ${localUpdatedAt.toISOString()}`);
+          logger.warn(`   最新: ${syncedUpdatedAt.toISOString()}`);
           // ユーザーには警告を表示するが、更新は続行（Last Write Wins戦略）
         }
       } catch (syncError) {
-        console.warn('[警告] ️ 同期に失敗しましたが、更新を続行します:', syncError);
+        logger.warn('[警告] ️ 同期に失敗しましたが、更新を続行します:', syncError);
       }
     }
 
     // 3. Firestoreを直接更新（IndexedDBキャッシュも更新）
-    console.log(' データを更新中...');
+    logger.info(' データを更新中...');
     await updateInCloud(id, updates);
 
-    console.log(`✅  更新完了 (ID: ${id})`);
+    logger.info(`✅  更新完了 (ID: ${id})`);
   } catch (error) {
     if (error instanceof NotFoundError || error instanceof ValidationError || error instanceof OfflineError) {
       throw error;
     }
-    console.error('Failed to update calculation:', error);
+    logger.error('Failed to update calculation:', error);
     throw mapFirebaseError(error, 'update');
   }
 }
@@ -429,14 +430,14 @@ export async function updateCalculationName(id, name, category = null) {
       };
     }
 
-    console.log(` 商品名を更新中... (ID: ${id})`);
+    logger.info(` 商品名を更新中... (ID: ${id})`);
 
     // Firestoreを直接更新（IndexedDBキャッシュも更新）
     await updateInCloud(id, updates);
 
-    console.log(`✅  商品名更新完了 (ID: ${id})`);
+    logger.info(`✅  商品名更新完了 (ID: ${id})`);
   } catch (error) {
-    console.error('Failed to update calculation name:', error);
+    logger.error('Failed to update calculation name:', error);
     throw error;
   }
 }
@@ -458,7 +459,7 @@ export async function exportData() {
 
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Failed to export data:', error);
+    logger.error('Failed to export data:', error);
     throw error;
   }
 }
@@ -480,14 +481,14 @@ export async function importData(file) {
         const result = await db.importJSON(jsonString);
         resolve(result);
       } catch (error) {
-        console.error('Failed to import data:', error);
+        logger.error('Failed to import data:', error);
         reject(error);
       }
     };
 
     reader.onerror = () => {
       const error = reader.error || new Error('Failed to read file');
-      console.error('File reader error:', error);
+      logger.error('File reader error:', error);
       reject(error);
     };
 
@@ -508,9 +509,9 @@ export async function clearAllHistory() {
     // ローカル（IndexedDB）から全削除
     await db.clear();
 
-    console.log('✅  すべてのデータを削除しました');
+    logger.info('✅  すべてのデータを削除しました');
   } catch (error) {
-    console.error('Failed to clear history:', error);
+    logger.error('Failed to clear history:', error);
     throw error;
   }
 }
@@ -534,7 +535,7 @@ export async function getUniqueProductNames(category = null) {
     });
     return Array.from(names);
   } catch (error) {
-    console.error('Failed to get unique product names:', error);
+    logger.error('Failed to get unique product names:', error);
     return [];
   }
 }
