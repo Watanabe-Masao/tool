@@ -85,6 +85,12 @@ jobs:
 
           # Check format: type(scope): subject or type: subject
           while IFS= read -r msg; do
+            # Skip merge commits
+            if [[ "$msg" =~ ^Merge ]]; then
+              echo "⏭️  Skipping merge commit: $msg"
+              continue
+            fi
+
             if [[ ! "$msg" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\(.+\))?:.+ ]]; then
               echo "❌ Invalid commit message: $msg"
               echo "Expected format: type(scope): subject"
