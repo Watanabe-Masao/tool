@@ -51,18 +51,23 @@ function displayCurrentStatistics() {
   const selectedType = selectElement?.value || 'yieldRate';
   const data = appState.getYieldStatsRawData();
 
+  console.log('[displayCurrentStatistics] data:', data);
+
   // 状態を更新：現在の表示タイプ（setCurrentDisplayType内で外れ値リセット処理あり）
   appState.setCurrentDisplayType(selectedType);
 
   if (!data) {
     hide('yieldStatsResults');
+    console.log('[displayCurrentStatistics] No data, hiding results');
     return;
   }
 
   // 各統計タイプの統計を計算して保存
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
     if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
-      appState.setCalculatedStats(type, calculateStatistics(data[type]));
+      const stats = calculateStatistics(data[type]);
+      console.log(`[displayCurrentStatistics] Setting ${type} stats:`, stats);
+      appState.setCalculatedStats(type, stats);
     } else {
       appState.setCalculatedStats(type, null);
     }
@@ -161,12 +166,17 @@ function displayCurrentStatistics() {
   }
 
   // 除外後のデータで統計を表示
+  console.log('[displayCurrentStatistics] Displaying statistics for:', actualSelectedType, 'finalStats:', finalStats);
   displayStatistics(finalStats, unit);
+  console.log('[displayCurrentStatistics] displayStatistics done');
   displayMatrixEvaluation(finalStats);
+  console.log('[displayCurrentStatistics] displayMatrixEvaluation done');
   renderStatsChart(finalValues, finalStats, typeName, unit);
+  console.log('[displayCurrentStatistics] renderStatsChart done');
 
   // 統計結果を表示
   show('yieldStatsResults');
+  console.log('[displayCurrentStatistics] yieldStatsResults shown');
 
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
