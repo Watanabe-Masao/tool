@@ -49,49 +49,31 @@ import {
 function displayCurrentStatistics() {
   const selectElement = qs('#statsTypeSelect');
   const selectedType = selectElement?.value || 'yieldRate';
-  const data = appState.getYieldStatsData();
+  const data = appState.getYieldStatsRawData();
 
-  // 状態を更新：現在の表示タイプ
-  window.yieldStatsState.currentDisplayType = selectedType;
-
-  // 統計タイプが変更されたら外れ値の除外状態をリセット
-  // 注：この時点ではまだ自動切り替え前なので selectedType を使用
-  if (window.yieldStatsState.currentDisplayType !== selectedType) {
-    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
-    window.yieldStatsState.currentOutlierValues = [];
-    window.yieldStatsState.isOutlierExcluded = false;
-  }
+  // 状態を更新：現在の表示タイプ（setCurrentDisplayType内で外れ値リセット処理あり）
+  appState.setCurrentDisplayType(selectedType);
 
   if (!data) {
     hide('yieldStatsResults');
     return;
   }
 
-  // 統計タイプごとの統計データをオブジェクトで管理（表示処理の前に実行）
-  if (!window.statsDataByType) {
-    window.statsDataByType = {};
-  }
-
   // 各統計タイプの統計を計算して保存
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
     if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
-      window.statsDataByType[type] = calculateStatistics(data[type]);
+      appState.setCalculatedStats(type, calculateStatistics(data[type]));
     } else {
-      window.statsDataByType[type] = null;
+      appState.setCalculatedStats(type, null);
     }
   });
-
-  // 状態を更新：データ存在フラグ
-  window.yieldStatsState.hasYieldRateData = !!(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
-  window.yieldStatsState.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
-  window.yieldStatsState.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
 
   // 状態を更新：計算済みフラグ
   // 注：isFromHistoryは履歴復元時に既にtrueが設定されている場合があるので、
   // 既にtrueの場合は保持し、falseの場合のみ明示的にfalseを設定する
-  window.yieldStatsState.isCalculated = true;
-  if (!window.yieldStatsState.isFromHistory) {
-    window.yieldStatsState.isFromHistory = false;
+  appState.setYieldStatsCalculated(true);
+  if (!appState.isYieldStatsFromHistory()) {
+    appState.setYieldStatsFromHistory(false);
   }
 
   // 複数パターン分析の読み込みボタンの状態を更新
@@ -121,7 +103,7 @@ function displayCurrentStatistics() {
       // セレクトボックスも更新
       if (selectElement) {
         selectElement.value = foundType;
-        window.yieldStatsState.currentDisplayType = foundType;
+        appState.setCurrentDisplayType(foundType);
       }
     } else {
       // 全てのタイプでデータが不足している場合は非表示
@@ -134,11 +116,14 @@ function displayCurrentStatistics() {
   let finalValues = values;
   let finalStats = null;
 
-  if (window.yieldStatsState.manuallyExcludedOutlierIndices.size > 0 && window.yieldStatsState.currentOutlierValues.length > 0) {
+  const manuallyExcludedIndices = appState.getManuallyExcludedOutlierIndices();
+  const currentOutliers = appState.getCurrentOutlierValues();
+
+  if (manuallyExcludedIndices.size > 0 && currentOutliers.length > 0) {
     const excludedValues = new Set();
-    window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
-      if (index < window.yieldStatsState.currentOutlierValues.length) {
-        excludedValues.add(window.yieldStatsState.currentOutlierValues[index]);
+    manuallyExcludedIndices.forEach(index => {
+      if (index < currentOutliers.length) {
+        excludedValues.add(currentOutliers[index]);
       }
     });
 
@@ -186,15 +171,15 @@ function displayCurrentStatistics() {
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
 
-  // 後方互換性のため、従来の変数も維持（サンプルサイズが妥当な場合のみ）
+  // サンプルサイズ妥当性判断（後方互換性のため、従来の動作を維持）
   // 許容誤差が入力されている場合はその妥当性を、未入力の場合は保存済みの妥当性を使用
-  const validation = window.yieldStatsState?.sampleSizeValidation?.[actualSelectedType];
+  const validation = appState.getSampleSizeValidation(actualSelectedType);
   const isSampleSizeValid = validation ? validation.isValid : true; // 妥当性情報がない場合はtrue（後方互換性）
 
   if (isSampleSizeValid) {
-    window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+    appState.setLastCalculatedStats(finalStats); // 表示用（選択された統計タイプ）
   } else {
-    window.lastCalculatedStats = null; // サンプルサイズ不十分の場合はnull
+    appState.setLastCalculatedStats(null); // サンプルサイズ不十分の場合はnull
   }
 
   // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
@@ -342,7 +327,7 @@ function displaySampleSizeValidation() {
   const statsTypeSelect = qs('#statsTypeSelect');
   const statsType = statsTypeSelect?.value || 'yieldRate';
 
-  const data = appState.getYieldStatsData();
+  const data = appState.getYieldStatsRawData();
   if (!data) {
     resultDiv.classList.add('is-hidden');
     return;
@@ -365,12 +350,15 @@ function displaySampleSizeValidation() {
   let finalValues = values;
   let finalStats = stats;
 
-  if (window.yieldStatsState.manuallyExcludedOutlierIndices.size > 0 && window.yieldStatsState.currentOutlierValues.length > 0) {
+  const manuallyExcludedIndices = appState.getManuallyExcludedOutlierIndices();
+  const currentOutliers = appState.getCurrentOutlierValues();
+
+  if (manuallyExcludedIndices.size > 0 && currentOutliers.length > 0) {
     // 手動除外する外れ値のセットを作成
     const excludedValues = new Set();
-    window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
-      if (index < window.yieldStatsState.currentOutlierValues.length) {
-        excludedValues.add(window.yieldStatsState.currentOutlierValues[index]);
+    manuallyExcludedIndices.forEach(index => {
+      if (index < currentOutliers.length) {
+        excludedValues.add(currentOutliers[index]);
       }
     });
 
@@ -528,21 +516,19 @@ function displaySampleSizeValidation() {
   displayOutlierInfo(outlierResult, statsType, isValid);
 
   // サンプルサイズ妥当性を状態に保存
-  if (window.yieldStatsState) {
-    window.yieldStatsState.sampleSizeValidation[statsType] = {
-      isValid,
-      actualSize: actualSampleSize,
-      requiredSize: requiredSampleSize
-    };
-  }
+  appState.setSampleSizeValidation(statsType, {
+    isValid,
+    actualSize: actualSampleSize,
+    requiredSize: requiredSampleSize
+  });
 
   // 推奨代表値を表示
   // サンプルサイズの妥当性に応じて表示内容を分岐
   if (finalValues.length >= 2) {
-    window.lastCalculatedStats = isValid ? finalStats : null;
+    appState.setLastCalculatedStats(isValid ? finalStats : null);
     displayRecommendedValue(finalStats, isValid, statsType);
   } else {
-    window.lastCalculatedStats = isValid ? stats : null;
+    appState.setLastCalculatedStats(isValid ? stats : null);
     displayRecommendedValue(stats, isValid, statsType);
   }
 
@@ -555,36 +541,9 @@ function displaySampleSizeValidation() {
 
 /**
  * 歩留まり統計の状態管理
- * データと状態を明確に分離して管理
+ * 注：状態はappState.yieldStatsで一元管理されています
+ * window.yieldStatsStateは削除され、appState.yieldStatsに移行しました
  */
-window.yieldStatsState = {
-  // 表示関連の状態
-  currentDisplayType: 'yieldRate',        // 現在表示中の統計タイプ
-
-  // データソース関連の状態
-  isFromHistory: false,                   // 履歴から読み込まれたか
-  isCalculated: false,                    // 計算済みか（新規計算されたか）
-
-  // データ存在フラグ
-  hasYieldRateData: false,                // 歩留まり率データが存在するか
-  hasBeforeWeightData: false,             // 加工前重量データが存在するか
-  hasAfterWeightData: false,              // 加工後重量データが存在するか
-
-  // UI状態
-  isOutlierExcluded: false,               // 外れ値除外が適用されているか
-  manuallyExcludedOutlierIndices: new Set(), // 手動除外された外れ値のインデックス
-  currentOutlierValues: [],               // 現在の外れ値リスト
-
-  // サンプルサイズ妥当性（統計タイプ別）
-  sampleSizeValidation: {
-    yieldRate: null,      // { isValid: boolean, actualSize: number, requiredSize: number }
-    beforeWeight: null,
-    afterWeight: null
-  },
-
-  // 次のアクション指示
-  shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか
-};
 
 /**
  * 外れ値情報を表示
@@ -606,24 +565,29 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   // 外れ値がない場合は非表示
   if (outlierResult.outliers.length === 0) {
     outlierInfoDiv.classList.add('is-hidden');
-    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
-    window.yieldStatsState.currentOutlierValues = [];
+    appState.clearExcludedOutliers();
     // ハイライトをクリア
     highlightOutlierRows(statsType);
     return;
   }
 
   // 現在の外れ値リストを更新
-  window.yieldStatsState.currentOutlierValues = [...outlierResult.outliers];
+  appState.setCurrentOutlierValues([...outlierResult.outliers]);
 
   // 前回の除外状態をクリア（新しい検出結果に合わせる）
   const validIndices = new Set();
-  window.yieldStatsState.manuallyExcludedOutlierIndices.forEach(index => {
-    if (index < window.yieldStatsState.currentOutlierValues.length) {
+  const manuallyExcludedIndices = appState.getManuallyExcludedOutlierIndices();
+  const currentOutliers = appState.getCurrentOutlierValues();
+
+  manuallyExcludedIndices.forEach(index => {
+    if (index < currentOutliers.length) {
       validIndices.add(index);
     }
   });
-  window.yieldStatsState.manuallyExcludedOutlierIndices = validIndices;
+
+  // 有効なインデックスのみ保持
+  appState.clearExcludedOutliers();
+  validIndices.forEach(index => appState.excludeOutlierByIndex(index));
 
   // 統計タイプに応じた単位を取得
   const unit = statsType === 'yieldRate' ? '%' : 'g';
@@ -660,7 +624,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
       checkbox.type = 'checkbox';
       checkbox.id = `outlier-${index}`;
       checkbox.dataset.index = index;
-      checkbox.checked = window.yieldStatsState.manuallyExcludedOutlierIndices.has(index);
+      checkbox.checked = appState.getManuallyExcludedOutlierIndices().has(index);
       checkbox.addEventListener('change', () => handleOutlierCheckboxChange());
 
       const label = document.createElement('label');
@@ -675,7 +639,7 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
   }
 
   // 手動除外数を計算
-  const manuallyExcludedCount = window.yieldStatsState.manuallyExcludedOutlierIndices.size;
+  const manuallyExcludedCount = appState.getManuallyExcludedOutlierIndices().size;
   const remainingOutliersCount = outlierResult.outliers.length - manuallyExcludedCount;
   const remainingDataCount = outlierResult.cleanedValues.length + remainingOutliersCount;
 
@@ -704,13 +668,13 @@ function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) {
  */
 function handleOutlierCheckboxChange() {
   // チェックボックスの状態を読み取り
-  window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+  appState.clearExcludedOutliers();
 
   const checkboxes = qsa('#outlierCheckboxList input[type="checkbox"]:checked');
   checkboxes.forEach(checkbox => {
     const index = parseInt(checkbox.dataset.index, 10);
     if (!isNaN(index)) {
-      window.yieldStatsState.manuallyExcludedOutlierIndices.add(index);
+      appState.excludeOutlierByIndex(index);
     }
   });
 
@@ -727,7 +691,8 @@ function deleteOutlierRows() {
   if (!tbody) return;
 
   // 外れ値が検出されていない場合は何もしない
-  if (!window.yieldStatsState.currentOutlierValues || window.yieldStatsState.currentOutlierValues.length === 0) {
+  const currentOutliers = appState.getCurrentOutlierValues();
+  if (!currentOutliers || currentOutliers.length === 0) {
     showWarning('削除する外れ値がありません。');
     return;
   }
@@ -738,7 +703,7 @@ function deleteOutlierRows() {
   const statsTypeName = statsType === 'yieldRate' ? '歩留まり率' :
                        statsType === 'beforeWeight' ? '加工前重量' : '加工後重量';
 
-  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n削除した行は元に戻せません。\n\n削除する外れ値の数: ${window.yieldStatsState.currentOutlierValues.length}件\n\n本当に削除しますか？`;
+  const confirmMessage = `${statsTypeName}に外れ値を含む行をテーブルから削除します。\n削除した行は元に戻せません。\n\n削除する外れ値の数: ${currentOutliers.length}件\n\n本当に削除しますか？`;
 
   if (!confirm(confirmMessage)) {
     return;
@@ -1038,8 +1003,8 @@ function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'yieldRat
   // 複数パターン分析へのリンクを表示（歩留まり率の統計を表示している場合のみ）
   const multiPatternLink = qs('#multiPatternLink');
   if (multiPatternLink && statsType === 'yieldRate') {
-    const hasYieldRateData = window.yieldStatsState.hasYieldRateData;
-    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const hasYieldRateData = appState.hasYieldStatsDataByType('yieldRate');
+    const yieldRateStats = appState.getCalculatedStats('yieldRate');
 
     // データが十分にあるかチェック
     if (isSampleSizeValid && hasYieldRateData && yieldRateStats && yieldRateStats.count >= 2) {
@@ -1137,14 +1102,14 @@ function updateLoadStatsButtons() {
 
   // 一括取り込みモードの場合
   if (selectedStatsType === 'bulk') {
-    const yieldRateStats = window.statsDataByType?.yieldRate;
-    const beforeWeightStats = window.statsDataByType?.beforeWeight;
-    const afterWeightStats = window.statsDataByType?.afterWeight;
+    const yieldRateStats = appState.getCalculatedStats('yieldRate');
+    const beforeWeightStats = appState.getCalculatedStats('beforeWeight');
+    const afterWeightStats = appState.getCalculatedStats('afterWeight');
 
     // サンプルサイズの妥当性をチェック
-    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
-    const beforeWeightValidation = window.yieldStatsState?.sampleSizeValidation?.beforeWeight;
-    const afterWeightValidation = window.yieldStatsState?.sampleSizeValidation?.afterWeight;
+    const yieldRateValidation = appState.getSampleSizeValidation('yieldRate');
+    const beforeWeightValidation = appState.getSampleSizeValidation('beforeWeight');
+    const afterWeightValidation = appState.getSampleSizeValidation('afterWeight');
 
     // 歩留まり率の統計データが必須かつサンプルサイズが妥当である必要がある
     if (!yieldRateStats || yieldRateStats.count < 2 || (yieldRateValidation && !yieldRateValidation.isValid)) {
@@ -1273,7 +1238,7 @@ function updateLoadStatsButtons() {
   }
 
   // 通常モード（個別の統計タイプ）
-  const stats = window.statsDataByType?.[selectedStatsType];
+  const stats = appState.getCalculatedStats(selectedStatsType);
 
   // 一括取り込みボタンコンテナを削除（通常モードでは不要）
   const bulkImportBtnContainer = qs('#bulkImportBtnContainer');
@@ -1282,7 +1247,7 @@ function updateLoadStatsButtons() {
   }
 
   // サンプルサイズの妥当性をチェック
-  const validation = window.yieldStatsState?.sampleSizeValidation?.[selectedStatsType];
+  const validation = appState.getSampleSizeValidation(selectedStatsType);
 
   if (stats && stats.count >= 2 && (!validation || validation.isValid)) {
     // 推奨値を取得
