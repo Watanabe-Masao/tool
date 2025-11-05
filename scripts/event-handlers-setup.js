@@ -3,6 +3,8 @@
  * アプリケーションの全イベントリスナーを初期化
  */
 
+import { logger } from './core/logger.js';
+
 // すべての必要なimportsをmain.jsからコピー
 import { qs, qsa, num, hide, show, toggleActive, setText, yen, pct, addTapListener, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
@@ -604,7 +606,7 @@ function init() {
           }, TIME.ONE_HOUR);
         })
         .catch((error) => {
-          console.error('[PWA] Service Worker registration failed:', error);
+          logger.error('[PWA] Service Worker registration failed:', error);
         });
     });
 
@@ -742,7 +744,7 @@ function init() {
     if (window.multiPatternUI && typeof window.multiPatternUI.replaceAllPatterns === 'function') {
       window.multiPatternUI.replaceAllPatterns(sigmaPatterns);
     } else {
-      console.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
+      logger.warn('[MultiPattern] replaceAllPatterns関数が見つかりません');
       showError('パターン生成機能の初期化に失敗しました。');
     }
   }
@@ -892,4 +894,3 @@ export function setupEventHandlers() {
   // init関数を実行
   init();
 }
-

@@ -3,6 +3,8 @@
  * @param {string} text - フォーマットするテキスト
  * @returns {string} - フォーマット済みHTML
  */
+
+import { logger } from './core/logger.js';
 function formatHelpText(text) {
   // パイプ記号で分割
   const lines = text.split('|');
@@ -40,7 +42,7 @@ export function initializeHelpModal() {
   const closeHelpModal = document.getElementById('closeHelpModal');
 
   if (!helpModal || !helpModalContent || !closeHelpModal) {
-    console.warn('ヘルプモーダル要素が見つかりません');
+    logger.warn('ヘルプモーダル要素が見つかりません');
     return;
   }
 

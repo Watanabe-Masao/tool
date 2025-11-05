@@ -3,6 +3,7 @@
  */
 
 import { MODE } from './constants.js';
+import { YieldStatsState } from './state/yield-stats-state.js';
 
 /**
  * 計算結果のスナップショット
@@ -80,48 +81,14 @@ export class AppState {
     this.showYieldStatsWithMultiPattern = false; // 複数パターン分析モード時に歩留まり統計を表示するか
 
     // 一元化された状態管理
-    this.yieldStatsData = null;     // 歩留まり統計データ（旧 window.yieldStatsData）【非推奨：yieldStats.rawDataを使用】
     this.saveDialogMode = 'normal'; // 保存ダイアログのモード（'normal' or 'new'）
 
-    // 歩留まり統計の一元管理（新規）
-    this.yieldStats = {
-      // 生データ（旧 yieldStatsData から移行）
-      rawData: null,  // { yieldRate: [...], beforeWeight: [...], afterWeight: [...] }
+    // 歩留まり統計の状態管理（コンポジション）
+    this._yieldStatsState = new YieldStatsState();
 
-      // 計算結果（旧 window.statsDataByType から移行）
-      calculatedStats: {
-        yieldRate: null,      // { mean, stdDev, count, min, max, median, mode, ... }
-        beforeWeight: null,
-        afterWeight: null
-      },
-
-      // UI状態（旧 window.yieldStatsState から移行）
-      ui: {
-        currentDisplayType: 'yieldRate',
-        isCalculated: false,
-        isFromHistory: false,
-        hasYieldRateData: false,
-        hasBeforeWeightData: false,
-        hasAfterWeightData: false,
-        isOutlierExcluded: false
-      },
-
-      // 外れ値管理（旧 window.yieldStatsState から移行）
-      outliers: {
-        manuallyExcludedIndices: new Set(),
-        currentValues: []
-      },
-
-      // サンプルサイズ妥当性（旧 window.yieldStatsState.sampleSizeValidation から移行）
-      validation: {
-        yieldRate: null,
-        beforeWeight: null,
-        afterWeight: null
-      },
-
-      // 最後の計算結果キャッシュ（旧 window.lastCalculatedStats から移行）
-      lastCalculated: null
-    };
+    // 後方互換性のため、yieldStats オブジェクトとして直接アクセス可能にする
+    // ただし、メソッド経由でのアクセスを推奨
+    this.yieldStats = this._yieldStatsState;
   }
 
   setMode(mode) {
@@ -210,16 +177,6 @@ export class AppState {
     return this.hasUnsavedChanges;
   }
 
-  // 歩留まり統計データの管理（後方互換性のため残す）
-  setYieldStatsData(data) {
-    // 新しいメソッドに転送（後方互換性を保つため）
-    this.setYieldStatsRawData(data);
-  }
-
-  getYieldStatsData() {
-    // 新しいメソッドに転送（後方互換性を保つため）
-    return this.getYieldStatsRawData();
-  }
 
   // 保存ダイアログモードの管理
   setSaveDialogMode(mode) {
@@ -239,7 +196,7 @@ export class AppState {
    * @returns {Object|null} { yieldRate: [...], beforeWeight: [...], afterWeight: [...] }
    */
   getYieldStatsRawData() {
-    return this.yieldStats.rawData;
+    return this._yieldStatsState.getRawData();
   }
 
   /**
@@ -247,21 +204,7 @@ export class AppState {
    * @param {Object|null} data - { yieldRate: [...], beforeWeight: [...], afterWeight: [...] }
    */
   setYieldStatsRawData(data) {
-    this.yieldStats.rawData = data;
-
-    // データ有無フラグを自動更新
-    if (data) {
-      this.yieldStats.ui.hasYieldRateData = !!(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
-      this.yieldStats.ui.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
-      this.yieldStats.ui.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
-    } else {
-      this.yieldStats.ui.hasYieldRateData = false;
-      this.yieldStats.ui.hasBeforeWeightData = false;
-      this.yieldStats.ui.hasAfterWeightData = false;
-    }
-
-    // 後方互換性のため、旧プロパティも更新
-    this.yieldStatsData = data;
+    this._yieldStatsState.setRawData(data);
   }
 
   /**
@@ -270,7 +213,7 @@ export class AppState {
    * @returns {Object|null} 統計計算結果
    */
   getCalculatedStats(type) {
-    return this.yieldStats.calculatedStats[type];
+    return this._yieldStatsState.getCalculatedStats(type);
   }
 
   /**
@@ -278,7 +221,7 @@ export class AppState {
    * @returns {Object} { yieldRate: {...}, beforeWeight: {...}, afterWeight: {...} }
    */
   getAllCalculatedStats() {
-    return this.yieldStats.calculatedStats;
+    return this._yieldStatsState.getAllCalculatedStats();
   }
 
   /**
@@ -287,12 +230,7 @@ export class AppState {
    * @param {Object|null} stats - 統計計算結果
    */
   setCalculatedStats(type, stats) {
-    this.yieldStats.calculatedStats[type] = stats;
-
-    if (stats) {
-      this.yieldStats.ui.isCalculated = true;
-      this.yieldStats.lastCalculated = stats;
-    }
+    this._yieldStatsState.setCalculatedStats(type, stats);
   }
 
   /**
@@ -300,18 +238,7 @@ export class AppState {
    * @param {Object} statsData - { yieldRate: {...}, beforeWeight: {...}, afterWeight: {...} }
    */
   setAllCalculatedStats(statsData) {
-    if (statsData) {
-      this.yieldStats.calculatedStats.yieldRate = statsData.yieldRate || null;
-      this.yieldStats.calculatedStats.beforeWeight = statsData.beforeWeight || null;
-      this.yieldStats.calculatedStats.afterWeight = statsData.afterWeight || null;
-
-      // いずれかのデータがあれば計算完了とみなす
-      if (statsData.yieldRate || statsData.beforeWeight || statsData.afterWeight) {
-        this.yieldStats.ui.isCalculated = true;
-        // 最初に見つかったデータをlastCalculatedに設定
-        this.yieldStats.lastCalculated = statsData.yieldRate || statsData.beforeWeight || statsData.afterWeight;
-      }
-    }
+    this._yieldStatsState.setAllCalculatedStats(statsData);
   }
 
   /**
@@ -319,7 +246,7 @@ export class AppState {
    * @returns {Object|null}
    */
   getLastCalculatedStats() {
-    return this.yieldStats.lastCalculated;
+    return this._yieldStatsState.getLastCalculatedStats();
   }
 
   /**
@@ -327,7 +254,7 @@ export class AppState {
    * @param {Object|null} stats
    */
   setLastCalculatedStats(stats) {
-    this.yieldStats.lastCalculated = stats;
+    this._yieldStatsState.setLastCalculatedStats(stats);
   }
 
   /**
@@ -335,7 +262,7 @@ export class AppState {
    * @returns {string} 'yieldRate' | 'beforeWeight' | 'afterWeight'
    */
   getCurrentDisplayType() {
-    return this.yieldStats.ui.currentDisplayType;
+    return this._yieldStatsState.getCurrentDisplayType();
   }
 
   /**
@@ -343,11 +270,7 @@ export class AppState {
    * @param {string} type - 'yieldRate' | 'beforeWeight' | 'afterWeight'
    */
   setCurrentDisplayType(type) {
-    // タイプが変更された場合、外れ値除外をリセット
-    if (this.yieldStats.ui.currentDisplayType !== type) {
-      this.clearExcludedOutliers();
-    }
-    this.yieldStats.ui.currentDisplayType = type;
+    this._yieldStatsState.setCurrentDisplayType(type);
   }
 
   /**
@@ -355,7 +278,7 @@ export class AppState {
    * @returns {boolean}
    */
   isYieldStatsCalculated() {
-    return this.yieldStats.ui.isCalculated;
+    return this._yieldStatsState.isCalculated();
   }
 
   /**
@@ -363,7 +286,7 @@ export class AppState {
    * @param {boolean} value
    */
   setYieldStatsCalculated(value) {
-    this.yieldStats.ui.isCalculated = value;
+    this._yieldStatsState.setCalculated(value);
   }
 
   /**
@@ -371,7 +294,7 @@ export class AppState {
    * @returns {boolean}
    */
   isYieldStatsFromHistory() {
-    return this.yieldStats.ui.isFromHistory;
+    return this._yieldStatsState.isFromHistory();
   }
 
   /**
@@ -379,7 +302,7 @@ export class AppState {
    * @param {boolean} value
    */
   setYieldStatsFromHistory(value) {
-    this.yieldStats.ui.isFromHistory = value;
+    this._yieldStatsState.setFromHistory(value);
   }
 
   /**
@@ -388,10 +311,7 @@ export class AppState {
    * @returns {boolean}
    */
   hasYieldStatsDataByType(type) {
-    if (type === 'yieldRate') return this.yieldStats.ui.hasYieldRateData;
-    if (type === 'beforeWeight') return this.yieldStats.ui.hasBeforeWeightData;
-    if (type === 'afterWeight') return this.yieldStats.ui.hasAfterWeightData;
-    return false;
+    return this._yieldStatsState.hasDataByType(type);
   }
 
   /**
@@ -399,7 +319,7 @@ export class AppState {
    * @returns {boolean}
    */
   isOutlierExcluded() {
-    return this.yieldStats.ui.isOutlierExcluded;
+    return this._yieldStatsState.isOutlierExcluded();
   }
 
   /**
@@ -407,7 +327,7 @@ export class AppState {
    * @param {boolean} value
    */
   setOutlierExcluded(value) {
-    this.yieldStats.ui.isOutlierExcluded = value;
+    this._yieldStatsState.setOutlierExcluded(value);
   }
 
   /**
@@ -415,7 +335,7 @@ export class AppState {
    * @returns {Set}
    */
   getManuallyExcludedOutlierIndices() {
-    return this.yieldStats.outliers.manuallyExcludedIndices;
+    return this._yieldStatsState.getManuallyExcludedOutlierIndices();
   }
 
   /**
@@ -423,7 +343,7 @@ export class AppState {
    * @returns {Array}
    */
   getCurrentOutlierValues() {
-    return this.yieldStats.outliers.currentValues;
+    return this._yieldStatsState.getCurrentOutlierValues();
   }
 
   /**
@@ -431,7 +351,7 @@ export class AppState {
    * @param {Array} values
    */
   setCurrentOutlierValues(values) {
-    this.yieldStats.outliers.currentValues = values;
+    this._yieldStatsState.setCurrentOutlierValues(values);
   }
 
   /**
@@ -439,17 +359,14 @@ export class AppState {
    * @param {number} index
    */
   excludeOutlierByIndex(index) {
-    this.yieldStats.outliers.manuallyExcludedIndices.add(index);
-    this.yieldStats.ui.isOutlierExcluded = true;
+    this._yieldStatsState.excludeOutlierByIndex(index);
   }
 
   /**
    * 外れ値除外をクリア
    */
   clearExcludedOutliers() {
-    this.yieldStats.outliers.manuallyExcludedIndices.clear();
-    this.yieldStats.outliers.currentValues = [];
-    this.yieldStats.ui.isOutlierExcluded = false;
+    this._yieldStatsState.clearExcludedOutliers();
   }
 
   /**
@@ -458,7 +375,7 @@ export class AppState {
    * @returns {Object|null} { isValid, actualSize, requiredSize }
    */
   getSampleSizeValidation(type) {
-    return this.yieldStats.validation[type];
+    return this._yieldStatsState.getSampleSizeValidation(type);
   }
 
   /**
@@ -467,41 +384,14 @@ export class AppState {
    * @param {Object|null} validation - { isValid, actualSize, requiredSize }
    */
   setSampleSizeValidation(type, validation) {
-    this.yieldStats.validation[type] = validation;
+    this._yieldStatsState.setSampleSizeValidation(type, validation);
   }
 
   /**
    * すべての歩留まり統計データをクリア
    */
   clearAllYieldStats() {
-    this.yieldStats.rawData = null;
-    this.yieldStats.calculatedStats = {
-      yieldRate: null,
-      beforeWeight: null,
-      afterWeight: null
-    };
-    this.yieldStats.ui = {
-      currentDisplayType: 'yieldRate',
-      isCalculated: false,
-      isFromHistory: false,
-      hasYieldRateData: false,
-      hasBeforeWeightData: false,
-      hasAfterWeightData: false,
-      isOutlierExcluded: false
-    };
-    this.yieldStats.outliers = {
-      manuallyExcludedIndices: new Set(),
-      currentValues: []
-    };
-    this.yieldStats.validation = {
-      yieldRate: null,
-      beforeWeight: null,
-      afterWeight: null
-    };
-    this.yieldStats.lastCalculated = null;
-
-    // 後方互換性のため、旧プロパティもクリア
-    this.yieldStatsData = null;
+    this._yieldStatsState.reset();
   }
 
   resetAll() {
@@ -511,11 +401,10 @@ export class AppState {
     this.loadedHistoryId = null;  // 履歴IDもリセット
     this.isFromHistory = false;
     this.hasUnsavedChanges = false;
-    this.yieldStatsData = null;     // 歩留まり統計データもリセット（後方互換）
     this.saveDialogMode = 'normal'; // ダイアログモードもリセット
     this.showYieldStatsWithMultiPattern = false; // 歩留まり統計表示フラグもリセット
 
-    // 新しいyieldStats構造もリセット
+    // 歩留まり統計もリセット
     this.clearAllYieldStats();
   }
 }

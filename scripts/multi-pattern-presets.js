@@ -4,6 +4,8 @@
  * プリセットの作成、編集、削除、適用を管理します。
  */
 
+import { logger } from './core/logger.js';
+
 import { qs, qsa } from './dom-utils.js';
 import { showError, showWarning } from './toast.js';
 
@@ -28,7 +30,7 @@ export function loadPresets() {
       patterns: Array.isArray(preset.patterns) ? preset.patterns : []
     }));
   } catch (error) {
-    console.error('Failed to parse presets from localStorage:', error);
+    logger.error('Failed to parse presets from localStorage:', error);
     // 破損したデータをクリア
     localStorage.removeItem(PRESET_STORAGE_KEY);
     return [];
@@ -176,7 +178,7 @@ function removeTempPair(index) {
 
   // 境界チェックを追加
   if (index < 0 || index >= sorted.length) {
-    console.error('Invalid index:', index);
+    logger.error('Invalid index:', index);
     return;
   }
 

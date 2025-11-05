@@ -3,6 +3,8 @@
  * 歩留まり統計から複数パターン分析へデータを転記
  */
 
+import { logger } from './core/logger.js';
+
 import { qs, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
 import { MODE, TIME } from './constants.js';
@@ -31,7 +33,7 @@ export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, sta
   const statsData = appState.getCalculatedStats(selectedStatsType);
 
   if (!statsData) {
-    console.warn('[MultiPattern] 統計データが見つかりません');
+    logger.warn('[MultiPattern] 統計データが見つかりません');
     return;
   }
 
@@ -39,13 +41,13 @@ export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, sta
   const validation = appState.getSampleSizeValidation(selectedStatsType);
   if (validation && !validation.isValid) {
     alert(`サンプルサイズが不十分です。\n\n実際のサンプル数: ${validation.actualSize}\n必要なサンプル数: ${validation.requiredSize}\n\nより多くのデータを収集してから推奨値を使用してください。`);
-    console.warn('[MultiPattern] サンプルサイズが不十分なため、推奨値を読み込めません');
+    logger.warn('[MultiPattern] サンプルサイズが不十分なため、推奨値を読み込めません');
     return;
   }
 
   const recommended = getRecommendedValue(statsData);
   if (!recommended) {
-    console.warn('[MultiPattern] 推奨値を取得できません');
+    logger.warn('[MultiPattern] 推奨値を取得できません');
     return;
   }
 
@@ -55,7 +57,7 @@ export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, sta
   loadStatsValueToMultiPattern(recommended.value, selectedStatsType, shouldSwitchMode, productName);
 
   // 推奨値を読み込んだことを通知
-  console.log(`[MultiPattern] 推奨代表値（${recommended.label}: ${toFixed(recommended.value, 2)}）を読み込みました`);
+  logger.info(`[MultiPattern] 推奨代表値（${recommended.label}: ${toFixed(recommended.value, 2)}）を読み込みました`);
 }
 
 /**
@@ -182,7 +184,7 @@ export function loadAllStatsToMultiPattern(skipConfirm = false) {
 
     focusFirstPatternInput();
   } catch (error) {
-    console.error('[ERROR] 一括転記でエラーが発生しました:', error);
+    logger.error('[ERROR] 一括転記でエラーが発生しました:', error);
     showError('一括転記でエラーが発生しました。コンソールを確認してください。');
   }
 }

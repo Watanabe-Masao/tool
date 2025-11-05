@@ -2,6 +2,8 @@
  * 履歴機能のUI管理
  */
 
+import { logger } from './core/logger.js';
+
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, exportData, importData, clearAllHistory, getUniqueProductNames } from './storage.js';
 import { qs, qsa, num, show, hide, setText, yen, pct, addTapListener } from './dom-utils.js';
 import { appState } from './state.js';
@@ -34,7 +36,7 @@ export { updateSaveButtonsVisibility, closeSaveDialog };
 export async function showHistoryModal() {
   const modal = qs('#historyModal');
   if (!modal) {
-    console.error('履歴モーダルが見つかりません');
+    logger.error('履歴モーダルが見つかりません');
     return;
   }
 
@@ -74,7 +76,7 @@ export async function showHistoryModal() {
 
     await renderHistoryList(null, currentMode, currentYieldMethod);
   } catch (error) {
-    console.error('履歴モーダルを開く際にエラーが発生しました:', error);
+    logger.error('履歴モーダルを開く際にエラーが発生しました:', error);
     showToast('[エラー]  履歴を読み込めませんでした', 'error');
   }
 }
@@ -86,22 +88,22 @@ export async function showHistoryModal() {
 async function ensureFreshDataBeforeDisplay() {
   // Firebase認証チェック
   if (!isSignedIn()) {
-    console.log('オフラインのため、ローカルキャッシュを表示します');
+    logger.info('オフラインのため、ローカルキャッシュを表示します');
     return;
   }
 
   try {
-    console.log(' 履歴表示前にFirestoreと同期中...');
+    logger.info(' 履歴表示前にFirestoreと同期中...');
     const success = await downloadFromCloud();
 
     if (success) {
-      console.log('✅  最新データの取得完了');
+      logger.info('✅  最新データの取得完了');
     } else {
-      console.warn('[警告] ️ 同期に失敗しましたが、ローカルキャッシュを表示します');
+      logger.warn('[警告] ️ 同期に失敗しましたが、ローカルキャッシュを表示します');
     }
   } catch (error) {
-    console.error('[エラー]  同期エラー:', error);
-    console.warn('[警告] ️ ローカルキャッシュを表示します');
+    logger.error('[エラー]  同期エラー:', error);
+    logger.warn('[警告] ️ ローカルキャッシュを表示します');
     // エラーが発生してもローカルデータは表示
   }
 }
@@ -380,7 +382,7 @@ async function handleLoadCalculation(id) {
         // タイミングの問題で表示されない場合があるため、明示的に呼び出す
         if (window.displayCurrentStatistics) {
           setTimeout(() => {
-            const yieldStatsData = appState.getYieldStatsData();
+            const yieldStatsData = appState.getYieldStatsRawData();
             if (yieldStatsData && (
               (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
               (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
@@ -402,7 +404,7 @@ async function handleLoadCalculation(id) {
     }, 100);
 
   } catch (error) {
-    console.error('Load error:', error);
+    logger.error('Load error:', error);
     showToast('[エラー]  データの読み込みに失敗しました', 'error');
   }
 }
@@ -456,7 +458,7 @@ async function handleEditCalculation(id) {
     await renderHistoryList();
     showToast('更新しました', 'success');
   } catch (error) {
-    console.error('[handleEditCalculation] Error:', error);
+    logger.error('[handleEditCalculation] Error:', error);
     showToast('[エラー]  更新に失敗しました', 'error');
   }
 }
@@ -483,7 +485,7 @@ async function handleDeleteCalculation(id) {
     // エラーメッセージを表示（オンラインチェックのエラーを含む）
     const errorMessage = error.message || '削除に失敗しました';
     showToast(`[エラー]  ${errorMessage}`, 'error');
-    console.error('Delete error:', error);
+    logger.error('Delete error:', error);
   }
 }
 
@@ -603,12 +605,12 @@ export async function handleClearAll() {
 function toggleHistoryMenu() {
   const menu = qs('#historyMenu');
   if (!menu) {
-    console.error('履歴メニューが見つかりません');
+    logger.error('履歴メニューが見つかりません');
     return;
   }
 
   menu.classList.toggle('is-hidden');
-  console.log('メニュー表示切り替え:', !menu.classList.contains('is-hidden'));
+  logger.info('メニュー表示切り替え:', !menu.classList.contains('is-hidden'));
 }
 
 /**
@@ -794,12 +796,12 @@ export function initHistoryUI() {
 
   //  historyUpdatedイベントリスナー: Firestore同期後にUI自動更新
   window.addEventListener('historyUpdated', async () => {
-    console.log('📢 historyUpdatedイベントを受信: UIを更新します');
+    logger.info('📢 historyUpdatedイベントを受信: UIを更新します');
 
     // モーダルが開いている場合のみ再描画
     const modal = qs('#historyModal');
     if (modal && modal.open) {
-      console.log('✅  履歴モーダルが開いているため、リストを再描画します');
+      logger.info('✅  履歴モーダルが開いているため、リストを再描画します');
 
       // 現在のフィルタ条件を維持して再描画
       const activeBtn = qs('.btn-mode.is-active[data-mode]');
@@ -814,7 +816,7 @@ export function initHistoryUI() {
 
       await renderHistoryList(null, mode, yieldMethod);
     } else {
-      console.log('履歴モーダルが閉じているため、再描画をスキップします');
+      logger.info('履歴モーダルが閉じているため、再描画をスキップします');
     }
   });
 }

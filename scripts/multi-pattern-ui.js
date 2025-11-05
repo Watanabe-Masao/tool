@@ -2,6 +2,8 @@
  * 複数パターン分析モードのUI制御
  */
 
+import { logger } from './core/logger.js';
+
 import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
 import { PERCENT_MULTIPLIER } from './constants.js';
@@ -76,7 +78,7 @@ export function initMultiPatternUI() {
 
   // 要素が存在しない場合は初期化しない
   if (!elements.beforeWeightCalc || !elements.beforeWeightDirect) {
-    console.warn('[MultiPattern] Required elements not found');
+    logger.warn('[MultiPattern] Required elements not found');
     return;
   }
 
@@ -511,6 +513,9 @@ function recalculateAll() {
   // 結果テーブルをクリア
   elements.resultsTableBody.innerHTML = '';
 
+  // Document Fragment を使用してDOM操作を最適化（リフロー削減）
+  const fragment = document.createDocumentFragment();
+
   // 各パターンを計算して表示
   validPatterns.forEach(pattern => {
     const result = calculatePattern({
@@ -590,9 +595,12 @@ function recalculateAll() {
         <td class="${sensitivityClass}">${result.sensitivity !== null ? sensitivitySign + toFixed(result.sensitivity, 3) : '-'}</td>
       `;
 
-      elements.resultsTableBody.appendChild(row);
+      fragment.appendChild(row);
     }
   });
+
+  // 一括でDOM に追加（1回のリフロー）
+  elements.resultsTableBody.appendChild(fragment);
 
   // 結果を表示
   elements.step2Result.classList.remove(CSS_HIDDEN);
@@ -1166,7 +1174,7 @@ export function setStatValue(value, statType, productName = '') {
  */
 export function replaceAllPatterns(newPatterns) {
   if (!Array.isArray(newPatterns) || newPatterns.length === 0) {
-    console.warn('[MultiPattern] 有効なパターンが指定されていません');
+    logger.warn('[MultiPattern] 有効なパターンが指定されていません');
     return;
   }
 

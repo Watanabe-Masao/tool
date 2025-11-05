@@ -3,6 +3,8 @@
  * 歩留まり計算ツールのデータ永続化を管理
  */
 
+import { logger } from './core/logger.js';
+
 const DB_NAME = 'YieldCalculatorDB';
 const DB_VERSION = 5; // v5: 削除フラグ方式で管理
 const STORE_NAME = 'calculations';
@@ -103,7 +105,7 @@ export class YieldCalculatorDB {
     }
 
     if (this.activeTransactions > 2) {
-      console.warn(`[警告] ️ 複数トランザクション検出: ${this.activeTransactions}個同時実行中 (${operation})`);
+      logger.warn(`複数トランザクション検出: ${this.activeTransactions}個同時実行中 (${operation})`);
     }
   }
 
@@ -161,13 +163,13 @@ export class YieldCalculatorDB {
           quota: estimate.quota,
           usagePercent: ((estimate.usage / estimate.quota) * 100).toFixed(2)
         };
-        console.log(' ストレージ使用状況:', checks.storageEstimate);
+        logger.debug('ストレージ使用状況:', checks.storageEstimate);
       }).catch(err => {
-        console.warn('ストレージ使用状況の取得に失敗:', err);
+        logger.warn('ストレージ使用状況の取得に失敗:', err);
       });
     }
 
-    console.log(' データベース環境チェック:', checks);
+    logger.debug('データベース環境チェック:', checks);
     return checks;
   }
 
@@ -197,7 +199,7 @@ export class YieldCalculatorDB {
 
     // 開く処理が進行中の場合は、同じPromiseを返す
     if (this.openPromise) {
-      console.log('⏳ データベース接続処理が進行中です...');
+      logger.debug('データベース接続処理が進行中です...');
       return this.openPromise;
     }
 
@@ -212,7 +214,7 @@ export class YieldCalculatorDB {
         const error = request.error;
 
         // エラーの詳細情報をログ出力（Safari デバッグ用）
-        console.error('[エラー]  IndexedDB接続エラー詳細:', {
+        logger.error('IndexedDB接続エラー詳細:', {
           name: error?.name || 'Unknown',
           message: error?.message || 'No message',
           code: error?.code || 'No code',
@@ -233,19 +235,19 @@ export class YieldCalculatorDB {
 
         if (isVersionError) {
           // VersionErrorは致命的なエラー - リトライ絶対不可
-          console.error('⛔ VersionError: データベースバージョンの競合が発生しました');
-          console.error('[警告] ️ このエラーはリトライできません');
-          console.error('[ヒント]  対処方法:');
-          console.error('   1. すべてのタブを閉じる');
-          console.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
-          console.error('   3. それでも解決しない場合、ハードリロード (Cmd+Shift+R / Ctrl+Shift+R)');
-          console.error('   4. 最終手段: データベースを削除');
+          logger.error('VersionError: データベースバージョンの競合が発生しました');
+          logger.error('このエラーはリトライできません');
+          logger.error('対処方法:');
+          logger.error('   1. すべてのタブを閉じる');
+          logger.error('   2. ページを再読み込み (Cmd+R / Ctrl+R)');
+          logger.error('   3. それでも解決しない場合、ハードリロード (Cmd+Shift+R / Ctrl+Shift+R)');
+          logger.error('   4. 最終手段: データベースを削除');
 
           // iOS Safari対応: DBリセットボタンを表示
           const resetButton = document.getElementById('reset-db-button');
           if (resetButton) {
             resetButton.style.display = 'inline-block';
-            console.log('[ヒント]  画面上部の「 DBリセット」ボタンを押してデータベースをリセットしてください');
+            logger.info('画面上部の「DBリセット」ボタンを押してデータベースをリセットしてください');
           }
 
           // 自動的にユーザーに確認ダイアログを表示
@@ -278,7 +280,7 @@ export class YieldCalculatorDB {
                   alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
                 };
               } catch (err) {
-                console.error('データベース削除エラー:', err);
+                logger.error('データベース削除エラー:', err);
                 alert('データベースの削除に失敗しました。ページを再読み込みしてください。');
               }
             } else {
@@ -297,22 +299,22 @@ export class YieldCalculatorDB {
         const isRetriableError = error && !isPrivateModeError && !isVersionError;
 
         if (isRetriableError && retryCount < this.maxRetries) {
-          console.warn(` データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
+          logger.warn(`データベース接続リトライ ${retryCount + 1}/${this.maxRetries}:`, error.name);
           // Safari対応: 指数バックオフの遅延を強化 (300ms, 600ms, 900ms)
           await this.sleep(300 * (retryCount + 1));
           try {
             const db = await this.open(retryCount + 1);
-            console.log(`✅  リトライ成功 (試行 ${retryCount + 1})`);
+            logger.info(`リトライ成功 (試行 ${retryCount + 1})`);
             resolve(db);
           } catch (retryError) {
-            console.error(`[エラー]  リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
+            logger.error(`リトライ失敗 (試行 ${retryCount + 1}):`, retryError);
             reject(retryError);
           }
         } else {
           if (!isRetriableError) {
-            console.error('⛔ リトライ不可能なエラー（プライベートモード等）');
+            logger.error('リトライ不可能なエラー（プライベートモード等）');
           } else {
-            console.error(`⛔ 最大リトライ回数に達しました (${this.maxRetries}回)`);
+            logger.error(`最大リトライ回数に達しました (${this.maxRetries}回)`);
           }
           reject(createUserFriendlyError(error, 'データベースを開く'));
         }
@@ -325,12 +327,12 @@ export class YieldCalculatorDB {
 
         // データベース接続エラーを監視
         this.db.onerror = (event) => {
-          console.error('IndexedDB error:', event.target.error);
+          logger.error('IndexedDB error:', event.target.error);
         };
 
         // Safariでのバージョン競合対策
         this.db.onversionchange = () => {
-          console.warn('IndexedDB version change detected, closing connection');
+          logger.warn('IndexedDB version change detected, closing connection');
           this.db.close();
           this.db = null;
         };
@@ -344,7 +346,7 @@ export class YieldCalculatorDB {
         const oldVersion = event.oldVersion;
         const newVersion = event.newVersion;
 
-        console.log(` データベース更新: v${oldVersion} → v${newVersion}`);
+        logger.info(`データベース更新: v${oldVersion} → v${newVersion}`);
 
         try {
           let store;
@@ -361,7 +363,7 @@ export class YieldCalculatorDB {
             store.createIndex('name', 'name', { unique: false });
             store.createIndex('mode', 'mode', { unique: false });
             store.createIndex('category', 'category', { unique: false });
-            console.log('✅  オブジェクトストアとインデックスを作成しました');
+            logger.info('オブジェクトストアとインデックスを作成しました');
           } else {
             // 既存のストアを取得
             store = transaction.objectStore(STORE_NAME);
@@ -371,7 +373,7 @@ export class YieldCalculatorDB {
           if (oldVersion < 2) {
             if (!store.indexNames.contains('firestoreId')) {
               store.createIndex('firestoreId', 'firestoreId', { unique: false });
-              console.log('✅  firestoreIdインデックスを追加しました');
+              logger.info('firestoreIdインデックスを追加しました');
             }
           }
 
@@ -381,9 +383,9 @@ export class YieldCalculatorDB {
               // 最初はunique: trueで作成していたが、これは失敗する可能性がある
               try {
                 store.createIndex('uuid', 'uuid', { unique: true });
-                console.log('✅  uuidインデックスを追加しました（v3）');
+                logger.info('uuidインデックスを追加しました（v3）');
               } catch (e) {
-                console.warn('[警告] ️ uuidインデックス作成失敗（想定内）:', e.message);
+                logger.warn('uuidインデックス作成失敗（想定内）:', e.message);
               }
             }
           }
@@ -405,12 +407,12 @@ export class YieldCalculatorDB {
             // 既存のuuidインデックスを削除（存在する場合）
             if (store.indexNames.contains('uuid')) {
               store.deleteIndex('uuid');
-              console.log('[削除]  既存のuuidインデックスを削除しました');
+              logger.info('既存のuuidインデックスを削除しました');
             }
 
             // unique: falseで再作成
             store.createIndex('uuid', 'uuid', { unique: false });
-            console.log('✅  uuidインデックスを再作成しました（unique: false）');
+            logger.info('uuidインデックスを再作成しました（unique: false）');
 
             // 既存データにUUIDを付与するマイグレーション
             const cursorRequest = store.openCursor();
@@ -429,24 +431,24 @@ export class YieldCalculatorDB {
                 cursor.continue();
               } else {
                 if (migratedCount > 0) {
-                  console.log(`✅  ${migratedCount}件のデータにUUIDを付与しました`);
+                  logger.info(`${migratedCount}件のデータにUUIDを付与しました`);
                 }
               }
             };
 
             cursorRequest.onerror = () => {
-              console.error('[エラー]  UUIDマイグレーションエラー:', cursorRequest.error);
+              logger.error('UUIDマイグレーションエラー:', cursorRequest.error);
             };
           }
         } catch (error) {
-          console.error('Failed to upgrade database schema:', error);
+          logger.error('Failed to upgrade database schema:', error);
           reject(createUserFriendlyError(error, 'データベーススキーマの更新'));
         }
       };
 
       request.onblocked = async (event) => {
-        console.warn('[警告] ️ IndexedDB接続がブロックされました（他のタブでDBが開かれている可能性）');
-        console.log('ブロックイベント詳細:', {
+        logger.warn('IndexedDB接続がブロックされました（他のタブでDBが開かれている可能性）');
+        logger.debug('ブロックイベント詳細:', {
           oldVersion: event.oldVersion,
           newVersion: event.newVersion,
           retryCount,
@@ -458,17 +460,17 @@ export class YieldCalculatorDB {
           try {
             const channel = new BroadcastChannel('indexeddb-control');
             channel.postMessage({ type: 'REQUEST_CLOSE_DB', dbName: DB_NAME });
-            console.log('📢 他のタブにDB接続クローズを要求しました');
+            logger.info('他のタブにDB接続クローズを要求しました');
             channel.close();
           } catch (err) {
-            console.warn('BroadcastChannel送信エラー:', err);
+            logger.warn('BroadcastChannel送信エラー:', err);
           }
         }
 
         // ブロックされた場合、少し待機してからタイムアウト
         setTimeout(() => {
           if (this.openPromise) {
-            console.error('⏱️ データベース接続タイムアウト（10秒）');
+            logger.error('データベース接続タイムアウト（10秒）');
             this.openPromise = null;
             reject(createUserFriendlyError(
               new Error('Database connection blocked'),
@@ -497,7 +499,7 @@ export class YieldCalculatorDB {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
         transaction.onerror = () => {
           this.logTransactionEnd('save', false);
-          console.error('トランザクションエラー [save]:', {
+          logger.error('トランザクションエラー [save]:', {
             error: transaction.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -526,7 +528,7 @@ export class YieldCalculatorDB {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => {
           this.logTransactionEnd('save', false);
-          console.error('リクエストエラー [save]:', {
+          logger.error('リクエストエラー [save]:', {
             error: request.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -535,7 +537,7 @@ export class YieldCalculatorDB {
         };
       } catch (error) {
         this.logTransactionEnd('save', false);
-        console.error('例外エラー [save]:', {
+        logger.error('例外エラー [save]:', {
           error,
           activeTransactions: this.activeTransactions,
           timestamp: new Date().toISOString()
@@ -740,7 +742,7 @@ export class YieldCalculatorDB {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
         transaction.onerror = () => {
           this.logTransactionEnd('update', false);
-          console.error('トランザクションエラー [update]:', {
+          logger.error('トランザクションエラー [update]:', {
             error: transaction.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -784,7 +786,7 @@ export class YieldCalculatorDB {
           updateRequest.onsuccess = () => resolve();
           updateRequest.onerror = () => {
             this.logTransactionEnd('update', false);
-            console.error('リクエストエラー [update]:', {
+            logger.error('リクエストエラー [update]:', {
               error: updateRequest.error,
               activeTransactions: this.activeTransactions,
               timestamp: new Date().toISOString()
@@ -795,7 +797,7 @@ export class YieldCalculatorDB {
 
         getRequest.onerror = () => {
           this.logTransactionEnd('update', false);
-          console.error('リクエストエラー [update/get]:', {
+          logger.error('リクエストエラー [update/get]:', {
             error: getRequest.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -804,7 +806,7 @@ export class YieldCalculatorDB {
         };
       } catch (error) {
         this.logTransactionEnd('update', false);
-        console.error('例外エラー [update]:', {
+        logger.error('例外エラー [update]:', {
           error,
           activeTransactions: this.activeTransactions,
           timestamp: new Date().toISOString()
@@ -829,7 +831,7 @@ export class YieldCalculatorDB {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
         transaction.onerror = () => {
           this.logTransactionEnd('softDelete', false);
-          console.error('トランザクションエラー [softDelete]:', {
+          logger.error('トランザクションエラー [softDelete]:', {
             error: transaction.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -866,7 +868,7 @@ export class YieldCalculatorDB {
           updateRequest.onsuccess = () => resolve();
           updateRequest.onerror = () => {
             this.logTransactionEnd('softDelete', false);
-            console.error('リクエストエラー [softDelete]:', {
+            logger.error('リクエストエラー [softDelete]:', {
               error: updateRequest.error,
               activeTransactions: this.activeTransactions,
               timestamp: new Date().toISOString()
@@ -877,7 +879,7 @@ export class YieldCalculatorDB {
 
         getRequest.onerror = () => {
           this.logTransactionEnd('softDelete', false);
-          console.error('リクエストエラー [softDelete/get]:', {
+          logger.error('リクエストエラー [softDelete/get]:', {
             error: getRequest.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -886,7 +888,7 @@ export class YieldCalculatorDB {
         };
       } catch (error) {
         this.logTransactionEnd('softDelete', false);
-        console.error('例外エラー [softDelete]:', {
+        logger.error('例外エラー [softDelete]:', {
           error,
           activeTransactions: this.activeTransactions,
           timestamp: new Date().toISOString()
@@ -911,7 +913,7 @@ export class YieldCalculatorDB {
         const transaction = this.db.transaction([STORE_NAME], 'readwrite');
         transaction.onerror = () => {
           this.logTransactionEnd('hardDelete', false);
-          console.error('トランザクションエラー [hardDelete]:', {
+          logger.error('トランザクションエラー [hardDelete]:', {
             error: transaction.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -929,7 +931,7 @@ export class YieldCalculatorDB {
         request.onsuccess = () => resolve();
         request.onerror = () => {
           this.logTransactionEnd('hardDelete', false);
-          console.error('リクエストエラー [hardDelete]:', {
+          logger.error('リクエストエラー [hardDelete]:', {
             error: request.error,
             activeTransactions: this.activeTransactions,
             timestamp: new Date().toISOString()
@@ -938,7 +940,7 @@ export class YieldCalculatorDB {
         };
       } catch (error) {
         this.logTransactionEnd('hardDelete', false);
-        console.error('例外エラー [hardDelete]:', {
+        logger.error('例外エラー [hardDelete]:', {
           error,
           activeTransactions: this.activeTransactions,
           timestamp: new Date().toISOString()
@@ -1013,12 +1015,12 @@ export class YieldCalculatorDB {
         count++;
       } catch (error) {
         errors.push({ item, error: error.message });
-        console.error('Failed to import item:', item, error);
+        logger.error('Failed to import item:', item, error);
       }
     }
 
     if (errors.length > 0) {
-      console.warn(`Imported ${count} items with ${errors.length} errors`);
+      logger.warn(`Imported ${count} items with ${errors.length} errors`);
     }
 
     return { count, errors };
@@ -1074,7 +1076,7 @@ if (typeof window !== 'undefined') {
   // ページを離れる前にDB接続をクローズ（リロード、別ページへの移動）
   window.addEventListener('beforeunload', () => {
     if (db.db) {
-      console.log('ページ離脱: IndexedDB接続をクローズ');
+      logger.debug('ページ離脱: IndexedDB接続をクローズ');
       db.close();
     }
   });
@@ -1082,7 +1084,7 @@ if (typeof window !== 'undefined') {
   // ページがフリーズされる前にクローズ（モバイルSafari bfcache対応）
   window.addEventListener('pagehide', () => {
     if (db.db) {
-      console.log('ページ隠蔽: IndexedDB接続をクローズ');
+      logger.debug('ページ隠蔽: IndexedDB接続をクローズ');
       db.close();
     }
   });
@@ -1094,15 +1096,15 @@ if (typeof window !== 'undefined') {
       const dbControlChannel = new BroadcastChannel('indexeddb-control');
       dbControlChannel.addEventListener('message', (event) => {
         if (event.data.type === 'REQUEST_CLOSE_DB' && event.data.dbName === DB_NAME) {
-          console.log('📨 他のタブからDB接続クローズ要求を受信');
+          logger.debug('他のタブからDB接続クローズ要求を受信');
           if (db.db) {
-            console.log('🔒 DB接続をクローズします');
+            logger.debug('DB接続をクローズします');
             db.close();
           }
         }
       });
     } catch (err) {
-      console.warn('BroadcastChannel初期化エラー:', err);
+      logger.warn('BroadcastChannel初期化エラー:', err);
     }
   }
 
@@ -1112,7 +1114,7 @@ if (typeof window !== 'undefined') {
      * データベース状態を表示
      */
     getStatus: () => {
-      console.log(' IndexedDB 状態:', {
+      logger.info('IndexedDB 状態:', {
         isOpen: !!db.db,
         activeTransactions: db.activeTransactions,
         openPromise: !!db.openPromise,
@@ -1126,7 +1128,7 @@ if (typeof window !== 'undefined') {
      */
     getTransactionLog: () => {
       const log = db.getTransactionLog();
-      console.log('📜 トランザクションログ (最新50件):', log);
+      logger.info('トランザクションログ (最新50件):', log);
       return log;
     },
 
@@ -1141,22 +1143,22 @@ if (typeof window !== 'undefined') {
      * データベースを強制的にクローズ
      */
     forceClose: () => {
-      console.log('🔒 データベースを強制クローズします...');
+      logger.info('データベースを強制クローズします...');
       db.close();
-      console.log('✅  クローズ完了');
+      logger.info('クローズ完了');
     },
 
     /**
      * データベースを強制的に再接続
      */
     forceReconnect: async () => {
-      console.log(' データベースを再接続します...');
+      logger.info('データベースを再接続します...');
       db.close();
       try {
         await db.open();
-        console.log('✅  再接続成功');
+        logger.info('再接続成功');
       } catch (err) {
-        console.error('[エラー]  再接続失敗:', err);
+        logger.error('再接続失敗:', err);
       }
     },
 
@@ -1164,7 +1166,7 @@ if (typeof window !== 'undefined') {
      * データベースを完全に削除（VersionError対策）
      */
     deleteDatabase: async () => {
-      console.warn('[警告] ️ データベースを完全に削除します。すべてのデータが失われます！');
+      logger.warn('データベースを完全に削除します。すべてのデータが失われます！');
       const confirmed = confirm(
         'IndexedDBデータベースを削除しますか？\n\n' +
         'この操作により、すべてのローカルデータが削除されます。\n' +
@@ -1173,35 +1175,35 @@ if (typeof window !== 'undefined') {
       );
 
       if (!confirmed) {
-        console.log('[エラー]  キャンセルされました');
+        logger.info('キャンセルされました');
         return;
       }
 
       try {
         // DB接続を閉じる
         db.close();
-        console.log('🔒 DB接続をクローズしました');
+        logger.info('DB接続をクローズしました');
 
         // DBを削除
         const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
 
         deleteRequest.onsuccess = () => {
-          console.log('✅  データベースを削除しました');
-          console.log('[ヒント]  ページを再読み込みしてください');
+          logger.info('データベースを削除しました');
+          logger.info('ページを再読み込みしてください');
           alert('データベースを削除しました。ページを再読み込みしてください。');
         };
 
         deleteRequest.onerror = (event) => {
-          console.error('[エラー]  データベース削除エラー:', event.target.error);
+          logger.error('データベース削除エラー:', event.target.error);
           alert('データベースの削除に失敗しました。');
         };
 
         deleteRequest.onblocked = () => {
-          console.warn('[警告] ️ データベース削除がブロックされました。すべてのタブを閉じてください。');
+          logger.warn('データベース削除がブロックされました。すべてのタブを閉じてください。');
           alert('データベース削除がブロックされました。すべてのタブを閉じてから再試行してください。');
         };
       } catch (err) {
-        console.error('[エラー]  データベース削除に失敗:', err);
+        logger.error('データベース削除に失敗:', err);
       }
     },
 
@@ -1209,17 +1211,18 @@ if (typeof window !== 'undefined') {
      * 全てのデバッグ情報を表示
      */
     showAll: () => {
-      console.log('=== IndexedDB デバッグ情報 ===');
+      logger.info('=== IndexedDB デバッグ情報 ===');
       window.debugIndexedDB.getStatus();
       window.debugIndexedDB.checkEnvironment();
       window.debugIndexedDB.getTransactionLog();
     }
   };
 
-  console.log('🛠️ デバッグヘルパー関数が利用可能です: window.debugIndexedDB');
-  console.log('   - debugIndexedDB.getStatus() - データベース状態を表示');
-  console.log('   - debugIndexedDB.getTransactionLog() - トランザクションログを表示');
-  console.log('   - debugIndexedDB.checkEnvironment() - 環境情報を表示');
-  console.log('   - debugIndexedDB.deleteDatabase() - データベースを削除（VersionError対策）');
-  console.log('   - debugIndexedDB.showAll() - 全情報を表示');
+  // デバッグヘルパー関数の利用可能通知（開発環境のみ表示）
+  logger.debug('デバッグヘルパー関数が利用可能です: window.debugIndexedDB');
+  logger.debug('   - debugIndexedDB.getStatus() - データベース状態を表示');
+  logger.debug('   - debugIndexedDB.getTransactionLog() - トランザクションログを表示');
+  logger.debug('   - debugIndexedDB.checkEnvironment() - 環境情報を表示');
+  logger.debug('   - debugIndexedDB.deleteDatabase() - データベースを削除（VersionError対策）');
+  logger.debug('   - debugIndexedDB.showAll() - 全情報を表示');
 }

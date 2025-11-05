@@ -3,6 +3,8 @@
  * ページリロード後も入力値とモードを保持
  */
 
+import { logger } from './core/logger.js';
+
 import { qs } from './dom-utils.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES, TIME } from './constants.js';
 
@@ -103,7 +105,7 @@ export function saveSessionState(mode) {
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
   } catch (error) {
-    console.error('Failed to save session state:', error);
+    logger.error('Failed to save session state:', error);
   }
 }
 
@@ -128,7 +130,7 @@ export function restoreSessionState() {
 
     return sessionData;
   } catch (error) {
-    console.error('Failed to restore session state:', error);
+    logger.error('Failed to restore session state:', error);
     return null;
   }
 }
@@ -140,7 +142,7 @@ export function clearSessionState() {
   try {
     localStorage.removeItem(SESSION_KEY);
   } catch (error) {
-    console.error('Failed to clear session state:', error);
+    logger.error('Failed to clear session state:', error);
   }
 }
 

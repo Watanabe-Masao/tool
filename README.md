@@ -6,6 +6,10 @@
 [![Offline First](https://img.shields.io/badge/Offline-First-green.svg)](https://web.dev/offline-first/)
 [![Mobile Friendly](https://img.shields.io/badge/Mobile-Friendly-orange.svg)](https://search.google.com/test/mobile-friendly)
 
+[![CI](https://github.com/Watanabe-Masao/tool/workflows/CI/badge.svg)](https://github.com/Watanabe-Masao/tool/actions/workflows/ci.yml)
+[![PR Checks](https://github.com/Watanabe-Masao/tool/workflows/PR%20Checks/badge.svg)](https://github.com/Watanabe-Masao/tool/actions/workflows/pr-checks.yml)
+[![codecov](https://codecov.io/gh/Watanabe-Masao/tool/branch/main/graph/badge.svg)](https://codecov.io/gh/Watanabe-Masao/tool)
+
 ## 目次
 - [主な機能](#-主な機能)
 - [フローチャート](#-フローチャート)

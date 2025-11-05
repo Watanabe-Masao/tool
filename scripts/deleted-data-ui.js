@@ -2,6 +2,8 @@
  * 論理削除データ管理UI
  */
 
+import { logger } from './core/logger.js';
+
 import { getDeletedHistory, hardDeleteHistory } from './storage.js';
 import { qs } from './dom-utils.js';
 import { showToast } from './toast.js';
@@ -14,7 +16,7 @@ import { isSignedIn } from './firebase-auth.js';
 export async function showDeletedDataModal() {
   const modal = qs('#deletedDataModal');
   if (!modal) {
-    console.error('論理削除データ管理モーダルが見つかりません');
+    logger.error('論理削除データ管理モーダルが見つかりません');
     return;
   }
 
@@ -33,7 +35,7 @@ export async function showDeletedDataModal() {
     // 論理削除データを取得して表示
     await renderDeletedDataList();
   } catch (error) {
-    console.error('論理削除データ管理モーダルを開く際にエラーが発生しました:', error);
+    logger.error('論理削除データ管理モーダルを開く際にエラーが発生しました:', error);
     showToast('[エラー]  論理削除データを読み込めませんでした', 'error');
   }
 }
@@ -79,7 +81,7 @@ async function renderDeletedDataList() {
       });
     });
   } catch (error) {
-    console.error('論理削除データの描画エラー:', error);
+    logger.error('論理削除データの描画エラー:', error);
     listContainer.innerHTML = '<div class="error-message">[エラー]  データの読み込みに失敗しました</div>';
   }
 }
@@ -133,7 +135,7 @@ async function handleHardDelete(id) {
     // リストを再描画
     await renderDeletedDataList();
   } catch (error) {
-    console.error('完全削除エラー:', error);
+    logger.error('完全削除エラー:', error);
     showToast('[エラー]  完全削除に失敗しました', 'error');
   }
 }

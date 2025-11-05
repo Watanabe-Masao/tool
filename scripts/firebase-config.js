@@ -1,15 +1,17 @@
 /**
  * Firebase設定ファイル
  *
- * 使い方：
- * 1. Firebaseコンソール (https://console.firebase.google.com/) でプロジェクトを作成
- * 2. プロジェクト設定 > 全般 > マイアプリ > ウェブアプリを追加
- * 3. 以下の設定値をFirebaseコンソールからコピー
- * 4. Authentication > Sign-in method で「匿名」と「メール/パスワード」を有効化
- * 5. Firestore Database を作成（テストモードで開始）
+ * ⚠️ セキュリティ警告: このファイルは機密情報を含むため、Gitリポジトリから除外されています
+ *
+ * セットアップ手順：
+ * 1. firebase-config.example.js からこのファイルを作成
+ * 2. Firebaseコンソールから取得した実際の設定値に置き換える
+ *
+ * 注意: このファイルを公開リポジトリにコミットしないでください
  */
 
 // Firebase設定値（プロジェクト情報から取得）
+// 本番環境用の設定値（このファイルは .gitignore に含まれています）
 export const firebaseConfig = {
   apiKey: "AIzaSyA7UMMKgnwweA8PJYQIL7zvhBexqyiCi0k",
   authDomain: "yield-calculator-ffc3a.firebaseapp.com",

@@ -3,6 +3,8 @@
  * 失敗した操作を自動的に再試行する機能を提供
  */
 
+import { logger } from './core/logger.js';
+
 import { isRetryableError } from './errors.js';
 
 /**
@@ -55,7 +57,7 @@ export async function retryWithBackoff(fn, options = {}) {
       const jitter = Math.random() * 0.3 * exponentialDelay; // 0-30%のランダム性
       const delay = Math.floor(exponentialDelay + jitter);
 
-      console.warn(
+      logger.warn(
         `[警告] ️ リトライ ${attempt}/${maxRetries}: ${delay}ms後に再試行`,
         { error: error.message, code: error.code, name: error.name }
       );
@@ -65,7 +67,7 @@ export async function retryWithBackoff(fn, options = {}) {
         try {
           await onRetry(attempt, error, delay);
         } catch (callbackError) {
-          console.error('リトライコールバックでエラー:', callbackError);
+          logger.error('リトライコールバックでエラー:', callbackError);
         }
       }
 
@@ -110,7 +112,7 @@ export async function retryFailedTasks(tasks, options = {}) {
       const result = await retryWithBackoff(tasks[i], options);
       results.push({ index: i, success: true, data: result });
     } catch (error) {
-      console.error(`タスク ${i + 1}/${tasks.length} が全てのリトライ後に失敗:`, error);
+      logger.error(`タスク ${i + 1}/${tasks.length} が全てのリトライ後に失敗:`, error);
       results.push({ index: i, success: false, error });
       errors.push({ index: i, error });
     }

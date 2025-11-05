@@ -22,7 +22,7 @@ export function switchToMode(mode) {
   // 歩留まり統計表示フラグの管理
   if (currentMode === MODE.YIELD_STATS && isMultiPattern) {
     // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
-    const data = appState.getYieldStatsData();
+    const data = appState.getYieldStatsRawData();
     appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData(data);
   } else if (isMultiPattern && currentMode !== MODE.YIELD_STATS) {
     // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示

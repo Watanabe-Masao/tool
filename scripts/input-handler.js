@@ -10,6 +10,7 @@ import {
   UI_ELEMENTS,
   DISCOUNT
 } from './constants.js';
+import { debounce } from './debounce.js';
 
 /**
  * 定額モードの入力フィールドリストを取得
@@ -116,17 +117,24 @@ export function setupDiscountSlider(onChangeCallback) {
   const slider = qs(`#${UI_ELEMENTS.DISC_SLIDER}`);
   const input = qs(`#${UI_ELEMENTS.DISC_INPUT}`);
 
+  // コールバックをデバウンスしてパフォーマンスを向上
+  const debouncedCallback = debounce(onChangeCallback, 300);
+
   slider?.addEventListener('input', (e) => {
+    // 値の同期は即座に実行（UI応答性のため）
     input.value = e.target.value;
-    onChangeCallback();
+    // 計算などの重い処理はデバウンス
+    debouncedCallback();
   });
 
   input?.addEventListener('input', (e) => {
     let v = parseFloat(e.target.value) || 0;
     v = Math.max(DISCOUNT.MIN, Math.min(DISCOUNT.MAX, v));
+    // 値の同期は即座に実行
     e.target.value = v;
     slider.value = Math.min(v, DISCOUNT.SLIDER_MAX);
-    onChangeCallback();
+    // 計算などの重い処理はデバウンス
+    debouncedCallback();
   });
 }
 
