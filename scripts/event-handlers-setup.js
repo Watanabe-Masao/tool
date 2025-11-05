@@ -330,6 +330,22 @@ function init() {
             setTimeout(() => {
               loadAllStatsToMultiPattern(true);
             }, delay);
+          } else {
+            // 「いいえ」を選択した場合、歩留まり統計をクリアして非表示にする
+            appState.showYieldStatsWithMultiPattern = false;
+            appState.setYieldStatsData(null);
+            window.statsDataByType = {};
+            window.lastCalculatedStats = null;
+
+            // 歩留まり統計のテーブルと結果をクリア
+            clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
+            hide('yieldStatsResults');
+
+            // 歩留まり統計のDOM要素を非表示
+            const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+            if (yieldStatsInputs) {
+              yieldStatsInputs.classList.add('is-hidden');
+            }
           }
 
           return;
@@ -733,6 +749,22 @@ function init() {
       setTimeout(() => {
         loadAllStatsToMultiPattern(true);
       }, delay);
+    } else {
+      // 「いいえ」を選択した場合、歩留まり統計をクリアして非表示にする
+      appState.showYieldStatsWithMultiPattern = false;
+      appState.setYieldStatsData(null);
+      window.statsDataByType = {};
+      window.lastCalculatedStats = null;
+
+      // 歩留まり統計のテーブルと結果をクリア
+      clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
+      hide('yieldStatsResults');
+
+      // 歩留まり統計のDOM要素を非表示
+      const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+      if (yieldStatsInputs) {
+        yieldStatsInputs.classList.add('is-hidden');
+      }
     }
   });
 
