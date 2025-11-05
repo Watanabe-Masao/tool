@@ -186,6 +186,11 @@ export function displaySampleSizeValidation(
     };
   }
 
+  // サンプルサイズが不十分な場合、statsDataByTypeをnullに設定（推奨値として使用不可）
+  if (!isValid && window.statsDataByType) {
+    window.statsDataByType[statsType] = null;
+  }
+
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   if (finalValues.length >= 2) {
     // サンプルサイズが妥当な場合のみグローバルに保存

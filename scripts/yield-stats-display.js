@@ -85,6 +85,12 @@ function displayCurrentStatistics() {
   ['yieldRate', 'beforeWeight', 'afterWeight'].forEach(type => {
     if (data[type] && Array.isArray(data[type]) && data[type].length >= 2) {
       window.statsDataByType[type] = calculateStatistics(data[type]);
+
+      // サンプルサイズ妥当性情報がある場合、不十分なら統計データをnullに設定
+      const validation = window.yieldStatsState?.sampleSizeValidation?.[type];
+      if (validation && !validation.isValid) {
+        window.statsDataByType[type] = null;
+      }
     } else {
       window.statsDataByType[type] = null;
     }
@@ -201,8 +207,16 @@ function displayCurrentStatistics() {
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
 
-  // 後方互換性のため、従来の変数も維持
-  window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+  // 後方互換性のため、従来の変数も維持（サンプルサイズが妥当な場合のみ）
+  // 許容誤差が入力されている場合はその妥当性を、未入力の場合は保存済みの妥当性を使用
+  const validation = window.yieldStatsState?.sampleSizeValidation?.[actualSelectedType];
+  const isSampleSizeValid = validation ? validation.isValid : true; // 妥当性情報がない場合はtrue（後方互換性）
+
+  if (isSampleSizeValid) {
+    window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+  } else {
+    window.lastCalculatedStats = null; // サンプルサイズ不十分の場合はnull
+  }
 
   // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
   const toleranceErrorInput = qs('#toleranceError');
@@ -210,9 +224,9 @@ function displayCurrentStatistics() {
 
   displaySampleSizeValidation();
 
-  // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
+  // 許容誤差が未入力の場合も推奨代表値を表示（ただしサンプルサイズが妥当な場合のみ）
   if (!hasTolerance) {
-    displayRecommendedValue(finalStats, true, actualSelectedType);
+    displayRecommendedValue(finalStats, isSampleSizeValid, actualSelectedType);
   }
 }
 
@@ -541,6 +555,11 @@ function displaySampleSizeValidation() {
       actualSize: actualSampleSize,
       requiredSize: requiredSampleSize
     };
+  }
+
+  // サンプルサイズが不十分な場合、statsDataByTypeをnullに設定（推奨値として使用不可）
+  if (!isValid && window.statsDataByType) {
+    window.statsDataByType[statsType] = null;
   }
 
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
