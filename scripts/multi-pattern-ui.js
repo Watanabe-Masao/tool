@@ -713,7 +713,7 @@ function calculateBreakEvenPrices() {
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = '✅  挿入完了！';
+      btn.innerHTML = '<i class="fa-regular fa-circle-check"></i> 挿入完了！';
       setTimeout(() => {
         btn.textContent = ' 値入率分岐点を一括挿入';
       }, 2000);
@@ -868,7 +868,7 @@ function applyTargetMarkupPrices() {
   if (updatedCount > 0) {
     // 成功メッセージを表示
     if (btn) {
-      btn.textContent = `✅  挿入完了！（${toFixed(targetMarkup, 1)}%）`;
+      btn.innerHTML = `<i class="fa-regular fa-circle-check"></i> 挿入完了！（${toFixed(targetMarkup, 1)}%）`;
       setTimeout(() => {
         btn.textContent = ' 売価を挿入';
       }, 2000);
@@ -1123,6 +1123,10 @@ export function setStatValue(value, statType, productName = '') {
   const productNameEl = document.getElementById('multiPatternProductName');
   if (productNameEl && productName) {
     productNameEl.value = productName;
+    // 歩留まり統計から読み込んだ場合は読み取り専用にして動的連動を有効化
+    productNameEl.setAttribute('readonly', 'readonly');
+    productNameEl.style.backgroundColor = '#f0f0f0';
+    productNameEl.style.cursor = 'not-allowed';
   }
 
   // 現在のモードを取得（モードは変更しない）

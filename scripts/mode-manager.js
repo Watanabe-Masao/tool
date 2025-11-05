@@ -165,6 +165,10 @@ export function clearFixedInputs() {
     FIXED_FIELDS.DIRECT.YIELD_RATE,
     FIXED_FIELDS.DIRECT.AFTER_PRICE_100
   ]);
+
+  // 内部キャッシュ（計算結果のスナップショット、プロダクトデータ）をクリア
+  appState.snapshot.reset();
+  appState.productData.reset();
 }
 
 /**
@@ -190,6 +194,10 @@ export function clearWeightInputs() {
 
   setText(UI_ELEMENTS.PER_100G_DISPLAY, '-');
   setText(UI_ELEMENTS.PER_100G_DISPLAY_DIRECT, '-');
+
+  // 内部キャッシュ（計算結果のスナップショット、プロダクトデータ）をクリア
+  appState.snapshot.reset();
+  appState.productData.reset();
 }
 
 /**
@@ -206,6 +214,26 @@ export function clearYieldStatsInputs(addYieldStatsRowCallback) {
     tbody.innerHTML = '';
     if (typeof addYieldStatsRowCallback === 'function') {
       addYieldStatsRowCallback();
+    }
+  }
+
+  // 統計結果表示を非表示にする
+  const yieldStatsResults = qs('#yieldStatsResults');
+  if (yieldStatsResults) {
+    yieldStatsResults.classList.add('is-hidden');
+  }
+
+  // 複数パターン分析で使用する統計データのグローバル変数もクリア
+  if (typeof window !== 'undefined') {
+    window.statsDataByType = null;
+    window.lastCalculatedStats = null;
+    // サンプルサイズ妥当性情報もクリア
+    if (window.yieldStatsState) {
+      window.yieldStatsState.sampleSizeValidation = {
+        yieldRate: null,
+        beforeWeight: null,
+        afterWeight: null
+      };
     }
   }
 }
@@ -254,23 +282,29 @@ export function handleModeSwitch(newMode, callbacks = {}) {
 export function switchMode(newMode, callbacks = {}) {
   const currentMode = appState.getMode();
 
+  // 歩留まり統計⇔複数パターン分析の切り替えかどうかを判定
+  const isYieldStatsToMultiPattern = currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN;
+  const isMultiPatternToYieldStats = currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS;
+  const isYieldStatsMultiPatternSwitch = isYieldStatsToMultiPattern || isMultiPatternToYieldStats;
+
   // 現在のモードの入力値をクリア
   // 歩留まり統計⇔複数パターン分析の切り替えではデータをクリアしない
-  const isYieldStatsMultiPatternSwitch =
-    (currentMode === MODE.YIELD_STATS && newMode === MODE.MULTI_PATTERN) ||
-    (currentMode === MODE.MULTI_PATTERN && newMode === MODE.YIELD_STATS);
-
   if (!isYieldStatsMultiPatternSwitch) {
     if (currentMode === MODE.FIXED) {
       clearFixedInputs();
     } else if (currentMode === MODE.WEIGHT) {
       clearWeightInputs();
     } else if (currentMode === MODE.YIELD_STATS) {
+      // 歩留まり統計から他のモード（定量/計量）に切り替える場合
       clearYieldStatsInputs(callbacks.addYieldStatsRow);
 
-      // 注意：統計データは複数パターン分析で使用するため、ここではクリアしない
+      // 統計データ（キャッシュ）もクリア
+      appState.setYieldStatsData(null);
+
+      // 複数パターン分析のUIもクリア
+      resetMultiPatternUI();
     } else if (currentMode === MODE.MULTI_PATTERN) {
-      // 複数パターン分析モードのクリア処理
+      // 複数パターン分析から他のモードに切り替える場合
       resetMultiPatternUI();
     }
   }
@@ -290,6 +324,9 @@ export function switchMode(newMode, callbacks = {}) {
     // 歩留まり統計から複数パターン分析に切り替えた場合、データがある場合のみ表示
     const data = appState.getYieldStatsData();
     appState.showYieldStatsWithMultiPattern = hasValidYieldStatsData(data);
+  } else if (currentMode === MODE.YIELD_STATS && (newMode === MODE.FIXED || newMode === MODE.WEIGHT)) {
+    // 歩留まり統計から定額/計量に切り替えた場合はフラグをリセット
+    appState.showYieldStatsWithMultiPattern = false;
   } else if (newMode === MODE.MULTI_PATTERN && currentMode !== MODE.YIELD_STATS) {
     // 歩留まり統計以外から複数パターン分析に切り替えた場合は非表示
     appState.showYieldStatsWithMultiPattern = false;
@@ -322,6 +359,26 @@ export function switchMode(newMode, callbacks = {}) {
   if (activeBtn) {
     activeBtn.classList.add('is-active');
     activeBtn.setAttribute('aria-selected', 'true');
+  }
+
+  // モードボタンの表示/非表示を制御（歩留まり統計と複数パターン分析の2画面モード）
+  const fixedBtn = qs(`#${UI_ELEMENTS.FIXED_BTN}`);
+  const weightBtn = qs(`#${UI_ELEMENTS.WEIGHT_BTN}`);
+  const yieldStatsBtn = qs(`#${UI_ELEMENTS.YIELD_STATS_BTN}`);
+  const multiPatternBtnElement = qs(`#${UI_ELEMENTS.MULTI_PATTERN_BTN}`);
+
+  if (appState.showYieldStatsWithMultiPattern) {
+    // 歩留まり統計と複数パターン分析の2画面モード：他のボタンを非表示
+    if (fixedBtn) fixedBtn.style.display = 'none';
+    if (weightBtn) weightBtn.style.display = 'none';
+    if (yieldStatsBtn) yieldStatsBtn.style.display = '';
+    if (multiPatternBtnElement) multiPatternBtnElement.style.display = '';
+  } else {
+    // 通常モード：すべてのボタンを表示
+    if (fixedBtn) fixedBtn.style.display = '';
+    if (weightBtn) weightBtn.style.display = '';
+    if (yieldStatsBtn) yieldStatsBtn.style.display = '';
+    if (multiPatternBtnElement) multiPatternBtnElement.style.display = '';
   }
 
   // セクションの表示/非表示を切り替え

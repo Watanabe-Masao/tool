@@ -176,17 +176,33 @@ export function displaySampleSizeValidation(
     displayOutlierCallback(outlierResult, statsType, isValid);
   }
 
-  // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
+  // サンプルサイズ妥当性を状態に保存
+  if (window.yieldStatsState) {
+    window.yieldStatsState.sampleSizeValidation = window.yieldStatsState.sampleSizeValidation || {};
+    window.yieldStatsState.sampleSizeValidation[statsType] = {
+      isValid,
+      actualSize: actualSampleSize,
+      requiredSize: requiredSampleSize
+    };
+  }
+
+  // 推奨代表値を表示
+  // サンプルサイズの妥当性に応じて表示内容を分岐
   if (finalValues.length >= 2) {
-    window.lastCalculatedStats = finalStats;
+    window.lastCalculatedStats = isValid ? finalStats : null;
     if (displayRecommendedCallback) {
       displayRecommendedCallback(finalStats, isValid, statsType);
     }
   } else {
-    window.lastCalculatedStats = stats;
+    window.lastCalculatedStats = isValid ? stats : null;
     if (displayRecommendedCallback) {
       displayRecommendedCallback(stats, isValid, statsType);
     }
+  }
+
+  // 複数パターン分析の読み込みボタンの状態を更新（サンプルサイズ妥当性が変更されたため）
+  if (typeof window.updateLoadStatsButtons === 'function') {
+    window.updateLoadStatsButtons();
   }
 
   // 結果を表示（スムーズなアニメーション）

@@ -275,6 +275,103 @@ function init() {
 
   if (multiPatternBtn) {
     multiPatternBtn.addEventListener('click', () => {
+      // 現在のモードを取得
+      const currentMode = appState.getMode();
+
+      // 複数パターン分析の商品名フィールドを取得
+      const multiPatternProductName = qs('#multiPatternProductName');
+
+      if (multiPatternProductName) {
+        // 歩留まり統計モード以外から遷移する場合は商品名をクリアして編集可能にする
+        if (currentMode !== MODE.YIELD_STATS) {
+          multiPatternProductName.value = '';
+          multiPatternProductName.removeAttribute('readonly');
+          multiPatternProductName.style.backgroundColor = '';
+          multiPatternProductName.style.cursor = '';
+        }
+        // 歩留まり統計モードから遷移する場合はreadonly属性を保持（動的連動を継続）
+      }
+
+      // 歩留まり統計モードから遷移する場合、統計データがあれば確認メッセージを表示
+      if (currentMode === MODE.YIELD_STATS) {
+        // 統計データの存在をチェック
+        const yieldRateStats = window.statsDataByType?.yieldRate;
+        const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
+
+        // 履歴から読み込まれた場合もチェック
+        const isFromHistory = window.yieldStatsState?.isFromHistory;
+        const yieldStatsData = appState.getYieldStatsData();
+        const hasYieldStatsData = yieldStatsData && (
+          (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+          (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+          (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+        );
+
+        // 統計データがある、または履歴から読み込まれた場合
+        if (hasValidStats || (isFromHistory && hasYieldStatsData)) {
+          // 確認メッセージを表示（サンプルサイズの妥当性に関わらず）
+          const useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
+
+          // まず画面を遷移
+          handleModeSwitch(MODE.MULTI_PATTERN, {
+            resetSteps,
+            resetWeightSteps,
+            resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+            updateLoadStatsButtons,
+            displayCurrentStatistics
+          });
+
+          // 「はい」を選択した場合、推奨値を取り込む
+          // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
+          if (useStats) {
+            // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+            // 履歴から読み込まれた場合は、統計計算の完了を待つために少し長めに待つ
+            const delay = isFromHistory ? 400 : 100;
+            setTimeout(() => {
+              loadAllStatsToMultiPattern(true);
+            }, delay);
+          } else {
+            // 「いいえ」を選択した場合、歩留まり統計をクリアして非表示にする
+            appState.showYieldStatsWithMultiPattern = false;
+            appState.setYieldStatsData(null);
+            window.statsDataByType = {};
+            window.lastCalculatedStats = null;
+
+            // window.yieldStatsState を初期状態にリセット
+            if (window.yieldStatsState) {
+              window.yieldStatsState.currentDisplayType = 'yieldRate';
+              window.yieldStatsState.isFromHistory = false;
+              window.yieldStatsState.isCalculated = false;
+              window.yieldStatsState.hasYieldRateData = false;
+              window.yieldStatsState.hasBeforeWeightData = false;
+              window.yieldStatsState.hasAfterWeightData = false;
+              window.yieldStatsState.isOutlierExcluded = false;
+              window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+              window.yieldStatsState.currentOutlierValues = [];
+              window.yieldStatsState.sampleSizeValidation = {
+                yieldRate: null,
+                beforeWeight: null,
+                afterWeight: null
+              };
+              window.yieldStatsState.shouldShowMultiPatternLink = false;
+            }
+
+            // 歩留まり統計のテーブルと結果をクリア
+            clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
+            hide('yieldStatsResults');
+
+            // 歩留まり統計のDOM要素を非表示
+            const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+            if (yieldStatsInputs) {
+              yieldStatsInputs.classList.add('is-hidden');
+            }
+          }
+
+          return;
+        }
+      }
+
+      // 通常の遷移処理
       handleModeSwitch(MODE.MULTI_PATTERN, {
         resetSteps,
         resetWeightSteps,
@@ -618,9 +715,95 @@ function init() {
   window.showTransferNotification = showTransferNotification;
   window.focusFirstPatternInput = focusFirstPatternInput;
 
+  // 歩留まり統計の商品名が変更されたら複数パターン分析にも動的に反映
+  qs('#yieldStatsProductName')?.addEventListener('input', (e) => {
+    const multiPatternProductName = qs('#multiPatternProductName');
+    // 複数パターン分析の商品名が読み取り専用の場合のみ同期
+    if (multiPatternProductName && multiPatternProductName.hasAttribute('readonly')) {
+      multiPatternProductName.value = e.target.value;
+    }
+  });
+
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    // 統計データの存在をチェック
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
+
+    // 履歴から読み込まれた場合もチェック
+    const isFromHistory = window.yieldStatsState?.isFromHistory;
+    const yieldStatsData = appState.getYieldStatsData();
+    const hasYieldStatsData = yieldStatsData && (
+      (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+      (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+      (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+    );
+
+    // 確認メッセージを表示（統計データがある、または履歴から読み込まれた場合）
+    // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
+    let useStats = false;
+    if (hasValidStats || (isFromHistory && hasYieldStatsData)) {
+      useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
+    }
+
+    // 歩留まり統計の商品名を複数パターン分析に引き継ぐ
+    const yieldStatsProductName = qs('#yieldStatsProductName')?.value || '';
+    const multiPatternProductName = qs('#multiPatternProductName');
+    if (multiPatternProductName && yieldStatsProductName) {
+      multiPatternProductName.value = yieldStatsProductName;
+      // 歩留まり統計から遷移した場合は商品名を読み取り専用にする
+      multiPatternProductName.setAttribute('readonly', 'readonly');
+      multiPatternProductName.style.backgroundColor = '#f0f0f0';
+      multiPatternProductName.style.cursor = 'not-allowed';
+    }
+
+    // 画面遷移
     handleModeSwitch(MODE.MULTI_PATTERN);
+
+    // 「はい」を選択した場合、推奨値を取り込む
+    if (useStats) {
+      // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+      // 履歴から読み込まれた場合は、統計計算の完了を待つために少し長めに待つ
+      const delay = isFromHistory ? 400 : 100;
+      setTimeout(() => {
+        loadAllStatsToMultiPattern(true);
+      }, delay);
+    } else {
+      // 「いいえ」を選択した場合、歩留まり統計をクリアして非表示にする
+      appState.showYieldStatsWithMultiPattern = false;
+      appState.setYieldStatsData(null);
+      window.statsDataByType = {};
+      window.lastCalculatedStats = null;
+
+      // window.yieldStatsState を初期状態にリセット
+      if (window.yieldStatsState) {
+        window.yieldStatsState.currentDisplayType = 'yieldRate';
+        window.yieldStatsState.isFromHistory = false;
+        window.yieldStatsState.isCalculated = false;
+        window.yieldStatsState.hasYieldRateData = false;
+        window.yieldStatsState.hasBeforeWeightData = false;
+        window.yieldStatsState.hasAfterWeightData = false;
+        window.yieldStatsState.isOutlierExcluded = false;
+        window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
+        window.yieldStatsState.currentOutlierValues = [];
+        window.yieldStatsState.sampleSizeValidation = {
+          yieldRate: null,
+          beforeWeight: null,
+          afterWeight: null
+        };
+        window.yieldStatsState.shouldShowMultiPatternLink = false;
+      }
+
+      // 歩留まり統計のテーブルと結果をクリア
+      clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
+      hide('yieldStatsResults');
+
+      // 歩留まり統計のDOM要素を非表示
+      const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
+      if (yieldStatsInputs) {
+        yieldStatsInputs.classList.add('is-hidden');
+      }
+    }
   });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
@@ -772,6 +955,31 @@ function init() {
       }
     });
   });
+
+  // 歩留まり統計全体の折りたたみ機能
+  const yieldStatsToggle = qs('#yieldStatsToggle');
+  if (yieldStatsToggle) {
+    yieldStatsToggle.addEventListener('click', () => {
+      const content = qs('#yieldStatsContent');
+      const icon = yieldStatsToggle.querySelector('.accordion-icon');
+
+      if (content && icon) {
+        const isHidden = content.style.display === 'none';
+
+        if (isHidden) {
+          // 展開
+          content.style.display = 'block';
+          icon.textContent = '▼';
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          // 折りたたみ
+          content.style.display = 'none';
+          icon.textContent = '▶';
+          icon.style.transform = 'rotate(-90deg)';
+        }
+      }
+    });
+  }
 }
 
 // 公開用のセットアップ関数としてinit関数をexport

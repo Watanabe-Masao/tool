@@ -201,8 +201,16 @@ function displayCurrentStatistics() {
   // サンプルサイズ妥当性判断の単位と表示を更新
   updateToleranceUnit();
 
-  // 後方互換性のため、従来の変数も維持
-  window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+  // 後方互換性のため、従来の変数も維持（サンプルサイズが妥当な場合のみ）
+  // 許容誤差が入力されている場合はその妥当性を、未入力の場合は保存済みの妥当性を使用
+  const validation = window.yieldStatsState?.sampleSizeValidation?.[actualSelectedType];
+  const isSampleSizeValid = validation ? validation.isValid : true; // 妥当性情報がない場合はtrue（後方互換性）
+
+  if (isSampleSizeValid) {
+    window.lastCalculatedStats = finalStats; // 表示用（選択された統計タイプ）
+  } else {
+    window.lastCalculatedStats = null; // サンプルサイズ不十分の場合はnull
+  }
 
   // サンプルサイズ検証を実行（許容誤差が入力されている場合は推奨代表値も表示）
   const toleranceErrorInput = qs('#toleranceError');
@@ -210,9 +218,9 @@ function displayCurrentStatistics() {
 
   displaySampleSizeValidation();
 
-  // 許容誤差が未入力の場合も推奨代表値と複数パターン分析ボタンを表示
+  // 許容誤差が未入力の場合も推奨代表値を表示（ただしサンプルサイズが妥当な場合のみ）
   if (!hasTolerance) {
-    displayRecommendedValue(finalStats, true, actualSelectedType);
+    displayRecommendedValue(finalStats, isSampleSizeValid, actualSelectedType);
   }
 }
 
@@ -534,17 +542,27 @@ function displaySampleSizeValidation() {
   // 外れ値を検出して表示
   displayOutlierInfo(outlierResult, statsType, isValid);
 
-  // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
-  // 手動除外後のデータで計算
+  // サンプルサイズ妥当性を状態に保存
+  if (window.yieldStatsState) {
+    window.yieldStatsState.sampleSizeValidation[statsType] = {
+      isValid,
+      actualSize: actualSampleSize,
+      requiredSize: requiredSampleSize
+    };
+  }
+
+  // 推奨代表値を表示
+  // サンプルサイズの妥当性に応じて表示内容を分岐
   if (finalValues.length >= 2) {
-    // グローバルに保存（複数パターン分析への遷移用）
-    window.lastCalculatedStats = finalStats;
+    window.lastCalculatedStats = isValid ? finalStats : null;
     displayRecommendedValue(finalStats, isValid, statsType);
   } else {
-    // グローバルに保存（複数パターン分析への遷移用）
-    window.lastCalculatedStats = stats;
+    window.lastCalculatedStats = isValid ? stats : null;
     displayRecommendedValue(stats, isValid, statsType);
   }
+
+  // 複数パターン分析の読み込みボタンの状態を更新（サンプルサイズ妥当性が変更されたため）
+  updateLoadStatsButtons();
 
   // 結果を表示
   resultDiv.classList.remove('is-hidden');
@@ -571,6 +589,13 @@ window.yieldStatsState = {
   isOutlierExcluded: false,               // 外れ値除外が適用されているか
   manuallyExcludedOutlierIndices: new Set(), // 手動除外された外れ値のインデックス
   currentOutlierValues: [],               // 現在の外れ値リスト
+
+  // サンプルサイズ妥当性（統計タイプ別）
+  sampleSizeValidation: {
+    yieldRate: null,      // { isValid: boolean, actualSize: number, requiredSize: number }
+    beforeWeight: null,
+    afterWeight: null
+  },
 
   // 次のアクション指示
   shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか
@@ -1136,22 +1161,42 @@ function updateLoadStatsButtons() {
     const beforeWeightStats = window.statsDataByType?.beforeWeight;
     const afterWeightStats = window.statsDataByType?.afterWeight;
 
-    // 歩留まり率の統計データが必須
-    if (!yieldRateStats || yieldRateStats.count < 2) {
+    // サンプルサイズの妥当性をチェック
+    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+    const beforeWeightValidation = window.yieldStatsState?.sampleSizeValidation?.beforeWeight;
+    const afterWeightValidation = window.yieldStatsState?.sampleSizeValidation?.afterWeight;
+
+    // 歩留まり率の統計データが必須かつサンプルサイズが妥当である必要がある
+    if (!yieldRateStats || yieldRateStats.count < 2 || (yieldRateValidation && !yieldRateValidation.isValid)) {
       loadStatsButtons.classList.add('is-hidden');
       loadStatsNoData.classList.remove('is-hidden');
+
+      // サンプルサイズ不十分の場合は専用メッセージを表示
+      if (yieldRateStats && yieldRateValidation && !yieldRateValidation.isValid) {
+        loadStatsNoData.innerHTML = `
+          <div class="no-data-message" style="padding: 1em; text-align: center; color: #dc3545;">
+            <p style="margin: 0 0 0.5em 0; font-weight: bold;">⚠️ サンプルサイズが不十分です</p>
+            <p style="margin: 0; font-size: 0.9em;">実際のサンプル数: ${yieldRateValidation.actualSize}、必要なサンプル数: ${yieldRateValidation.requiredSize}</p>
+            <p style="margin: 0.5em 0 0 0; font-size: 0.9em;">より多くのデータを収集してから推奨値を使用してください。</p>
+          </div>`;
+      } else {
+        loadStatsNoData.innerHTML = '<p style="text-align: center; padding: 1em; color: #6c757d;">歩留まり統計のデータがありません。<br>先に歩留まり統計で計算を実行してください。</p>';
+      }
+
       if (generateSigmaPatternsSection) {
         generateSigmaPatternsSection.classList.add('is-hidden');
       }
       return;
     }
 
-    // 推奨値を取得
+    // 推奨値を取得（妥当性チェック済み）
     const yieldRateRecommended = getRecommendedValue(yieldRateStats);
     const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      && (!beforeWeightValidation || beforeWeightValidation.isValid)
       ? getRecommendedValue(beforeWeightStats)
       : null;
     const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
+      && (!afterWeightValidation || afterWeightValidation.isValid)
       ? getRecommendedValue(afterWeightStats)
       : null;
 
@@ -1256,7 +1301,10 @@ function updateLoadStatsButtons() {
     bulkImportBtnContainer.remove();
   }
 
-  if (stats && stats.count >= 2) {
+  // サンプルサイズの妥当性をチェック
+  const validation = window.yieldStatsState?.sampleSizeValidation?.[selectedStatsType];
+
+  if (stats && stats.count >= 2 && (!validation || validation.isValid)) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
@@ -1351,9 +1399,21 @@ function updateLoadStatsButtons() {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
   } else {
-    // データがない場合、メッセージを表示
+    // データがない、またはサンプルサイズが不十分な場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
     loadStatsNoData.classList.remove('is-hidden');
+
+    // サンプルサイズ不十分の場合は専用メッセージ
+    if (stats && stats.count >= 2 && validation && !validation.isValid) {
+      loadStatsNoData.innerHTML = `
+        <div class="no-data-message" style="padding: 1em; text-align: center; color: #dc3545;">
+          <p style="margin: 0 0 0.5em 0; font-weight: bold;">⚠️ サンプルサイズが不十分です</p>
+          <p style="margin: 0; font-size: 0.9em;">実際のサンプル数: ${validation.actualSize}、必要なサンプル数: ${validation.requiredSize}</p>
+          <p style="margin: 0.5em 0 0 0; font-size: 0.9em;">より多くのデータを収集してから推奨値を使用してください。</p>
+        </div>`;
+    } else {
+      loadStatsNoData.innerHTML = '<p style="text-align: center; padding: 1em; color: #6c757d;">歩留まり統計のデータがありません。<br>先に歩留まり統計で計算を実行してください。</p>';
+    }
 
     // σパターン生成セクションを非表示
     if (generateSigmaPatternsSection) {

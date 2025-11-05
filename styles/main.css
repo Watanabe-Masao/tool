@@ -2014,61 +2014,11 @@ input[type="range"]::-moz-range-thumb:hover {
   margin-left: 2px;
 }
 
-/* ツールチップ本体 */
-.help-icon::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  padding: 12px 16px;
-  background: var(--brand);
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.6;
-  border-radius: 8px;
-  white-space: pre-line;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  pointer-events: none;
-  z-index: 9999;
-  min-width: 200px;
-  max-width: 320px;
-  text-align: left;
-}
-
-/* ツールチップの矢印 */
+/* ツールチップを無効化（モーダルで表示するため） */
+.help-icon::before,
 .help-icon::after {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  border: 8px solid transparent;
-  border-top-color: var(--brand);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  z-index: 10000;
-}
-
-/* ホバー時にツールチップを表示 */
-.help-icon:hover::before,
-.help-icon:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* モバイル用: タップで表示/非表示 */
-.help-icon.active::before,
-.help-icon.active::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  content: none !important;
+  display: none !important;
 }
 
 /* 黄色背景のサブヘッダー内のヘルプアイコン */
@@ -2345,12 +2295,13 @@ input[type="range"]::-moz-range-thumb:hover {
   font-weight: 500;
   color: #333;
   width: 30%;
+  text-align: right;
 }
 
 .stats-load-table .stats-value {
   font-weight: 700;
   color: var(--brand-dark);
-  text-align: left;
+  text-align: right;
   width: 35%;
   font-family: 'Courier New', monospace;
 }
@@ -4147,4 +4098,41 @@ input[type="range"]::-moz-range-thumb:hover {
     font-size: 0.9em;
     margin-bottom: 0.2em;
   }
+}
+
+/* ========================================
+   ヘルプモーダルコンテンツ
+   ======================================== */
+
+.help-modal-content {
+  line-height: 2;
+  color: var(--text-primary);
+  font-size: 15px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.help-modal-content p {
+  margin: 0;
+  padding: 0;
+}
+
+/* リストアイテム（◎、○、△、×）のインデント */
+.help-modal-content .help-list-item {
+  padding-left: 1.5em;
+  text-indent: -1.5em;
+  margin-bottom: 0.5em;
+}
+
+/* セクション区切り */
+.help-modal-content .help-section {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* 説明文のインデント */
+.help-modal-content .help-indent {
+  padding-left: 2em;
 }
