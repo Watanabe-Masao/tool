@@ -681,6 +681,20 @@ function init() {
 
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
+    // 統計データの存在と妥当性をチェック
+    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
+
+    // サンプルサイズの妥当性をチェック
+    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+    const isValidSampleSize = !yieldRateValidation || yieldRateValidation.isValid;
+
+    // 確認メッセージを表示（有効な統計データがある場合のみ）
+    let useStats = false;
+    if (hasValidStats && isValidSampleSize) {
+      useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
+    }
+
     // 歩留まり統計の商品名を複数パターン分析に引き継ぐ
     const yieldStatsProductName = qs('#yieldStatsProductName')?.value || '';
     const multiPatternProductName = qs('#multiPatternProductName');
@@ -691,7 +705,17 @@ function init() {
       multiPatternProductName.style.backgroundColor = '#f0f0f0';
       multiPatternProductName.style.cursor = 'not-allowed';
     }
+
+    // 画面遷移
     handleModeSwitch(MODE.MULTI_PATTERN);
+
+    // 「はい」を選択した場合、推奨値を取り込む
+    if (useStats) {
+      // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+      setTimeout(() => {
+        loadAllStatsToMultiPattern(true);
+      }, 100);
+    }
   });
 
   // 複数パターン分析画面: モード切り替えラジオボタンの変更イベント
