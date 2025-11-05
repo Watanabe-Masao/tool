@@ -440,6 +440,10 @@ async function handleEditCalculation(id) {
     await updateCalculationName(id, newName.trim());
     console.log('[handleEditCalculation] Database updated');
 
+    // 🔥 重要: Firestoreと同期して最新データを取得
+    await ensureFreshDataBeforeDisplay();
+    console.log('[handleEditCalculation] Synced with Firestore');
+
     // 更新後のデータを確認
     const updatedData = await loadCalculation(id);
     console.log('[handleEditCalculation] Updated data from DB:', { id: updatedData.id, name: updatedData.name });
