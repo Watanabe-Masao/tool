@@ -808,6 +808,31 @@ function init() {
       }
     });
   });
+
+  // 歩留まり統計全体の折りたたみ機能
+  const yieldStatsToggle = qs('#yieldStatsToggle');
+  if (yieldStatsToggle) {
+    yieldStatsToggle.addEventListener('click', () => {
+      const content = qs('#yieldStatsContent');
+      const icon = yieldStatsToggle.querySelector('.accordion-icon');
+
+      if (content && icon) {
+        const isHidden = content.style.display === 'none';
+
+        if (isHidden) {
+          // 展開
+          content.style.display = 'block';
+          icon.textContent = '▼';
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          // 折りたたみ
+          content.style.display = 'none';
+          icon.textContent = '▶';
+          icon.style.transform = 'rotate(-90deg)';
+        }
+      }
+    });
+  }
 }
 
 // 公開用のセットアップ関数としてinit関数をexport

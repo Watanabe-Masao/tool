@@ -424,8 +424,12 @@
 
       <!-- 統計情報ウィンドウ -->
       <div id="yieldStatsResults" class="stats-results is-hidden">
-        <h3 class="section-subtitle"><i class="fa-solid fa-chart-line"></i> 統計分析結果</h3>
+        <h3 class="section-subtitle accordion-header" id="yieldStatsToggle" style="cursor: pointer; user-select: none;">
+          <span><i class="fa-solid fa-chart-line"></i> 統計分析結果</span>
+          <span class="accordion-icon" style="float: right; transition: transform 0.3s;">▼</span>
+        </h3>
 
+        <div id="yieldStatsContent" class="accordion-content" style="display: block;">
         <!-- 統計・グラフ選択エリア -->
         <div class="stats-controls">
           <div class="stats-type-selector">
@@ -751,6 +755,8 @@
           </div>
           </div>
         </div>
+        </div>
+        <!-- /yieldStatsContent -->
 
         <!-- 複数パターン分析への遷移 -->
         <div id="multiPatternLink" class="multi-pattern-link is-hidden">
