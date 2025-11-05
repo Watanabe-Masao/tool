@@ -13,17 +13,16 @@ import { num } from './dom-utils.js';
 import { WEIGHT_FIELDS, LABELS, GRAMS_PER_KG, PERCENT_MULTIPLIER } from './constants.js';
 
 /**
- * 計量モード - 重量から計算
+ * 計量モード - 重量から計算（純粋関数）
+ * @param {number} bc - 箱コスト
+ * @param {number} bp - 箱売価
+ * @param {number} bwKg - 箱重量（kg）
+ * @param {number} bs - 加工前サンプル重量
+ * @param {number} aw - 加工後重量
+ * @param {number} ap - 加工後100g単価
+ * @returns {Object|null} 計算結果
  */
-function calculateFromWeight() {
-  const fields = WEIGHT_FIELDS.CALCULATE;
-  const bc = num(fields.BOX_COST);
-  const bp = num(fields.BOX_PRICE);
-  const bwKg = num(fields.BOX_WEIGHT);
-  const bs = num(fields.BEFORE_SAMPLE);
-  const aw = num(fields.AFTER_WEIGHT);
-  const ap = num(fields.AFTER_PRICE_100);
-
+export function calculateFromWeightLogic(bc, bp, bwKg, bs, aw, ap) {
   // 必須フィールドチェック
   if ([bc, bp, bwKg, bs, aw, ap].some(v => !Number.isFinite(v))) {
     return null;
@@ -55,16 +54,30 @@ function calculateFromWeight() {
 }
 
 /**
- * 計量モード - 歩留まり率を直接入力
+ * 計量モード - 重量から計算（DOM統合）
  */
-function calculateFromDirectYield() {
-  const fields = WEIGHT_FIELDS.DIRECT;
+function calculateFromWeight() {
+  const fields = WEIGHT_FIELDS.CALCULATE;
   const bc = num(fields.BOX_COST);
   const bp = num(fields.BOX_PRICE);
   const bwKg = num(fields.BOX_WEIGHT);
-  const yr = num(fields.YIELD_RATE);
+  const bs = num(fields.BEFORE_SAMPLE);
+  const aw = num(fields.AFTER_WEIGHT);
   const ap = num(fields.AFTER_PRICE_100);
 
+  return calculateFromWeightLogic(bc, bp, bwKg, bs, aw, ap);
+}
+
+/**
+ * 計量モード - 歩留まり率を直接入力（純粋関数）
+ * @param {number} bc - 箱コスト
+ * @param {number} bp - 箱売価
+ * @param {number} bwKg - 箱重量（kg）
+ * @param {number} yr - 歩留まり率
+ * @param {number} ap - 加工後100g単価
+ * @returns {Object|null} 計算結果
+ */
+export function calculateFromDirectYieldLogic(bc, bp, bwKg, yr, ap) {
   // 必須フィールドチェック
   if ([bc, bp, bwKg, yr, ap].some(v => !Number.isFinite(v))) {
     return null;
@@ -92,6 +105,20 @@ function calculateFromDirectYield() {
     priceDiff,
     finishedLabel: LABELS.FINISHED_PRICE_WEIGHT
   };
+}
+
+/**
+ * 計量モード - 歩留まり率を直接入力（DOM統合）
+ */
+function calculateFromDirectYield() {
+  const fields = WEIGHT_FIELDS.DIRECT;
+  const bc = num(fields.BOX_COST);
+  const bp = num(fields.BOX_PRICE);
+  const bwKg = num(fields.BOX_WEIGHT);
+  const yr = num(fields.YIELD_RATE);
+  const ap = num(fields.AFTER_PRICE_100);
+
+  return calculateFromDirectYieldLogic(bc, bp, bwKg, yr, ap);
 }
 
 /**
