@@ -1,0 +1,20 @@
+name: Count Lines of Code
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Count lines with cloc
+        run: |
+          sudo apt install -y cloc
+          cloc --json . > cloc-report.json
+      - name: Upload result
+        uses: actions/upload-artifact@v3
+        with:
+          name: cloc-report
+          path: cloc-report.json
