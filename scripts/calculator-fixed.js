@@ -13,16 +13,15 @@ import { num } from './dom-utils.js';
 import { FIXED_FIELDS, LABELS, PERCENT_MULTIPLIER } from './constants.js';
 
 /**
- * 定額モード - 重量から計算
+ * 定額モード - 重量から計算（純粋関数）
+ * @param {number} uc - 単価コスト
+ * @param {number} up - 単価売価
+ * @param {number} bw - 加工前重量
+ * @param {number} aw - 加工後重量
+ * @param {number} ap - 加工後100g単価
+ * @returns {Object|null} 計算結果
  */
-function calculateFromWeight() {
-  const fields = FIXED_FIELDS.CALCULATE;
-  const uc = num(fields.UNIT_COST);
-  const up = num(fields.UNIT_PRICE);
-  const bw = num(fields.BEFORE_WEIGHT);
-  const aw = num(fields.AFTER_WEIGHT);
-  const ap = num(fields.AFTER_PRICE_100);
-
+export function calculateFromWeightLogic(uc, up, bw, aw, ap) {
   // 必須フィールドチェック
   if ([uc, up, bw, aw, ap].some(v => !Number.isFinite(v))) {
     return null;
@@ -54,16 +53,29 @@ function calculateFromWeight() {
 }
 
 /**
- * 定額モード - 歩留まり率を直接入力
+ * 定額モード - 重量から計算（DOM統合）
  */
-function calculateFromDirectYield() {
-  const fields = FIXED_FIELDS.DIRECT;
+function calculateFromWeight() {
+  const fields = FIXED_FIELDS.CALCULATE;
   const uc = num(fields.UNIT_COST);
   const up = num(fields.UNIT_PRICE);
   const bw = num(fields.BEFORE_WEIGHT);
-  const yr = num(fields.YIELD_RATE);
+  const aw = num(fields.AFTER_WEIGHT);
   const ap = num(fields.AFTER_PRICE_100);
 
+  return calculateFromWeightLogic(uc, up, bw, aw, ap);
+}
+
+/**
+ * 定額モード - 歩留まり率を直接入力（純粋関数）
+ * @param {number} uc - 単価コスト
+ * @param {number} up - 単価売価
+ * @param {number} bw - 加工前重量
+ * @param {number} yr - 歩留まり率
+ * @param {number} ap - 加工後100g単価
+ * @returns {Object|null} 計算結果
+ */
+export function calculateFromDirectYieldLogic(uc, up, bw, yr, ap) {
   // 必須フィールドチェック
   if ([uc, up, bw, yr, ap].some(v => !Number.isFinite(v))) {
     return null;
@@ -91,6 +103,20 @@ function calculateFromDirectYield() {
     priceDiff,
     finishedLabel: LABELS.FINISHED_PRICE_FIXED
   };
+}
+
+/**
+ * 定額モード - 歩留まり率を直接入力（DOM統合）
+ */
+function calculateFromDirectYield() {
+  const fields = FIXED_FIELDS.DIRECT;
+  const uc = num(fields.UNIT_COST);
+  const up = num(fields.UNIT_PRICE);
+  const bw = num(fields.BEFORE_WEIGHT);
+  const yr = num(fields.YIELD_RATE);
+  const ap = num(fields.AFTER_PRICE_100);
+
+  return calculateFromDirectYieldLogic(uc, up, bw, yr, ap);
 }
 
 /**
