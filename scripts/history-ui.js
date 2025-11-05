@@ -441,8 +441,12 @@ async function handleEditCalculation(id) {
     console.log('[handleEditCalculation] Database updated');
 
     // 🔥 重要: Firestoreと同期して最新データを取得
+    // historyUpdatedイベントが発火するが、後でrenderHistoryList()を呼ぶので問題ない
     await ensureFreshDataBeforeDisplay();
     console.log('[handleEditCalculation] Synced with Firestore');
+
+    // 短い遅延を入れてFirestore同期を完全に終わらせる
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // 更新後のデータを確認
     const updatedData = await loadCalculation(id);
