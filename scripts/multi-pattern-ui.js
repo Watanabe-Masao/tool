@@ -513,6 +513,9 @@ function recalculateAll() {
   // 結果テーブルをクリア
   elements.resultsTableBody.innerHTML = '';
 
+  // Document Fragment を使用してDOM操作を最適化（リフロー削減）
+  const fragment = document.createDocumentFragment();
+
   // 各パターンを計算して表示
   validPatterns.forEach(pattern => {
     const result = calculatePattern({
@@ -592,9 +595,12 @@ function recalculateAll() {
         <td class="${sensitivityClass}">${result.sensitivity !== null ? sensitivitySign + toFixed(result.sensitivity, 3) : '-'}</td>
       `;
 
-      elements.resultsTableBody.appendChild(row);
+      fragment.appendChild(row);
     }
   });
+
+  // 一括でDOM に追加（1回のリフロー）
+  elements.resultsTableBody.appendChild(fragment);
 
   // 結果を表示
   elements.step2Result.classList.remove(CSS_HIDDEN);

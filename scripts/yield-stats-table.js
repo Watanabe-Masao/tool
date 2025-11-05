@@ -11,6 +11,7 @@ import { UI_ELEMENTS, YIELD_STATS_FIELDS } from './constants.js';
 import { appState } from './state.js';
 import { calculateYieldRate } from './calculator-yield-stats.js';
 import { calculateStatistics } from './yield-stats-calc.js';
+import { debounce } from './debounce.js';
 
 // モジュール内のカウンター
 let yieldStatsEntryCounter = 0;
@@ -168,8 +169,10 @@ export function addYieldStatsRow(callbacks = {}) {
     }
   };
 
-  beforeWeightInput?.addEventListener('input', handleYieldStatsInput);
-  afterWeightInput?.addEventListener('input', handleYieldStatsInput);
+  // デバウンスを適用して入力パフォーマンスを向上
+  const debouncedHandleInput = debounce(handleYieldStatsInput, 300);
+  beforeWeightInput?.addEventListener('input', debouncedHandleInput);
+  afterWeightInput?.addEventListener('input', debouncedHandleInput);
 
   // テーブル行を追加したのでUI状態を更新
   appState.markAsChanged();
