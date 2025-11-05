@@ -294,10 +294,21 @@ function init() {
 
       // 歩留まり統計モードから遷移する場合、統計データがあれば確認メッセージを表示
       if (currentMode === MODE.YIELD_STATS) {
+        // 統計データの存在をチェック
         const yieldRateStats = window.statsDataByType?.yieldRate;
         const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
 
-        if (hasValidStats) {
+        // 履歴から読み込まれた場合もチェック
+        const isFromHistory = window.yieldStatsState?.isFromHistory;
+        const yieldStatsData = appState.getYieldStatsData();
+        const hasYieldStatsData = yieldStatsData && (
+          (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+          (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+          (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+        );
+
+        // 統計データがある、または履歴から読み込まれた場合
+        if (hasValidStats || (isFromHistory && hasYieldStatsData)) {
           // 確認メッセージを表示（サンプルサイズの妥当性に関わらず）
           const useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
 
@@ -314,9 +325,11 @@ function init() {
           // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
           if (useStats) {
             // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+            // 履歴から読み込まれた場合は、統計計算の完了を待つために少し長めに待つ
+            const delay = isFromHistory ? 400 : 100;
             setTimeout(() => {
               loadAllStatsToMultiPattern(true);
-            }, 100);
+            }, delay);
           }
 
           return;
@@ -682,10 +695,19 @@ function init() {
     const yieldRateStats = window.statsDataByType?.yieldRate;
     const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
 
-    // 確認メッセージを表示（統計データがある場合、サンプルサイズの妥当性に関わらず）
+    // 履歴から読み込まれた場合もチェック
+    const isFromHistory = window.yieldStatsState?.isFromHistory;
+    const yieldStatsData = appState.getYieldStatsData();
+    const hasYieldStatsData = yieldStatsData && (
+      (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
+      (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
+      (yieldStatsData.afterWeight && yieldStatsData.afterWeight.length >= 2)
+    );
+
+    // 確認メッセージを表示（統計データがある、または履歴から読み込まれた場合）
     // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
     let useStats = false;
-    if (hasValidStats) {
+    if (hasValidStats || (isFromHistory && hasYieldStatsData)) {
       useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
     }
 
@@ -706,9 +728,11 @@ function init() {
     // 「はい」を選択した場合、推奨値を取り込む
     if (useStats) {
       // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+      // 履歴から読み込まれた場合は、統計計算の完了を待つために少し長めに待つ
+      const delay = isFromHistory ? 400 : 100;
       setTimeout(() => {
         loadAllStatsToMultiPattern(true);
-      }, 100);
+      }, delay);
     }
   });
 
