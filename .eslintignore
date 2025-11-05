@@ -1,0 +1,5 @@
+# スタンドアロンテストスクリプト (開発用ツール)
+# これらは本番コードではなく、console出力が必要
+tests/relative-deviation-consistency-test.js
+tests/validate-imports.js
+tests/z-score-calculation-test.js

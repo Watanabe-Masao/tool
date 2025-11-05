@@ -81,9 +81,9 @@ export class YieldStatsState {
 
     // データ有無フラグを自動更新
     if (data) {
-      this.ui.hasYieldRateData = !!(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
-      this.ui.hasBeforeWeightData = !!(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
-      this.ui.hasAfterWeightData = !!(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
+      this.ui.hasYieldRateData = Boolean(data.yieldRate && Array.isArray(data.yieldRate) && data.yieldRate.length >= 2);
+      this.ui.hasBeforeWeightData = Boolean(data.beforeWeight && Array.isArray(data.beforeWeight) && data.beforeWeight.length >= 2);
+      this.ui.hasAfterWeightData = Boolean(data.afterWeight && Array.isArray(data.afterWeight) && data.afterWeight.length >= 2);
     } else {
       this.ui.hasYieldRateData = false;
       this.ui.hasBeforeWeightData = false;
@@ -223,9 +223,15 @@ export class YieldStatsState {
    * @returns {boolean}
    */
   hasDataByType(type) {
-    if (type === 'yieldRate') return this.ui.hasYieldRateData;
-    if (type === 'beforeWeight') return this.ui.hasBeforeWeightData;
-    if (type === 'afterWeight') return this.ui.hasAfterWeightData;
+    if (type === 'yieldRate') {
+      return this.ui.hasYieldRateData;
+    }
+    if (type === 'beforeWeight') {
+      return this.ui.hasBeforeWeightData;
+    }
+    if (type === 'afterWeight') {
+      return this.ui.hasAfterWeightData;
+    }
     return false;
   }
 
