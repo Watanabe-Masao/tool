@@ -534,15 +534,32 @@ function displaySampleSizeValidation() {
   // 外れ値を検出して表示
   displayOutlierInfo(outlierResult, statsType, isValid);
 
+  // サンプルサイズ妥当性を状態に保存
+  if (window.yieldStatsState) {
+    window.yieldStatsState.sampleSizeValidation[statsType] = {
+      isValid,
+      actualSize: actualSampleSize,
+      requiredSize: requiredSampleSize
+    };
+  }
+
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   // 手動除外後のデータで計算
   if (finalValues.length >= 2) {
-    // グローバルに保存（複数パターン分析への遷移用）
-    window.lastCalculatedStats = finalStats;
+    // サンプルサイズが妥当な場合のみグローバルに保存
+    if (isValid) {
+      window.lastCalculatedStats = finalStats;
+    } else {
+      window.lastCalculatedStats = null;
+    }
     displayRecommendedValue(finalStats, isValid, statsType);
   } else {
-    // グローバルに保存（複数パターン分析への遷移用）
-    window.lastCalculatedStats = stats;
+    // サンプルサイズが妥当な場合のみグローバルに保存
+    if (isValid) {
+      window.lastCalculatedStats = stats;
+    } else {
+      window.lastCalculatedStats = null;
+    }
     displayRecommendedValue(stats, isValid, statsType);
   }
 
@@ -571,6 +588,13 @@ window.yieldStatsState = {
   isOutlierExcluded: false,               // 外れ値除外が適用されているか
   manuallyExcludedOutlierIndices: new Set(), // 手動除外された外れ値のインデックス
   currentOutlierValues: [],               // 現在の外れ値リスト
+
+  // サンプルサイズ妥当性（統計タイプ別）
+  sampleSizeValidation: {
+    yieldRate: null,      // { isValid: boolean, actualSize: number, requiredSize: number }
+    beforeWeight: null,
+    afterWeight: null
+  },
 
   // 次のアクション指示
   shouldShowMultiPatternLink: false       // 複数パターン分析リンクを表示すべきか

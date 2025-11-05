@@ -176,14 +176,34 @@ export function displaySampleSizeValidation(
     displayOutlierCallback(outlierResult, statsType, isValid);
   }
 
+  // サンプルサイズ妥当性を状態に保存
+  if (window.yieldStatsState) {
+    window.yieldStatsState.sampleSizeValidation = window.yieldStatsState.sampleSizeValidation || {};
+    window.yieldStatsState.sampleSizeValidation[statsType] = {
+      isValid,
+      actualSize: actualSampleSize,
+      requiredSize: requiredSampleSize
+    };
+  }
+
   // 推奨代表値を表示（サンプルサイズが妥当な場合のみ）
   if (finalValues.length >= 2) {
-    window.lastCalculatedStats = finalStats;
+    // サンプルサイズが妥当な場合のみグローバルに保存
+    if (isValid) {
+      window.lastCalculatedStats = finalStats;
+    } else {
+      window.lastCalculatedStats = null;
+    }
     if (displayRecommendedCallback) {
       displayRecommendedCallback(finalStats, isValid, statsType);
     }
   } else {
-    window.lastCalculatedStats = stats;
+    // サンプルサイズが妥当な場合のみグローバルに保存
+    if (isValid) {
+      window.lastCalculatedStats = stats;
+    } else {
+      window.lastCalculatedStats = null;
+    }
     if (displayRecommendedCallback) {
       displayRecommendedCallback(stats, isValid, statsType);
     }

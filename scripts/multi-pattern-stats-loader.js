@@ -35,6 +35,14 @@ export function loadRecommendedValueToMultiPattern(shouldSwitchMode = false, sta
     return;
   }
 
+  // サンプルサイズの妥当性をチェック
+  const validation = window.yieldStatsState?.sampleSizeValidation?.[selectedStatsType];
+  if (validation && !validation.isValid) {
+    alert(`サンプルサイズが不十分です。\n\n実際のサンプル数: ${validation.actualSize}\n必要なサンプル数: ${validation.requiredSize}\n\nより多くのデータを収集してから推奨値を使用してください。`);
+    console.warn('[MultiPattern] サンプルサイズが不十分なため、推奨値を読み込めません');
+    return;
+  }
+
   const recommended = getRecommendedValue(statsData);
   if (!recommended) {
     console.warn('[MultiPattern] 推奨値を取得できません');
@@ -95,6 +103,13 @@ export function loadAllStatsToMultiPattern() {
     const productNameEl = qs('#yieldStatsProductName');
     const productName = productNameEl?.value?.trim() || '';
 
+    // サンプルサイズの妥当性をチェック
+    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+    if (yieldRateValidation && !yieldRateValidation.isValid) {
+      alert(`歩留まり率のサンプルサイズが不十分です。\n\n実際のサンプル数: ${yieldRateValidation.actualSize}\n必要なサンプル数: ${yieldRateValidation.requiredSize}\n\nより多くのデータを収集してから推奨値を使用してください。`);
+      return;
+    }
+
     // 推奨値を取得
     const yieldRateRecommended = getRecommendedValue(yieldRateStats);
     if (!yieldRateRecommended) {
@@ -102,13 +117,17 @@ export function loadAllStatsToMultiPattern() {
       return;
     }
 
-    // 加工前重量の推奨値を取得（存在する場合）
+    // 加工前重量の推奨値を取得（存在する場合、かつサンプルサイズが妥当な場合）
+    const beforeWeightValidation = window.yieldStatsState?.sampleSizeValidation?.beforeWeight;
     const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      && (!beforeWeightValidation || beforeWeightValidation.isValid)
       ? getRecommendedValue(beforeWeightStats)
       : null;
 
-    // 加工後重量の推奨値を取得（存在する場合）
+    // 加工後重量の推奨値を取得（存在する場合、かつサンプルサイズが妥当な場合）
+    const afterWeightValidation = window.yieldStatsState?.sampleSizeValidation?.afterWeight;
     const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
+      && (!afterWeightValidation || afterWeightValidation.isValid)
       ? getRecommendedValue(afterWeightStats)
       : null;
 
@@ -134,11 +153,19 @@ export function loadAllStatsToMultiPattern() {
     } else {
       // 重量から計算モード：加工前重量と加工後重量を設定
       if (!beforeWeightRecommended) {
-        showWarning('加工前重量の統計データがありません。');
+        if (beforeWeightValidation && !beforeWeightValidation.isValid) {
+          showWarning(`加工前重量のサンプルサイズが不十分です。\n実際: ${beforeWeightValidation.actualSize}、必要: ${beforeWeightValidation.requiredSize}`);
+        } else {
+          showWarning('加工前重量の統計データがありません。');
+        }
         return;
       }
       if (!afterWeightRecommended) {
-        showWarning('加工後重量の統計データがありません。');
+        if (afterWeightValidation && !afterWeightValidation.isValid) {
+          showWarning(`加工後重量のサンプルサイズが不十分です。\n実際: ${afterWeightValidation.actualSize}、必要: ${afterWeightValidation.requiredSize}`);
+        } else {
+          showWarning('加工後重量の統計データがありません。');
+        }
         return;
       }
 

@@ -227,6 +227,14 @@ export function clearYieldStatsInputs(addYieldStatsRowCallback) {
   if (typeof window !== 'undefined') {
     window.statsDataByType = null;
     window.lastCalculatedStats = null;
+    // サンプルサイズ妥当性情報もクリア
+    if (window.yieldStatsState) {
+      window.yieldStatsState.sampleSizeValidation = {
+        yieldRate: null,
+        beforeWeight: null,
+        afterWeight: null
+      };
+    }
   }
 }
 
