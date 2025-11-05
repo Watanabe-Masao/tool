@@ -18,7 +18,11 @@ const mockAppState = {
   showYieldStatsWithMultiPattern: false,
   setYieldStatsData: jest.fn(),
   getYieldStatsData: jest.fn(),
-  getMode: jest.fn()
+  getYieldStatsRawData: jest.fn(),
+  getMode: jest.fn(),
+  getCalculatedStats: jest.fn(),
+  isYieldStatsFromHistory: jest.fn(),
+  clearAllYieldStats: jest.fn()
 };
 
 // モジュールモック
@@ -67,7 +71,11 @@ beforeEach(() => {
   mockAppState.showYieldStatsWithMultiPattern = false;
   mockAppState.setYieldStatsData.mockClear();
   mockAppState.getYieldStatsData.mockClear();
+  mockAppState.getYieldStatsRawData.mockClear();
   mockAppState.getMode.mockClear();
+  mockAppState.getCalculatedStats.mockClear();
+  mockAppState.isYieldStatsFromHistory.mockClear();
+  mockAppState.clearAllYieldStats.mockClear();
 
   // DOM操作関数のモックをリセット
   mockQs.mockClear();

@@ -268,22 +268,5 @@ describe('AppState - 歩留まり統計メソッド', () => {
     });
   });
 
-  describe('後方互換性', () => {
-    test('setYieldStatsRawData() は旧プロパティ yieldStatsData も更新する', () => {
-      const data = { yieldRate: [80, 82, 85] };
-
-      appState.setYieldStatsRawData(data);
-
-      expect(appState.yieldStatsData).toEqual(data);
-      expect(appState.getYieldStatsData()).toEqual(data);
-    });
-
-    test('getYieldStatsData() は getYieldStatsRawData() と同じ結果を返す', () => {
-      const data = { yieldRate: [80, 82, 85] };
-
-      appState.setYieldStatsRawData(data);
-
-      expect(appState.getYieldStatsData()).toEqual(appState.getYieldStatsRawData());
-    });
-  });
+  // Phase 0で後方互換性コードを削除したため、関連テストも削除
 });

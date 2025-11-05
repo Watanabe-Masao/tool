@@ -14,10 +14,15 @@ import { logger } from './core/logger.js';
 
 import { qs, hide } from './dom-utils.js';
 import { appState } from './state.js';
-import { MODE, UI_ELEMENTS, TIME } from './constants.js';
+import { MODE, UI_ELEMENTS } from './constants.js';
 import { clearYieldStatsInputs } from './mode-manager.js';
 import { addYieldStatsRow } from './yield-stats-table.js';
 import { updateLoadStatsButtons } from './yield-stats-display.js';
+
+// タイミング定数（Phase 0で削除されたTIME定数の代わり）
+const UI_TRANSITION_DELAY = 300; // UI遷移待機時間（ms）
+const STATS_POLL_MAX_WAIT = 5000; // 統計データ待機最大時間（ms）
+const STATS_POLL_INTERVAL = 100;  // ポーリング間隔（ms）
 
 /**
  * 統計データの準備完了を待つ（Promiseベース）
@@ -32,14 +37,14 @@ export async function waitForStatsDataReady(isFromHistory) {
   // 履歴からの読み込みでない場合は、UI遷移のみ待つ
   if (!isFromHistory) {
     return new Promise(resolve => {
-      setTimeout(resolve, TIME.UI_TRANSITION_DELAY);
+      setTimeout(resolve, UI_TRANSITION_DELAY);
     });
   }
 
   // 履歴から読み込まれた場合は、統計データの準備完了を待つ
   const startTime = Date.now();
 
-  while (Date.now() - startTime < TIME.STATS_POLL_MAX_WAIT) {
+  while (Date.now() - startTime < STATS_POLL_MAX_WAIT) {
     // 統計データが準備できているかチェック
     const yieldRateStats = appState.getCalculatedStats('yieldRate');
     if (yieldRateStats && yieldRateStats.count >= 2) {
@@ -48,7 +53,7 @@ export async function waitForStatsDataReady(isFromHistory) {
     }
 
     // 少し待ってから再チェック
-    await new Promise(resolve => setTimeout(resolve, TIME.STATS_POLL_INTERVAL));
+    await new Promise(resolve => setTimeout(resolve, STATS_POLL_INTERVAL));
   }
 
   // タイムアウト：最大待機時間を超えた

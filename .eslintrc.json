@@ -10,8 +10,8 @@
     "sourceType": "module"
   },
   "rules": {
-    // ログ管理
-    "no-console": ["error", { "allow": [] }],
+    // ログ管理（logger.jsを使用すること）
+    "no-console": "error",
 
     // コード品質
     "no-unused-vars": ["warn", {
