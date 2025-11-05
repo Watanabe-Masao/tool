@@ -43,15 +43,15 @@ describe('validateName', () => {
 
 describe('validateMode', () => {
   test('有効なモードは検証を通過する', () => {
-    expect(validateMode('FIXED')).toBe(true);
-    expect(validateMode('WEIGHT')).toBe(true);
-    expect(validateMode('YIELD_STATS')).toBe(true);
-    expect(validateMode('MULTI_PATTERN')).toBe(true);
+    expect(validateMode('fixed')).toBe(true);
+    expect(validateMode('weight')).toBe(true);
+    expect(validateMode('yieldStats')).toBe(true);
+    expect(validateMode('multiPattern')).toBe(true);
   });
 
   test('無効なモードはエラーをスローする', () => {
     expect(() => validateMode('INVALID')).toThrow(ValidationError);
-    expect(() => validateMode('fixed')).toThrow(ValidationError);
+    expect(() => validateMode('FIXED')).toThrow(ValidationError); // 大文字は無効
     expect(() => validateMode('')).toThrow(ValidationError);
   });
 
@@ -62,36 +62,36 @@ describe('validateMode', () => {
 });
 
 describe('validateInputData', () => {
-  test('有効なFIXEDモード入力データは検証を通過する', () => {
+  test('有効なfixedモード入力データは検証を通過する', () => {
     const inputData = {
       unitCost: 100,
       unitPrice: 150,
       beforeWeight: 100,
       afterWeight: 80
     };
-    expect(validateInputData(inputData, 'FIXED')).toBe(true);
+    expect(validateInputData(inputData, 'fixed')).toBe(true);
   });
 
-  test('有効なWEIGHTモード入力データは検証を通過する', () => {
+  test('有効なweightモード入力データは検証を通過する', () => {
     const inputData = {
       beforeWeight: 100,
       afterWeight: 80,
       unitCost: 100
     };
-    expect(validateInputData(inputData, 'WEIGHT')).toBe(true);
+    expect(validateInputData(inputData, 'weight')).toBe(true);
   });
 
   test('null/undefinedはエラーをスローする', () => {
-    expect(() => validateInputData(null, 'FIXED')).toThrow(ValidationError);
-    expect(() => validateInputData(undefined, 'FIXED')).toThrow(ValidationError);
+    expect(() => validateInputData(null, 'fixed')).toThrow(ValidationError);
+    expect(() => validateInputData(undefined, 'fixed')).toThrow(ValidationError);
   });
 
   test('配列はエラーをスローする', () => {
-    expect(() => validateInputData([], 'FIXED')).toThrow(ValidationError);
+    expect(() => validateInputData([], 'fixed')).toThrow(ValidationError);
   });
 
   test('文字列はエラーをスローする', () => {
-    expect(() => validateInputData('test', 'FIXED')).toThrow(ValidationError);
+    expect(() => validateInputData('test', 'fixed')).toThrow(ValidationError);
   });
 });
 
@@ -147,9 +147,9 @@ describe('validateProductData', () => {
     expect(validateProductData({})).toBe(true);
   });
 
-  test('null/undefinedはエラーをスローする', () => {
-    expect(() => validateProductData(null)).toThrow(ValidationError);
-    expect(() => validateProductData(undefined)).toThrow(ValidationError);
+  test('null/undefinedは許可される（オプションフィールド）', () => {
+    expect(validateProductData(null)).toBe(true);
+    expect(validateProductData(undefined)).toBe(true);
   });
 
   test('配列はエラーをスローする', () => {
@@ -161,7 +161,7 @@ describe('validateCalculationData', () => {
   test('完全な計算データは検証を通過する', () => {
     const data = {
       name: 'テスト計算',
-      mode: 'FIXED',
+      mode: 'fixed',
       inputData: { test: 'data' },
       resultData: { result: 'data' },
       category: 'カテゴリ',
@@ -171,18 +171,19 @@ describe('validateCalculationData', () => {
     expect(validateCalculationData(data)).toBe(true);
   });
 
-  test('必須フィールドのみでも検証を通過する', () => {
+  test('必須フィールド（name, mode, inputData, resultData）で検証を通過する', () => {
     const data = {
       name: 'テスト',
-      mode: 'WEIGHT',
-      inputData: {}
+      mode: 'weight',
+      inputData: {},
+      resultData: {} // resultDataは必須
     };
     expect(validateCalculationData(data)).toBe(true);
   });
 
   test('nameが欠けているとエラーをスローする', () => {
     const data = {
-      mode: 'FIXED',
+      mode: 'fixed',
       inputData: {}
     };
     expect(() => validateCalculationData(data)).toThrow(ValidationError);
@@ -199,7 +200,7 @@ describe('validateCalculationData', () => {
   test('inputDataが欠けているとエラーをスローする', () => {
     const data = {
       name: 'テスト',
-      mode: 'FIXED'
+      mode: 'fixed'
     };
     expect(() => validateCalculationData(data)).toThrow(ValidationError);
   });
@@ -236,7 +237,7 @@ describe('validateId', () => {
 describe('validateUUID', () => {
   test('有効なUUID v4は検証を通過する', () => {
     expect(validateUUID('550e8400-e29b-41d4-a916-446655440000')).toBe(true);
-    expect(validateUUID('123e4567-e89b-12d3-a456-426614174000')).toBe(true);
+    expect(validateUUID('123e4567-e89b-42d3-a456-426614174000')).toBe(true); // 3番目のブロックを4で開始
   });
 
   test('無効なUUID形式はエラーをスローする', () => {

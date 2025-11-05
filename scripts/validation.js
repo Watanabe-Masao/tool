@@ -272,7 +272,7 @@ export function validateCalculationData(data) {
   }
 
   try {
-    validateInputData(data.input, data.mode);
+    validateInputData(data.inputData, data.mode);
   } catch (error) {
     if (error instanceof ValidationError) {
       errors.push(...error.getErrors());
@@ -282,7 +282,7 @@ export function validateCalculationData(data) {
   }
 
   try {
-    validateResultData(data.result);
+    validateResultData(data.resultData);
   } catch (error) {
     if (error instanceof ValidationError) {
       errors.push(...error.getErrors());
