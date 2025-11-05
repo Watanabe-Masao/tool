@@ -31,12 +31,31 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
 
+      - name: Check coverage meets minimum thresholds
+        run: |
+          echo "📊 Verifying coverage thresholds..."
+          npm run test:coverage -- --coverageThreshold='{"global":{"statements":5,"branches":5,"functions":10,"lines":5}}'
+        continue-on-error: false
+
       - name: Comment coverage on PR
         uses: romeovs/lcov-reporter-action@v0.3.1
         with:
           lcov-file: ./coverage/lcov.info
           github-token: ${{ secrets.GITHUB_TOKEN }}
           delete-old-comments: true
+
+      - name: Coverage Summary
+        if: always()
+        run: |
+          echo "## 📊 Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests run: Check the detailed coverage comment above" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Minimum Thresholds" >> $GITHUB_STEP_SUMMARY
+          echo "- Statements: 5%" >> $GITHUB_STEP_SUMMARY
+          echo "- Branches: 5%" >> $GITHUB_STEP_SUMMARY
+          echo "- Functions: 10%" >> $GITHUB_STEP_SUMMARY
+          echo "- Lines: 5%" >> $GITHUB_STEP_SUMMARY
 
   code-quality:
     name: Code Quality Check
