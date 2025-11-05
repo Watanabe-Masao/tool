@@ -59,6 +59,12 @@
   - 15KB
 
 ### インフラ・設定
+- **[CI_CD.md](./CI_CD.md)** ⭐ **NEW**
+  - GitHub Actions CI/CDパイプライン
+  - 自動テスト、カバレッジレポート、PR チェック
+  - ワークフロー構成、トラブルシューティング
+  - 9KB
+
 - **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**
   - Firebase プロジェクトのセットアップ
   - Authentication, Firestore, Hosting
