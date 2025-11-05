@@ -39,7 +39,7 @@ export async function waitForStatsDataReady(isFromHistory) {
 
   while (Date.now() - startTime < TIME.STATS_POLL_MAX_WAIT) {
     // 統計データが準備できているかチェック
-    const yieldRateStats = window.statsDataByType?.yieldRate;
+    const yieldRateStats = appState.getCalculatedStats('yieldRate');
     if (yieldRateStats && yieldRateStats.count >= 2) {
       // データが準備できた
       return;
@@ -58,13 +58,13 @@ export async function waitForStatsDataReady(isFromHistory) {
  * @returns {Object} { hasValidStats: boolean, isFromHistory: boolean, hasYieldStatsData: boolean }
  */
 export function checkStatsDataExists() {
-  // window.statsDataByType から統計データを確認
-  const yieldRateStats = window.statsDataByType?.yieldRate;
+  // appState から統計データを確認
+  const yieldRateStats = appState.getCalculatedStats('yieldRate');
   const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
 
   // 履歴から読み込まれた場合もチェック
-  const isFromHistory = window.yieldStatsState?.isFromHistory;
-  const yieldStatsData = appState.getYieldStatsData();
+  const isFromHistory = appState.isYieldStatsFromHistory();
+  const yieldStatsData = appState.getYieldStatsRawData();
   const hasYieldStatsData = yieldStatsData && (
     (yieldStatsData.yieldRate && yieldStatsData.yieldRate.length >= 2) ||
     (yieldStatsData.beforeWeight && yieldStatsData.beforeWeight.length >= 2) ||
@@ -84,52 +84,27 @@ export function checkStatsDataExists() {
  *
  * このフンクションは以下を実行します:
  * 1. appStateのデータクリア
- * 2. windowグローバル変数のクリア
- * 3. yieldStatsStateの完全リセット
- * 4. DOMの非表示化
- * 5. UIの更新
+ * 2. DOMの非表示化
+ * 3. UIの更新
  *
  * @param {Function} yieldStatsCallbacks - 歩留まり統計のコールバック（addYieldStatsRow用）
  */
 export function clearAllYieldStatsData(yieldStatsCallbacks) {
-  // 1. appStateのデータクリア
+  // 1. appStateのすべての歩留まり統計データをクリア
   appState.showYieldStatsWithMultiPattern = false;
-  appState.setYieldStatsData(null);
+  appState.clearAllYieldStats(); // 一元化されたクリア処理
 
-  // 2. windowグローバル変数のクリア
-  window.statsDataByType = {};
-  window.lastCalculatedStats = null;
-
-  // 3. window.yieldStatsState を初期状態に完全リセット
-  if (window.yieldStatsState) {
-    window.yieldStatsState.currentDisplayType = 'yieldRate';
-    window.yieldStatsState.isFromHistory = false;
-    window.yieldStatsState.isCalculated = false;
-    window.yieldStatsState.hasYieldRateData = false;
-    window.yieldStatsState.hasBeforeWeightData = false;
-    window.yieldStatsState.hasAfterWeightData = false;
-    window.yieldStatsState.isOutlierExcluded = false;
-    window.yieldStatsState.manuallyExcludedOutlierIndices.clear();
-    window.yieldStatsState.currentOutlierValues = [];
-    window.yieldStatsState.sampleSizeValidation = {
-      yieldRate: null,
-      beforeWeight: null,
-      afterWeight: null
-    };
-    window.yieldStatsState.shouldShowMultiPatternLink = false;
-  }
-
-  // 4. 歩留まり統計のテーブルと結果をクリア
+  // 2. 歩留まり統計のテーブルと結果をクリア
   clearYieldStatsInputs(() => addYieldStatsRow(yieldStatsCallbacks));
   hide('yieldStatsResults');
 
-  // 5. 歩留まり統計のDOM要素を非表示
+  // 3. 歩留まり統計のDOM要素を非表示
   const yieldStatsInputs = qs(`#${UI_ELEMENTS.YIELD_STATS_INPUTS}`);
   if (yieldStatsInputs) {
     yieldStatsInputs.classList.add('is-hidden');
   }
 
-  // 6. データクリア後、updateLoadStatsButtons を呼び出してメッセージをクリア
+  // 4. データクリア後、updateLoadStatsButtons を呼び出してメッセージをクリア
   // これは重要：handleModeSwitch内で呼ばれた後、データクリアしたので再度呼ぶ必要がある
   updateLoadStatsButtons();
 }

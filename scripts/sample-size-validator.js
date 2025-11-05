@@ -177,24 +177,21 @@ export function displaySampleSizeValidation(
   }
 
   // サンプルサイズ妥当性を状態に保存
-  if (window.yieldStatsState) {
-    window.yieldStatsState.sampleSizeValidation = window.yieldStatsState.sampleSizeValidation || {};
-    window.yieldStatsState.sampleSizeValidation[statsType] = {
-      isValid,
-      actualSize: actualSampleSize,
-      requiredSize: requiredSampleSize
-    };
-  }
+  appState.setSampleSizeValidation(statsType, {
+    isValid,
+    actualSize: actualSampleSize,
+    requiredSize: requiredSampleSize
+  });
 
   // 推奨代表値を表示
   // サンプルサイズの妥当性に応じて表示内容を分岐
   if (finalValues.length >= 2) {
-    window.lastCalculatedStats = isValid ? finalStats : null;
+    appState.setLastCalculatedStats(isValid ? finalStats : null);
     if (displayRecommendedCallback) {
       displayRecommendedCallback(finalStats, isValid, statsType);
     }
   } else {
-    window.lastCalculatedStats = isValid ? stats : null;
+    appState.setLastCalculatedStats(isValid ? stats : null);
     if (displayRecommendedCallback) {
       displayRecommendedCallback(stats, isValid, statsType);
     }

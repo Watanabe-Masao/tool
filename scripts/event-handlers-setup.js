@@ -718,7 +718,7 @@ function init() {
   function handleGenerateSigmaPatterns() {
     const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
     const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-    const statsData = window.statsDataByType?.[selectedStatsType];
+    const statsData = appState.getCalculatedStats(selectedStatsType);
 
     if (!statsData) {
       showWarning('統計データがありません。先に歩留まり統計で計算を実行してください。');
@@ -785,7 +785,7 @@ function init() {
     if (e.target.id === 'loadStatsMeanBtn' || e.target.closest('#loadStatsMeanBtn')) {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
+      const statsData = appState.getCalculatedStats(selectedStatsType);
       if (statsData) {
         loadStatsValueToMultiPattern(statsData.mean, selectedStatsType, false);
       }
@@ -794,7 +794,7 @@ function init() {
     else if (e.target.id === 'loadStatsMedianBtn' || e.target.closest('#loadStatsMedianBtn')) {
       const loadStatsTypeSelect = qs('#loadStatsTypeSelect');
       const selectedStatsType = loadStatsTypeSelect?.value || 'yieldRate';
-      const statsData = window.statsDataByType?.[selectedStatsType];
+      const statsData = appState.getCalculatedStats(selectedStatsType);
       if (statsData) {
         loadStatsValueToMultiPattern(statsData.median, selectedStatsType, false);
       }
