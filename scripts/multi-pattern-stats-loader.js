@@ -87,8 +87,9 @@ export function loadStatsValueToMultiPattern(value, displayType, shouldSwitchMod
 
 /**
  * 一括取り込み：推奨値をステップ1に転記
+ * @param {boolean} skipConfirm - 確認ダイアログをスキップするかどうか（デフォルト：false）
  */
-export function loadAllStatsToMultiPattern() {
+export function loadAllStatsToMultiPattern(skipConfirm = false) {
   try {
     const yieldRateStats = window.statsDataByType?.yieldRate;
     const beforeWeightStats = window.statsDataByType?.beforeWeight;
@@ -134,8 +135,8 @@ export function loadAllStatsToMultiPattern() {
     // 現在のモードを取得
     const currentMode = document.querySelector('input[name="yieldMethodMultiPattern"]:checked')?.value || 'calculate';
 
-    // 確認ダイアログ
-    if (!confirm('推奨値をステップ1に転記しますか？')) {
+    // 確認ダイアログ（skipConfirmがfalseの場合のみ表示）
+    if (!skipConfirm && !confirm('推奨値をステップ1に転記しますか？')) {
       return;
     }
 

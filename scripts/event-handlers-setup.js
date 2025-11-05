@@ -292,6 +292,41 @@ function init() {
         // 歩留まり統計モードから遷移する場合はreadonly属性を保持（動的連動を継続）
       }
 
+      // 歩留まり統計モードから遷移する場合、統計データがあれば確認メッセージを表示
+      if (currentMode === MODE.YIELD_STATS) {
+        const yieldRateStats = window.statsDataByType?.yieldRate;
+        const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
+
+        // サンプルサイズの妥当性をチェック
+        const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+        const isValidSampleSize = !yieldRateValidation || yieldRateValidation.isValid;
+
+        if (hasValidStats && isValidSampleSize) {
+          // 確認メッセージを表示
+          const useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
+
+          // まず画面を遷移
+          handleModeSwitch(MODE.MULTI_PATTERN, {
+            resetSteps,
+            resetWeightSteps,
+            resetYieldStatsEntries: () => resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks)),
+            updateLoadStatsButtons,
+            displayCurrentStatistics
+          });
+
+          // 「はい」を選択した場合、推奨値を取り込む
+          if (useStats) {
+            // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
+            setTimeout(() => {
+              loadAllStatsToMultiPattern(true);
+            }, 100);
+          }
+
+          return;
+        }
+      }
+
+      // 通常の遷移処理
       handleModeSwitch(MODE.MULTI_PATTERN, {
         resetSteps,
         resetWeightSteps,
