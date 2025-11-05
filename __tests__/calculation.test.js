@@ -160,6 +160,14 @@ describe('grossFromMarkup', () => {
     expect(result).toBeCloseTo(44.44, 1);
   });
 
+  test('値引率省略時はデフォルト0%で計算', () => {
+    // 値入率50%、値引率省略（デフォルト0%） → 粗利率50%
+    expect(grossFromMarkup(50)).toBe(50);
+
+    // 値入率30%、値引率省略（デフォルト0%） → 粗利率30%
+    expect(grossFromMarkup(30)).toBe(30);
+  });
+
   test('値引率が100%以上は0を返す', () => {
     expect(grossFromMarkup(50, 100)).toBe(0);
     expect(grossFromMarkup(50, 110)).toBe(0);

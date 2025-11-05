@@ -362,4 +362,40 @@ describe('トースト通知システム', () => {
       expect(toast.innerHTML).toContain('fa-circle-info'); // デフォルトのinfoアイコン
     });
   });
+
+  describe('デフォルト引数', () => {
+    beforeEach(() => {
+      document.body.innerHTML = '';
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('typeとduration省略時はデフォルト値（info, 3000ms）が使用される', () => {
+      showToast('デフォルトテスト');
+
+      const toast = document.getElementById('app-toast');
+      expect(toast).toBeTruthy();
+      expect(toast.classList.contains('toast-info')).toBe(true);
+      expect(toast.innerHTML).toContain('fa-circle-info');
+
+      // 3000ms後に非表示になることを確認
+      jest.advanceTimersByTime(3000);
+      expect(toast.classList.contains('toast-show')).toBe(false);
+    });
+
+    it('duration省略時はデフォルト値（3000ms）が使用される', () => {
+      showToast('デフォルトduration', 'success');
+
+      const toast = document.getElementById('app-toast');
+      expect(toast).toBeTruthy();
+      expect(toast.classList.contains('toast-success')).toBe(true);
+
+      // 3000ms後に非表示になることを確認
+      jest.advanceTimersByTime(3000);
+      expect(toast.classList.contains('toast-show')).toBe(false);
+    });
+  });
 });
