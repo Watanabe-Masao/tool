@@ -1158,22 +1158,42 @@ function updateLoadStatsButtons() {
     const beforeWeightStats = window.statsDataByType?.beforeWeight;
     const afterWeightStats = window.statsDataByType?.afterWeight;
 
-    // 歩留まり率の統計データが必須
-    if (!yieldRateStats || yieldRateStats.count < 2) {
+    // サンプルサイズの妥当性をチェック
+    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
+    const beforeWeightValidation = window.yieldStatsState?.sampleSizeValidation?.beforeWeight;
+    const afterWeightValidation = window.yieldStatsState?.sampleSizeValidation?.afterWeight;
+
+    // 歩留まり率の統計データが必須かつサンプルサイズが妥当である必要がある
+    if (!yieldRateStats || yieldRateStats.count < 2 || (yieldRateValidation && !yieldRateValidation.isValid)) {
       loadStatsButtons.classList.add('is-hidden');
       loadStatsNoData.classList.remove('is-hidden');
+
+      // サンプルサイズ不十分の場合は専用メッセージを表示
+      if (yieldRateStats && yieldRateValidation && !yieldRateValidation.isValid) {
+        loadStatsNoData.innerHTML = `
+          <div class="no-data-message" style="padding: 1em; text-align: center; color: #dc3545;">
+            <p style="margin: 0 0 0.5em 0; font-weight: bold;">⚠️ サンプルサイズが不十分です</p>
+            <p style="margin: 0; font-size: 0.9em;">実際のサンプル数: ${yieldRateValidation.actualSize}、必要なサンプル数: ${yieldRateValidation.requiredSize}</p>
+            <p style="margin: 0.5em 0 0 0; font-size: 0.9em;">より多くのデータを収集してから推奨値を使用してください。</p>
+          </div>`;
+      } else {
+        loadStatsNoData.innerHTML = '<p style="text-align: center; padding: 1em; color: #6c757d;">歩留まり統計のデータがありません。<br>先に歩留まり統計で計算を実行してください。</p>';
+      }
+
       if (generateSigmaPatternsSection) {
         generateSigmaPatternsSection.classList.add('is-hidden');
       }
       return;
     }
 
-    // 推奨値を取得
+    // 推奨値を取得（妥当性チェック済み）
     const yieldRateRecommended = getRecommendedValue(yieldRateStats);
     const beforeWeightRecommended = beforeWeightStats && beforeWeightStats.count >= 2
+      && (!beforeWeightValidation || beforeWeightValidation.isValid)
       ? getRecommendedValue(beforeWeightStats)
       : null;
     const afterWeightRecommended = afterWeightStats && afterWeightStats.count >= 2
+      && (!afterWeightValidation || afterWeightValidation.isValid)
       ? getRecommendedValue(afterWeightStats)
       : null;
 
@@ -1278,7 +1298,10 @@ function updateLoadStatsButtons() {
     bulkImportBtnContainer.remove();
   }
 
-  if (stats && stats.count >= 2) {
+  // サンプルサイズの妥当性をチェック
+  const validation = window.yieldStatsState?.sampleSizeValidation?.[selectedStatsType];
+
+  if (stats && stats.count >= 2 && (!validation || validation.isValid)) {
     // 推奨値を取得
     const recommended = getRecommendedValue(stats);
 
@@ -1373,9 +1396,21 @@ function updateLoadStatsButtons() {
       generateSigmaPatternsSection.classList.add('is-hidden');
     }
   } else {
-    // データがない場合、メッセージを表示
+    // データがない、またはサンプルサイズが不十分な場合、メッセージを表示
     loadStatsButtons.classList.add('is-hidden');
     loadStatsNoData.classList.remove('is-hidden');
+
+    // サンプルサイズ不十分の場合は専用メッセージ
+    if (stats && stats.count >= 2 && validation && !validation.isValid) {
+      loadStatsNoData.innerHTML = `
+        <div class="no-data-message" style="padding: 1em; text-align: center; color: #dc3545;">
+          <p style="margin: 0 0 0.5em 0; font-weight: bold;">⚠️ サンプルサイズが不十分です</p>
+          <p style="margin: 0; font-size: 0.9em;">実際のサンプル数: ${validation.actualSize}、必要なサンプル数: ${validation.requiredSize}</p>
+          <p style="margin: 0.5em 0 0 0; font-size: 0.9em;">より多くのデータを収集してから推奨値を使用してください。</p>
+        </div>`;
+    } else {
+      loadStatsNoData.innerHTML = '<p style="text-align: center; padding: 1em; color: #6c757d;">歩留まり統計のデータがありません。<br>先に歩留まり統計で計算を実行してください。</p>';
+    }
 
     // σパターン生成セクションを非表示
     if (generateSigmaPatternsSection) {
