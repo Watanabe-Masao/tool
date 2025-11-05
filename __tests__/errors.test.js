@@ -187,6 +187,14 @@ describe('mapFirebaseError', () => {
 
     expect(error.message).toContain('Unknown error occurred');
   });
+
+  test('未知のエラーコードの場合は汎用AppErrorを返す', () => {
+    const firebaseError = { code: 'unknown-error-code', message: 'Unknown error' };
+    const error = mapFirebaseError(firebaseError);
+
+    expect(error.message).toBe('Unknown error');
+    expect(error.retryable).toBe(false);
+  });
 });
 
 describe('mapIndexedDBError', () => {
@@ -215,6 +223,14 @@ describe('mapIndexedDBError', () => {
     const error = mapIndexedDBError(null, 'operation');
 
     expect(error instanceof DatabaseError).toBe(true);
+  });
+
+  test('未知のエラー名の場合はDatabaseErrorを返す', () => {
+    const dbError = { name: 'UnknownDBError', message: 'Unknown database error' };
+    const error = mapIndexedDBError(dbError, 'query');
+
+    expect(error instanceof DatabaseError).toBe(true);
+    expect(error.operation).toBe('query');
   });
 });
 
@@ -263,6 +279,18 @@ describe('isRetryableError', () => {
 
   test('通常のErrorオブジェクトはリトライ不可', () => {
     const error = new Error('Generic error');
+
+    expect(isRetryableError(error)).toBe(false);
+  });
+
+  test('codeもnameもないエラーオブジェクトはリトライ不可', () => {
+    const error = { message: 'Some error without code or name' };
+
+    expect(isRetryableError(error)).toBe(false);
+  });
+
+  test('空オブジェクトはリトライ不可', () => {
+    const error = {};
 
     expect(isRetryableError(error)).toBe(false);
   });
