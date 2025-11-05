@@ -125,7 +125,6 @@ export function closeHistoryModal() {
  * @param {string} filterYieldMethod - フィルタする歩留まり率入力方法（オプション）
  */
 export async function renderHistoryList(items = null, filterMode = null, filterYieldMethod = null) {
-  console.log('[renderHistoryList] Start rendering');
   const listContainer = qs('#historyList');
   if (!listContainer) return;
 
@@ -143,14 +142,7 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   }
 
   // データを取得
-  console.log('[renderHistoryList] Fetching history data...');
   let history = items || await getHistory();
-  console.log('[renderHistoryList] History data:', history.length, 'items');
-  if (history.length > 0) {
-    const first3 = history.slice(0, 3).map(item => ({ id: item.id, name: item.name }));
-    console.log('[renderHistoryList] First 3 items:', first3);
-    console.table(first3);
-  }
 
   // モードと計算方法でフィルタリング
   if (filterMode) {
@@ -214,27 +206,7 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   const groups = groupHistoryByProduct(history);
 
   // グループごとにHTMLを生成
-  console.log('[renderHistoryList] Updating DOM with', groups.length, 'groups');
-  console.log('[renderHistoryList] Groups data:', groups.map(group => ({
-    groupSize: group.length,
-    firstItem: { id: group[0]?.id, name: group[0]?.name }
-  })));
-
-  const html = groups.map(group => createHistoryGroupHTML(group)).join('');
-  console.log('[renderHistoryList] Generated HTML length:', html.length);
-  listContainer.innerHTML = html;
-  console.log('[renderHistoryList] DOM updated');
-
-  // DOM更新後の実際の表示を確認
-  const displayedItems = listContainer.querySelectorAll('.history-item');
-  console.log('[renderHistoryList] Displayed items count:', displayedItems.length);
-  if (displayedItems.length > 0) {
-    const firstThree = Array.from(displayedItems).slice(0, 3).map(item => ({
-      id: item.dataset.id,
-      text: item.querySelector('.history-item-name')?.textContent?.trim()
-    }));
-    console.log('[renderHistoryList] First 3 displayed items:', firstThree);
-  }
+  listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
 
   // 商品名候補を更新（現在のフィルタ条件の履歴から生成）
   const filteredHistory = filterMode ? allHistory.filter(item => {
@@ -251,7 +223,6 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
   // イベントリスナーをバインド
   bindHistoryItemEvents();
   initializeCarousels();
-  console.log('[renderHistoryList] Rendering complete');
 }
 
 /**
@@ -443,9 +414,7 @@ async function handleLoadCalculation(id) {
  */
 async function handleEditCalculation(id) {
   try {
-    console.log('[handleEditCalculation] Start editing:', id);
     const data = await loadCalculation(id);
-    console.log('[handleEditCalculation] Current name:', data.name);
     const newName = prompt('商品名を入力してください', data.name);
 
     if (newName === null) return; // キャンセル
@@ -454,21 +423,13 @@ async function handleEditCalculation(id) {
       return;
     }
 
-    console.log('[handleEditCalculation] New name:', newName.trim());
     await updateCalculationName(id, newName.trim());
-    console.log('[handleEditCalculation] Database updated');
 
     // 🔥 重要: Firestoreと同期して最新データを取得
-    // historyUpdatedイベントが発火するが、後でrenderHistoryList()を呼ぶので問題ない
     await ensureFreshDataBeforeDisplay();
-    console.log('[handleEditCalculation] Synced with Firestore');
 
     // 短い遅延を入れてFirestore同期を完全に終わらせる
     await new Promise(resolve => setTimeout(resolve, 100));
-
-    // 更新後のデータを確認
-    const updatedData = await loadCalculation(id);
-    console.log('[handleEditCalculation] Updated data from DB:', { id: updatedData.id, name: updatedData.name });
 
     // 編集した履歴が現在読み込まれているものと同じ場合、商品名フィールドも更新
     const loadedHistoryId = appState.getLoadedHistoryId();
@@ -492,14 +453,7 @@ async function handleEditCalculation(id) {
       searchInput.value = '';
     }
 
-    console.log('[handleEditCalculation] Calling renderHistoryList...');
     await renderHistoryList();
-    console.log('[handleEditCalculation] renderHistoryList completed');
-
-    // renderHistoryList後に再度データを確認
-    const allHistory = await getHistory();
-    const editedItem = allHistory.find(item => item.id === id);
-    console.log('[handleEditCalculation] Item in history list after render:', editedItem ? { id: editedItem.id, name: editedItem.name } : 'NOT FOUND');
     showToast('更新しました', 'success');
   } catch (error) {
     console.error('[handleEditCalculation] Error:', error);
