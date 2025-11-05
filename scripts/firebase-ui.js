@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * Firebase同期UI
  * 認証画面、同期ボタン、ステータス表示
  */
+
+import { logger } from './core/logger.js';
 
 import {
   initializeFirebase,

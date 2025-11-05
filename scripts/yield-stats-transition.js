@@ -1,5 +1,4 @@
 /**
-import { logger } from './core/logger.js';
  * 歩留まり統計遷移ユーティリティ
  *
  * 歩留まり統計から複数パターン分析への遷移に関する
@@ -10,6 +9,8 @@ import { logger } from './core/logger.js';
  * - データクリア処理の一元化
  * - 保守性とテスタビリティの向上
  */
+
+import { logger } from './core/logger.js';
 
 import { qs, hide } from './dom-utils.js';
 import { appState } from './state.js';

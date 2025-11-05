@@ -1,7 +1,8 @@
 /**
-import { logger } from './core/logger.js';
  * 履歴機能のUI管理
  */
+
+import { logger } from './core/logger.js';
 
 import { getHistory, searchHistory, deleteHistory, updateCalculationName, loadCalculation, exportData, importData, clearAllHistory, getUniqueProductNames } from './storage.js';
 import { qs, qsa, num, show, hide, setText, yen, pct, addTapListener } from './dom-utils.js';

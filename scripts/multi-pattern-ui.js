@@ -1,7 +1,8 @@
 /**
-import { logger } from './core/logger.js';
  * 複数パターン分析モードのUI制御
  */
+
+import { logger } from './core/logger.js';
 
 import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';

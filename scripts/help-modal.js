@@ -1,9 +1,10 @@
 /**
-import { logger } from './core/logger.js';
  * ヘルプテキストをフォーマット
  * @param {string} text - フォーマットするテキスト
  * @returns {string} - フォーマット済みHTML
  */
+
+import { logger } from './core/logger.js';
 function formatHelpText(text) {
   // パイプ記号で分割
   const lines = text.split('|');

@@ -1,9 +1,10 @@
 /**
-import { logger } from './core/logger.js';
  * 複数パターン分析: プリセット管理モジュール
  *
  * プリセットの作成、編集、削除、適用を管理します。
  */
+
+import { logger } from './core/logger.js';
 
 import { qs, qsa } from './dom-utils.js';
 import { showError, showWarning } from './toast.js';

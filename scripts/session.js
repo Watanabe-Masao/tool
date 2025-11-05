@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * セッション状態の永続化
  * ページリロード後も入力値とモードを保持
  */
+
+import { logger } from './core/logger.js';
 
 import { qs } from './dom-utils.js';
 import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RADIO_NAMES, TIME } from './constants.js';

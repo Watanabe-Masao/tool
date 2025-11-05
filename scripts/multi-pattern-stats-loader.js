@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * 複数パターン分析への統計値読み込み機能
  * 歩留まり統計から複数パターン分析へデータを転記
  */
+
+import { logger } from './core/logger.js';
 
 import { qs, toFixed } from './dom-utils.js';
 import { appState } from './state.js';

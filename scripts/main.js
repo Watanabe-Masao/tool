@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * メインアプリケーションエントリーポイント
  * イベントハンドラーのセットアップを委譲
  */
+
+import { logger } from './core/logger.js';
 
 import { setupEventHandlers } from './event-handlers-setup.js';
 import { initializeFirebaseUI } from './firebase-ui.js';

@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * リトライユーティリティ
  * 失敗した操作を自動的に再試行する機能を提供
  */
+
+import { logger } from './core/logger.js';
 
 import { isRetryableError } from './errors.js';
 

@@ -1,5 +1,4 @@
 /**
-import { logger } from './core/logger.js';
  * Firestore重複データクリーンアップスクリプト
  *
  * 実行方法:
@@ -12,6 +11,8 @@ import { logger } from './core/logger.js';
  * - UUID形式のデータを優先
  * - 古い重複データを削除
  */
+
+import { logger } from './core/logger.js';
 
 async function cleanupFirestoreDuplicates() {
   logger.info('[クリーンアップ]  Firestoreクリーンアップを開始します...');

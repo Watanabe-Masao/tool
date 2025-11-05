@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * Firebase認証モジュール
  * 匿名認証とメール/パスワード認証をサポート
  */
+
+import { logger } from './core/logger.js';
 
 import { firebaseConfig, firebaseFeatures } from './firebase-config.js';
 import { showToast } from './toast.js';

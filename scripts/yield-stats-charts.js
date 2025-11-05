@@ -1,10 +1,11 @@
 /**
-import { logger } from './core/logger.js';
  * 歩留まり統計: チャート描画モジュール
  *
  * このモジュールはEChartsを使用した統計グラフの描画を担当します。
  * 箱ひげ図、ヒストグラム、散布図、Q-Qプロット、正規分布曲線などをサポートします。
  */
+
+import { logger } from './core/logger.js';
 
 import { qs } from './dom-utils.js';
 import { toFixed } from './calculation.js';

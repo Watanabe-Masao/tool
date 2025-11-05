@@ -1,8 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * イベントハンドラーのセットアップ
  * アプリケーションの全イベントリスナーを初期化
  */
+
+import { logger } from './core/logger.js';
 
 // すべての必要なimportsをmain.jsからコピー
 import { qs, qsa, num, hide, show, toggleActive, setText, yen, pct, addTapListener, toFixed } from './dom-utils.js';
@@ -893,4 +894,3 @@ export function setupEventHandlers() {
   // init関数を実行
   init();
 }
-

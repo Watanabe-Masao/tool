@@ -1,7 +1,8 @@
 /**
-import { logger } from './core/logger.js';
  * 論理削除データ管理UI
  */
+
+import { logger } from './core/logger.js';
 
 import { getDeletedHistory, hardDeleteHistory } from './storage.js';
 import { qs } from './dom-utils.js';

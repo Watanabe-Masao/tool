@@ -1,5 +1,4 @@
 /**
-import { logger } from './core/logger.js';
  * ブラウザコンソールから実行するデータクリーンアップスクリプト
  *
  * 使用方法:
@@ -23,6 +22,8 @@ import { logger } from './core/logger.js';
  * // 状態確認
  * await checkDataStatus()
  */
+
+import { logger } from './core/logger.js';
 
 /**
  * すべてのデータを削除

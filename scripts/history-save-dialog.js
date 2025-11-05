@@ -1,7 +1,8 @@
 /**
-import { logger } from './core/logger.js';
  * 保存ダイアログの管理
  */
+
+import { logger } from './core/logger.js';
 
 import { loadCalculation, updateCalculation, saveCalculation, getUniqueProductNames } from './storage.js';
 import { qs, qsa, num } from './dom-utils.js';

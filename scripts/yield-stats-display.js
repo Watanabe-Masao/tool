@@ -1,5 +1,4 @@
 /**
-import { logger } from './core/logger.js';
  * 歩留まり統計: 表示管理モジュール（Phase 9: UX改善完了版）
  *
  * 統計値の表示、読み込みボタン管理などを担当します。
@@ -28,6 +27,8 @@ import { logger } from './core/logger.js';
  * - Phase 0-8: main.js 5,621行 → 15行 (99.7%削減)
  * - Phase 9: yield-stats-display.js 1,289行 → 1,391行 (UX改善により102行追加, 7.9%増)
  */
+
+import { logger } from './core/logger.js';
 
 import { qs, qsa, hide, show, setText, yen, pct, toFixed } from './dom-utils.js';
 import { appState } from './state.js';

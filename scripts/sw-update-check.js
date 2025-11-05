@@ -1,9 +1,9 @@
 /**
-import { logger } from './core/logger.js';
  * Service Worker更新チェック
  * 新しいバージョンを検出し、ユーザーに通知
  */
 
+import { logger } from './core/logger.js';
 import { showToast } from './toast.js';
 
 /**
