@@ -64,19 +64,25 @@ describe('validateMode', () => {
 describe('validateInputData', () => {
   test('有効なfixedモード入力データは検証を通過する', () => {
     const inputData = {
+      yieldMethod: 'calculate',
       unitCost: 100,
       unitPrice: 150,
       beforeWeight: 100,
-      afterWeight: 80
+      afterWeight: 80,
+      afterPrice100: 200
     };
     expect(validateInputData(inputData, 'fixed')).toBe(true);
   });
 
   test('有効なweightモード入力データは検証を通過する', () => {
     const inputData = {
-      beforeWeight: 100,
+      yieldMethod: 'calculate',
+      boxCost: 1000,
+      boxPrice: 1500,
+      boxWeight: 5,
+      beforeSample: 100,
       afterWeight: 80,
-      unitCost: 100
+      afterPrice100: 200
     };
     expect(validateInputData(inputData, 'weight')).toBe(true);
   });
@@ -162,7 +168,14 @@ describe('validateCalculationData', () => {
     const data = {
       name: 'テスト計算',
       mode: 'fixed',
-      inputData: { test: 'data' },
+      inputData: {
+        yieldMethod: 'calculate',
+        unitCost: 100,
+        unitPrice: 150,
+        beforeWeight: 100,
+        afterWeight: 80,
+        afterPrice100: 200
+      },
       resultData: { result: 'data' },
       category: 'カテゴリ',
       productData: { name: '商品名' },
@@ -175,7 +188,15 @@ describe('validateCalculationData', () => {
     const data = {
       name: 'テスト',
       mode: 'weight',
-      inputData: {},
+      inputData: {
+        yieldMethod: 'calculate',
+        boxCost: 1000,
+        boxPrice: 1500,
+        boxWeight: 5,
+        beforeSample: 100,
+        afterWeight: 80,
+        afterPrice100: 200
+      },
       resultData: {} // resultDataは必須
     };
     expect(validateCalculationData(data)).toBe(true);
