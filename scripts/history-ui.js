@@ -215,8 +215,26 @@ export async function renderHistoryList(items = null, filterMode = null, filterY
 
   // グループごとにHTMLを生成
   console.log('[renderHistoryList] Updating DOM with', groups.length, 'groups');
-  listContainer.innerHTML = groups.map(group => createHistoryGroupHTML(group)).join('');
+  console.log('[renderHistoryList] Groups data:', groups.map(g => ({
+    productName: g.productName,
+    items: g.items.map(i => ({ id: i.id, name: i.name }))
+  })));
+
+  const html = groups.map(group => createHistoryGroupHTML(group)).join('');
+  console.log('[renderHistoryList] Generated HTML length:', html.length);
+  listContainer.innerHTML = html;
   console.log('[renderHistoryList] DOM updated');
+
+  // DOM更新後の実際の表示を確認
+  const displayedItems = listContainer.querySelectorAll('.history-item');
+  console.log('[renderHistoryList] Displayed items count:', displayedItems.length);
+  if (displayedItems.length > 0) {
+    const firstThree = Array.from(displayedItems).slice(0, 3).map(item => ({
+      id: item.dataset.id,
+      text: item.querySelector('.history-item-name')?.textContent?.trim()
+    }));
+    console.log('[renderHistoryList] First 3 displayed items:', firstThree);
+  }
 
   // 商品名候補を更新（現在のフィルタ条件の履歴から生成）
   const filteredHistory = filterMode ? allHistory.filter(item => {
