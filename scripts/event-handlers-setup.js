@@ -297,12 +297,8 @@ function init() {
         const yieldRateStats = window.statsDataByType?.yieldRate;
         const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
 
-        // サンプルサイズの妥当性をチェック
-        const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
-        const isValidSampleSize = !yieldRateValidation || yieldRateValidation.isValid;
-
-        if (hasValidStats && isValidSampleSize) {
-          // 確認メッセージを表示
+        if (hasValidStats) {
+          // 確認メッセージを表示（サンプルサイズの妥当性に関わらず）
           const useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
 
           // まず画面を遷移
@@ -315,6 +311,7 @@ function init() {
           });
 
           // 「はい」を選択した場合、推奨値を取り込む
+          // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
           if (useStats) {
             // 画面遷移後に少し待ってから値を取り込む（確認ダイアログはスキップ）
             setTimeout(() => {
@@ -681,17 +678,14 @@ function init() {
 
   // 複数パターン分析への遷移ボタン
   qs('#goToMultiPatternBtn')?.addEventListener('click', () => {
-    // 統計データの存在と妥当性をチェック
+    // 統計データの存在をチェック
     const yieldRateStats = window.statsDataByType?.yieldRate;
     const hasValidStats = yieldRateStats && yieldRateStats.count >= 2;
 
-    // サンプルサイズの妥当性をチェック
-    const yieldRateValidation = window.yieldStatsState?.sampleSizeValidation?.yieldRate;
-    const isValidSampleSize = !yieldRateValidation || yieldRateValidation.isValid;
-
-    // 確認メッセージを表示（有効な統計データがある場合のみ）
+    // 確認メッセージを表示（統計データがある場合、サンプルサイズの妥当性に関わらず）
+    // サンプルサイズが不十分な場合はloadAllStatsToMultiPattern内でエラー表示
     let useStats = false;
-    if (hasValidStats && isValidSampleSize) {
+    if (hasValidStats) {
       useStats = confirm('歩留まり統計の推奨値を複数パターン分析で使用しますか？');
     }
 
