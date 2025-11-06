@@ -6,6 +6,7 @@
 
 import { qs, qsa, pct, toFixed } from './dom-utils.js';
 import { UI_ELEMENTS, YIELD_STATS_FIELDS } from './constants.js';
+import { escapeHTML } from './core/sanitizer.js';
 
 // 外れ値の状態管理
 let currentOutlierValues = [];
@@ -421,9 +422,10 @@ function showLoadingOverlay(message) {
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'loadingOverlay';
+    // XSS対策: メッセージパラメータをエスケープ
     overlay.innerHTML = `
       <div class="loading-spinner"></div>
-      <div class="loading-message">${message}</div>
+      <div class="loading-message">${escapeHTML(message)}</div>
     `;
     overlay.style.cssText = `
       position: fixed;

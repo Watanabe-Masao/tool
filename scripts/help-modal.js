@@ -5,6 +5,8 @@
  */
 
 import { logger } from './core/logger.js';
+import { escapeHTML } from './core/sanitizer.js';
+
 function formatHelpText(text) {
   // パイプ記号で分割
   const lines = text.split('|');
@@ -12,9 +14,10 @@ function formatHelpText(text) {
   return lines.map(line => {
     line = line.trim();
 
+    // XSS対策: すべてのユーザー入力をエスケープ
     // リストアイテム（◎、○、△、×で始まる行）
     if (/^[◎○△×]/.test(line)) {
-      return `<div class="help-list-item">${line}</div>`;
+      return `<div class="help-list-item">${escapeHTML(line)}</div>`;
     }
 
     // コロンを含む行（キー: 値の形式）
@@ -23,12 +26,12 @@ function formatHelpText(text) {
       if (parts.length === 2) {
         const key = parts[0].trim();
         const value = parts[1].trim();
-        return `<div><strong>${key}:</strong> ${value}</div>`;
+        return `<div><strong>${escapeHTML(key)}:</strong> ${escapeHTML(value)}</div>`;
       }
     }
 
     // 通常の行
-    return `<div>${line}</div>`;
+    return `<div>${escapeHTML(line)}</div>`;
   }).join('');
 }
 

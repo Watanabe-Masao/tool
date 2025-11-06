@@ -5,6 +5,7 @@
  */
 
 import { logger } from './core/logger.js';
+import { escapeHTML } from './core/sanitizer.js';
 
 import { qs, qsa } from './dom-utils.js';
 import { showError, showWarning } from './toast.js';
@@ -255,11 +256,14 @@ function renderPresetList() {
       .join('');
     const moreText = patterns.length > 3 ? ` <span style="color: #999;">他${patterns.length - 3}件</span>` : '';
 
+    // XSS対策: localStorageから読み込んだプリセット名をエスケープ
+    const safeName = escapeHTML(preset.name || '名称未設定');
+
     return `
       <div class="preset-item" data-preset-id="${preset.id}">
         <input type="checkbox" class="preset-checkbox" data-preset-id="${preset.id}">
         <div class="preset-info">
-          <div class="preset-name">${preset.name || '名称未設定'}</div>
+          <div class="preset-name">${safeName}</div>
           <div class="preset-item-patterns">${patternsDisplay}${moreText}</div>
         </div>
         <button class="preset-btn preset-btn-edit" data-preset-id="${preset.id}">編集</button>

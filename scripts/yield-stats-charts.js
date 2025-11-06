@@ -87,12 +87,22 @@ export async function renderStatsChart(values, stats, typeName, unit) {
     // エラーハンドリング
     toggleLoadingIndicator(chartDom, false);
     logger.error('Failed to render chart:', error);
-    chartDom.innerHTML = `
-      <div class="chart-error">
-        <p>⚠️ チャートの読み込みに失敗しました</p>
-        <p class="error-detail">${error.message}</p>
-      </div>
-    `;
+
+    // XSS対策: error.messageをtextContentで安全に設定
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'chart-error';
+
+    const errorTitle = document.createElement('p');
+    errorTitle.textContent = '⚠️ チャートの読み込みに失敗しました';
+
+    const errorDetail = document.createElement('p');
+    errorDetail.className = 'error-detail';
+    errorDetail.textContent = error.message;
+
+    errorContainer.appendChild(errorTitle);
+    errorContainer.appendChild(errorDetail);
+    chartDom.innerHTML = '';
+    chartDom.appendChild(errorContainer);
   }
 }
 
