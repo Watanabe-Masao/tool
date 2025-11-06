@@ -77,20 +77,18 @@ export function saveSessionState(mode) {
       if (tbody) {
         const rows = tbody.querySelectorAll('.yield-stats-row');
         rows.forEach((row) => {
-          const rowId = row.dataset.rowId;
-          if (rowId !== undefined) {
-            const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-            const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+          // 配列ベース管理: rowから直接inputを取得
+          const beforeWeightInput = row.querySelector('.before-weight-input');
+          const afterWeightInput = row.querySelector('.after-weight-input');
 
-            const beforeWeight = beforeWeightInput ? beforeWeightInput.value : '';
-            const afterWeight = afterWeightInput ? afterWeightInput.value : '';
+          const beforeWeight = beforeWeightInput ? beforeWeightInput.value : '';
+          const afterWeight = afterWeightInput ? afterWeightInput.value : '';
 
-            // 空の行もスキップせずに保存（行番号を保持するため）
-            tableData.push({
-              beforeWeight: beforeWeight,
-              afterWeight: afterWeight
-            });
-          }
+          // 空の行もスキップせずに保存（行番号を保持するため）
+          tableData.push({
+            beforeWeight: beforeWeight,
+            afterWeight: afterWeight
+          });
         });
       }
 

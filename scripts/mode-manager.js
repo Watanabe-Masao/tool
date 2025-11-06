@@ -98,14 +98,12 @@ export function hasInputValues() {
     if (tbody) {
       const rows = tbody.querySelectorAll('.yield-stats-row');
       for (const row of rows) {
-        const rowId = row.dataset.rowId;
-        if (rowId !== undefined) {
-          const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-          const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
-          if ((beforeWeightInput && beforeWeightInput.value.trim() !== '') ||
-              (afterWeightInput && afterWeightInput.value.trim() !== '')) {
-            return true;
-          }
+        // 配列ベース管理: rowから直接inputを取得
+        const beforeWeightInput = row.querySelector('.before-weight-input');
+        const afterWeightInput = row.querySelector('.after-weight-input');
+        if ((beforeWeightInput && beforeWeightInput.value.trim() !== '') ||
+            (afterWeightInput && afterWeightInput.value.trim() !== '')) {
+          return true;
         }
       }
     }

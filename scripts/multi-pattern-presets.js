@@ -13,6 +13,7 @@ import { showError, showWarning } from './toast.js';
 const PRESET_STORAGE_KEY = 'multiPatternPresets';
 let currentEditingPreset = null; // 編集中のプリセット
 let tempPairs = []; // 一時的な原価・売価ペア配列
+let tempPairIdCounter = 0; // ペアのユニークID生成用カウンター
 
 /**
  * プリセットをlocalStorageから読み込む
@@ -96,6 +97,7 @@ function showPresetEditor() {
 function openNewPresetEditor() {
   currentEditingPreset = null;
   tempPairs = [];
+  tempPairIdCounter = 0; // カウンターをリセット
 
   const editorTitle = qs('#presetEditorTitle');
   if (editorTitle) {
@@ -136,11 +138,11 @@ function renderTempPairs() {
   // 売価基準で降順ソート
   const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
 
-  tbody.innerHTML = sorted.map((pair, index) => `
+  tbody.innerHTML = sorted.map((pair) => `
     <tr>
       <td>${pair.unitCost}</td>
       <td>${pair.unitPrice}</td>
-      <td><button type="button" class="btn-remove-pair" data-pair-index="${index}">削除</button></td>
+      <td><button type="button" class="btn-remove-pair" data-pair-id="${pair.id}">削除</button></td>
     </tr>
   `).join('');
 }
@@ -163,7 +165,12 @@ function addPairToTemp() {
     return;
   }
 
-  tempPairs.push({ unitCost, unitPrice });
+  // ユニークIDを付与して追加
+  tempPairs.push({
+    id: tempPairIdCounter++,
+    unitCost,
+    unitPrice
+  });
   qs('#tempUnitCost').value = '';
   qs('#tempUnitPrice').value = '';
   renderTempPairs();
@@ -171,25 +178,18 @@ function addPairToTemp() {
 
 /**
  * 一時ペアを削除
- * @param {number} index - 削除するペアのインデックス
+ * @param {number} id - 削除するペアのID
  */
-function removeTempPair(index) {
-  // ソート済みの配列から実際のインデックスを見つける
-  const sorted = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+function removeTempPair(id) {
+  // IDで該当するペアを検索して削除
+  const index = tempPairs.findIndex(p => p.id === id);
 
-  // 境界チェックを追加
-  if (index < 0 || index >= sorted.length) {
-    logger.error('Invalid index:', index);
-    return;
+  if (index !== -1) {
+    tempPairs.splice(index, 1);
+    renderTempPairs();
+  } else {
+    logger.error('Invalid pair ID:', id);
   }
-
-  const pairToRemove = sorted[index];
-  const realIndex = tempPairs.findIndex(p => p.unitCost === pairToRemove.unitCost && p.unitPrice === pairToRemove.unitPrice);
-
-  if (realIndex !== -1) {
-    tempPairs.splice(realIndex, 1);
-  }
-  renderTempPairs();
 }
 
 /**
@@ -209,7 +209,10 @@ function savePresetFromModal() {
   }
 
   const presets = loadPresets();
-  const patterns = [...tempPairs].sort((a, b) => b.unitPrice - a.unitPrice);
+  // ソートして、内部管理用のIDプロパティを削除
+  const patterns = [...tempPairs]
+    .sort((a, b) => b.unitPrice - a.unitPrice)
+    .map(({ unitCost, unitPrice }) => ({ unitCost, unitPrice }));
 
   if (currentEditingPreset) {
     // 編集モード
@@ -285,7 +288,15 @@ function editPresetFromModal(id) {
 
   currentEditingPreset = preset;
   // preset.patternsが存在しない場合は空配列として扱う
-  tempPairs = Array.isArray(preset.patterns) ? [...preset.patterns] : [];
+  // 既存のパターンにIDを付与（保存時にIDプロパティがない場合があるため）
+  tempPairIdCounter = 0;
+  tempPairs = Array.isArray(preset.patterns)
+    ? preset.patterns.map(p => ({
+        id: tempPairIdCounter++,
+        unitCost: p.unitCost,
+        unitPrice: p.unitPrice
+      }))
+    : [];
   qs('#presetEditorTitle').textContent = 'プリセット編集';
   qs('#presetName').value = preset.name;
   qs('#tempUnitCost').value = '';
@@ -521,8 +532,8 @@ export function setupPresetEventListeners() {
   if (pairsTableBody) {
     const handlePairsTableEvent = (e) => {
       if (e.target.classList.contains('btn-remove-pair')) {
-        const index = parseInt(e.target.dataset.pairIndex);
-        removeTempPair(index);
+        const id = parseInt(e.target.dataset.pairId);
+        removeTempPair(id);
       }
     };
 

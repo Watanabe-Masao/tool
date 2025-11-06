@@ -91,7 +91,7 @@ export function addYieldStatsRow(callbacks = {}) {
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"
-             class="table-input"
+             class="table-input before-weight-input"
              step="0.01"
              inputmode="decimal"
              placeholder="300"
@@ -100,15 +100,15 @@ export function addYieldStatsRow(callbacks = {}) {
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}"
-             class="table-input"
+             class="table-input after-weight-input"
              step="0.01"
              inputmode="decimal"
              placeholder="150"
              data-row-id="${rowId}" />
     </td>
-    <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
-    <td class="z-score" id="zScore${rowId}">-</td>
-    <td class="confidence-judgment" id="confidenceJudgment${rowId}">-</td>
+    <td class="yield-result yield-rate-display" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
+    <td class="z-score z-score-display" id="zScore${rowId}">-</td>
+    <td class="confidence-judgment confidence-judgment-display" id="confidenceJudgment${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -214,9 +214,9 @@ export function compactYieldStatsRows(callbacks = {}) {
 
   // データがある行だけを抽出
   allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
-    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+    // 配列ベース管理: rowから直接inputを取得
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
 
     const hasBeforeWeight = beforeInput && beforeInput.value.trim() !== '';
     const hasAfterWeight = afterInput && afterInput.value.trim() !== '';
@@ -238,9 +238,11 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (validRows.length > 0) {
     validRows.forEach(rowData => {
       addYieldStatsRow(callbacks);
-      const newRowId = yieldStatsEntryCounter - 1;
-      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${newRowId}`);
-      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${newRowId}`);
+      // 配列ベース管理: 最後に追加した行から直接inputを取得
+      const allNewRows = tbody.querySelectorAll('.yield-stats-row');
+      const lastRow = allNewRows[allNewRows.length - 1];
+      const beforeInput = lastRow.querySelector('.before-weight-input');
+      const afterInput = lastRow.querySelector('.after-weight-input');
 
       beforeInput.value = rowData.beforeValue;
       afterInput.value = rowData.afterValue;
@@ -385,13 +387,13 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
   const allRows = tbody.querySelectorAll('.yield-stats-row');
 
   allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
-    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
-    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+    // 配列ベース管理: rowから直接要素を取得
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
+    const yieldRateDisplay = row.querySelector('.yield-rate-display');
 
     // 歩留まり率
-    if (yieldRateDisplay.classList.contains('calculated')) {
+    if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
       const rateText = yieldRateDisplay.textContent.replace('%', '');
       const rate = parseFloat(rateText);
       if (!isNaN(rate)) {
@@ -437,10 +439,10 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
     const stdDevYield = stats.stdDev;
 
     allRows.forEach(row => {
-      const rowId = row.dataset.rowId;
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
-      const zScoreDisplay = qs(`#zScore${rowId}`);
-      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+      // 配列ベース管理: rowから直接要素を取得
+      const yieldRateDisplay = row.querySelector('.yield-rate-display');
+      const zScoreDisplay = row.querySelector('.z-score-display');
+      const confidenceJudgmentDisplay = row.querySelector('.confidence-judgment-display');
 
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && zScoreDisplay) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
@@ -516,9 +518,9 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
   } else {
     // データが不足している場合はz-scoreと判定をクリア
     allRows.forEach(row => {
-      const rowId = row.dataset.rowId;
-      const zScoreDisplay = qs(`#zScore${rowId}`);
-      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+      // 配列ベース管理: rowから直接要素を取得
+      const zScoreDisplay = row.querySelector('.z-score-display');
+      const confidenceJudgmentDisplay = row.querySelector('.confidence-judgment-display');
 
       if (zScoreDisplay) {
         zScoreDisplay.textContent = '-';
