@@ -47,15 +47,11 @@ import {
   restoreYieldStatsTable,
   updateYieldStatsStatistics
 } from './yield-stats-table.js';
-import {
-  displayCurrentStatistics,
-  setupFormulaModal,
-  updateLoadStatsButtons,
-  displaySampleSizeValidation,
-  handleOutlierCheckboxChange,
-  deleteOutlierRows,
-  generateSigmaPatterns
-} from './yield-stats-display.js';
+// Lazy-loaded modules - imported dynamically when needed
+// import { displayCurrentStatistics, setupFormulaModal, updateLoadStatsButtons, ... } from './yield-stats-display.js';
+// import { loadRecommendedValueToMultiPattern, ... } from './multi-pattern-stats-loader.js';
+// import { initMultiPatternUI } from './multi-pattern-ui.js';
+// import { setupPresetEventListeners } from './multi-pattern-presets.js';
 import {
   resetReverseSimulation,
   toggleReverseSimulation,
@@ -63,18 +59,121 @@ import {
   handleReverseCalculation,
   applyReverseSimulationResult
 } from './reverse-simulation.js';
-import {
-  loadRecommendedValueToMultiPattern,
-  loadStatsValueToMultiPattern,
-  loadAllStatsToMultiPattern,
-  showTransferNotification,
-  focusFirstPatternInput
-} from './multi-pattern-stats-loader.js';
 import { initHistoryUI } from './history-ui.js';
-import { initMultiPatternUI } from './multi-pattern-ui.js';
-import { setupPresetEventListeners, openPresetModal, closePresetModal } from './multi-pattern-presets.js';
+import { loadYieldStatsModule, loadMultiPatternModule } from './lazy-loader.js';
 import { updateDiscountSimulation } from './product-simulator.js';
 import { handleYieldStatsTransition, waitForStatsDataReady } from './yield-stats-transition.js';
+
+// Module cache for lazy-loaded modules
+let yieldStatsModule = null;
+let multiPatternModule = null;
+
+// Lazy-loading wrapper functions
+const lazyYieldStats = {
+  async displayCurrentStatistics(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.displayCurrentStatistics(...args);
+  },
+  async setupFormulaModal(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.setupFormulaModal(...args);
+  },
+  async updateLoadStatsButtons(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.updateLoadStatsButtons(...args);
+  },
+  async displaySampleSizeValidation(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.displaySampleSizeValidation(...args);
+  },
+  async handleOutlierCheckboxChange(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.handleOutlierCheckboxChange(...args);
+  },
+  async deleteOutlierRows(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.deleteOutlierRows(...args);
+  },
+  async generateSigmaPatterns(...args) {
+    if (!yieldStatsModule) {
+      yieldStatsModule = await loadYieldStatsModule();
+    }
+    return yieldStatsModule.display.generateSigmaPatterns(...args);
+  }
+};
+
+const lazyMultiPattern = {
+  async initMultiPatternUI(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.ui.initMultiPatternUI(...args);
+  },
+  async setupPresetEventListeners(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.presets.setupPresetEventListeners(...args);
+  },
+  async loadRecommendedValueToMultiPattern(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.statsLoader.loadRecommendedValueToMultiPattern(...args);
+  },
+  async loadStatsValueToMultiPattern(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.statsLoader.loadStatsValueToMultiPattern(...args);
+  },
+  async loadAllStatsToMultiPattern(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.statsLoader.loadAllStatsToMultiPattern(...args);
+  },
+  async showTransferNotification(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.statsLoader.showTransferNotification(...args);
+  },
+  async focusFirstPatternInput(...args) {
+    if (!multiPatternModule) {
+      multiPatternModule = await loadMultiPatternModule();
+    }
+    return multiPatternModule.statsLoader.focusFirstPatternInput(...args);
+  }
+};
+
+// Synchronous aliases for backward compatibility (delegates to lazy versions)
+const displayCurrentStatistics = (...args) => lazyYieldStats.displayCurrentStatistics(...args);
+const setupFormulaModal = (...args) => lazyYieldStats.setupFormulaModal(...args);
+const updateLoadStatsButtons = (...args) => lazyYieldStats.updateLoadStatsButtons(...args);
+const displaySampleSizeValidation = (...args) => lazyYieldStats.displaySampleSizeValidation(...args);
+const handleOutlierCheckboxChange = (...args) => lazyYieldStats.handleOutlierCheckboxChange(...args);
+const deleteOutlierRows = (...args) => lazyYieldStats.deleteOutlierRows(...args);
+const generateSigmaPatterns = (...args) => lazyYieldStats.generateSigmaPatterns(...args);
+const initMultiPatternUI = (...args) => lazyMultiPattern.initMultiPatternUI(...args);
+const setupPresetEventListeners = (...args) => lazyMultiPattern.setupPresetEventListeners(...args);
+const loadRecommendedValueToMultiPattern = (...args) => lazyMultiPattern.loadRecommendedValueToMultiPattern(...args);
+const loadStatsValueToMultiPattern = (...args) => lazyMultiPattern.loadStatsValueToMultiPattern(...args);
+const loadAllStatsToMultiPattern = (...args) => lazyMultiPattern.loadAllStatsToMultiPattern(...args);
+const showTransferNotification = (...args) => lazyMultiPattern.showTransferNotification(...args);
+const focusFirstPatternInput = (...args) => lazyMultiPattern.focusFirstPatternInput(...args);
 
 // yield-stats-table.js の関数呼び出しに使うコールバックオブジェクト
 const yieldStatsCallbacks = {

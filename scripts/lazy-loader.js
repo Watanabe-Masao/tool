@@ -1,13 +1,20 @@
 /**
  * 遅延ロードユーティリティ
- * 外部ライブラリを必要な時にのみロードしてパフォーマンスを向上
+ * 外部ライブラリと内部モジュールを必要な時にのみロードしてパフォーマンスを向上
  */
 
 import { logger } from './core/logger.js';
 
-// ロード状態を管理
+// ロード状態を管理（外部ライブラリ）
 const loadStates = {
   echarts: { loaded: false, loading: false, promise: null }
+};
+
+// モジュールキャッシュ（内部モジュール）
+const moduleCache = {
+  yieldStats: null,
+  multiPattern: null,
+  firebaseSync: null
 };
 
 /**
@@ -111,6 +118,118 @@ export async function loadChartJS() {
 export function isLoaded(libraryName) {
   const state = loadStates[libraryName];
   return state ? state.loaded : false;
+}
+
+/**
+ * 歩留まり統計モジュールを遅延ロード
+ * @returns {Promise<Object>} モジュールエクスポート
+ */
+export async function loadYieldStatsModule() {
+  if (moduleCache.yieldStats) {
+    return moduleCache.yieldStats;
+  }
+
+  logger.info('[Lazy Load] Loading yield stats module...');
+  const start = performance.now();
+
+  try {
+    const [display, calc, helpers, charts, table] = await Promise.all([
+      import('./yield-stats-display.js'),
+      import('./yield-stats-calc.js'),
+      import('./yield-stats-helpers.js'),
+      import('./yield-stats-charts.js'),
+      import('./yield-stats-table.js')
+    ]);
+
+    moduleCache.yieldStats = {
+      display,
+      calc,
+      helpers,
+      charts,
+      table
+    };
+
+    const duration = (performance.now() - start).toFixed(2);
+    logger.info(`[Lazy Load] Yield stats module loaded in ${duration}ms`);
+
+    return moduleCache.yieldStats;
+  } catch (error) {
+    logger.error('[Lazy Load] Failed to load yield stats module:', error);
+    throw error;
+  }
+}
+
+/**
+ * 複数パターン分析モジュールを遅延ロード
+ * @returns {Promise<Object>} モジュールエクスポート
+ */
+export async function loadMultiPatternModule() {
+  if (moduleCache.multiPattern) {
+    return moduleCache.multiPattern;
+  }
+
+  logger.info('[Lazy Load] Loading multi-pattern module...');
+  const start = performance.now();
+
+  try {
+    const [ui, calc, presets, statsLoader] = await Promise.all([
+      import('./multi-pattern-ui.js'),
+      import('./calculator-multi-pattern.js'),
+      import('./multi-pattern-presets.js'),
+      import('./multi-pattern-stats-loader.js')
+    ]);
+
+    moduleCache.multiPattern = {
+      ui,
+      calc,
+      presets,
+      statsLoader
+    };
+
+    const duration = (performance.now() - start).toFixed(2);
+    logger.info(`[Lazy Load] Multi-pattern module loaded in ${duration}ms`);
+
+    return moduleCache.multiPattern;
+  } catch (error) {
+    logger.error('[Lazy Load] Failed to load multi-pattern module:', error);
+    throw error;
+  }
+}
+
+/**
+ * Firebase同期モジュールを遅延ロード
+ * @returns {Promise<Object>} モジュールエクスポート
+ */
+export async function loadFirebaseSyncModule() {
+  if (moduleCache.firebaseSync) {
+    return moduleCache.firebaseSync;
+  }
+
+  logger.info('[Lazy Load] Loading firebase sync module...');
+  const start = performance.now();
+
+  try {
+    const firebaseSync = await import('./firebase-sync.js');
+
+    moduleCache.firebaseSync = firebaseSync;
+
+    const duration = (performance.now() - start).toFixed(2);
+    logger.info(`[Lazy Load] Firebase sync module loaded in ${duration}ms`);
+
+    return moduleCache.firebaseSync;
+  } catch (error) {
+    logger.error('[Lazy Load] Failed to load firebase sync module:', error);
+    throw error;
+  }
+}
+
+/**
+ * モジュールがロード済みかチェック
+ * @param {string} moduleName - モジュール名（'yieldStats', 'multiPattern', 'firebaseSync'）
+ * @returns {boolean}
+ */
+export function isModuleLoaded(moduleName) {
+  return moduleCache[moduleName] !== null;
 }
 
 /**

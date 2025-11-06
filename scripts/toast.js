@@ -3,6 +3,8 @@
  * alert()に代わるユーザーフレンドリーな通知機能
  */
 
+import { escapeHTML, htmlWithRaw, raw } from './core/sanitizer.js';
+
 /**
  * トースト通知を表示
  * @param {string} message - 通知メッセージ
@@ -33,13 +35,19 @@ export function showToast(message, type = 'info', duration = 3000) {
   toast.className = `toast toast-${type} toast-show`;
 
   // メッセージを設定（改行を<br>に変換）
+  // XSS対策: ユーザー入力をエスケープしつつ、改行は<br>タグとして保持
   // null/undefinedの場合は空文字列に変換
   const safeMessage = (message != null) ? String(message) : '';
-  const formattedMessage = safeMessage.replace(/\n/g, '<br>');
-  toast.innerHTML = `
+
+  // 改行で分割してエスケープ、その後<br>で結合
+  const escapedParts = safeMessage.split('\n').map(part => escapeHTML(part));
+  const formattedMessage = escapedParts.join('<br>');
+
+  // htmlWithRaw を使用: アイコンはtrusted HTML、メッセージは既にエスケープ済み
+  toast.innerHTML = htmlWithRaw`
     <div class="toast-content">
-      <span class="toast-icon">${getToastIcon(type)}</span>
-      <span class="toast-message">${formattedMessage}</span>
+      <span class="toast-icon">${raw(getToastIcon(type))}</span>
+      <span class="toast-message">${raw(formattedMessage)}</span>
     </div>
   `;
 
