@@ -47,39 +47,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify environment (debug)
-        run: |
-          echo "📋 Environment Information:"
-          node --version
-          npm --version
-          pwd
-          echo "📦 Package files:"
-          ls -la package*.json
-
       - name: Run tests with coverage
         id: test
         run: npm run test:coverage
-
-      - name: Check test results (debug)
-        if: always()
-        run: |
-          echo "🧪 Test step outcome: ${{ steps.test.outcome }}"
-          echo "Test step conclusion: ${{ steps.test.conclusion }}"
-
-      - name: Check coverage directory (debug)
-        if: success() || failure()
-        run: |
-          echo "📂 Checking coverage directory..."
-          pwd
-          ls -la
-          if [ -d "coverage" ]; then
-            echo "✅ coverage/ directory exists"
-            ls -la coverage/
-            du -sh coverage/
-          else
-            echo "❌ coverage/ directory not found"
-            echo "This might indicate tests failed before coverage generation"
-          fi
 
       - name: Upload coverage to Codecov
         if: success() || failure()
@@ -100,7 +70,6 @@ jobs:
           path: coverage/
           retention-days: 30
           if-no-files-found: warn
-          include-hidden-files: false
 
   build:
     name: Vite Build
