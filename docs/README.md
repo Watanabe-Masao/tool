@@ -1,170 +1,115 @@
-# ドキュメント構造
+# ドキュメント一覧 📚
 
-**最終更新**: 2025-11-05
-**現在のフェーズ**: Phase 3 完了 ✅
-
----
-
-## 📚 主要ドキュメント
-
-### 設計・アーキテクチャ
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - システムアーキテクチャ全体図
-  - モジュール構成、データフロー、状態管理
-  - PWAアーキテクチャ、データベース設計
-  - 41KB, v4.2
-
-- **[DESIGN_IMPROVEMENT_PLAN_V2.md](./DESIGN_IMPROVEMENT_PLAN_V2.md)** - 設計改善計画 v2.0
-  - 設計原則レビュー（54/150点）
-  - Phase 0-3 の改善計画
-  - 34KB
-
-### 実装・リファクタリング
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** ⭐ **NEW**
-  - Phase 0-3 の完全な実施報告書
-  - Before/After比較、技術的負債返済状況
-  - 設計スコア改善: 54/150 → 84/150
-  - 24KB
-
-- **[REFACTORING_PHASE_3_QUALITY.md](./REFACTORING_PHASE_3_QUALITY.md)** ⭐ **NEW**
-  - Phase 3: コード品質改善の詳細レポート
-  - ESLint設定、ユニットテスト、カバレッジ測定
-  - Critical バグ修正（logger 無限再帰）
-  - 11KB
-
-### パフォーマンス・品質
-- **[PERFORMANCE.md](./PERFORMANCE.md)** ⭐ **NEW**
-  - パフォーマンス最適化ガイドライン
-  - イベントハンドリング、DOM操作、メモ化
-  - ベンチマーク目標: 25-60% 改善
-  - 6KB
-
-- **[TESTING.md](./TESTING.md)**
-  - テスト戦略、ユニットテスト、統合テスト
-  - カバレッジ目標、CI/CD連携
-  - 32KB
-
-### 機能・操作
-- **[FEATURES.md](./FEATURES.md)**
-  - 全機能一覧と詳細説明
-  - 固定歩留まり、逆算、複数パターン分析
-  - 45KB
-
-- **[CRUD_OPERATIONS.md](./CRUD_OPERATIONS.md)**
-  - CRUD操作の完全ガイド
-  - IndexedDB + Firestore の二層構造
-  - 30KB
-
-- **[GUIDES.md](./GUIDES.md)**
-  - ユーザーガイド、開発者ガイド
-  - 15KB
-
-### インフラ・設定
-- **[CI_CD.md](./CI_CD.md)** ⭐ **NEW**
-  - GitHub Actions CI/CDパイプライン
-  - 自動テスト、カバレッジレポート、PR チェック
-  - ワークフロー構成、トラブルシューティング
-  - 9KB
-
-- **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**
-  - Firebase プロジェクトのセットアップ
-  - Authentication, Firestore, Hosting
-  - 11KB
-
-- **[CACHE_STRATEGY.md](./CACHE_STRATEGY.md)**
-  - キャッシュ戦略（Service Worker）
-  - オフライン対応
-  - 12KB
-
-### 仕様
-- **[reverse-sim-spec.md](./reverse-sim-spec.md)**
-  - 逆算シミュレーション仕様
-  - 2.6KB
+このディレクトリには、歩留まり計算ツールのすべてのドキュメントが含まれています。
 
 ---
 
-## 📁 アーカイブ
+## 📖 目的別ガイド
 
-### archive/phase0-2/ (旧ドキュメント)
-Phase 0-2 完了後、不要になったドキュメント：
+### 🎯 初めての方
 
-- `DESIGN_IMPROVEMENT_PLAN.md` - v1改善計画（v2に更新）
-- `DOCUMENTATION_REORGANIZATION.md` - 古い再編成計画
-- `REFACTORING_BACKWARD_COMPAT_TIMING.md` - Phase 0後方互換性削除
-- `REFACTORING_SUMMARY.md` - 旧リファクタリング要約
-- `REFACTORING_YIELD_STATS_TRANSITION.md` - Phase 2.1完了記録
-- `STATE_CONSOLIDATION_IMPACT_ANALYSIS.md` - 状態統合分析（完了）
-- `GLOBAL_STATE_ANALYSIS.md` - グローバル状態分析（完了）
+1. [ルートREADME](../README.md) - プロジェクト概要とクイックスタート
+2. [使い方ガイド](user-guide/USAGE.md) - 基本的な使い方
+3. [FAQ](user-guide/FAQ.md) - よくある質問
 
-**注意**: これらのドキュメントは参照用として保持していますが、最新情報は上記の主要ドキュメントを参照してください。
+### 👨‍💻 開発に参加したい方
 
----
+1. [開発ガイド](development/CONTRIBUTING.md) - 開発への参加方法
+2. [アーキテクチャ](development/ARCHITECTURE.md) - システム設計
+3. [テストガイド](testing/README.md) - テスト戦略
 
-## 🗺️ ドキュメントマップ
+### 🔧 プロジェクト管理者
 
-### 初めての方
-1. [FEATURES.md](./FEATURES.md) - どんな機能があるか
-2. [GUIDES.md](./GUIDES.md) - 使い方
-3. [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) - セットアップ
-
-### 開発者
-1. [ARCHITECTURE.md](./ARCHITECTURE.md) - システム全体像
-2. [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - 改善履歴
-3. [TESTING.md](./TESTING.md) - テスト戦略
-4. [PERFORMANCE.md](./PERFORMANCE.md) - パフォーマンス最適化
-
-### メンテナンス
-1. [CRUD_OPERATIONS.md](./CRUD_OPERATIONS.md) - データ操作
-2. [CACHE_STRATEGY.md](./CACHE_STRATEGY.md) - キャッシュ管理
-3. [REFACTORING_PHASE_3_QUALITY.md](./REFACTORING_PHASE_3_QUALITY.md) - 最新の改善内容
+1. [現状評価](project-management/CURRENT_STATUS_ASSESSMENT.md) - 最新の評価（**必読**）
+2. [改善計画](project-management/DESIGN_IMPROVEMENT_PLAN_V2.md) - 設計改善計画
 
 ---
 
-## 📊 プロジェクト状況
+## 📂 カテゴリ別一覧
 
-### 設計スコア
-- **Phase 0 開始前**: 54/150 (36%)
-- **Phase 3 完了後**: 84/150 (56%)
-- **改善**: +30点 (+56%)
+### 👤 [user-guide/](user-guide/) - ユーザーガイド
 
-### テストカバレッジ
-- **Phase 0 開始前**: 0%
-- **Phase 3 完了後**: 80-100% (主要モジュール)
+ツールの使い方、FAQ、トラブルシューティング
 
-### 技術的負債
-- **返済済み**: 5項目（console.* 乱用、無限再帰バグ、など）
-- **残存**: 5項目（E2Eテスト、CI/CD、など）
-- **返済率**: 50%
+| ドキュメント | 説明 |
+|------------|------|
+| [USAGE.md](user-guide/USAGE.md) | 基本的な使い方 |
+| [YIELD_STATS_GUIDE.md](user-guide/YIELD_STATS_GUIDE.md) | 歩留まり統計モードの詳細 |
+| [FAQ.md](user-guide/FAQ.md) | よくある質問 |
+| [TROUBLESHOOTING.md](user-guide/TROUBLESHOOTING.md) | 問題解決ガイド |
+
+### 👨‍💻 [development/](development/) - 開発者向け
+
+アーキテクチャ、ベストプラクティス、開発ガイド
+
+| ドキュメント | 説明 |
+|------------|------|
+| [ARCHITECTURE.md](development/ARCHITECTURE.md) | システムアーキテクチャ |
+| [CONTRIBUTING.md](development/CONTRIBUTING.md) | 開発への参加方法 |
+| [BEST_PRACTICES.md](development/BEST_PRACTICES.md) | コーディング規約 |
+| [PERFORMANCE.md](development/PERFORMANCE.md) | パフォーマンス最適化 |
+
+### 🧪 [testing/](testing/) - テスト
+
+テスト戦略、カバレッジ、テスト実行方法
+
+| ドキュメント | 説明 |
+|------------|------|
+| [README.md](testing/README.md) | テスト概要 |
+| [COVERAGE.md](testing/COVERAGE.md) | テストカバレッジ |
+
+### 🚀 [deployment/](deployment/) - デプロイ・運用
+
+CI/CD、Firebase設定、キャッシュ戦略
+
+| ドキュメント | 説明 |
+|------------|------|
+| [CI_CD.md](deployment/CI_CD.md) | CI/CDパイプライン |
+| [FIREBASE_SETUP.md](deployment/FIREBASE_SETUP.md) | Firebase設定ガイド |
+| [CACHE_STRATEGY.md](deployment/CACHE_STRATEGY.md) | キャッシュ戦略 |
+
+### 📋 [specs/](specs/) - 仕様書
+
+機能仕様、API仕様、設計ドキュメント
+
+| ドキュメント | 説明 |
+|------------|------|
+| [FEATURES.md](specs/FEATURES.md) | 機能詳細仕様 |
+| [CRUD_OPERATIONS.md](specs/CRUD_OPERATIONS.md) | CRUD操作仕様 |
+| [reverse-sim-spec.md](specs/reverse-sim-spec.md) | 逆算シミュレーション仕様 |
+
+### 📊 [project-management/](project-management/) - プロジェクト管理
+
+評価、改善計画、プロジェクトステータス
+
+| ドキュメント | 説明 | 重要度 |
+|------------|------|-------|
+| [CURRENT_STATUS_ASSESSMENT.md](project-management/CURRENT_STATUS_ASSESSMENT.md) | 現状評価（2025-11-06） | ⭐⭐⭐ **必読** |
+| [DESIGN_IMPROVEMENT_PLAN_V2.md](project-management/DESIGN_IMPROVEMENT_PLAN_V2.md) | 設計改善計画v2.0 | ⭐⭐⭐ **必読** |
+
+### 📦 [archive/](archive/) - アーカイブ
+
+過去のドキュメント、完了したリファクタリング計画
 
 ---
 
-## 🚀 次のステップ
+## 🔍 検索ヘルプ
 
-### 推奨される改善（IMPLEMENTATION_SUMMARY.md より）
-1. **Phase 4**: UI/History State の分離（中優先度）
-2. **Phase 5**: パフォーマンス最適化実装（高優先度）
-3. **Phase 6**: E2Eテスト基盤構築（中優先度）
-4. **Phase 7**: CI/CDパイプライン構築（高優先度）
+**知りたいことから探す**
 
----
-
-## 📝 ドキュメント更新履歴
-
-### 2025-11-05 (Phase 3 完了)
-- ✅ **NEW**: IMPLEMENTATION_SUMMARY.md - 実装総まとめ
-- ✅ **NEW**: REFACTORING_PHASE_3_QUALITY.md - Phase 3詳細レポート
-- ✅ **NEW**: PERFORMANCE.md - パフォーマンスガイド
-- ✅ **NEW**: README.md - このファイル
-- ✅ アーカイブ: 7ファイルを archive/phase0-2/ に移動
-
-### 2025-10-31 (Phase 2 完了)
-- DESIGN_IMPROVEMENT_PLAN_V2.md 作成
-- ARCHITECTURE.md v4.2 更新
+| 知りたいこと | 参照先 |
+|------------|--------|
+| ツールの使い方 | [USAGE.md](user-guide/USAGE.md) |
+| 統計分析の方法 | [YIELD_STATS_GUIDE.md](user-guide/YIELD_STATS_GUIDE.md) |
+| エラーの解決 | [TROUBLESHOOTING.md](user-guide/TROUBLESHOOTING.md) |
+| システムの仕組み | [ARCHITECTURE.md](development/ARCHITECTURE.md) |
+| 開発への参加 | [CONTRIBUTING.md](development/CONTRIBUTING.md) |
+| テストの実行 | [testing/README.md](testing/README.md) |
+| Firebaseの設定 | [FIREBASE_SETUP.md](deployment/FIREBASE_SETUP.md) |
+| 機能の仕様 | [FEATURES.md](specs/FEATURES.md) |
+| プロジェクトの現状 | [CURRENT_STATUS_ASSESSMENT.md](project-management/CURRENT_STATUS_ASSESSMENT.md) |
 
 ---
 
-## 📮 フィードバック
-
-ドキュメントの改善提案は Issues または Pull Requests でお願いします。
-
-**メンテナー**: Claude (AI Assistant)
-**レビュー推奨日**: 2025-12-01 (1ヶ月後)
+**最終更新**: 2025-11-06
+**ドキュメント構成**: 6カテゴリ、20+ファイル
