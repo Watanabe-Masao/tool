@@ -87,6 +87,7 @@
         "jest": true
       },
       "rules": {
+        "no-console": "off",
         "max-nested-callbacks": "off"
       }
     },
