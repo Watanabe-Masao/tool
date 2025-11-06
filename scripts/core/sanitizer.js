@@ -15,36 +15,59 @@ import { logger } from './logger.js';
 
 /**
  * HTMLエスケープが必要な文字のマッピング
+ * XSS攻撃を防ぐため、以下の文字を必ずエスケープします：
+ * - & : HTMLエンティティの開始文字
+ * - < : タグの開始文字
+ * - > : タグの終了文字
+ * - " : 属性値の区切り文字（ダブルクォート）
+ * - ' : 属性値の区切り文字（シングルクォート）
+ * - / : スクリプトタグの終了を防ぐため（</script>対策）
+ *
  * @constant
  * @type {Object.<string, string>}
  */
 const HTML_ESCAPE_MAP = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-  '/': '&#x2F;'
+  '/': '&#x2F;',  // Forward slash - MUST escape to prevent </script> injection
+  '&': '&amp;',   // Ampersand
+  '<': '&lt;',    // Less than
+  '>': '&gt;',    // Greater than
+  '"': '&quot;',  // Double quote
+  "'": '&#39;'    // Single quote
 };
 
 /**
  * HTML特殊文字をエスケープする正規表現
+ * 【重要】スラッシュ(/)を含む全6文字を必ずマッチさせること
  * @constant
  * @type {RegExp}
  */
 const HTML_ESCAPE_REGEX = /[&<>"'/]/g;
 
+// 実行時バリデーション: 正規表現とマップの整合性をチェック
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  const regexChars = new Set(HTML_ESCAPE_REGEX.source.match(/[^[\]\\]/g));
+  const mapKeys = new Set(Object.keys(HTML_ESCAPE_MAP));
+
+  for (const char of mapKeys) {
+    if (!regexChars.has(char)) {
+      logger.error(`Escape map contains character "${char}" not in regex`);
+    }
+  }
+}
+
 /**
  * HTML文字列をエスケープ
  *
  * XSS攻撃を防ぐため、HTML特殊文字をエスケープします。
+ * 特に </script> タグの注入を防ぐため、スラッシュ(/)も必ずエスケープします。
  *
  * @param {*} str - エスケープする文字列
  * @returns {string} エスケープされた文字列
  *
  * @example
  * escapeHTML('<script>alert("XSS")</script>')
- * // => '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'
+ * // => '&lt;script&gt;alert(&quot;XSS&quot;)&lt;&#x2F;script&gt;'
+ * // 注意: スラッシュが &#x2F; にエスケープされることに注目
  */
 export function escapeHTML(str) {
   // null, undefined, 数値などを安全に処理
