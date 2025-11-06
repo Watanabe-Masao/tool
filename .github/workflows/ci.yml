@@ -51,6 +51,21 @@ jobs:
         id: test
         run: npm run test:coverage
 
+      - name: Check coverage directory (debug)
+        if: success() || failure()
+        run: |
+          echo "📂 Checking coverage directory..."
+          pwd
+          ls -la
+          if [ -d "coverage" ]; then
+            echo "✅ coverage/ directory exists"
+            ls -la coverage/
+            du -sh coverage/
+          else
+            echo "❌ coverage/ directory not found"
+            exit 1
+          fi
+
       - name: Upload coverage to Codecov
         if: success() || failure()
         uses: codecov/codecov-action@v4
@@ -69,6 +84,8 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 30
+          if-no-files-found: warn
+          include-hidden-files: false
 
   build:
     name: Vite Build
