@@ -68,6 +68,21 @@ export function clearPatterns() {
 }
 
 /**
+ * パターン行番号を更新（相対値1,2,3...に）
+ */
+export function updatePatternNumbers() {
+  if (!elements.tableBody) return;
+
+  const allRows = elements.tableBody.querySelectorAll('tr');
+  allRows.forEach((row, index) => {
+    const numberCell = row.querySelector('.pattern-number');
+    if (numberCell) {
+      numberCell.textContent = index + 1; // 1-based行番号
+    }
+  });
+}
+
+/**
  * 要素から数値を取得
  * @param {HTMLElement} element - HTML要素
  * @returns {number|null} 数値またはnull
@@ -87,11 +102,11 @@ export function addPattern() {
   const row = document.createElement('tr');
   row.dataset.patternId = patternId;
   row.innerHTML = `
-    <td class="pattern-number">${patternId}</td>
+    <td class="pattern-number">1</td>
     <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
     <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
     <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>
-    <td><button type="button" class="btn-remove" data-pattern-id="${patternId}">削除</button></td>
+    <td><button type="number" class="btn-remove" data-pattern-id="${patternId}">削除</button></td>
   `;
 
   elements.tableBody.appendChild(row);
@@ -154,19 +169,6 @@ export function removePattern(patternId) {
   if (recalculateCallback) {
     recalculateCallback();
   }
-}
-
-/**
- * パターン番号を1から連番で更新
- */
-export function updatePatternNumbers() {
-  const rows = elements.tableBody.querySelectorAll('tr[data-pattern-id]');
-  rows.forEach((row, index) => {
-    const patternNumberCell = row.querySelector('.pattern-number');
-    if (patternNumberCell) {
-      patternNumberCell.textContent = index + 1;
-    }
-  });
 }
 
 /**
@@ -289,7 +291,7 @@ export function replaceAllPatterns(newPatterns) {
 
     // XSS対策: htmlWithRaw を使用（数値IDは安全、HTMLは信頼できる静的コンテンツ）
     row.innerHTML = htmlWithRaw`
-      <td class="pattern-number"${raw(labelComment)}>${patternId}</td>
+      <td class="pattern-number"${raw(labelComment)}>1</td>
       <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
       <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
       <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>

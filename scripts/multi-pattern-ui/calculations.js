@@ -108,7 +108,7 @@ export function recalculateAll() {
   const fragment = document.createDocumentFragment();
 
   // 各パターンを計算して表示
-  validPatterns.forEach(pattern => {
+  validPatterns.forEach((pattern, index) => {
     const result = calculatePattern({
       yieldRate: yr,
       beforeWeight: bw,
@@ -171,7 +171,7 @@ export function recalculateAll() {
       };
 
       row.innerHTML = `
-        <td class="result-number">${pattern.id}</td>
+        <td class="result-number">${index + 1}</td>
         <td class="result-before">${toFixed(result.beforeCost100, 2)}</td>
         <td class="result-after">${toFixed(result.afterCost100, 2)}</td>
         <td class="${getCostChangeClass(costChange)}">${formatChange(costChange)}</td>

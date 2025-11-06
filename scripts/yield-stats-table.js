@@ -31,6 +31,22 @@ export function resetYieldStatsEntryCounter() {
 }
 
 /**
+ * テーブルの全行番号を更新（相対値1,2,3...に）
+ */
+export function updateRowNumbers() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  const allRows = tbody.querySelectorAll('.yield-stats-row');
+  allRows.forEach((row, index) => {
+    const rowNumberCell = row.querySelector('.row-number');
+    if (rowNumberCell) {
+      rowNumberCell.textContent = index + 1; // 1-based行番号
+    }
+  });
+}
+
+/**
  * 歩留まり率統計モード: 表示をリセット（入力値はクリアしない）
  *
  * @param {Function} addYieldStatsRowCallback - 行追加のコールバック
@@ -71,7 +87,7 @@ export function addYieldStatsRow(callbacks = {}) {
   row.dataset.rowId = rowId;
 
   row.innerHTML = `
-    <td class="row-number">${rowId + 1}</td>
+    <td class="row-number">1</td>
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"
@@ -96,6 +112,9 @@ export function addYieldStatsRow(callbacks = {}) {
   `;
 
   tbody.appendChild(row);
+
+  // 行番号を更新（相対値に）
+  updateRowNumbers();
 
   // 入力イベントリスナーを追加
   const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
@@ -262,6 +281,9 @@ export function compactYieldStatsRows(callbacks = {}) {
     addYieldStatsRow(callbacks);
   }
 
+  // 行番号を更新（相対値に）
+  updateRowNumbers();
+
   // 統計情報を更新
   if (callbacks.updateYieldStatsStatistics) {
     callbacks.updateYieldStatsStatistics();
@@ -335,6 +357,9 @@ export function restoreYieldStatsTable(tableData, callbacks = {}) {
   // 状態を更新：履歴から読み込まれた
   appState.setYieldStatsFromHistory(true);
   appState.setYieldStatsCalculated(true);
+
+  // 行番号を更新（相対値に）
+  updateRowNumbers();
 
   // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
   setTimeout(() => {
