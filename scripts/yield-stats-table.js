@@ -250,7 +250,7 @@ export function compactYieldStatsRows(callbacks = {}) {
       // 計算を直接実行（イベント発火ではなく）
       const hasBeforeWeight = rowData.beforeValue.trim() !== '';
       const hasAfterWeight = rowData.afterValue.trim() !== '';
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${newRowId}`);
+      const yieldRateDisplay = lastRow.querySelector('.yield-rate-display');
 
       if (hasBeforeWeight && hasAfterWeight) {
         const beforeWeight = parseFloat(rowData.beforeValue);
@@ -323,14 +323,16 @@ export function checkIfTableHasData() {
  */
 export function appendYieldStatsTable(tableData, callbacks = {}) {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
-  if (!tbody || !tableData || tableData.length === 0) return;
+  if (!tbody || !tableData || tableData.length === 0) {
+    return;
+  }
 
   // カウンターはリセットしない（既存の行を保持）
   // 空行を削除してから追加
   compactYieldStatsRows(callbacks);
 
   // データから行を追加
-  tableData.forEach(rowData => {
+  tableData.forEach((rowData, index) => {
     addYieldStatsRow(callbacks);
 
     // 配列ベース管理: 最後に追加した行から直接inputを取得

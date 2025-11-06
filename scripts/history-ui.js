@@ -407,7 +407,7 @@ async function handleLoadCalculation(id) {
 
     // 少し待ってからフィールドに値を復元（UIの切り替えが完了するまで）
     setTimeout(() => {
-      // 履歴の商品名を商品名フィールドに設定（上書きの場合のみ）
+      // データ復元処理
       if (data.mode === MODE.YIELD_STATS && loadMode === 'append') {
         // 追加の場合：テーブルデータのみ追加、商品名は変更しない
         if (data.input.tableData) {
@@ -449,7 +449,7 @@ async function handleLoadCalculation(id) {
 
       // 歩留まり統計データを読み込んだ場合、統計を表示
       if (data.mode === MODE.YIELD_STATS) {
-        // restoreYieldStatsTableが既に統計を計算しているが、
+        // restoreYieldStatsTableまたはappendYieldStatsTableが既に統計を計算しているが、
         // タイミングの問題で表示されない場合があるため、明示的に呼び出す
         if (window.displayCurrentStatistics) {
           setTimeout(() => {
