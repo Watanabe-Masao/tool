@@ -31,17 +31,17 @@
 
     <!-- シンプルなヘッダー -->
     <div class="simple-header">
-      <span id="auth-status" class="status-badge logged-out"><i class="fa-solid fa-circle-xmark"></i> 未ログイン</span>
+      <span id="auth-status" class="status-badge logged-out" role="status" aria-live="polite"><i class="fa-solid fa-circle-xmark"></i> 未ログイン</span>
       <div class="header-buttons">
-        <button type="button" id="signin-button" class="btn-simple">ログイン</button>
-        <button type="button" id="sync-button" class="btn-simple" disabled title="同期"><i class="fa-solid fa-arrows-rotate"></i></button>
-        <button type="button" id="menu-button" class="btn-simple" title="メニュー"><i class="fa-solid fa-sliders"></i></button>
+        <button type="button" id="signin-button" class="btn-simple" aria-label="ログイン">ログイン</button>
+        <button type="button" id="sync-button" class="btn-simple" disabled title="同期" aria-label="データ同期"><i class="fa-solid fa-arrows-rotate"></i></button>
+        <button type="button" id="menu-button" class="btn-simple" title="メニュー" aria-label="メニュー" aria-expanded="false" aria-controls="header-menu"><i class="fa-solid fa-sliders"></i></button>
       </div>
-      <span id="sync-status" class="sync-status-text"></span>
+      <span id="sync-status" class="sync-status-text" role="status" aria-live="polite"></span>
     </div>
 
     <!-- メニュードロップダウン -->
-    <div id="header-menu" class="header-menu" style="display: none;">
+    <div id="header-menu" class="header-menu" style="display: none;" role="menu">
       <button type="button" id="download-file-btn" class="menu-item" disabled><i class="fa-solid fa-download"></i> ダウンロード</button>
       <button type="button" id="upload-file-btn" class="menu-item" disabled><i class="fa-solid fa-upload"></i> アップロード</button>
       <button type="button" id="cleanup-firestore-button" class="menu-item" disabled><i class="fa-solid fa-broom"></i> 重複削除</button>
@@ -50,16 +50,16 @@
       <button type="button" id="signout-button" class="menu-item" style="display: none;"><i class="fa-solid fa-right-from-bracket"></i> ログアウト</button>
       <button type="button" id="reset-db-button" class="menu-item" style="display: none;"><i class="fa-solid fa-gear"></i> DBリセット</button>
     </div>
-    <input type="file" id="upload-file-input" accept=".json" style="display: none;" />
+    <input type="file" id="upload-file-input" accept=".json" style="display: none;" aria-label="JSONファイルをアップロード" />
 
     <!-- モード切替 -->
     <section class="card section" aria-labelledby="modeHeading">
       <h2 id="modeHeading" class="section-title"><i class="fa-solid fa-gear"></i> 計算モード選択</h2>
       <div class="btn-row" role="tablist">
-        <button type="button" id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true">定額→計量加工</button>
-        <button type="button" id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false">計量→計量加工</button>
-        <button type="button" id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false">歩留まり統計</button>
-        <button type="button" id="multiPatternBtn" class="btn btn-mode" role="tab" aria-selected="false">複数パターン分析</button>
+        <button type="button" id="fixedBtn" class="btn btn-mode is-active" role="tab" aria-selected="true" aria-controls="fixedInputs" aria-pressed="true">定額→計量加工</button>
+        <button type="button" id="weightBtn" class="btn btn-mode" role="tab" aria-selected="false" aria-controls="weightInputs" aria-pressed="false">計量→計量加工</button>
+        <button type="button" id="yieldStatsBtn" class="btn btn-mode" role="tab" aria-selected="false" aria-controls="yieldStatsInputs" aria-pressed="false">歩留まり統計</button>
+        <button type="button" id="multiPatternBtn" class="btn btn-mode" role="tab" aria-selected="false" aria-controls="multiPatternInputs" aria-pressed="false">複数パターン分析</button>
       </div>
     </section>
 
@@ -124,7 +124,7 @@
             <div id="yieldRateStep2" class="result-value">-</div>
           </div>
           <!-- 歩留まり率100%超過警告 -->
-          <div id="yieldWarningFixed" class="yield-warning is-hidden">
+          <div id="yieldWarningFixed" class="yield-warning is-hidden" role="alert" aria-live="polite">
             <span class="warning-icon"><i class="fa-solid fa-triangle-exclamation icon-warning"></i></span>
             <span class="warning-text">歩留まり率が100%を超えています。水分を多く含む場合など特殊なケースでは100%を超えることがありますが、通常は100%以下です。入力値を確認してください。</span>
           </div>
@@ -176,7 +176,7 @@
             <div id="yieldRateDirectStep2" class="result-value">-</div>
           </div>
           <!-- 歩留まり率100%超過警告 -->
-          <div id="yieldWarningFixedDirect" class="yield-warning is-hidden">
+          <div id="yieldWarningFixedDirect" class="yield-warning is-hidden" role="alert" aria-live="polite">
             <span class="warning-icon"><i class="fa-solid fa-triangle-exclamation icon-warning"></i></span>
             <span class="warning-text">歩留まり率が100%を超えています。水分を多く含む場合など特殊なケースでは100%を超えることがありますが、通常は100%以下です。入力値を確認してください。</span>
           </div>
@@ -250,8 +250,8 @@
           <div class="grid">
             <label class="field"><span>1箱あたりの原価（円）</span><input type="number" id="boxCost" step="0.01" inputmode="decimal" placeholder="3000" /></label>
             <label class="field"><span>1箱あたりの売価（円）</span><input type="number" id="boxPrice" step="0.01" inputmode="decimal" placeholder="3960" /></label>
-            <label class="field"><span>1箱あたりの重量（kg）</span><input type="number" id="boxWeight" step="0.01" inputmode="decimal" placeholder="6" /></label>
-            <div class="field field--static" aria-live="polite"><span class="muted">100gあたりの売価</span><div id="per100gDisplay">-</div></div>
+            <label class="field"><span>1箱あたりの重量（kg）</span><input type="number" id="boxWeight" step="0.01" inputmode="decimal" placeholder="6" aria-required="true" /></label>
+            <div class="field field--static"><span class="muted">100gあたりの売価</span><div id="per100gDisplay" aria-live="polite">-</div></div>
           </div>
         </div>
 
@@ -283,7 +283,7 @@
             <div id="yieldRateWeightStep2" class="result-value">-</div>
           </div>
           <!-- 歩留まり率100%超過警告 -->
-          <div id="yieldWarningWeight" class="yield-warning is-hidden">
+          <div id="yieldWarningWeight" class="yield-warning is-hidden" role="alert" aria-live="polite">
             <span class="warning-icon"><i class="fa-solid fa-triangle-exclamation icon-warning"></i></span>
             <span class="warning-text">歩留まり率が100%を超えています。水分を多く含む場合など特殊なケースでは100%を超えることがありますが、通常は100%以下です。入力値を確認してください。</span>
           </div>
@@ -348,7 +348,7 @@
             <div id="yieldRateWeightDirectStep2" class="result-value">-</div>
           </div>
           <!-- 歩留まり率100%超過警告 -->
-          <div id="yieldWarningWeightDirect" class="yield-warning is-hidden">
+          <div id="yieldWarningWeightDirect" class="yield-warning is-hidden" role="alert" aria-live="polite">
             <span class="warning-icon"><i class="fa-solid fa-triangle-exclamation icon-warning"></i></span>
             <span class="warning-text">歩留まり率が100%を超えています。水分を多く含む場合など特殊なケースでは100%を超えることがありますが、通常は100%以下です。入力値を確認してください。</span>
           </div>
@@ -411,9 +411,9 @@
               <th>歩留まり率<br><span class="th-unit">（%）</span></th>
               <th>
                 z-score<br><span class="th-unit">（標準偏差）</span>
-                <span class="help-icon" data-tooltip="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" data-tooltip="z-score: 個別値が平均からどれだけ離れているかを標準偏差で表した値。|z|≤1=非常に良好、≤2=良好、≤3=注意、>3=外れ値の可能性" aria-label="z-scoreの説明を表示"><i class="fa-solid fa-circle-question"></i></span>
               </th>
-              <th>判定 <span class="help-icon" data-tooltip="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)"><i class="fa-solid fa-circle-question"></i></span></th>
+              <th>判定 <span class="help-icon" data-tooltip="z-scoreに基づく統計的判定: ◎=非常に良好(±1σ以内)、○=良好(±2σ以内)、△=注意(±3σ以内)、×=外れ値の可能性(3σ外)" aria-label="判定の説明を表示"><i class="fa-solid fa-circle-question"></i></span></th>
             </tr>
           </thead>
           <tbody id="yieldStatsTableBody">
@@ -424,7 +424,7 @@
 
       <!-- 統計情報ウィンドウ -->
       <div id="yieldStatsResults" class="stats-results is-hidden">
-        <h3 class="section-subtitle accordion-header" id="yieldStatsToggle" style="cursor: pointer; user-select: none;">
+        <h3 class="section-subtitle accordion-header" id="yieldStatsToggle" style="cursor: pointer; user-select: none;" role="button" aria-expanded="true" aria-controls="yieldStatsContent" tabindex="0">
           <span><i class="fa-solid fa-chart-line"></i> 統計分析結果</span>
           <span class="accordion-icon" style="float: right; transition: transform 0.3s;">▼</span>
         </h3>
@@ -434,7 +434,7 @@
         <div class="stats-controls">
           <div class="stats-type-selector">
             <label for="statsTypeSelect" class="stats-type-label">表示する統計</label>
-            <select id="statsTypeSelect" class="stats-type-select">
+            <select id="statsTypeSelect" class="stats-type-select" aria-label="表示する統計を選択">
               <option value="yieldRate">歩留まり率</option>
               <option value="beforeWeight">加工前重量</option>
               <option value="afterWeight">加工後重量</option>
@@ -442,7 +442,7 @@
           </div>
           <div class="stats-type-selector">
             <label for="chartTypeSelect" class="stats-type-label">グラフ種類</label>
-            <select id="chartTypeSelect" class="stats-type-select">
+            <select id="chartTypeSelect" class="stats-type-select" aria-label="グラフ種類を選択">
               <option value="boxplot">箱ひげ図</option>
               <option value="histogram">ヒストグラム</option>
               <option value="scatter">散布図</option>
@@ -457,7 +457,7 @@
 
         <!-- 基本統計 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header" data-accordion="basic-stats">
+          <h4 class="stats-section-title accordion-header" data-accordion="basic-stats" role="button" aria-expanded="true" aria-controls="basic-stats" tabindex="0">
             <span>基本統計量</span>
             <span class="accordion-icon">▼</span>
           </h4>
@@ -470,49 +470,49 @@
           <div class="stat-item">
             <div class="stat-label">
               最大値
-              <span class="help-icon" data-tooltip="データの中で最も大きい値"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データの中で最も大きい値" aria-label="最大値の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMax" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               最小値
-              <span class="help-icon" data-tooltip="データの中で最も小さい値"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データの中で最も小さい値" aria-label="最小値の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMin" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               範囲
-              <span class="help-icon" data-tooltip="最大値と最小値の差。データのばらつきの広さを示します"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="最大値と最小値の差。データのばらつきの広さを示します" aria-label="範囲の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsRange" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               平均値
-              <span class="help-icon" data-tooltip="全データの合計をデータ数で割った値。データの中心的な傾向を表します"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="全データの合計をデータ数で割った値。データの中心的な傾向を表します" aria-label="平均値の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsAvg" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               中央値
-              <span class="help-icon" data-tooltip="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの真ん中の値。外れ値の影響を受けにくい中心値です" aria-label="中央値の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsMedian" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               標準偏差
-              <span class="help-icon" data-tooltip="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データのばらつき（散らばり具合）を示す値。大きいほどデータが平均値から離れています" aria-label="標準偏差の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsStdDev" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               RSD / CV（相対標準偏差）
-              <span class="help-icon" data-tooltip="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="相対標準偏差（Relative Standard Deviation）/ 変動係数（Coefficient of Variation）。標準偏差を平均値で割った値（%）。異なる単位のデータのばらつきを比較できます。品質管理では一般的にRSD < 5%が目標とされます" aria-label="RSD/CVの説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsCV" class="stat-value">-</div>
           </div>
@@ -522,7 +522,7 @@
 
         <!-- 四分位数 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="quartiles">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="quartiles" role="button" aria-expanded="false" aria-controls="quartiles" tabindex="0">
             <span>四分位数</span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -531,21 +531,21 @@
           <div class="stat-item">
             <div class="stat-label">
               第1四分位数（Q1）
-              <span class="help-icon" data-tooltip="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの25%の位置にある値。下位25%のデータの境界です" aria-label="第1四分位数の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ1" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               第3四分位数（Q3）
-              <span class="help-icon" data-tooltip="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="データを小さい順に並べたときの75%の位置にある値。上位25%のデータの境界です" aria-label="第3四分位数の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsQ3" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               四分位範囲（IQR）
-              <span class="help-icon" data-tooltip="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="Q3とQ1の差。中央50%のデータの広がりを示し、外れ値の影響を受けにくい指標です" aria-label="四分位範囲の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsIQR" class="stat-value">-</div>
           </div>
@@ -555,7 +555,7 @@
 
         <!-- 分布の形状 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="distribution">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="distribution" role="button" aria-expanded="false" aria-controls="distribution" tabindex="0">
             <span>分布の形状</span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -564,14 +564,14 @@
           <div class="stat-item">
             <div class="stat-label">
               歪度（Skewness）
-              <span class="help-icon" data-tooltip="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="分布の左右対称性を示す値。正なら右に裾が長く、負なら左に裾が長い。0に近いほど左右対称です" aria-label="歪度の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsSkewness" class="stat-value">-</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">
               尖度（Kurtosis）
-              <span class="help-icon" data-tooltip="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="分布の尖り具合を示す値。正なら正規分布より尖っており、負ならなだらかです" aria-label="尖度の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </div>
             <div id="statsKurtosis" class="stat-value">-</div>
           </div>
@@ -581,10 +581,10 @@
 
         <!-- σ範囲 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sigma-range" role="button" aria-expanded="false" aria-controls="sigma-range" tabindex="0">
             <span>
               正規分布における信頼区間
-              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="データが正規分布に従うと仮定した場合、平均値からどの範囲にデータが含まれるかを示します" aria-label="正規分布における信頼区間の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -617,7 +617,7 @@
 
         <!-- データ信頼性評価 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header" data-accordion="matrix-eval">
+          <h4 class="stats-section-title accordion-header" data-accordion="matrix-eval" role="button" aria-expanded="true" aria-controls="matrix-eval" tabindex="0">
             <span>データ信頼性評価</span>
             <span class="accordion-icon">▼</span>
           </h4>
@@ -643,10 +643,10 @@
 
         <!-- サンプルサイズの妥当性判断 -->
         <div class="accordion-item">
-          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size">
+          <h4 class="stats-section-title accordion-header is-collapsed" data-accordion="sample-size" role="button" aria-expanded="false" aria-controls="sample-size" tabindex="0">
             <span>
               サンプルサイズの妥当性判断
-              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます"><i class="fa-solid fa-circle-question"></i></span>
+              <span class="help-icon" style="font-size: 0.9rem;" title="収集したデータ数が統計的に十分かどうかを判定します。必要数より多ければ信頼性の高い分析ができます" aria-label="サンプルサイズの妥当性判断の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
             </span>
             <span class="accordion-icon">▶</span>
           </h4>
@@ -656,10 +656,10 @@
             <div class="validation-input-group">
               <label for="toleranceError" class="validation-label">
                 許容誤差（E）
-                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" title="推定値と真の値の間で許容できる誤差の大きさ。小さいほど精度が高くなりますが、より多くのサンプルが必要です" aria-label="許容誤差の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
               </label>
               <div class="input-with-unit">
-                <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" value="3.0" placeholder="例: 2.0" />
+                <input type="number" id="toleranceError" class="validation-input" step="0.1" min="0.1" value="3.0" placeholder="例: 2.0" aria-required="true" />
                 <span class="input-unit" id="toleranceUnit">%</span>
               </div>
               <small class="validation-help">例：2.0なら真の値±2.0の範囲で推定したい</small>
@@ -667,9 +667,9 @@
             <div class="validation-input-group">
               <label for="confidenceLevel" class="validation-label">
                 信頼水準
-                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" title="推定値が正しい範囲に含まれる確率。95%なら、100回中95回は正しい範囲に含まれます" aria-label="信頼水準の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
               </label>
-              <select id="confidenceLevel" class="validation-select">
+              <select id="confidenceLevel" class="validation-select" aria-required="true">
                 <option value="90">90%（Z=1.645）</option>
                 <option value="95" selected>95%（Z=1.960）</option>
                 <option value="99">99%（Z=2.576）</option>
@@ -697,10 +697,10 @@
             <div id="confidenceMessage" class="confidence-message"></div>
 
             <!-- 外れ値情報 -->
-            <div id="outlierInfo" class="outlier-info is-hidden">
+            <div id="outlierInfo" class="outlier-info is-hidden" role="alert" aria-live="polite">
               <div class="outlier-info-header">
                 <strong><i class="fa-solid fa-triangle-exclamation icon-warning"></i> 外れ値の検出</strong>
-                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" title="IQR法（四分位範囲法）により、Q1-1.5*IQR～Q3+1.5*IQRの範囲外のデータを外れ値として検出します" aria-label="外れ値検出方法の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
               </div>
               <div class="outlier-info-content">
                 <div class="outlier-details">
@@ -742,7 +742,7 @@
             <div id="recommendedValue" class="recommended-value is-hidden">
               <div class="recommended-value-header">
                 <strong>📌 推奨代表値</strong>
-                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します"><i class="fa-solid fa-circle-question"></i></span>
+                <span class="help-icon" title="データの分布状況から、使用すべき代表値を自動判定します" aria-label="推奨代表値の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
               </div>
               <div class="recommended-value-content">
                 <div class="recommended-badge-wrapper">
@@ -781,7 +781,7 @@
       </div>
     </section>
 
-    <div id="warning" class="notice notice-warn" role="alert" aria-live="assertive"><i class="fa-solid fa-triangle-exclamation icon-warning"></i> すべての必須項目を入力してください</div>
+    <div id="warning" class="notice notice-warn is-hidden" role="alert" aria-live="assertive" aria-atomic="true"><i class="fa-solid fa-triangle-exclamation icon-warning"></i> すべての必須項目を入力してください</div>
 
     <!-- 結果表示 -->
     <section id="results" class="card section is-hidden" aria-labelledby="resultHeading">
@@ -929,7 +929,7 @@
             <label for="loadStatsTypeSelect" style="font-size: 0.85em; color: #666; display: block; margin-bottom: 0.3em;">
               読み込む統計の種類
             </label>
-            <select id="loadStatsTypeSelect" class="stats-type-select" style="width: 100%; padding: 0.4em; font-size: 0.85em; border: 1px solid #ddd; border-radius: 4px;">
+            <select id="loadStatsTypeSelect" class="stats-type-select" style="width: 100%; padding: 0.4em; font-size: 0.85em; border: 1px solid #ddd; border-radius: 4px;" aria-label="読み込む統計の種類を選択">
               <!-- オプションはJavaScriptで動的に生成されます -->
             </select>
           </div>
@@ -1190,11 +1190,7 @@
                 <th rowspan="2" class="header-diff">1個<br>差額（円）</th>
                 <th rowspan="2" class="header-sensitivity">
                   感度<br>(%/1%)
-                  <span class="help-icon"
-                   
-                   
-                   
-                   ><i class="fa-solid fa-circle-question"></i></span>
+                  <span class="help-icon" data-tooltip="歩留まり率が1%変動したときに、値入率が何%変化するかを示す指標" aria-label="感度の説明を表示"><i class="fa-solid fa-circle-question"></i></span>
                 </th>
               </tr>
               <tr>
@@ -1224,12 +1220,12 @@
   </main>
 
   <!-- 保存ダイアログ -->
-  <dialog id="saveDialog" class="dialog">
-    <h3 class="dialog-title"><i class="fa-regular fa-floppy-disk"></i> 計算を保存</h3>
+  <dialog id="saveDialog" class="dialog" aria-labelledby="saveDialogTitle">
+    <h3 id="saveDialogTitle" class="dialog-title"><i class="fa-regular fa-floppy-disk"></i> 計算を保存</h3>
     <div class="dialog-body">
       <label class="field">
         <span>カテゴリ <span style="color: #e53935;">*</span></span>
-        <select id="saveCategory" required>
+        <select id="saveCategory" required aria-required="true">
           <option value="">選択してください</option>
           <option value="vegetable">🥬 野菜</option>
           <option value="fruit">🍎 果実</option>
@@ -1237,7 +1233,7 @@
       </label>
       <label class="field">
         <span>商品名 <span style="color: #e53935;">*</span></span>
-        <input type="text" id="saveName" list="productNameList" placeholder="例: トマト" autocomplete="off" />
+        <input type="text" id="saveName" list="productNameList" placeholder="例: トマト" autocomplete="off" required aria-required="true" />
         <datalist id="productNameList">
           <!-- JavaScriptで動的に生成 -->
         </datalist>
@@ -1250,15 +1246,15 @@
   </dialog>
 
   <!-- 履歴モーダル -->
-  <dialog id="historyModal" class="dialog dialog--large">
+  <dialog id="historyModal" class="dialog dialog--large" aria-labelledby="historyModalTitle">
     <div class="dialog-header">
-      <h3 class="dialog-title"><i class="fa-regular fa-folder"></i> 保存済みの計算</h3>
+      <h3 id="historyModalTitle" class="dialog-title"><i class="fa-regular fa-folder"></i> 保存済みの計算</h3>
       <div class="dialog-header-actions">
-        <button type="button" id="historyMenuBtn" class="btn-icon" aria-label="メニュー" title="データ管理">⋮</button>
+        <button type="button" id="historyMenuBtn" class="btn-icon" aria-label="データ管理メニュー" aria-expanded="false" aria-controls="historyMenu" title="データ管理">⋮</button>
         <button type="button" id="closeHistoryModal" class="btn-close" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
 
         <!-- データ管理メニュー（ドロップダウン） -->
-        <div id="historyMenu" class="history-menu is-hidden">
+        <div id="historyMenu" class="history-menu is-hidden" role="menu">
           <button type="button" id="exportBtn" class="history-menu-item">
             <span class="menu-icon"><i class="fa-solid fa-upload"></i></span>
             <span class="menu-text">データをエクスポート</span>
@@ -1298,10 +1294,10 @@
         </div>
 
         <div class="search-container">
-          <select id="historySearch">
+          <select id="historySearch" aria-label="商品名で絞り込み">
             <option value=""><i class="fa-solid fa-magnifying-glass"></i> 商品名で絞り込み...</option>
           </select>
-          <button type="button" id="clearSearchBtn" class="btn-clear-search">選択を解除</button>
+          <button type="button" id="clearSearchBtn" class="btn-clear-search" aria-label="検索をクリア">選択を解除</button>
         </div>
       </div>
       <ul id="historyList" class="history-list">
@@ -1337,7 +1333,7 @@
   </footer>
 
   <!-- 計算式詳細モーダル -->
-  <div id="formulaModal" class="modal">
+  <div id="formulaModal" class="modal" role="dialog" aria-labelledby="formulaModalTitle" aria-modal="true">
     <div class="modal-overlay"></div>
     <div class="modal-content">
       <div class="modal-header">
@@ -1351,11 +1347,11 @@
   </div>
 
   <!-- プリセット管理モーダル -->
-  <div id="presetModal" class="modal">
+  <div id="presetModal" class="modal" role="dialog" aria-labelledby="presetModalTitle" aria-modal="true">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-large">
       <div class="modal-header">
-        <h3 class="modal-title"><i class="fa-regular fa-clipboard"></i> プリセット管理</h3>
+        <h3 id="presetModalTitle" class="modal-title"><i class="fa-regular fa-clipboard"></i> プリセット管理</h3>
         <button type="button" id="closePresetModalBtn" class="modal-close" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
@@ -1365,7 +1361,7 @@
 
           <div class="field">
             <label for="presetName">プリセット名</label>
-            <input type="text" id="presetName" placeholder="例: 夏季仕入" />
+            <input type="text" id="presetName" placeholder="例: 夏季仕入" required aria-required="true" />
           </div>
 
           <!-- 原価・売価追加フォーム -->
@@ -1374,11 +1370,11 @@
             <div class="grid" style="gap: 0.75em;">
               <div class="field">
                 <label for="tempUnitCost">1個原価（円）</label>
-                <input type="number" id="tempUnitCost" step="0.01" placeholder="150" min="0" />
+                <input type="number" id="tempUnitCost" step="0.01" placeholder="150" min="0" aria-required="true" />
               </div>
               <div class="field">
                 <label for="tempUnitPrice">1個売価（円）</label>
-                <input type="number" id="tempUnitPrice" step="0.01" placeholder="198" min="0" />
+                <input type="number" id="tempUnitPrice" step="0.01" placeholder="198" min="0" aria-required="true" />
               </div>
               <div style="align-self: flex-end;">
                 <button type="button" id="addPairBtn" class="btn btn-secondary" style="width: 100%;">追加</button>
@@ -1438,12 +1434,12 @@
   </div>
 
   <!-- 比較結果のヘルプモーダル -->
-  <div id="resultsHelpModal" class="modal">
+  <div id="resultsHelpModal" class="modal" role="dialog" aria-labelledby="resultsHelpModalTitle" aria-modal="true">
     <div class="modal-overlay"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title"><i class="fa-solid fa-chart-column"></i> 比較結果テーブルの見方</h3>
-        <button type="button" class="modal-close" id="resultsHelpModalClose">×</button>
+        <h3 id="resultsHelpModalTitle" class="modal-title"><i class="fa-solid fa-chart-column"></i> 比較結果テーブルの見方</h3>
+        <button type="button" class="modal-close" id="resultsHelpModalClose" aria-label="閉じる">×</button>
       </div>
       <div class="modal-body">
         <div class="help-section">
@@ -1522,9 +1518,9 @@
   </div>
 
   <!-- 論理削除データ管理モーダル -->
-  <dialog id="deletedDataModal" class="dialog dialog--large">
+  <dialog id="deletedDataModal" class="dialog dialog--large" aria-labelledby="deletedDataModalTitle">
     <div class="dialog-header">
-      <h2 class="dialog-title"><i class="fa-regular fa-trash-can"></i> 論理削除データ管理</h2>
+      <h2 id="deletedDataModalTitle" class="dialog-title"><i class="fa-regular fa-trash-can"></i> 論理削除データ管理</h2>
       <button type="button" id="closeDeletedDataModal" class="btn-icon" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="dialog-body">
@@ -1543,11 +1539,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 
   <!-- 認証モーダル -->
-  <div id="auth-modal" class="modal">
+  <div id="auth-modal" class="modal" role="dialog" aria-labelledby="authModalTitle" aria-modal="true">
     <div class="modal-content auth-modal-content">
       <div class="modal-header">
-        <h2 class="modal-title"><i class="fa-solid fa-cloud"></i> クラウド同期</h2>
-        <button type="button" id="close-auth-modal" class="modal-close">&times;</button>
+        <h2 id="authModalTitle" class="modal-title"><i class="fa-solid fa-cloud"></i> クラウド同期</h2>
+        <button type="button" id="close-auth-modal" class="modal-close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
         <!-- サインイン画面 -->
@@ -1561,11 +1557,11 @@
             <form id="signin-form" onsubmit="return false;">
               <div class="form-group">
                 <label for="signin-email">メールアドレス</label>
-                <input type="email" id="signin-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+                <input type="email" id="signin-email" class="form-input" placeholder="email@example.com" autocomplete="email" required aria-required="true" />
               </div>
               <div class="form-group">
                 <label for="signin-password">パスワード</label>
-                <input type="password" id="signin-password" class="form-input" placeholder="パスワード" autocomplete="current-password" />
+                <input type="password" id="signin-password" class="form-input" placeholder="パスワード" autocomplete="current-password" required aria-required="true" />
               </div>
               <button type="button" id="email-signin-btn" class="btn btn-primary btn-block">
                 メールでログイン
@@ -1585,15 +1581,15 @@
             <form id="signup-form" onsubmit="return false;">
               <div class="form-group">
                 <label for="signup-email">メールアドレス</label>
-                <input type="email" id="signup-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+                <input type="email" id="signup-email" class="form-input" placeholder="email@example.com" autocomplete="email" required aria-required="true" />
               </div>
               <div class="form-group">
                 <label for="signup-password">パスワード（6文字以上）</label>
-                <input type="password" id="signup-password" class="form-input" placeholder="パスワード" autocomplete="new-password" />
+                <input type="password" id="signup-password" class="form-input" placeholder="パスワード" autocomplete="new-password" required aria-required="true" minlength="6" />
               </div>
               <div class="form-group">
                 <label for="signup-password-confirm">パスワード（確認）</label>
-                <input type="password" id="signup-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" />
+                <input type="password" id="signup-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" required aria-required="true" minlength="6" />
               </div>
               <button type="button" id="email-signup-btn" class="btn btn-primary btn-block">
                 アカウント作成
@@ -1616,15 +1612,15 @@
             <form id="upgrade-form" onsubmit="return false;">
               <div class="form-group">
                 <label for="upgrade-email">メールアドレス</label>
-                <input type="email" id="upgrade-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+                <input type="email" id="upgrade-email" class="form-input" placeholder="email@example.com" autocomplete="email" required aria-required="true" />
               </div>
               <div class="form-group">
                 <label for="upgrade-password">パスワード（6文字以上）</label>
-                <input type="password" id="upgrade-password" class="form-input" placeholder="パスワード" autocomplete="new-password" />
+                <input type="password" id="upgrade-password" class="form-input" placeholder="パスワード" autocomplete="new-password" required aria-required="true" minlength="6" />
               </div>
               <div class="form-group">
                 <label for="upgrade-password-confirm">パスワード（確認）</label>
-                <input type="password" id="upgrade-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" />
+                <input type="password" id="upgrade-password-confirm" class="form-input" placeholder="パスワード（確認）" autocomplete="new-password" required aria-required="true" minlength="6" />
               </div>
               <button type="button" id="upgrade-account-btn" class="btn btn-primary btn-block">
                 アカウントをアップグレード
@@ -1643,7 +1639,7 @@
             <form id="reset-form" onsubmit="return false;">
               <div class="form-group">
                 <label for="reset-email">メールアドレス</label>
-                <input type="email" id="reset-email" class="form-input" placeholder="email@example.com" autocomplete="email" />
+                <input type="email" id="reset-email" class="form-input" placeholder="email@example.com" autocomplete="email" required aria-required="true" />
               </div>
               <button type="button" id="reset-password-btn" class="btn btn-primary btn-block">
                 リセットメールを送信
@@ -1659,11 +1655,11 @@
   </div>
 
   <!-- ヘルプモーダル -->
-  <div id="helpModal" class="dialog-overlay" style="display: none;">
+  <div id="helpModal" class="dialog-overlay" style="display: none;" role="dialog" aria-labelledby="helpModalTitle" aria-modal="true">
     <div class="dialog help-dialog">
       <div class="dialog-header">
-        <h3 class="dialog-title"><i class="fa-solid fa-circle-info"></i> ヘルプ</h3>
-        <button type="button" class="dialog-close-btn" id="closeHelpModal">
+        <h3 id="helpModalTitle" class="dialog-title"><i class="fa-solid fa-circle-info"></i> ヘルプ</h3>
+        <button type="button" class="dialog-close-btn" id="closeHelpModal" aria-label="閉じる">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
