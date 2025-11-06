@@ -221,8 +221,8 @@ export function compactYieldStatsRows(callbacks = {}) {
     const hasBeforeWeight = beforeInput && beforeInput.value.trim() !== '';
     const hasAfterWeight = afterInput && afterInput.value.trim() !== '';
 
-    // どちらか一方でも値がある行は残す
-    if (hasBeforeWeight || hasAfterWeight) {
+    // 両方のフィールドに値がある行だけを残す（上詰め処理）
+    if (hasBeforeWeight && hasAfterWeight) {
       validRows.push({
         beforeValue: beforeInput.value,
         afterValue: afterInput.value

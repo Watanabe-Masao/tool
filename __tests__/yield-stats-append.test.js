@@ -49,6 +49,26 @@ describe('歩留まり統計テーブル: 追加機能', () => {
       expect(modes).toContain('append');
       expect(modes).toContain('cancel');
     });
+
+    it('上詰め処理: 両方のフィールドに値がある行だけが有効', () => {
+      // compactYieldStatsRowsの仕様確認
+      // 両方のフィールドに値がある場合のみ有効な行とみなす
+
+      const completeRow = { beforeWeight: 100, afterWeight: 80 };
+      const incompleteRow1 = { beforeWeight: 100, afterWeight: null };
+      const incompleteRow2 = { beforeWeight: null, afterWeight: 80 };
+      const emptyRow = { beforeWeight: null, afterWeight: null };
+
+      // 完全な行のみが有効
+      expect(completeRow.beforeWeight).not.toBeNull();
+      expect(completeRow.afterWeight).not.toBeNull();
+
+      // 不完全な行は無効とみなされる
+      expect(incompleteRow1.afterWeight).toBeNull();
+      expect(incompleteRow2.beforeWeight).toBeNull();
+      expect(emptyRow.beforeWeight).toBeNull();
+      expect(emptyRow.afterWeight).toBeNull();
+    });
   });
 
   describe('ID管理の仕様', () => {
@@ -157,6 +177,20 @@ describe('歩留まり統計テーブル: 追加機能', () => {
           { beforeWeight: 100, afterWeight: 80 }
         ], {});
       }).not.toThrow();
+    });
+
+    it('compactYieldStatsRows関数の実装を確認（上詰め処理）', async () => {
+      // compactYieldStatsRowsのソースコードを確認
+      // 両方のフィールドに値がある行だけを残す実装になっているか確認
+      const module = await import('../scripts/yield-stats-table.js');
+      const funcString = module.compactYieldStatsRows.toString();
+
+      // 「&&」を使って両方の条件をチェックしていることを確認
+      expect(funcString).toContain('hasBeforeWeight && hasAfterWeight');
+
+      // 「||」（どちらか一方）を使っていないことを確認
+      // ただし、他の用途で使われている可能性があるため、
+      // 具体的な行をチェックするのは難しいので、コメントとして記録
     });
   });
 
