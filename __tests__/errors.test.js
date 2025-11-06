@@ -120,6 +120,14 @@ describe('ValidationError', () => {
 
     expect(error.getUserMessage()).toBe('一般的なエラー');
   });
+
+  test('errors引数省略時はデフォルトで空配列が設定される', () => {
+    const error = new ValidationError('検証エラー');
+
+    expect(error.validationErrors).toEqual([]);
+    expect(error.getErrors()).toEqual([]);
+    expect(error.getUserMessage()).toBe('検証エラー');
+  });
 });
 
 describe('DatabaseError', () => {
@@ -195,6 +203,17 @@ describe('mapFirebaseError', () => {
     expect(error.message).toBe('Unknown error');
     expect(error.retryable).toBe(false);
   });
+
+  test('messageがない場合はtoString()を使用', () => {
+    const firebaseError = {
+      code: 'unavailable',
+      toString: () => '[object Error: Network issue]'
+    };
+    const error = mapFirebaseError(firebaseError);
+
+    expect(error instanceof NetworkError).toBe(true);
+    expect(error.message).toContain('[object Error: Network issue]');
+  });
 });
 
 describe('mapIndexedDBError', () => {
@@ -231,6 +250,28 @@ describe('mapIndexedDBError', () => {
 
     expect(error instanceof DatabaseError).toBe(true);
     expect(error.operation).toBe('query');
+  });
+
+  test('operation引数省略時はデフォルト値が使用される', () => {
+    const dbError = { name: 'AbortError', message: 'Transaction aborted' };
+    const error = mapIndexedDBError(dbError);
+
+    expect(error instanceof DatabaseError).toBe(true);
+    expect(error.operation).toBe('operation'); // デフォルト値
+    expect(error.message).toContain('operation');
+  });
+
+  test('messageプロパティがない場合でもエラー処理できる', () => {
+    const dbError = {
+      name: 'AbortError',
+      toString: () => 'AbortError: Transaction aborted'
+    };
+    const error = mapIndexedDBError(dbError, 'test operation');
+
+    expect(error instanceof DatabaseError).toBe(true);
+    expect(error.operation).toBe('test operation');
+    // messageはundefinedだが、エラーオブジェクト自体は保持される
+    expect(error.originalError).toBe(dbError);
   });
 });
 

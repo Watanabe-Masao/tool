@@ -110,4 +110,47 @@ describe('Phase 5 統合テスト: メモ化', () => {
     calculateStatistics([1, 2, 3]); // 既存のキー
     expect(calculateStatistics.getCacheSize()).toBe(2); // 増えない
   });
+
+  describe('エッジケース', () => {
+    test('データが1つだけの場合（n=1）', () => {
+      const data = [85];
+      const stats = calculateStatistics(data);
+
+      expect(stats.count).toBe(1);
+      expect(stats.mean).toBe(85);
+      expect(stats.median).toBe(85);
+      expect(stats.stdDev).toBe(0); // n=1の場合、標準偏差は0
+      expect(stats.skewness).toBe(0); // n<3なのでskewnessは0
+      expect(stats.kurtosis).toBe(0); // n<4なのでkurtosisは0
+    });
+
+    test('平均が0の場合（CV計算）', () => {
+      const data = [-5, 0, 5];
+      const stats = calculateStatistics(data);
+
+      expect(stats.mean).toBe(0);
+      expect(stats.cv).toBe(0); // mean=0の場合、CVは0
+      expect(stats.rsd).toBe(0); // RSDもCVと同じ
+    });
+
+    test('すべての値が同じ場合（標準偏差=0）', () => {
+      const data = [80, 80, 80, 80];
+      const stats = calculateStatistics(data);
+
+      expect(stats.mean).toBe(80);
+      expect(stats.stdDev).toBe(0); // すべて同じ値なので標準偏差は0
+      expect(stats.skewness).toBe(0); // stdDev=0なのでskewnessは0
+      expect(stats.kurtosis).toBe(0); // stdDev=0なのでkurtosisは0
+    });
+
+    test('データが2つの場合（n=2）', () => {
+      const data = [80, 90];
+      const stats = calculateStatistics(data);
+
+      expect(stats.count).toBe(2);
+      expect(stats.mean).toBe(85);
+      expect(stats.skewness).toBe(0); // n<3なのでskewnessは0
+      expect(stats.kurtosis).toBe(0); // n<4なのでkurtosisは0
+    });
+  });
 });
