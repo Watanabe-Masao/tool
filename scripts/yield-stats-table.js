@@ -210,16 +210,25 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (!tbody) return;
 
   const allRows = Array.from(tbody.querySelectorAll('.yield-stats-row'));
+  console.log('[compactYieldStatsRows] 開始:', { totalRows: allRows.length });
   const validRows = [];
 
   // データがある行だけを抽出
-  allRows.forEach(row => {
+  allRows.forEach((row, index) => {
     // 配列ベース管理: rowから直接inputを取得
     const beforeInput = row.querySelector('.before-weight-input');
     const afterInput = row.querySelector('.after-weight-input');
 
     const hasBeforeWeight = beforeInput && beforeInput.value.trim() !== '';
     const hasAfterWeight = afterInput && afterInput.value.trim() !== '';
+
+    console.log(`[compactYieldStatsRows] 行${index}:`, {
+      before: beforeInput?.value,
+      after: afterInput?.value,
+      hasBeforeWeight,
+      hasAfterWeight,
+      willKeep: hasBeforeWeight && hasAfterWeight
+    });
 
     // 両方のフィールドに値がある行だけを残す（上詰め処理）
     if (hasBeforeWeight && hasAfterWeight) {
@@ -229,6 +238,8 @@ export function compactYieldStatsRows(callbacks = {}) {
       });
     }
   });
+
+  console.log('[compactYieldStatsRows] 有効な行:', validRows.length, '/', allRows.length);
 
   // テーブルを再構築
   yieldStatsEntryCounter = 0;
@@ -323,10 +334,14 @@ export function checkIfTableHasData() {
  */
 export function appendYieldStatsTable(tableData, callbacks = {}) {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  console.log('[appendYieldStatsTable] 開始:', { tbody: !!tbody, dataLength: tableData?.length });
+
   if (!tbody || !tableData || tableData.length === 0) {
+    console.log('[appendYieldStatsTable] 早期リターン');
     return;
   }
 
+  console.log('[appendYieldStatsTable] 上詰め処理を実行...');
   // カウンターはリセットしない（既存の行を保持）
   // 空行を削除してから追加
   compactYieldStatsRows(callbacks);
