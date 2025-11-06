@@ -45,7 +45,8 @@ import {
   addYieldStatsRow,
   compactYieldStatsRows,
   restoreYieldStatsTable,
-  updateYieldStatsStatistics
+  updateYieldStatsStatistics,
+  updateRowNumbers
 } from './yield-stats-table.js';
 // Lazy-loaded modules - imported dynamically when needed
 // import { displayCurrentStatistics, setupFormulaModal, updateLoadStatsButtons, ... } from './yield-stats-display.js';
@@ -270,6 +271,7 @@ function clearAll() {
     if (tbody) {
       tbody.innerHTML = '';
       addYieldStatsRow(yieldStatsCallbacks);
+      updateRowNumbers(); // 行番号を更新
     }
     resetYieldStatsEntries(() => addYieldStatsRow(yieldStatsCallbacks));
   }

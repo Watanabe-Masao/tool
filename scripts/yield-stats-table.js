@@ -17,6 +17,22 @@ import { debounce } from './debounce.js';
 let yieldStatsEntryCounter = 0;
 
 /**
+ * テーブルの行番号を更新（相対値で採番）
+ */
+export function updateRowNumbers() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('.yield-stats-row');
+  rows.forEach((row, index) => {
+    const rowNumberCell = row.querySelector('.row-number');
+    if (rowNumberCell) {
+      rowNumberCell.textContent = index + 1;
+    }
+  });
+}
+
+/**
  * エントリーカウンターを取得（デバッグ・テスト用）
  */
 export function getYieldStatsEntryCounter() {
@@ -50,6 +66,8 @@ export function resetYieldStatsEntries(addYieldStatsRowCallback) {
     if (addYieldStatsRowCallback) {
       addYieldStatsRowCallback();
     }
+    // 行番号を更新（相対値で採番）
+    updateRowNumbers();
   }
 }
 
@@ -153,6 +171,7 @@ export function addYieldStatsRow(callbacks = {}) {
         const lastRow = allRows[allRows.length - 1];
         if (lastRow.id === `yieldStatsRow${rowId}`) {
           addYieldStatsRow(callbacks);
+          updateRowNumbers(); // 行番号を更新
         }
 
         // 統計情報を更新
@@ -266,6 +285,9 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (callbacks.updateYieldStatsStatistics) {
     callbacks.updateYieldStatsStatistics();
   }
+
+  // 行番号を更新（相対値で採番）
+  updateRowNumbers();
 }
 
 /**
@@ -341,6 +363,8 @@ export function restoreYieldStatsTable(tableData, callbacks = {}) {
     if (callbacks.updateYieldStatsStatistics) {
       callbacks.updateYieldStatsStatistics();
     }
+    // 行番号を更新（相対値で採番）
+    updateRowNumbers();
   }, 50);
 }
 
