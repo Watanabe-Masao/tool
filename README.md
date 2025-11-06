@@ -116,7 +116,7 @@ npx http-server -p 8080
 
 - **[アーキテクチャ](docs/development/ARCHITECTURE.md)** - システム設計
 - **[開発ガイド](docs/development/CONTRIBUTING.md)** - 開発への参加方法
-- **[API仕様](docs/specs/API.md)** - モジュールAPI
+- **[ベストプラクティス](docs/development/BEST_PRACTICES.md)** - コーディング規約
 - **[テスト](docs/testing/README.md)** - テスト戦略
 
 ### プロジェクト管理
