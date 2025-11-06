@@ -17,8 +17,8 @@
 
 ### 使い方
 
-- [USAGE.md](./USAGE.md) - 基本的な使い方（作成予定）
-- [YIELD_STATS_GUIDE.md](./YIELD_STATS_GUIDE.md) - 歩留まり統計モードの詳細（作成予定）
+- [USAGE.md](./USAGE.md) - 基本的な使い方
+- [YIELD_STATS_GUIDE.md](./YIELD_STATS_GUIDE.md) - 歩留まり統計モードの詳細
 
 ### トラブルシューティング
 
@@ -26,7 +26,7 @@
 
 ### FAQ
 
-- [FAQ.md](./FAQ.md) - よくある質問（作成予定）
+- [FAQ.md](./FAQ.md) - よくある質問
 
 ---
 

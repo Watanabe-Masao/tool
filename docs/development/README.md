@@ -20,7 +20,7 @@
 
 ### 貢献方法
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - 開発への参加方法（作成予定）
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - 開発への参加方法
 
 ---
 

@@ -1284,10 +1284,10 @@ Phase 7完了（85%）✅ CI/CD稼働中
 
 ### 重要リンク
 
-- 📊 **進捗詳細**: [`DESIGN_IMPROVEMENT_STATUS.md`](./DESIGN_IMPROVEMENT_STATUS.md)
-- 📈 **カバレッジ**: [`COVERAGE.md`](./COVERAGE.md)
-- 🚀 **CI/CD**: [`CI_CD.md`](./CI_CD.md)
-- ⚡ **パフォーマンス**: [`PERFORMANCE.md`](./PERFORMANCE.md)
+- 📊 **現状評価**: [`CURRENT_STATUS_ASSESSMENT.md`](./CURRENT_STATUS_ASSESSMENT.md)
+- 📈 **カバレッジ**: [`COVERAGE.md`](../testing/COVERAGE.md)
+- 🚀 **CI/CD**: [`CI_CD.md`](../deployment/CI_CD.md)
+- ⚡ **パフォーマンス**: [`PERFORMANCE.md`](../development/PERFORMANCE.md)
 
 ---
 
