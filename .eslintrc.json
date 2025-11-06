@@ -56,7 +56,20 @@
     // セキュリティ
     "no-eval": "error",
     "no-implied-eval": "error",
-    "no-new-func": "error"
+    "no-new-func": "error",
+
+    // XSS対策: innerHTML の使用を制限
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "AssignmentExpression[left.property.name='innerHTML']",
+        "message": "Avoid using innerHTML directly. Use the sanitizer module (escapeHTML, html, htmlWithRaw) to prevent XSS attacks. If you must use innerHTML, ensure all user input is properly escaped."
+      },
+      {
+        "selector": "CallExpression[callee.property.name='insertAdjacentHTML']",
+        "message": "Avoid using insertAdjacentHTML directly. Use the sanitizer module to prevent XSS attacks."
+      }
+    ]
   },
   "overrides": [
     {
@@ -69,12 +82,32 @@
       }
     },
     {
-      "files": ["tests/**/*.js"],
+      "files": ["tests/**/*.js", "__tests__/**/*.js"],
       "env": {
         "jest": true
       },
       "rules": {
         "max-nested-callbacks": "off"
+      }
+    },
+    {
+      "files": [
+        "scripts/core/sanitizer.js"
+      ],
+      "rules": {
+        "no-restricted-syntax": "off",
+        "no-unused-vars": "off"
+      }
+    },
+    {
+      "files": [
+        "scripts/toast.js",
+        "scripts/multi-pattern-ui.js",
+        "scripts/history-item-renderer.js",
+        "scripts/yield-stats-display.js"
+      ],
+      "rules": {
+        "no-restricted-syntax": "warn"
       }
     }
   ]

@@ -32,7 +32,7 @@ const HTML_ESCAPE_MAP = {
  * @constant
  * @type {RegExp}
  */
-const HTML_ESCAPE_REGEX = /[&<>"'\/]/g;
+const HTML_ESCAPE_REGEX = /[&<>"'/]/g;
 
 /**
  * HTML文字列をエスケープ
