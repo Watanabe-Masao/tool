@@ -11,7 +11,7 @@ import { MODE, FIXED_FIELDS, WEIGHT_FIELDS, YIELD_STATS_FIELDS, UI_ELEMENTS, RAD
 import { grossFromMarkup, toFixed } from './calculation.js';
 import { displayProductSimulation } from './display.js';
 import { groupHistoryByProduct, createHistoryGroupHTML, createHistoryItemHTML, getModeIcon, escapeHTML } from './history-item-renderer.js';
-import { switchToMode, switchYieldMethod, restoreAllInputFields, restoreCalculationResults } from './history-restore.js';
+import { switchToMode, switchYieldMethod, restoreAllInputFields, restoreCalculationResults, appendYieldStatsTableData } from './history-restore.js';
 import {
   showSaveDialog as showSaveDialogBase,
   closeSaveDialog,
@@ -316,6 +316,55 @@ function bindHistoryItemEvents() {
 }
 
 /**
+ * 履歴読み込みモード選択ダイアログを表示
+ * @param {Object} data - 履歴データ
+ * @param {number} id - 履歴ID
+ * @returns {Promise<'overwrite'|'append'|'cancel'>} ユーザーの選択
+ */
+function showLoadModeDialog(data, id) {
+  return new Promise((resolve) => {
+    const dialog = qs('#loadModeConfirmDialog');
+    if (!dialog) {
+      logger.error('Load mode dialog not found');
+      resolve('cancel');
+      return;
+    }
+
+    const overwriteBtn = qs('#loadModeOverwrite');
+    const appendBtn = qs('#loadModeAppend');
+    const cancelBtn = qs('#loadModeCancel');
+
+    const handleOverwrite = () => {
+      cleanup();
+      resolve('overwrite');
+    };
+
+    const handleAppend = () => {
+      cleanup();
+      resolve('append');
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      resolve('cancel');
+    };
+
+    const cleanup = () => {
+      overwriteBtn.removeEventListener('click', handleOverwrite);
+      appendBtn.removeEventListener('click', handleAppend);
+      cancelBtn.removeEventListener('click', handleCancel);
+      dialog.close();
+    };
+
+    overwriteBtn.addEventListener('click', handleOverwrite);
+    appendBtn.addEventListener('click', handleAppend);
+    cancelBtn.addEventListener('click', handleCancel);
+
+    dialog.showModal();
+  });
+}
+
+/**
  * 計算データを読み込んで入力フィールドに復元
  * @param {number} id
  */
@@ -328,8 +377,22 @@ async function handleLoadCalculation(id) {
 
     const data = await loadCalculation(id);
 
-    // 履歴から読み込んだ計算のIDを保存（上書き保存用）
-    appState.setLoadedHistoryId(id);
+    // 歩留まり統計モードで既存データがある場合、上書き/追加を選択
+    let loadMode = 'overwrite'; // デフォルトは上書き
+    if (data.mode === MODE.YIELD_STATS && data.input.tableData && window.checkIfTableHasData && window.checkIfTableHasData()) {
+      loadMode = await showLoadModeDialog(data, id);
+      if (loadMode === 'cancel') {
+        return; // キャンセルの場合は何もしない
+      }
+    }
+
+    // ID管理：上書きの場合は履歴のID、追加の場合は現在のIDを保持
+    if (loadMode === 'overwrite') {
+      // 上書き：履歴から読み込んだ計算のIDを保存（上書き保存用）
+      appState.setLoadedHistoryId(id);
+    }
+    // 追加の場合は現在のIDを保持（setLoadedHistoryIdを呼ばない）
+
     // UI状態フラグを更新：履歴から呼び出された、変更なし
     appState.markAsFromHistory();
 
@@ -344,8 +407,16 @@ async function handleLoadCalculation(id) {
 
     // 少し待ってからフィールドに値を復元（UIの切り替えが完了するまで）
     setTimeout(() => {
-      // 履歴の商品名を商品名フィールドに設定
-      restoreAllInputFields(data.mode, data.input, data.name);
+      // 履歴の商品名を商品名フィールドに設定（上書きの場合のみ）
+      if (data.mode === MODE.YIELD_STATS && loadMode === 'append') {
+        // 追加の場合：テーブルデータのみ追加、商品名は変更しない
+        if (data.input.tableData) {
+          appendYieldStatsTableData(data.input.tableData);
+        }
+      } else {
+        // 上書きの場合：通常通り復元
+        restoreAllInputFields(data.mode, data.input, data.name);
+      }
 
       // 結果データがある場合はappStateに復元（歩留まり統計モードは除く）
       if (data.result && data.mode !== MODE.YIELD_STATS) {

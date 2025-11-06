@@ -293,6 +293,105 @@ export function compactYieldStatsRows(callbacks = {}) {
 }
 
 /**
+ * テーブルに入力データがあるかチェック
+ *
+ * @returns {boolean} データがある場合true
+ */
+export function checkIfTableHasData() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return false;
+
+  const rows = tbody.querySelectorAll('.yield-stats-row');
+  for (const row of rows) {
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
+
+    if ((beforeInput && beforeInput.value.trim() !== '') ||
+        (afterInput && afterInput.value.trim() !== '')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * 歩留まり率統計モード: テーブルデータを追加（既存データを保持）
+ *
+ * @param {Array} tableData - 追加するテーブルデータ
+ * @param {Object} callbacks - コールバック関数のオブジェクト
+ */
+export function appendYieldStatsTable(tableData, callbacks = {}) {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody || !tableData || tableData.length === 0) return;
+
+  // カウンターはリセットしない（既存の行を保持）
+  // 空行を削除してから追加
+  compactYieldStatsRows(callbacks);
+
+  // データから行を追加
+  tableData.forEach(rowData => {
+    addYieldStatsRow(callbacks);
+
+    // 配列ベース管理: 最後に追加した行から直接inputを取得
+    const allRows = tbody.querySelectorAll('.yield-stats-row');
+    const lastRow = allRows[allRows.length - 1];
+    const beforeInput = lastRow.querySelector('.before-weight-input');
+    const afterInput = lastRow.querySelector('.after-weight-input');
+
+    if (beforeInput && rowData.beforeWeight !== undefined && rowData.beforeWeight !== null) {
+      beforeInput.value = rowData.beforeWeight;
+    }
+    if (afterInput && rowData.afterWeight !== undefined && rowData.afterWeight !== null) {
+      afterInput.value = rowData.afterWeight;
+    }
+
+    // 歩留まり率を計算して表示
+    const beforeWeight = beforeInput ? beforeInput.value.trim() : '';
+    const afterWeight = afterInput ? afterInput.value.trim() : '';
+    const yieldRateDisplay = lastRow.querySelector('.yield-rate-display');
+
+    if (beforeWeight !== '' && afterWeight !== '') {
+      const beforeVal = parseFloat(beforeWeight);
+      const afterVal = parseFloat(afterWeight);
+      if (beforeVal > 0 && afterVal > 0) {
+        const yieldRate = calculateYieldRate(beforeVal, afterVal);
+        if (yieldRate !== null) {
+          yieldRateDisplay.textContent = pct(toFixed(yieldRate));
+          yieldRateDisplay.classList.add('calculated');
+          yieldRateDisplay.classList.remove('error');
+        }
+      }
+    } else if (beforeWeight !== '' || afterWeight !== '') {
+      // 片方だけ入力されている場合はエラー
+      yieldRateDisplay.textContent = 'エラー';
+      yieldRateDisplay.classList.add('error');
+      yieldRateDisplay.classList.remove('calculated');
+    }
+  });
+
+  // 最後の行に値がある場合、新しい空行を追加
+  const lastData = tableData[tableData.length - 1];
+  if (lastData && lastData.beforeWeight && lastData.afterWeight) {
+    addYieldStatsRow(callbacks);
+  }
+
+  // 状態を更新：履歴から読み込まれた
+  appState.setYieldStatsFromHistory(true);
+  appState.setYieldStatsCalculated(true);
+
+  // 行番号を更新（相対値に）
+  updateRowNumbers();
+
+  // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
+  setTimeout(() => {
+    if (callbacks.updateYieldStatsStatistics) {
+      callbacks.updateYieldStatsStatistics();
+    }
+  }, 50);
+}
+
+/**
  * 歩留まり率統計モード: テーブルデータを復元
  *
  * @param {Array} tableData - 保存されたテーブルデータ

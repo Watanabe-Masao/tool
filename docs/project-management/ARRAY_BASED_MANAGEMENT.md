@@ -474,3 +474,166 @@ row.dataset.rowId = rowId;
 
 **変更履歴**:
 - 2025-11-06: 初版作成（配列ベース管理への移行完了）
+
+## 履歴読み込みの「上書き/追加」選択機能（2025-11-06 追加）
+
+### 概要
+
+配列ベース管理への移行後、履歴読み込み時に「上書き」または「追加」を選択できる機能を実装しました。
+
+### 実装内容
+
+#### 1. 新規関数
+
+**checkIfTableHasData()** (`scripts/yield-stats-table.js`)
+```javascript
+export function checkIfTableHasData() {
+  // テーブルに入力データがあるかチェック
+  const rows = tbody.querySelectorAll('.yield-stats-row');
+  for (const row of rows) {
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
+    if (beforeInput.value.trim() !== '' || afterInput.value.trim() !== '') {
+      return true;
+    }
+  }
+  return false;
+}
+```
+
+**appendYieldStatsTable()** (`scripts/yield-stats-table.js`)
+```javascript
+export function appendYieldStatsTable(tableData, callbacks = {}) {
+  // 既存データを保持したまま新しいデータを追加
+  // カウンターはリセットしない
+  compactYieldStatsRows(callbacks);
+
+  tableData.forEach(rowData => {
+    addYieldStatsRow(callbacks);
+    // 配列ベースで値を設定
+    const allRows = tbody.querySelectorAll('.yield-stats-row');
+    const lastRow = allRows[allRows.length - 1];
+    const beforeInput = lastRow.querySelector('.before-weight-input');
+    beforeInput.value = rowData.beforeWeight;
+    // ...
+  });
+
+  updateRowNumbers(); // 行番号を相対値に更新
+}
+```
+
+#### 2. UI追加
+
+**選択ダイアログ** (`index.html`)
+```html
+<dialog id="loadModeConfirmDialog" class="dialog">
+  <div class="dialog-header">
+    <h3>履歴の読み込み</h3>
+  </div>
+  <div class="dialog-body">
+    <p>テーブルに既存のデータがあります。履歴データをどのように読み込みますか？</p>
+    <button id="loadModeOverwrite">上書き</button>
+    <button id="loadModeAppend">追加</button>
+    <button id="loadModeCancel">キャンセル</button>
+  </div>
+</dialog>
+```
+
+#### 3. ID管理の仕様
+
+| 読み込みモード | 保存時のID | 動作 |
+|---|---|---|
+| **上書き** | 履歴のID | 既存データを削除して履歴データで置き換え。履歴のIDを使って上書き保存可能 |
+| **追加** | 現在のID | 既存データに履歴データを追加。現在編集中のIDを保持し、新規保存または別IDで保存 |
+| **キャンセル** | 変更なし | 何もしない |
+
+**実装コード** (`scripts/history-ui.js`)
+```javascript
+async function handleLoadCalculation(id) {
+  const data = await loadCalculation(id);
+
+  // 既存データがある場合、選択ダイアログを表示
+  let loadMode = 'overwrite';
+  if (data.mode === MODE.YIELD_STATS && data.input.tableData &&
+      window.checkIfTableHasData && window.checkIfTableHasData()) {
+    loadMode = await showLoadModeDialog(data, id);
+    if (loadMode === 'cancel') return;
+  }
+
+  // ID管理
+  if (loadMode === 'overwrite') {
+    appState.setLoadedHistoryId(id); // 履歴のIDを保持
+  }
+  // 追加の場合は現在のIDを保持（setLoadedHistoryIdを呼ばない）
+
+  // データ復元
+  if (data.mode === MODE.YIELD_STATS && loadMode === 'append') {
+    appendYieldStatsTableData(data.input.tableData); // 追加
+  } else {
+    restoreAllInputFields(data.mode, data.input, data.name); // 上書き
+  }
+}
+```
+
+### テスト
+
+**テストファイル**: `__tests__/yield-stats-append.test.js`
+
+```javascript
+describe('歩留まり統計テーブル: 追加機能', () => {
+  it('checkIfTableHasData関数が存在する');
+  it('appendYieldStatsTable関数が存在する');
+  it('上書きモードでは履歴IDを保持すべき');
+  it('追加モードでは現在のIDを保持すべき');
+});
+```
+
+**テスト結果**:
+- 23 test suites: 全て通過 ✅
+- 719 tests: 全て通過 ✅
+- 8 new tests added
+
+### 変更ファイル
+
+| ファイル | 変更内容 | 行数 |
+|---|---|---|
+| `scripts/yield-stats-table.js` | checkIfTableHasData, appendYieldStatsTable追加 | +98 |
+| `scripts/history-ui.js` | showLoadModeDialog, handleLoadCalculation修正 | +60, -20 |
+| `scripts/history-restore.js` | appendYieldStatsTableData追加 | +8 |
+| `scripts/event-handlers-setup.js` | window公開関数追加 | +10 |
+| `index.html` | loadModeConfirmDialogダイアログ追加 | +30 |
+| `__tests__/yield-stats-append.test.js` | 新規テストファイル | +75 (新規) |
+
+**統計**: 6ファイル変更、約+281行、-20行
+
+### ユーザー体験フロー
+
+1. ユーザーが履歴モーダルから歩留まり統計データを選択
+2. テーブルに既存データがある場合、選択ダイアログが表示
+   - **上書き**: 「現在のデータを削除して履歴データで置き換えます」
+   - **追加**: 「現在のデータに履歴データを追加します」
+   - **キャンセル**: 何もしない
+3. ユーザーが選択
+4. 選択に応じてデータが読み込まれる
+5. ID管理により、保存動作が適切に制御される
+   - 上書き → 履歴IDで上書き保存可能
+   - 追加 → 現在のIDで保存または新規保存
+
+### 利点
+
+1. **柔軟なデータ管理**: ユーザーが既存データと履歴データの統合方法を選択可能
+2. **データ損失防止**: 上書きする前に確認でき、誤操作を防止
+3. **データ蓄積**: 複数の履歴から少しずつデータを集めることが可能
+4. **ID管理の一貫性**: 上書き/追加に応じて適切なIDを保持
+
+### 将来の拡張可能性
+
+- 複数パターン分析モードでも同様の機能を実装
+- データのマージ時の重複チェック機能
+- 追加時のデータソート機能（日付順、値順など）
+
+---
+
+**更新履歴**:
+- 2025-11-06: 初版作成（配列ベース管理への移行完了）
+- 2025-11-06: 履歴読み込みの「上書き/追加」選択機能を追加

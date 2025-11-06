@@ -1533,6 +1533,38 @@
     </div>
   </dialog>
 
+  <!-- 履歴読み込みモード選択ダイアログ -->
+  <dialog id="loadModeConfirmDialog" class="dialog" aria-labelledby="loadModeConfirmTitle">
+    <div class="dialog-header">
+      <h3 id="loadModeConfirmTitle" class="dialog-title"><i class="fa-solid fa-folder-open"></i> 履歴の読み込み</h3>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-description">
+        テーブルに既存のデータがあります。<br>
+        履歴データをどのように読み込みますか？
+      </p>
+      <div class="load-mode-options" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+        <button type="button" id="loadModeOverwrite" class="btn btn--primary" style="padding: 1rem;">
+          <i class="fa-solid fa-rotate"></i>
+          <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+            <strong>上書き</strong>
+            <small style="font-weight: normal; opacity: 0.9;">現在のデータを削除して履歴データで置き換えます</small>
+          </span>
+        </button>
+        <button type="button" id="loadModeAppend" class="btn btn--secondary" style="padding: 1rem;">
+          <i class="fa-solid fa-plus"></i>
+          <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+            <strong>追加</strong>
+            <small style="font-weight: normal; opacity: 0.9;">現在のデータに履歴データを追加します</small>
+          </span>
+        </button>
+        <button type="button" id="loadModeCancel" class="btn btn--tertiary" style="padding: 0.75rem;">
+          <i class="fa-solid fa-xmark"></i> キャンセル
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
