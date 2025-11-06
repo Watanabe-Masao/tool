@@ -3,6 +3,7 @@
  */
 
 import { logger } from './core/logger.js';
+import { escapeAttribute, htmlWithRaw, raw } from './core/sanitizer.js';
 
 import { calculatePattern } from './calculator-multi-pattern.js';
 import { toFixed, calcYield, per100FromPerUnit, afterCostPer100, markup, priceFromMarkup, isPositive } from './calculation.js';
@@ -1190,10 +1191,13 @@ export function replaceAllPatterns(newPatterns) {
     row.dataset.patternId = patternId;
 
     // パターンラベルをコメントとして表示（オプション）
-    const labelComment = pattern.label ? ` data-label="${pattern.label}"` : '';
+    // XSS対策: labelをエスケープして属性値として安全に使用
+    const escapedLabel = pattern.label ? escapeAttribute(pattern.label) : '';
+    const labelComment = escapedLabel ? ` data-label="${escapedLabel}"` : '';
 
-    row.innerHTML = `
-      <td class="pattern-number"${labelComment}>${patternId}</td>
+    // XSS対策: htmlWithRaw を使用（数値IDは安全、HTMLは信頼できる静的コンテンツ）
+    row.innerHTML = htmlWithRaw`
+      <td class="pattern-number"${raw(labelComment)}>${patternId}</td>
       <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
       <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
       <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>

@@ -29,6 +29,7 @@
  */
 
 import { logger } from './core/logger.js';
+import { escapeHTML, htmlWithRaw, raw } from './core/sanitizer.js';
 
 import { qs, qsa, hide, show, setText, yen, pct, toFixed } from './dom-utils.js';
 import { appState } from './state.js';
@@ -793,23 +794,24 @@ function setupFormulaModal() {
     return;
   }
 
-  // モーダルを開く関数
+  // モーダルを開く関数（XSS対策: dataset属性の値をエスケープ）
   const openModal = (formulaName, formula, description, example) => {
     modalTitle.textContent = formulaName;
 
+    // XSS対策: dataset属性から取得した値をエスケープ
     let html = '<div class="formula-section">';
 
     if (formula) {
       html += '<div class="formula-label">計算式</div>';
-      html += `<div class="formula-expression">${formula}</div>`;
+      html += `<div class="formula-expression">${escapeHTML(formula)}</div>`;
     }
 
     if (description) {
-      html += `<div class="formula-description">${description}</div>`;
+      html += `<div class="formula-description">${escapeHTML(description)}</div>`;
     }
 
     if (example) {
-      html += `<div class="formula-example"><strong>例：</strong> ${example}</div>`;
+      html += `<div class="formula-example"><strong>例：</strong> ${escapeHTML(example)}</div>`;
     }
 
     html += '</div>';

@@ -3,6 +3,7 @@
  */
 
 import { MODE } from './constants.js';
+import { escapeHTML as sanitizeEscapeHTML, htmlWithRaw, raw } from './core/sanitizer.js';
 
 /**
  * 履歴を商品名とカテゴリーでグループ化
@@ -228,12 +229,11 @@ export function getModeIcon(mode, yieldMethod = null) {
 }
 
 /**
- * HTMLエスケープ
+ * HTMLエスケープ（XSS対策）
+ * 中央集約されたsanitizerモジュールを使用
  * @param {string} str
  * @returns {string}
  */
 export function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  return sanitizeEscapeHTML(str);
 }

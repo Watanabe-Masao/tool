@@ -182,6 +182,136 @@ describe('トースト通知システム', () => {
     });
   });
 
+  describe('XSS対策（セキュリティテスト）', () => {
+    it('スクリプトタグがエスケープされ実行されない', () => {
+      const malicious = '<script>alert("XSS")</script>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // エスケープされたHTMLが含まれる
+      expect(messageElement.innerHTML).toContain('&lt;script&gt;');
+      expect(messageElement.innerHTML).not.toContain('<script>alert');
+
+      // 実際のscriptタグは存在しない
+      const scripts = toast.querySelectorAll('script');
+      expect(scripts.length).toBe(0);
+    });
+
+    it('img onerror攻撃がブロックされる', () => {
+      const malicious = '<img src=x onerror=alert(1)>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // エスケープされている
+      expect(messageElement.innerHTML).toContain('&lt;img');
+      expect(messageElement.innerHTML).not.toContain('<img src=x');
+
+      // 実際のimgタグは存在しない（アイコンは別）
+      const imgs = messageElement.querySelectorAll('img');
+      expect(imgs.length).toBe(0);
+    });
+
+    it('iframe攻撃がブロックされる', () => {
+      const malicious = '<iframe src="javascript:alert(1)"></iframe>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      expect(messageElement.innerHTML).toContain('&lt;iframe');
+      expect(messageElement.innerHTML).not.toContain('<iframe');
+
+      const iframes = toast.querySelectorAll('iframe');
+      expect(iframes.length).toBe(0);
+    });
+
+    it('svg onload攻撃がブロックされる', () => {
+      const malicious = '<svg onload=alert(1)>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      expect(messageElement.innerHTML).toContain('&lt;svg');
+      expect(messageElement.innerHTML).not.toContain('<svg onload');
+
+      const svgs = toast.querySelectorAll('svg');
+      expect(svgs.length).toBe(0);
+    });
+
+    it('複数の攻撃ベクターが同時にブロックされる', () => {
+      const malicious = '<script>alert(1)</script><img src=x onerror=alert(2)><iframe src="javascript:alert(3)"></iframe>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // すべてエスケープされている
+      expect(messageElement.innerHTML).toContain('&lt;script&gt;');
+      expect(messageElement.innerHTML).toContain('&lt;img');
+      expect(messageElement.innerHTML).toContain('&lt;iframe');
+
+      // 実際のタグは存在しない
+      expect(toast.querySelectorAll('script').length).toBe(0);
+      expect(messageElement.querySelectorAll('img').length).toBe(0);
+      expect(toast.querySelectorAll('iframe').length).toBe(0);
+    });
+
+    it('改行を含むXSS攻撃もブロックされる', () => {
+      const malicious = '正常な行1\n<script>alert("XSS")</script>\n正常な行3';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // 改行は<br>に変換されている
+      expect(messageElement.innerHTML).toContain('<br>');
+
+      // スクリプトはエスケープされている
+      expect(messageElement.innerHTML).toContain('&lt;script&gt;');
+      expect(messageElement.innerHTML).not.toContain('<script>');
+
+      // テキストとして正常な行が表示される
+      expect(messageElement.textContent).toContain('正常な行1');
+      expect(messageElement.textContent).toContain('正常な行3');
+    });
+
+    it('HTMLエンティティが二重エスケープされる', () => {
+      const alreadyEscaped = '&lt;script&gt;alert("XSS")&lt;/script&gt;';
+      showToast(alreadyEscaped, 'info', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // 二重エスケープされる（正しい動作）
+      expect(messageElement.innerHTML).toContain('&amp;lt;script&amp;gt;');
+
+      // テキストとして元の文字列が表示される
+      expect(messageElement.textContent).toBe(alreadyEscaped);
+    });
+
+    it('イベントハンドラ属性がエスケープされる', () => {
+      const malicious = '<div onclick="alert(1)">Click me</div>';
+      showToast(malicious, 'error', 3000);
+
+      const toast = document.getElementById('app-toast');
+      const messageElement = toast.querySelector('.toast-message');
+
+      // HTMLタグとしてエスケープされている（文字列としては残るが実行されない）
+      expect(messageElement.innerHTML).toContain('&lt;div');
+      expect(messageElement.innerHTML).toContain('&gt;');
+      expect(messageElement.innerHTML).not.toContain('<div onclick');
+
+      // 実際のdivタグは存在しない（toast-contentなど正規のdivを除く）
+      const innerDivs = messageElement.querySelectorAll('div');
+      expect(innerDivs.length).toBe(0);
+    });
+  });
+
   describe('エッジケース', () => {
     it('空のメッセージでもエラーにならない', () => {
       expect(() => showToast('', 'info', 3000)).not.toThrow();
