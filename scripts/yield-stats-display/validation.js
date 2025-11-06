@@ -305,9 +305,9 @@ export function displayOutlierInfo(outlierResult, statsType, isSampleSizeValid) 
   const formatValue = (value) => {
     if (unit === '%') {
       return pct(toFixed(value));
-    } else {
+    } 
       return `${toFixed(value)}${unit}`;
-    }
+    
   };
 
   // 外れ値の件数

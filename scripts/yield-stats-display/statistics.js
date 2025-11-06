@@ -23,7 +23,7 @@ export function displayMatrixEvaluation(stats) {
   }
 
   const n = stats.count;
-  const cv = stats.cv;
+  const {cv} = stats;
 
   // マトリックス評価を取得
   const evaluation = getMatrixEvaluation(n, cv);
@@ -70,9 +70,9 @@ export function displayStatistics(stats, unit = '%') {
   const formatValue = (value) => {
     if (unit === '%') {
       return pct(toFixed(value));
-    } else {
+    } 
       return `${toFixed(value)}${unit}`;
-    }
+    
   };
 
   // アニメーション付きで値を設定するヘルパー関数

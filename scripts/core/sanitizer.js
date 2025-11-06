@@ -32,7 +32,7 @@ const HTML_ESCAPE_MAP = {
  * @constant
  * @type {RegExp}
  */
-const HTML_ESCAPE_REGEX = /[&<>"'/]/g;
+const HTML_ESCAPE_REGEX = /[&<>"']/g;
 
 /**
  * HTML文字列をエスケープ
@@ -297,17 +297,10 @@ export function resetUsageStats() {
   };
 }
 
-// 開発環境でのみ統計を記録
-if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-  const originalEscapeHTML = escapeHTML;
-  const originalHTML = html;
-  const originalSetContent = setContent;
-  const originalSanitizeURL = sanitizeURL;
-
-  // 統計記録のラッパー（本番環境では実行されない）
-  // これらは実際には再代入できないので、コメントアウト
-  // escapeHTML = (...args) => { usageStats.escapeHTML++; return originalEscapeHTML(...args); };
-}
+// 開発環境での統計記録は、ES6モジュールのexport関数を再代入できないため無効化
+// if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+//   // 統計記録のラッパー（実装不可）
+// }
 
 /**
  * サニタイザーモジュールの初期化ログ

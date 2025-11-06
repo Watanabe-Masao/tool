@@ -52,7 +52,7 @@ export class HistoryOperations {
 
         const record = {
           ...data,
-          uuid: uuid,
+          uuid,
           timestamp: data.timestamp || Date.now(),
           createdAt: new Date().toISOString()
         };

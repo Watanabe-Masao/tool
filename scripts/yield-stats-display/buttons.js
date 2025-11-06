@@ -143,7 +143,7 @@ export function updateLoadStatsButtons() {
         rows += `
           <tr>
             <td class="stats-label" style="width: 50%; text-align: left; padding: 0.6em;">歩留まり率</td>
-            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${yieldRateRecommended ? toFixed(yieldRateRecommended.value, 2) + '%' : '-'}</td>
+            <td class="stats-value" style="width: 50%; text-align: right; padding: 0.6em; font-weight: bold;">${yieldRateRecommended ? `${toFixed(yieldRateRecommended.value, 2)  }%` : '-'}</td>
           </tr>`;
         if (beforeWeightRecommended) {
           rows += `

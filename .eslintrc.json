@@ -104,10 +104,23 @@
         "scripts/toast.js",
         "scripts/multi-pattern-ui.js",
         "scripts/history-item-renderer.js",
-        "scripts/yield-stats-display.js"
+        "scripts/yield-stats-display.js",
+        "scripts/yield-stats-display/**/*.js",
+        "scripts/multi-pattern-ui/**/*.js",
+        "scripts/db/**/*.js",
+        "scripts/firebase-sync/**/*.js"
       ],
       "rules": {
         "no-restricted-syntax": "warn"
+      }
+    },
+    {
+      "files": [
+        "scripts/db/connection.js"
+      ],
+      "rules": {
+        "no-async-promise-executor": "warn",
+        "require-await": "off"
       }
     }
   ]

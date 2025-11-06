@@ -53,7 +53,7 @@ export function getTimestampFromDate(date) {
  * @returns {boolean}
  */
 export function isFirebaseTimestamp(obj) {
-  if (!obj) return false;
+  if (!obj) {return false;}
 
   try {
     const fb = window.firebase;
@@ -76,7 +76,7 @@ export function isFirebaseTimestamp(obj) {
  * @returns {boolean}
  */
 export function isFirebaseFieldValue(obj) {
-  if (!obj) return false;
+  if (!obj) {return false;}
 
   try {
     const fb = window.firebase;
@@ -123,7 +123,7 @@ export function removeUndefinedFields(obj) {
   // オブジェクトの場合（再帰的にクリーンアップ）
   const cleaned = {};
   for (const key in obj) {
-    if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+    if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
       cleaned[key] = removeUndefinedFields(obj[key]);
     }
   }
@@ -161,7 +161,7 @@ export async function saveToCloud(data) {
 
     const dataToSave = {
       ...cleanedData,
-      uuid: uuid,
+      uuid,
       createdAt: getServerTimestamp(),
       updatedAt: getServerTimestamp(),
       deviceId: getDeviceId()
@@ -187,14 +187,14 @@ export async function saveToCloud(data) {
     // IndexedDBにもキャッシュとして保存
     const localData = {
       ...cleanedData,
-      uuid: uuid,
+      uuid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     const localId = await dbInstance.save(localData);
     logger.info(`✅  IndexedDBにキャッシュしました (ID: ${localId})`);
 
-    return { id: localId, uuid: uuid };
+    return { id: localId, uuid };
   } catch (error) {
     logger.error('[エラー]  クラウド保存エラー:', error);
     logger.error('エラー詳細:', {
@@ -228,7 +228,7 @@ export async function updateInCloud(id, updates) {
       throw new Error(`IndexedDB ID:${id} が見つかりません`);
     }
 
-    const uuid = localItem.uuid;
+    const {uuid} = localItem;
     if (!uuid) {
       throw new Error(`IndexedDB ID:${id} にUUIDが設定されていません`);
     }
@@ -296,7 +296,7 @@ export async function deleteFromCloud(id) {
       return false;
     }
 
-    const uuid = localItem.uuid;
+    const {uuid} = localItem;
     if (!uuid) {
       logger.warn(`IndexedDB ID:${id} にUUIDが設定されていません。クラウド削除をスキップします。`);
       // UUIDがない古いデータの場合、ローカル削除のみ許可
@@ -370,7 +370,7 @@ export async function hardDeleteFromCloud(id) {
       return false;
     }
 
-    const uuid = localItem.uuid;
+    const {uuid} = localItem;
     if (!uuid) {
       logger.warn(`IndexedDB ID:${id} にUUIDが設定されていません。クラウド削除をスキップします。`);
       // UUIDがない古いデータの場合、ローカル削除のみ許可

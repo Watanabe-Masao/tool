@@ -86,7 +86,7 @@ export class DatabaseConnection {
    */
   checkDatabaseEnvironment() {
     const checks = {
-      indexedDBAvailable: !!window.indexedDB,
+      indexedDBAvailable: Boolean(window.indexedDB),
       isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
       isPrivateMode: false,
       storageEstimate: null,
@@ -150,7 +150,7 @@ export class DatabaseConnection {
         this.openPromise = null; // エラー時にリセット
 
         // Safari対応: データベース接続エラーをリトライ
-        const error = request.error;
+        const {error} = request;
 
         // エラーの詳細情報をログ出力（Safari デバッグ用）
         logger.error('IndexedDB接続エラー詳細:', {
@@ -281,9 +281,9 @@ export class DatabaseConnection {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        const transaction = event.target.transaction;
-        const oldVersion = event.oldVersion;
-        const newVersion = event.newVersion;
+        const {transaction} = event.target;
+        const {oldVersion} = event;
+        const {newVersion} = event;
 
         logger.info(`データベース更新: v${oldVersion} → v${newVersion}`);
 
@@ -356,11 +356,9 @@ export class DatabaseConnection {
                   migratedCount++;
                 }
                 cursor.continue();
-              } else {
-                if (migratedCount > 0) {
+              } else if (migratedCount > 0) {
                   logger.info(`${migratedCount}件のデータにUUIDを付与しました`);
                 }
-              }
             };
 
             cursorRequest.onerror = () => {

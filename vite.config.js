@@ -22,28 +22,37 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html')
       },
       output: {
-        // マニュアルチャンク分割
-        manualChunks: {
-          // Firebaseライブラリを別チャンクに
-          'firebase-core': [
-            'firebase/app',
-            'firebase/auth',
-            'firebase/firestore'
-          ],
+        // マニュアルチャンク分割（CDNからFirebaseを読み込むため、Firebaseは除外）
+        manualChunks(id) {
+          // node_modules を vendor チャンクに
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
 
-          // 統計計算関連を別チャンクに
-          'stats': [
-            './scripts/yield-stats-calc.js',
-            './scripts/yield-stats-helpers.js',
-            './scripts/yield-stats-charts.js'
-          ],
+          // 統計計算関連モジュール
+          if (id.includes('/yield-stats-')) {
+            return 'stats';
+          }
 
-          // UI関連を別チャンクに
-          'ui': [
-            './scripts/toast.js',
-            './scripts/dom-utils.js',
-            './scripts/help-modal.js'
-          ]
+          // 複数パターンUI関連モジュール
+          if (id.includes('/multi-pattern-')) {
+            return 'multi-pattern';
+          }
+
+          // データベース関連モジュール
+          if (id.includes('/db/')) {
+            return 'database';
+          }
+
+          // Firebase同期関連モジュール
+          if (id.includes('/firebase-sync/')) {
+            return 'firebase-sync';
+          }
+
+          // UI ユーティリティ
+          if (id.includes('/toast.js') || id.includes('/dom-utils.js') || id.includes('/help-modal.js')) {
+            return 'ui-utils';
+          }
         },
 
         // チャンクファイル名のパターン
@@ -53,14 +62,11 @@ export default defineConfig({
       }
     },
 
-    // 圧縮設定
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // console.logを削除（本番環境）
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info']
-      }
+    // 圧縮設定（esbuild は Vite に組み込まれているため、追加インストール不要）
+    minify: 'esbuild',
+    esbuild: {
+      drop: ['console', 'debugger'], // console.log と debugger を削除（本番環境）
+      pure: ['console.log', 'console.info']
     },
 
     // チャンクサイズ警告のしきい値
@@ -90,11 +96,8 @@ export default defineConfig({
 
   // 最適化設定
   optimizeDeps: {
-    include: [
-      'firebase/app',
-      'firebase/auth',
-      'firebase/firestore'
-    ]
+    // Firebase は CDN から読み込むため、ここには含めない
+    include: []
   },
 
   // エイリアス設定（オプション）

@@ -73,7 +73,7 @@ export function clearPatterns() {
  * @returns {number|null} 数値またはnull
  */
 function getNumValue(element) {
-  if (!element) return null;
+  if (!element) {return null;}
   const v = parseFloat(element.value);
   return Number.isFinite(v) ? v : null;
 }
@@ -175,7 +175,7 @@ export function updatePatternNumbers() {
  */
 export function handlePatternInput(patternId) {
   const row = elements.tableBody.querySelector(`tr[data-pattern-id="${patternId}"]`);
-  if (!row) return;
+  if (!row) {return;}
 
   const unitCostInput = row.querySelector('.pattern-unit-cost');
   const unitPriceInput = row.querySelector('.pattern-unit-price');

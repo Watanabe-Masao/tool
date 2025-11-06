@@ -211,7 +211,7 @@ export function handleOutlierCheckboxChange() {
  */
 export function deleteOutlierRows() {
   const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
-  if (!tbody) return;
+  if (!tbody) {return;}
 
   // 外れ値が検出されていない場合は何もしない
   const currentOutliers = appState.getCurrentOutlierValues();
@@ -237,7 +237,7 @@ export function deleteOutlierRows() {
   const allRows = tbody.querySelectorAll('.yield-stats-row');
 
   allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
+    const {rowId} = row.dataset;
 
     if (statsType === 'yieldRate') {
       // 歩留まり率をチェック
@@ -357,8 +357,8 @@ export function setupFormulaModal() {
   // 全ての?マークにイベントリスナーを追加
   const helpIcons = qsa('.help-icon');
   helpIcons.forEach(icon => {
-    const formulaName = icon.dataset.formulaName;
-    const formula = icon.dataset.formula;
+    const {formulaName} = icon.dataset;
+    const {formula} = icon.dataset;
     const description = icon.dataset.formulaDesc;
     const example = icon.dataset.formulaExample;
 
@@ -395,15 +395,15 @@ export function generateSigmaPatterns(stats, sigmaRange = 2) {
   }
 
   const patterns = [];
-  const mean = stats.mean;
-  const stdDev = stats.stdDev;
+  const {mean} = stats;
+  const {stdDev} = stats;
 
   // 範囲内のσパターンを生成（-2σ, -1σ, 平均, +1σ, +2σ）
   for (let i = -sigmaRange; i <= sigmaRange; i++) {
     const value = mean + (i * stdDev);
 
     // 負の値は除外（歩留まり率や重量は負にならない）
-    if (value < 0) continue;
+    if (value < 0) {continue;}
 
     let label;
     if (i === 0) {

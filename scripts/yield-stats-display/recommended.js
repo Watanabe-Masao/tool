@@ -15,16 +15,16 @@ import { appState } from '../state.js';
  * @returns {Object|null} {type: 'mean'|'median', value: number, label: string}
  */
 export function getRecommendedValue(stats) {
-  if (!stats) return null;
+  if (!stats) {return null;}
 
-  const skewness = stats.skewness;
+  const {skewness} = stats;
   const absSkewness = Math.abs(skewness);
 
   if (absSkewness <= 0.5) {
     return { type: 'mean', value: stats.mean, label: '平均値' };
-  } else {
+  } 
     return { type: 'median', value: stats.median, label: '中央値' };
-  }
+  
 }
 
 /**
@@ -48,7 +48,7 @@ export function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'y
     return;
   }
 
-  const skewness = stats.skewness;
+  const {skewness} = stats;
   const absSkewness = Math.abs(skewness);
 
   // 統計タイプに応じた単位を取得
@@ -57,9 +57,9 @@ export function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'y
   const formatValue = (value) => {
     if (unit === '%') {
       return pct(toFixed(value));
-    } else {
+    } 
       return `${toFixed(value)}${unit}`;
-    }
+    
   };
 
   let recommendedType = '';
@@ -131,9 +131,7 @@ export function displayRecommendedValue(stats, isSampleSizeValid, statsType = 'y
     } else {
       multiPatternLink.classList.add('is-hidden');
     }
-  } else {
-    if (multiPatternLink) {
+  } else if (multiPatternLink) {
       multiPatternLink.classList.add('is-hidden');
     }
-  }
 }

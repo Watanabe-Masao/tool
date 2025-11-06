@@ -48,7 +48,7 @@ export function setGetPatternsFunc(func) {
  * @returns {number|null} 数値またはnull
  */
 function getNumValue(element) {
-  if (!element) return null;
+  if (!element) {return null;}
   const v = parseFloat(element.value);
   return Number.isFinite(v) ? v : null;
 }
@@ -127,20 +127,20 @@ export function recalculateAll() {
 
       // 増減の表示クラスを決定
       const getCostChangeClass = (val) => {
-        if (val > 0) return 'result-negative'; // 原価増加は赤
-        if (val < 0) return 'result-positive'; // 原価減少は緑
+        if (val > 0) {return 'result-negative';} // 原価増加は赤
+        if (val < 0) {return 'result-positive';} // 原価減少は緑
         return 'result-neutral';
       };
 
       const getPriceChangeClass = (val) => {
-        if (val > 0) return 'result-positive'; // 売価増加は緑
-        if (val < 0) return 'result-negative'; // 売価減少は赤
+        if (val > 0) {return 'result-positive';} // 売価増加は緑
+        if (val < 0) {return 'result-negative';} // 売価減少は赤
         return 'result-neutral';
       };
 
       const getMarkupChangeClass = (val) => {
-        if (val > 0) return 'result-positive'; // 値入率増加は緑
-        if (val < 0) return 'result-negative'; // 値入率減少は赤
+        if (val > 0) {return 'result-positive';} // 値入率増加は緑
+        if (val < 0) {return 'result-negative';} // 値入率減少は赤
         return 'result-neutral';
       };
 
@@ -166,7 +166,7 @@ export function recalculateAll() {
 
       // 符号付きフォーマット関数
       const formatChange = (val, decimals = 2) => {
-        if (!Number.isFinite(val)) return '-';
+        if (!Number.isFinite(val)) {return '-';}
         return (val >= 0 ? '+' : '') + toFixed(val, decimals);
       };
 

@@ -72,7 +72,7 @@ function getCurrentYieldMethod() {
  * @returns {number|null} 数値またはnull
  */
 function getNumValue(element) {
-  if (!element) return null;
+  if (!element) {return null;}
   const v = parseFloat(element.value);
   return Number.isFinite(v) ? v : null;
 }
@@ -86,14 +86,14 @@ function handleYieldMethodChange(e) {
   const isDirect = currentYieldMethod === 'direct';
 
   // モードの表示切り替え
-  if (elements.calculateMode) elements.calculateMode.classList.toggle(CSS_HIDDEN, isDirect);
-  if (elements.directMode) elements.directMode.classList.toggle(CSS_HIDDEN, !isDirect);
+  if (elements.calculateMode) {elements.calculateMode.classList.toggle(CSS_HIDDEN, isDirect);}
+  if (elements.directMode) {elements.directMode.classList.toggle(CSS_HIDDEN, !isDirect);}
 
   // 結果を非表示
-  if (elements.step2) elements.step2.classList.add(CSS_HIDDEN);
-  if (elements.step2Result) elements.step2Result.classList.add(CSS_HIDDEN);
-  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add(CSS_HIDDEN);
-  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add(CSS_HIDDEN);
+  if (elements.step2) {elements.step2.classList.add(CSS_HIDDEN);}
+  if (elements.step2Result) {elements.step2Result.classList.add(CSS_HIDDEN);}
+  if (elements.step1ResultCalc) {elements.step1ResultCalc.classList.add(CSS_HIDDEN);}
+  if (elements.step1ResultDirect) {elements.step1ResultDirect.classList.add(CSS_HIDDEN);}
 }
 
 /**
@@ -334,9 +334,9 @@ export function initMultiPatternUI() {
     // 入力ボックスを変更したらスライダー、売価を自動更新
     elements.targetMarkupRate.addEventListener('input', (e) => {
       let value = parseFloat(e.target.value);
-      if (isNaN(value)) value = 0;
-      if (value < 0) value = 0;
-      if (value > 99) value = 99;
+      if (isNaN(value)) {value = 0;}
+      if (value < 0) {value = 0;}
+      if (value > 99) {value = 99;}
       elements.targetMarkupRate.value = toFixed(value, 1);
       elements.targetMarkupSlider.value = value;
       // スライダーのカスタムプロパティを更新

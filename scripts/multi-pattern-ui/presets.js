@@ -74,7 +74,7 @@ export function setPatternManagementFuncs(clearFunc, resetFunc) {
  * @returns {number|null} 数値またはnull
  */
 function getNumValue(element) {
-  if (!element) return null;
+  if (!element) {return null;}
   const v = parseFloat(element.value);
   return Number.isFinite(v) ? v : null;
 }
@@ -452,23 +452,23 @@ function roundToDigit(value, digit) {
     // 近接値: 従来の動作（最も近い方）
     if (lastDigit <= digit) {
       return base + digit;
-    } else {
+    } 
       return base + 10 + digit;
-    }
+    
   } else if (roundMode === 'ceil') {
     // 切り上げ: digitより小さければ現在の10の位+digit、それ以外は次の10の位+digit
     if (lastDigit <= digit) {
       return base + digit;
-    } else {
+    } 
       return base + 10 + digit;
-    }
+    
   } else if (roundMode === 'floor') {
     // 切り捨て: digitより大きければ現在の10の位+digit、それ以外は前の10の位+digit
     if (lastDigit >= digit) {
       return base + digit;
-    } else {
+    } 
       return base - 10 + digit;
-    }
+    
   }
 
   // デフォルト（念のため）
@@ -542,26 +542,26 @@ export function adjustPrices(amount) {
 export function clearAll() {
   // 商品名をクリア
   const productNameEl = document.getElementById('multiPatternProductName');
-  if (productNameEl) productNameEl.value = '';
+  if (productNameEl) {productNameEl.value = '';}
 
   // 重量から計算モードの入力値をクリア
-  if (elements.beforeWeightCalc) elements.beforeWeightCalc.value = '';
-  if (elements.afterWeightCalc) elements.afterWeightCalc.value = '';
+  if (elements.beforeWeightCalc) {elements.beforeWeightCalc.value = '';}
+  if (elements.afterWeightCalc) {elements.afterWeightCalc.value = '';}
 
   // 歩留まり率直接入力モードの入力値をクリア
-  if (elements.beforeWeightDirect) elements.beforeWeightDirect.value = '';
-  if (elements.yieldRateDirect) elements.yieldRateDirect.value = '';
+  if (elements.beforeWeightDirect) {elements.beforeWeightDirect.value = '';}
+  if (elements.yieldRateDirect) {elements.yieldRateDirect.value = '';}
 
   // パターンテーブルをクリア
-  if (elements.tableBody) elements.tableBody.innerHTML = '';
-  if (clearPatternsFunc) clearPatternsFunc();
-  if (resetPatternIdCounterFunc) resetPatternIdCounterFunc();
+  if (elements.tableBody) {elements.tableBody.innerHTML = '';}
+  if (clearPatternsFunc) {clearPatternsFunc();}
+  if (resetPatternIdCounterFunc) {resetPatternIdCounterFunc();}
 
   // 結果を非表示
-  if (elements.step1ResultCalc) elements.step1ResultCalc.classList.add(CSS_HIDDEN);
-  if (elements.step1ResultDirect) elements.step1ResultDirect.classList.add(CSS_HIDDEN);
-  if (elements.step2) elements.step2.classList.add(CSS_HIDDEN);
-  if (elements.step2Result) elements.step2Result.classList.add(CSS_HIDDEN);
+  if (elements.step1ResultCalc) {elements.step1ResultCalc.classList.add(CSS_HIDDEN);}
+  if (elements.step1ResultDirect) {elements.step1ResultDirect.classList.add(CSS_HIDDEN);}
+  if (elements.step2) {elements.step2.classList.add(CSS_HIDDEN);}
+  if (elements.step2Result) {elements.step2Result.classList.add(CSS_HIDDEN);}
 
   // 初期パターンを追加
   if (addPatternFunc) {

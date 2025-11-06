@@ -379,9 +379,9 @@ export async function downloadFromCloud() {
 
       try {
         const result = await mergeHistoryItem(cloudItem);
-        if (result === 'imported') imported++;
-        else if (result === 'updated') updated++;
-        else skipped++;
+        if (result === 'imported') {imported++;}
+        else if (result === 'updated') {updated++;}
+        else {skipped++;}
       } catch (itemError) {
         // 個別アイテムのエラーをキャッチし、処理を継続
         errors++;
@@ -531,7 +531,7 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
 
   try {
     // UUIDで照合（新しい方式）
-    const uuid = cloudItem.uuid;
+    const {uuid} = cloudItem;
     let localItem = null;
 
     if (uuid) {
@@ -582,7 +582,7 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
       const newId = await dbInstance.save(itemWithoutId);
       logger.info(` 新規インポート (UUID: ${itemWithoutId.uuid} → IndexedDB ID: ${newId})`);
       return 'imported';
-    } else {
+    } 
       // 競合解決：タイムスタンプで判定
       const cloudTime = cloudItem.updatedAt?.toDate?.() || new Date(cloudItem.timestamp);
       const localTime = localItem.updatedAt ? new Date(localItem.updatedAt) : new Date(localItem.timestamp);
@@ -612,12 +612,12 @@ async function mergeHistoryItem(cloudItem, retryCount = 0) {
         await dbInstance.update(localItem.id, itemWithoutId);
         logger.info(` 更新 (UUID: ${localItem.uuid} → IndexedDB ID: ${localItem.id})`);
         return 'updated';
-      } else {
+      } 
         // ローカルの方が新しい→スキップ
         logger.info(`⏭️ スキップ (UUID: ${localItem.uuid})`);
         return 'skipped';
-      }
-    }
+      
+    
   } catch (error) {
     // Safari特有のトランザクション競合エラーをリトライ
     const isTransactionError = error.name === 'InvalidStateError' ||
