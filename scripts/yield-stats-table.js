@@ -13,7 +13,8 @@ import { calculateYieldRate } from './calculator-yield-stats.js';
 import { calculateStatistics } from './yield-stats-calc.js';
 import { debounce } from './debounce.js';
 
-// モジュール内のカウンター
+// 内部的なDOM要素ID管理用カウンター（表示される行番号とは異なる）
+// 行番号は updateRowNumbers() で相対値（位置ベース: 1, 2, 3...）として表示される
 let yieldStatsEntryCounter = 0;
 
 /**
@@ -83,13 +84,17 @@ export function addYieldStatsRow(callbacks = {}) {
   if (!tbody) return;
 
   const rowId = yieldStatsEntryCounter++;
+  // 行番号は位置ベース（相対値）で表示
+  const currentRowCount = tbody.querySelectorAll('.yield-stats-row').length;
+  const displayNumber = currentRowCount + 1;
+
   const row = document.createElement('tr');
   row.id = `yieldStatsRow${rowId}`;
   row.className = 'yield-stats-row';
   row.dataset.rowId = rowId;
 
   row.innerHTML = `
-    <td class="row-number">${rowId + 1}</td>
+    <td class="row-number">${displayNumber}</td>
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"

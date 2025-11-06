@@ -9,6 +9,8 @@ import { showWarning } from '../toast.js';
 import { debounce } from '../debounce.js';
 
 // パターン状態管理
+// 内部的なDOM要素ID管理用カウンター（表示されるパターン番号とは異なる）
+// パターン番号は updatePatternNumbers() で相対値（位置ベース: 1, 2, 3...）として表示される
 let patternIdCounter = 1;
 const patterns = [];
 
@@ -83,11 +85,14 @@ function getNumValue(element) {
  */
 export function addPattern() {
   const patternId = patternIdCounter++;
+  // パターン番号は位置ベース（相対値）で表示
+  const currentPatternCount = elements.tableBody.querySelectorAll('tr[data-pattern-id]').length;
+  const displayNumber = currentPatternCount + 1;
 
   const row = document.createElement('tr');
   row.dataset.patternId = patternId;
   row.innerHTML = `
-    <td class="pattern-number">${patternId}</td>
+    <td class="pattern-number">${displayNumber}</td>
     <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
     <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
     <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>
@@ -277,8 +282,11 @@ export function replaceAllPatterns(newPatterns) {
   patternIdCounter = 1;
 
   // 新しいパターンを追加
-  newPatterns.forEach(pattern => {
+  newPatterns.forEach((pattern, index) => {
     const patternId = patternIdCounter++;
+    // パターン番号は位置ベース（相対値）で表示
+    const displayNumber = index + 1;
+
     const row = document.createElement('tr');
     row.dataset.patternId = patternId;
 
@@ -289,7 +297,7 @@ export function replaceAllPatterns(newPatterns) {
 
     // XSS対策: htmlWithRaw を使用（数値IDは安全、HTMLは信頼できる静的コンテンツ）
     row.innerHTML = htmlWithRaw`
-      <td class="pattern-number"${raw(labelComment)}>${patternId}</td>
+      <td class="pattern-number"${raw(labelComment)}>${displayNumber}</td>
       <td><input type="number" class="pattern-unit-cost" step="0.01" inputmode="decimal" placeholder="150" /></td>
       <td><input type="number" class="pattern-unit-price" step="0.01" inputmode="decimal" placeholder="198" /></td>
       <td><input type="number" class="pattern-after-price" step="0.01" inputmode="decimal" placeholder="158" /></td>

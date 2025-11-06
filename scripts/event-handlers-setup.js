@@ -266,7 +266,6 @@ function clearAll() {
     if (productNameEl) productNameEl.value = '';
 
     // テーブルをクリア
-    let yieldStatsEntryCounter = 0;
     const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
     if (tbody) {
       tbody.innerHTML = '';
