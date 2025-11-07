@@ -317,7 +317,8 @@ export function checkIfTableHasData() {
     const beforeInput = row.querySelector('.before-weight-input');
     const afterInput = row.querySelector('.after-weight-input');
 
-    if ((beforeInput && beforeInput.value.trim() !== '') ||
+    // 両方のフィールドに値がある行がある場合のみtrue（compactYieldStatsRowsと同じ条件）
+    if ((beforeInput && beforeInput.value.trim() !== '') &&
         (afterInput && afterInput.value.trim() !== '')) {
       return true;
     }
