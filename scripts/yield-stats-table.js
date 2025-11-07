@@ -342,13 +342,8 @@ export function appendYieldStatsTable(tableData, callbacks = {}) {
     return;
   }
 
-  console.log('[appendYieldStatsTable] 既存データの上詰め処理を実行...');
-  // カウンターはリセットしない（既存の行を保持）
-  // 既存データの空行を削除
-  compactYieldStatsRows(callbacks);
-
   console.log('[appendYieldStatsTable] 履歴データを追加...');
-  // データから行を追加
+  // データから行を追加（既存データはそのまま保持、後で上詰め処理）
   tableData.forEach((rowData, index) => {
     addYieldStatsRow(callbacks);
 
@@ -389,9 +384,9 @@ export function appendYieldStatsTable(tableData, callbacks = {}) {
     }
   });
 
-  console.log('[appendYieldStatsTable] 追加後の上詰め処理を実行...');
-  // 履歴データに不完全な行が含まれていた場合に備えて、追加後にもう一度上詰め
-  // これにより、完全なデータだけが残り、最後に新しい空行が追加される
+  console.log('[appendYieldStatsTable] 上詰め処理を実行...');
+  // 既存データ + 履歴データの全行から、両方のフィールドに値がある行だけを残す
+  // 不完全な行（片方だけ入力、または空行）は削除され、最後に新しい空行が追加される
   compactYieldStatsRows(callbacks);
 
   // 状態を更新：履歴から読み込まれた
