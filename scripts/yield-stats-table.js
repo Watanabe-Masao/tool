@@ -342,11 +342,12 @@ export function appendYieldStatsTable(tableData, callbacks = {}) {
     return;
   }
 
-  console.log('[appendYieldStatsTable] 上詰め処理を実行...');
+  console.log('[appendYieldStatsTable] 既存データの上詰め処理を実行...');
   // カウンターはリセットしない（既存の行を保持）
-  // 空行を削除してから追加
+  // 既存データの空行を削除
   compactYieldStatsRows(callbacks);
 
+  console.log('[appendYieldStatsTable] 履歴データを追加...');
   // データから行を追加
   tableData.forEach((rowData, index) => {
     addYieldStatsRow(callbacks);
@@ -388,18 +389,14 @@ export function appendYieldStatsTable(tableData, callbacks = {}) {
     }
   });
 
-  // 最後の行に値がある場合、新しい空行を追加
-  const lastData = tableData[tableData.length - 1];
-  if (lastData && lastData.beforeWeight && lastData.afterWeight) {
-    addYieldStatsRow(callbacks);
-  }
+  console.log('[appendYieldStatsTable] 追加後の上詰め処理を実行...');
+  // 履歴データに不完全な行が含まれていた場合に備えて、追加後にもう一度上詰め
+  // これにより、完全なデータだけが残り、最後に新しい空行が追加される
+  compactYieldStatsRows(callbacks);
 
   // 状態を更新：履歴から読み込まれた
   appState.setYieldStatsFromHistory(true);
   appState.setYieldStatsCalculated(true);
-
-  // 行番号を更新（相対値に）
-  updateRowNumbers();
 
   // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
   setTimeout(() => {
