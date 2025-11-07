@@ -238,22 +238,20 @@ export function collectInputValues(mode) {
     if (tbody) {
       const rows = tbody.querySelectorAll('.yield-stats-row');
       rows.forEach((row) => {
-        const rowId = row.dataset.rowId;
-        if (rowId !== undefined) {
-          const beforeWeightInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-          const afterWeightInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+        // 配列ベース管理: rowから直接inputを取得
+        const beforeWeightInput = row.querySelector('.before-weight-input');
+        const afterWeightInput = row.querySelector('.after-weight-input');
 
-          const beforeWeight = beforeWeightInput ? beforeWeightInput.value : '';
-          const afterWeight = afterWeightInput ? afterWeightInput.value : '';
+        const beforeWeight = beforeWeightInput ? beforeWeightInput.value : '';
+        const afterWeight = afterWeightInput ? afterWeightInput.value : '';
 
-          // 空の行はスキップ（両方が空の場合）
-          if (beforeWeight !== '' || afterWeight !== '') {
-            // データ整合性: 数値として保存（文字列のままだと計算エラーの原因）
-            tableData.push({
-              beforeWeight: beforeWeight !== '' ? parseFloat(beforeWeight) || 0 : '',
-              afterWeight: afterWeight !== '' ? parseFloat(afterWeight) || 0 : ''
-            });
-          }
+        // 空の行はスキップ（両方が空の場合）
+        if (beforeWeight !== '' || afterWeight !== '') {
+          // データ整合性: 数値として保存（文字列のままだと計算エラーの原因）
+          tableData.push({
+            beforeWeight: beforeWeight !== '' ? parseFloat(beforeWeight) || 0 : '',
+            afterWeight: afterWeight !== '' ? parseFloat(afterWeight) || 0 : ''
+          });
         }
       });
     }

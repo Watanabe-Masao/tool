@@ -244,13 +244,13 @@ export function highlightOutlierRows(statsType) {
 
   // 各行の値をチェックして外れ値を含む行をハイライト
   allRows.forEach((row, index) => {
-    const rowId = row.dataset.rowId;
+    // 配列ベース管理: rowから直接要素を取得
     let shouldHighlight = false;
     let outlierCell = null;
 
     if (statsType === 'yieldRate') {
       // 歩留まり率をチェック
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      const yieldRateDisplay = row.querySelector('.yield-rate-display');
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
         const rate = parseFloat(rateText);
@@ -261,7 +261,7 @@ export function highlightOutlierRows(statsType) {
       }
     } else if (statsType === 'beforeWeight') {
       // 加工前重量をチェック
-      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+      const beforeInput = row.querySelector('.before-weight-input');
       if (beforeInput && beforeInput.value.trim() !== '') {
         const beforeWeight = parseFloat(beforeInput.value);
         if (!isNaN(beforeWeight) && isOutlierValue(beforeWeight)) {
@@ -271,7 +271,7 @@ export function highlightOutlierRows(statsType) {
       }
     } else if (statsType === 'afterWeight') {
       // 加工後重量をチェック
-      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+      const afterInput = row.querySelector('.after-weight-input');
       if (afterInput && afterInput.value.trim() !== '') {
         const afterWeight = parseFloat(afterInput.value);
         if (!isNaN(afterWeight) && isOutlierValue(afterWeight)) {
@@ -347,11 +347,11 @@ export function deleteOutlierRows(statsType, onComplete) {
   const allRows = tbody.querySelectorAll('.yield-stats-row');
 
   allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
+    // 配列ベース管理: rowから直接要素を取得
 
     if (statsType === 'yieldRate') {
       // 歩留まり率をチェック
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+      const yieldRateDisplay = row.querySelector('.yield-rate-display');
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
         const rate = parseFloat(rateText);
@@ -361,7 +361,7 @@ export function deleteOutlierRows(statsType, onComplete) {
       }
     } else if (statsType === 'beforeWeight') {
       // 加工前重量をチェック
-      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
+      const beforeInput = row.querySelector('.before-weight-input');
       if (beforeInput && beforeInput.value.trim() !== '') {
         const beforeWeight = parseFloat(beforeInput.value);
         if (!isNaN(beforeWeight) && isOutlierValue(beforeWeight)) {
@@ -370,7 +370,7 @@ export function deleteOutlierRows(statsType, onComplete) {
       }
     } else if (statsType === 'afterWeight') {
       // 加工後重量をチェック
-      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+      const afterInput = row.querySelector('.after-weight-input');
       if (afterInput && afterInput.value.trim() !== '') {
         const afterWeight = parseFloat(afterInput.value);
         if (!isNaN(afterWeight) && isOutlierValue(afterWeight)) {

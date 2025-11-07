@@ -45,6 +45,8 @@ import {
   addYieldStatsRow,
   compactYieldStatsRows,
   restoreYieldStatsTable,
+  appendYieldStatsTable,
+  checkIfTableHasData,
   updateYieldStatsStatistics
 } from './yield-stats-table.js';
 // Lazy-loaded modules - imported dynamically when needed
@@ -983,6 +985,15 @@ export function setupEventHandlers() {
       updateSaveButtonsVisibility
     });
   };
+
+  window.appendYieldStatsTable = function(tableData) {
+    appendYieldStatsTable(tableData, {
+      updateYieldStatsStatistics: () => updateYieldStatsStatistics(displayCurrentStatistics),
+      updateSaveButtonsVisibility
+    });
+  };
+
+  window.checkIfTableHasData = checkIfTableHasData;
 
   // 複数パターン分析の読み込みボタン更新関数を公開（history-ui.js から呼び出すため）
   window.updateLoadStatsButtons = updateLoadStatsButtons;

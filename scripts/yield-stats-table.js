@@ -91,7 +91,7 @@ export function addYieldStatsRow(callbacks = {}) {
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}"
-             class="table-input"
+             class="table-input before-weight-input"
              step="0.01"
              inputmode="decimal"
              placeholder="300"
@@ -100,15 +100,15 @@ export function addYieldStatsRow(callbacks = {}) {
     <td>
       <input type="number"
              id="${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}"
-             class="table-input"
+             class="table-input after-weight-input"
              step="0.01"
              inputmode="decimal"
              placeholder="150"
              data-row-id="${rowId}" />
     </td>
-    <td class="yield-result" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
-    <td class="z-score" id="zScore${rowId}">-</td>
-    <td class="confidence-judgment" id="confidenceJudgment${rowId}">-</td>
+    <td class="yield-result yield-rate-display" id="${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}">-</td>
+    <td class="z-score z-score-display" id="zScore${rowId}">-</td>
+    <td class="confidence-judgment confidence-judgment-display" id="confidenceJudgment${rowId}">-</td>
   `;
 
   tbody.appendChild(row);
@@ -210,25 +210,36 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (!tbody) return;
 
   const allRows = Array.from(tbody.querySelectorAll('.yield-stats-row'));
+  console.log('[compactYieldStatsRows] 開始:', { totalRows: allRows.length });
   const validRows = [];
 
   // データがある行だけを抽出
-  allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
-    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
+  allRows.forEach((row, index) => {
+    // 配列ベース管理: rowから直接inputを取得
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
 
     const hasBeforeWeight = beforeInput && beforeInput.value.trim() !== '';
     const hasAfterWeight = afterInput && afterInput.value.trim() !== '';
 
-    // どちらか一方でも値がある行は残す
-    if (hasBeforeWeight || hasAfterWeight) {
+    console.log(`[compactYieldStatsRows] 行${index}:`, {
+      before: beforeInput?.value,
+      after: afterInput?.value,
+      hasBeforeWeight,
+      hasAfterWeight,
+      willKeep: hasBeforeWeight && hasAfterWeight
+    });
+
+    // 両方のフィールドに値がある行だけを残す（上詰め処理）
+    if (hasBeforeWeight && hasAfterWeight) {
       validRows.push({
         beforeValue: beforeInput.value,
         afterValue: afterInput.value
       });
     }
   });
+
+  console.log('[compactYieldStatsRows] 有効な行:', validRows.length, '/', allRows.length);
 
   // テーブルを再構築
   yieldStatsEntryCounter = 0;
@@ -238,9 +249,11 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (validRows.length > 0) {
     validRows.forEach(rowData => {
       addYieldStatsRow(callbacks);
-      const newRowId = yieldStatsEntryCounter - 1;
-      const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${newRowId}`);
-      const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${newRowId}`);
+      // 配列ベース管理: 最後に追加した行から直接inputを取得
+      const allNewRows = tbody.querySelectorAll('.yield-stats-row');
+      const lastRow = allNewRows[allNewRows.length - 1];
+      const beforeInput = lastRow.querySelector('.before-weight-input');
+      const afterInput = lastRow.querySelector('.after-weight-input');
 
       beforeInput.value = rowData.beforeValue;
       afterInput.value = rowData.afterValue;
@@ -248,7 +261,7 @@ export function compactYieldStatsRows(callbacks = {}) {
       // 計算を直接実行（イベント発火ではなく）
       const hasBeforeWeight = rowData.beforeValue.trim() !== '';
       const hasAfterWeight = rowData.afterValue.trim() !== '';
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${newRowId}`);
+      const yieldRateDisplay = lastRow.querySelector('.yield-rate-display');
 
       if (hasBeforeWeight && hasAfterWeight) {
         const beforeWeight = parseFloat(rowData.beforeValue);
@@ -288,6 +301,104 @@ export function compactYieldStatsRows(callbacks = {}) {
   if (callbacks.updateYieldStatsStatistics) {
     callbacks.updateYieldStatsStatistics();
   }
+}
+
+/**
+ * テーブルに入力データがあるかチェック
+ *
+ * @returns {boolean} データがある場合true
+ */
+export function checkIfTableHasData() {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  if (!tbody) return false;
+
+  const rows = tbody.querySelectorAll('.yield-stats-row');
+  for (const row of rows) {
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
+
+    // 両方のフィールドに値がある行がある場合のみtrue（compactYieldStatsRowsと同じ条件）
+    if ((beforeInput && beforeInput.value.trim() !== '') &&
+        (afterInput && afterInput.value.trim() !== '')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * 歩留まり率統計モード: テーブルデータを追加（既存データを保持）
+ *
+ * @param {Array} tableData - 追加するテーブルデータ
+ * @param {Object} callbacks - コールバック関数のオブジェクト
+ */
+export function appendYieldStatsTable(tableData, callbacks = {}) {
+  const tbody = qs(`#${UI_ELEMENTS.YIELD_STATS_TABLE_BODY}`);
+  console.log('[appendYieldStatsTable] 開始:', { tbody: !!tbody, dataLength: tableData?.length });
+
+  if (!tbody || !tableData || tableData.length === 0) {
+    console.log('[appendYieldStatsTable] 早期リターン');
+    return;
+  }
+
+  console.log('[appendYieldStatsTable] 履歴データを追加...');
+  // データから行を追加（既存データはそのまま保持、後で上詰め処理）
+  tableData.forEach((rowData, index) => {
+    addYieldStatsRow(callbacks);
+
+    // 配列ベース管理: 最後に追加した行から直接inputを取得
+    const allRows = tbody.querySelectorAll('.yield-stats-row');
+    const lastRow = allRows[allRows.length - 1];
+    const beforeInput = lastRow.querySelector('.before-weight-input');
+    const afterInput = lastRow.querySelector('.after-weight-input');
+
+    if (beforeInput && rowData.beforeWeight !== undefined && rowData.beforeWeight !== null) {
+      beforeInput.value = rowData.beforeWeight;
+    }
+    if (afterInput && rowData.afterWeight !== undefined && rowData.afterWeight !== null) {
+      afterInput.value = rowData.afterWeight;
+    }
+
+    // 歩留まり率を計算して表示
+    const beforeWeight = beforeInput ? beforeInput.value.trim() : '';
+    const afterWeight = afterInput ? afterInput.value.trim() : '';
+    const yieldRateDisplay = lastRow.querySelector('.yield-rate-display');
+
+    if (beforeWeight !== '' && afterWeight !== '') {
+      const beforeVal = parseFloat(beforeWeight);
+      const afterVal = parseFloat(afterWeight);
+      if (beforeVal > 0 && afterVal > 0) {
+        const yieldRate = calculateYieldRate(beforeVal, afterVal);
+        if (yieldRate !== null) {
+          yieldRateDisplay.textContent = pct(toFixed(yieldRate));
+          yieldRateDisplay.classList.add('calculated');
+          yieldRateDisplay.classList.remove('error');
+        }
+      }
+    } else if (beforeWeight !== '' || afterWeight !== '') {
+      // 片方だけ入力されている場合はエラー
+      yieldRateDisplay.textContent = 'エラー';
+      yieldRateDisplay.classList.add('error');
+      yieldRateDisplay.classList.remove('calculated');
+    }
+  });
+
+  console.log('[appendYieldStatsTable] 上詰め処理を実行...');
+  // 既存データ + 履歴データの全行から、両方のフィールドに値がある行だけを残す
+  // 不完全な行（片方だけ入力、または空行）は削除され、最後に新しい空行が追加される
+  compactYieldStatsRows(callbacks);
+
+  // 状態を更新：履歴から読み込まれた
+  appState.setYieldStatsFromHistory(true);
+  appState.setYieldStatsCalculated(true);
+
+  // 統計情報を更新（DOMの更新が完全に反映されるのを待つ）
+  setTimeout(() => {
+    if (callbacks.updateYieldStatsStatistics) {
+      callbacks.updateYieldStatsStatistics();
+    }
+  }, 50);
 }
 
 /**
@@ -385,13 +496,13 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
   const allRows = tbody.querySelectorAll('.yield-stats-row');
 
   allRows.forEach(row => {
-    const rowId = row.dataset.rowId;
-    const beforeInput = qs(`#${YIELD_STATS_FIELDS.BEFORE_WEIGHT}${rowId}`);
-    const afterInput = qs(`#${YIELD_STATS_FIELDS.AFTER_WEIGHT}${rowId}`);
-    const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
+    // 配列ベース管理: rowから直接要素を取得
+    const beforeInput = row.querySelector('.before-weight-input');
+    const afterInput = row.querySelector('.after-weight-input');
+    const yieldRateDisplay = row.querySelector('.yield-rate-display');
 
     // 歩留まり率
-    if (yieldRateDisplay.classList.contains('calculated')) {
+    if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated')) {
       const rateText = yieldRateDisplay.textContent.replace('%', '');
       const rate = parseFloat(rateText);
       if (!isNaN(rate)) {
@@ -437,10 +548,10 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
     const stdDevYield = stats.stdDev;
 
     allRows.forEach(row => {
-      const rowId = row.dataset.rowId;
-      const yieldRateDisplay = qs(`#${YIELD_STATS_FIELDS.YIELD_RATE}${rowId}`);
-      const zScoreDisplay = qs(`#zScore${rowId}`);
-      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+      // 配列ベース管理: rowから直接要素を取得
+      const yieldRateDisplay = row.querySelector('.yield-rate-display');
+      const zScoreDisplay = row.querySelector('.z-score-display');
+      const confidenceJudgmentDisplay = row.querySelector('.confidence-judgment-display');
 
       if (yieldRateDisplay && yieldRateDisplay.classList.contains('calculated') && zScoreDisplay) {
         const rateText = yieldRateDisplay.textContent.replace('%', '');
@@ -516,9 +627,9 @@ export function updateYieldStatsStatistics(displayCurrentStatisticsCallback) {
   } else {
     // データが不足している場合はz-scoreと判定をクリア
     allRows.forEach(row => {
-      const rowId = row.dataset.rowId;
-      const zScoreDisplay = qs(`#zScore${rowId}`);
-      const confidenceJudgmentDisplay = qs(`#confidenceJudgment${rowId}`);
+      // 配列ベース管理: rowから直接要素を取得
+      const zScoreDisplay = row.querySelector('.z-score-display');
+      const confidenceJudgmentDisplay = row.querySelector('.confidence-judgment-display');
 
       if (zScoreDisplay) {
         zScoreDisplay.textContent = '-';

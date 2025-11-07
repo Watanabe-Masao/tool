@@ -222,9 +222,20 @@ export function restoreAllInputFields(mode, input, productName = '') {
     // 歩留まり統計モード（商品名は116-130行目で既に設定済み）
 
     // テーブルデータを復元（window.restoreYieldStatsTable関数を使用）
+    // 注意: 上書き/追加の選択はhistory-ui.jsで処理されるため、ここでは上書きのみ
     if (input.tableData && window.restoreYieldStatsTable) {
       window.restoreYieldStatsTable(input.tableData);
     }
+  }
+}
+
+/**
+ * 歩留まり統計テーブルにデータを追加（履歴読み込み専用）
+ * @param {Array} tableData - 追加するテーブルデータ
+ */
+export function appendYieldStatsTableData(tableData) {
+  if (tableData && window.appendYieldStatsTable) {
+    window.appendYieldStatsTable(tableData);
   }
 }
 
